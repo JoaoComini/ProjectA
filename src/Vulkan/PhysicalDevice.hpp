@@ -37,6 +37,7 @@ namespace Vulkan
 
         friend class PhysicalDevicePicker;
         friend class Device;
+        friend class SwapchainBuilder;
     };
 
     class PhysicalDevicePicker

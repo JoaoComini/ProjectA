@@ -23,5 +23,7 @@ namespace Vulkan
     private:
         VkDevice handle;
         PhysicalDevice physicalDevice;
+
+        friend class SwapchainBuilder;
     };
 }
