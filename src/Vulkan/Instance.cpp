@@ -2,7 +2,20 @@
 
 namespace Vulkan
 {
-    void Instance::Create()
+    VkInstance Instance::GetHandle() const
+    {
+        return this->handle;
+    }
+
+    void Instance::Destroy()
+    {
+#ifndef NDEBUG
+        messenger.Destroy();
+#endif
+        vkDestroyInstance(handle, nullptr);
+    }
+
+    Instance InstanceBuilder::Build()
     {
 #ifndef NDEBUG
         if (!CheckValidationLayerSupport())
@@ -38,17 +51,20 @@ namespace Vulkan
         createInfo.pNext = nullptr;
 #endif
 
-        if (vkCreateInstance(&createInfo, nullptr, &handle) != VK_SUCCESS)
+        Instance instance;
+        if (vkCreateInstance(&createInfo, nullptr, &instance.handle) != VK_SUCCESS)
         {
             throw std::runtime_error("failed to create instance!");
         }
 
 #ifndef NDEBUG
-        messenger = std::make_unique<DebugMessenger>(handle);
+        instance.messenger = DebugMessenger(instance.handle);
 #endif
+
+        return instance;
     }
 
-    bool Instance::CheckValidationLayerSupport()
+    bool InstanceBuilder::CheckValidationLayerSupport()
     {
         uint32_t count;
         vkEnumerateInstanceLayerProperties(&count, nullptr);
@@ -67,7 +83,7 @@ namespace Vulkan
         return false;
     }
 
-    std::vector<const char *> Instance::GetRequiredExtensions()
+    std::vector<const char *> InstanceBuilder::GetRequiredExtensions()
     {
         uint32_t count = 0;
         const char **glfwExtensions = glfwGetRequiredInstanceExtensions(&count);
@@ -79,16 +95,5 @@ namespace Vulkan
 #endif
 
         return extensions;
-    }
-
-    VkInstance Instance::GetHandle() const
-    {
-        return handle;
-    }
-
-    Instance::~Instance()
-    {
-        messenger->Destroy();
-        vkDestroyInstance(handle, nullptr);
     }
 }

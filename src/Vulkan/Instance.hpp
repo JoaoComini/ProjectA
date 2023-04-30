@@ -11,23 +11,28 @@
 
 namespace Vulkan
 {
-    class Instance
+    struct Instance
     {
     public:
-        ~Instance();
-
-        void Create();
         VkInstance GetHandle() const;
+        VkInstance handle = VK_NULL_HANDLE;
+
+        void Destroy();
 
     private:
-        VkInstance handle;
-        VkPhysicalDevice physicalDevice;
+#ifndef NDEBUG
+        DebugMessenger messenger;
+#endif
 
+    friend class InstanceBuilder;
+    };
+
+    class InstanceBuilder
+    {
+    public:
+        Instance Build();
+    private:
         bool CheckValidationLayerSupport();
         std::vector<const char *> GetRequiredExtensions();
-
-#ifndef NDEBUG
-        std::unique_ptr<DebugMessenger> messenger;
-#endif
     };
 }

@@ -2,16 +2,54 @@
 
 #include <vulkan/vulkan.h>
 #include <vector>
+#include <string.h>
+
+#include "Instance.hpp"
+#include "Queue.hpp"
+#include "Details.hpp"
 
 namespace Vulkan
 {
-    struct PhysicalDevice
+    struct SurfaceSupportDetails
     {
-        PhysicalDevice();
+        VkSurfaceCapabilitiesKHR capabilities;
+        std::vector<VkSurfaceFormatKHR> formats;
+        std::vector<VkPresentModeKHR> presentModes;
+    };
+
+    class PhysicalDevice
+    {
+    public:
+        PhysicalDevice() = default;
         PhysicalDevice(VkPhysicalDevice handle, VkSurfaceKHR surface);
-        
+
+        uint32_t FindQueueIndex(QueueType type) const;
+        uint32_t FindPresentQueueIndex() const;
+
+        SurfaceSupportDetails GetSurfaceSupportDetails();
+
+    private:
+        uint32_t FindFirstQueueIndex(VkQueueFlagBits flag) const;
+
         VkPhysicalDevice handle;
         VkSurfaceKHR surface;
         std::vector<VkQueueFamilyProperties> families;
+
+        friend class PhysicalDevicePicker;
+        friend class Device;
+    };
+
+    class PhysicalDevicePicker
+    {
+    public:
+        virtual ~PhysicalDevicePicker() = default;
+
+        static PhysicalDevice PickBestSuitable(Instance instance, VkSurfaceKHR surface);
+
+    private:
+        static bool IsDeviceSuitable(PhysicalDevice device);
+        static bool HasSuitableQueueFamily(PhysicalDevice device);
+        static bool HasExtensionsSupport(PhysicalDevice device);
+        static bool HasSwapchainSupport(PhysicalDevice device);
     };
 }

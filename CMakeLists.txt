@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.25)
 project(ProjectA VERSION 0.0.1)
 
 if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE "Debug" CACHE STRING FORCE)
+  set(CMAKE_BUILD_TYPE "Debug" STRING FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
 
 find_package(glfw3 REQUIRED)
@@ -25,7 +25,7 @@ find_program(glslc_executable NAMES glslc HINTS Vulkan::glslc)
 set(SHADER_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/resources/shaders)
 set(SHADER_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/resources/shaders)
 
-file(GLOB SHADERS_SRC_FILES ${SHADER_SOURCE_DIR}/*.vert)
+file(GLOB SHADERS_SRC_FILES ${SHADER_SOURCE_DIR}/*)
 
 add_custom_command(
   COMMAND
