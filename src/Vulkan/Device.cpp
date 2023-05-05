@@ -2,7 +2,12 @@
 
 namespace Vulkan
 {
-    Device Device::Create(PhysicalDevice physicalDevice)
+    Device::~Device()
+    {
+        vkDestroyDevice(handle, nullptr);
+    }
+
+    std::unique_ptr<Device> Device::Create(PhysicalDevice physicalDevice)
     {
         uint32_t graphicsIndex = physicalDevice.FindQueueIndex(QueueType::Graphics);
         uint32_t presentIndex = physicalDevice.FindQueueIndex(QueueType::Present);
@@ -35,9 +40,9 @@ namespace Vulkan
         createInfo.ppEnabledExtensionNames = extensions.data();
         createInfo.enabledLayerCount = 0;
 
-        Device device;
-        device.physicalDevice = physicalDevice;
-        if (vkCreateDevice(physicalDevice.handle, &createInfo, nullptr, &device.handle) != VK_SUCCESS)
+        std::unique_ptr<Device> device = std::make_unique<Device>();
+        device->physicalDevice = physicalDevice;
+        if (vkCreateDevice(physicalDevice.handle, &createInfo, nullptr, &device->handle) != VK_SUCCESS)
         {
             throw std::runtime_error("failed to create logical device!");
         }
@@ -59,6 +64,17 @@ namespace Vulkan
     {
         return physicalDevice.FindQueueIndex(type);
     }
+
+    void Device::WaitIdle()
+    {
+        vkDeviceWaitIdle(handle);
+    }
+
+    SurfaceSupportDetails Device::GetSurfaceSupportDetails() const
+    {
+        return physicalDevice.GetSurfaceSupportDetails();
+    }
+
 
     VkDevice Device::GetHandle() const
     {

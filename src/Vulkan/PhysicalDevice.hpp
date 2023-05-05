@@ -26,7 +26,7 @@ namespace Vulkan
         uint32_t FindQueueIndex(QueueType type) const;
         uint32_t FindPresentQueueIndex() const;
 
-        SurfaceSupportDetails GetSurfaceSupportDetails();
+        SurfaceSupportDetails GetSurfaceSupportDetails() const;
 
     private:
         uint32_t FindFirstQueueIndex(VkQueueFlagBits flag) const;
@@ -45,7 +45,7 @@ namespace Vulkan
     public:
         virtual ~PhysicalDevicePicker() = default;
 
-        static PhysicalDevice PickBestSuitable(Instance instance, VkSurfaceKHR surface);
+        static PhysicalDevice PickBestSuitable(const Instance &instance, VkSurfaceKHR surface);
 
     private:
         static bool IsDeviceSuitable(PhysicalDevice device);

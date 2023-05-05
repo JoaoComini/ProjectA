@@ -14,10 +14,9 @@ namespace Vulkan
     struct Instance
     {
     public:
+        ~Instance();
         VkInstance GetHandle() const;
         VkInstance handle = VK_NULL_HANDLE;
-
-        void Destroy();
 
     private:
 #ifndef NDEBUG
@@ -30,7 +29,7 @@ namespace Vulkan
     class InstanceBuilder
     {
     public:
-        Instance Build();
+        std::unique_ptr<Instance> Build();
     private:
         bool CheckValidationLayerSupport();
         std::vector<const char *> GetRequiredExtensions();

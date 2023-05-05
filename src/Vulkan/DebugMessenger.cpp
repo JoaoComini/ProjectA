@@ -4,7 +4,7 @@
 
 namespace Vulkan
 {
-    DebugMessenger::DebugMessenger(const VkInstance instance) : instance(instance)
+    DebugMessenger::DebugMessenger(const VkInstance &instance) : instance(instance)
     {
         VkDebugUtilsMessengerCreateInfoEXT createInfo = GetCreateInfo();
 
@@ -41,6 +41,11 @@ namespace Vulkan
 
     void DebugMessenger::Destroy()
     {
+        if (instance == nullptr)
+        {
+            return;
+        }
+
         auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
         if (func != nullptr)
         {

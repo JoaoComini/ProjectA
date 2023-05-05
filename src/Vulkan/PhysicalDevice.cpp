@@ -55,7 +55,7 @@ namespace Vulkan
         return Details::QUEUE_INDEX_MAX_VALUE;
     }
 
-    SurfaceSupportDetails PhysicalDevice::GetSurfaceSupportDetails()
+    SurfaceSupportDetails PhysicalDevice::GetSurfaceSupportDetails() const
     {
         SurfaceSupportDetails details;
 
@@ -82,7 +82,7 @@ namespace Vulkan
         return details;
     }
 
-    PhysicalDevice PhysicalDevicePicker::PickBestSuitable(Instance instance, VkSurfaceKHR surface)
+    PhysicalDevice PhysicalDevicePicker::PickBestSuitable(const Instance &instance, VkSurfaceKHR surface)
     {
         uint32_t count = 0;
         vkEnumeratePhysicalDevices(instance.GetHandle(), &count, nullptr);

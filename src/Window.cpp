@@ -1,5 +1,31 @@
 #include "Window.hpp"
 
+Window::Window(std::string name, int width, int height, void *userPointer, bool resizable) : userPointer(userPointer)
+{
+    glfwInit();
+
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+
+    handle = glfwCreateWindow(width, height, name.c_str(), nullptr, nullptr);
+
+    glfwSetWindowUserPointer(handle, this);
+
+    auto lambda = [](GLFWwindow *window, int width, int height)
+    {
+        auto pointer = static_cast<Window *>(glfwGetWindowUserPointer(window));
+        pointer->framebufferSizeCallback(pointer, FramebufferSize{height, width});
+    };
+
+    glfwSetFramebufferSizeCallback(handle, lambda);
+}
+
+Window::~Window()
+{
+    glfwDestroyWindow(handle);
+    glfwTerminate();
+}
+
 bool Window::ShouldClose()
 {
     return glfwWindowShouldClose(handle);
@@ -10,40 +36,38 @@ void Window::Update()
     glfwPollEvents();
 }
 
-void Window::Destroy()
+void Window::WaitForFocus()
 {
-    glfwDestroyWindow(handle);
-    glfwTerminate();
-}
-
-void Window::GetFrameBufferSize(int &width, int &height)
-{
-    glfwGetFramebufferSize(handle, &width, &height);
-}
-
-void Window::CreateSurface(Vulkan::Instance instance)
-{
-    if (glfwCreateWindowSurface(instance.handle, handle, nullptr, &surface) != VK_SUCCESS)
+    auto size = GetFramebufferSize();
+    while (size.width == 0 || size.height == 0)
     {
-        throw std::runtime_error("failed to create window surface!");
+        size = GetFramebufferSize();
+        glfwWaitEvents();
     }
 }
 
-VkSurfaceKHR Window::GetSurface() const
+GLFWwindow *Window::GetHandle() const
 {
-    return surface;
+    return handle;
 }
 
-Window WindowBuilder::Build()
+FramebufferSize Window::GetFramebufferSize()
 {
-    Window window;
+    FramebufferSize size;
+    glfwGetFramebufferSize(handle, &size.width, &size.height);
 
-    glfwInit();
+    return size;
+}
 
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+void Window::SetFramebufferSizeCallback(void (*callback)(Window *window, FramebufferSize size))
+{
+    this->framebufferSizeCallback = callback;
+}
 
-    window.handle = glfwCreateWindow(width, heigth, "Vulkan", nullptr, nullptr);
+std::unique_ptr<Window> WindowBuilder::Build()
+{
+
+    std::unique_ptr<Window> window = std::make_unique<Window>("Vulkan", width, height, userPointer, false);
 
     return window;
 }
@@ -56,6 +80,12 @@ WindowBuilder WindowBuilder::Width(uint32_t width)
 
 WindowBuilder WindowBuilder::Height(uint32_t height)
 {
-    this->heigth = height;
+    this->height = height;
+    return *this;
+}
+
+WindowBuilder WindowBuilder::UserPointer(void *userPointer)
+{
+    this->userPointer = userPointer;
     return *this;
 }

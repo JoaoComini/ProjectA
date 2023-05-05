@@ -13,6 +13,7 @@
 #include <memory>
 
 #include "Window.hpp"
+#include "WindowSurface.hpp"
 
 #include "Vulkan/Shader.hpp"
 #include "Vulkan/Instance.hpp"
@@ -37,12 +38,12 @@ public:
     }
 
 private:
-    Window window;
-
-    Vulkan::Instance instance;
+    std::unique_ptr<Window> window;
+    std::unique_ptr<Vulkan::Instance> instance;
+    std::unique_ptr<WindowSurface> surface;
     Vulkan::PhysicalDevice physicalDevice;
-    Vulkan::Device device;
-    Vulkan::Swapchain swapchain;
+    std::unique_ptr<Vulkan::Device> device;
+    std::unique_ptr<Vulkan::Swapchain> swapchain;
 
     VkQueue graphicsQueue;
     VkQueue presentQueue;
@@ -58,35 +59,41 @@ private:
     std::vector<VkFence> inFlightFences;
 
     uint32_t currentFrame = 0;
+    bool windowHasResized = false;
 
     void init()
     {
         window = WindowBuilder()
                      .Height(HEIGHT)
                      .Width(WIDTH)
+                     .UserPointer(this)
                      .Build();
+
+        window->SetFramebufferSizeCallback([](Window *window, FramebufferSize size)
+                                           {
+            auto app = window->GetUserPointer<Application>();
+            app->windowHasResized = true; });
 
         instance = Vulkan::InstanceBuilder().Build();
 
-        window.CreateSurface(instance);
+        surface = std::make_unique<WindowSurface>(*instance, window->GetHandle());
 
-        physicalDevice = Vulkan::PhysicalDevicePicker::PickBestSuitable(instance, window.GetSurface());
+        physicalDevice = Vulkan::PhysicalDevicePicker::PickBestSuitable(*instance, surface->GetHandle());
 
         device = Vulkan::Device::Create(physicalDevice);
-        graphicsQueue = device.FindQueue(Vulkan::QueueType::Graphics);
-        presentQueue = device.FindQueue(Vulkan::QueueType::Present);
+        graphicsQueue = device->FindQueue(Vulkan::QueueType::Graphics);
+        presentQueue = device->FindQueue(Vulkan::QueueType::Present);
 
-        int width, height;
-        window.GetFrameBufferSize(width, height);
+        auto size = window->GetFramebufferSize();
 
-        swapchain = Vulkan::SwapchainBuilder(device)
-            .DesiredWidth(width)
-            .DesiredHeight(height)
-            .Build();
+        swapchain = Vulkan::SwapchainBuilder()
+                        .DesiredWidth(size.width)
+                        .DesiredHeight(size.height)
+                        .Build(*device, *surface);
 
         createRenderPass();
         createGraphicsPipeline();
-        createFramebuffers();
+        CreateFramebuffers();
         createCommandPool();
         createCommandBuffers();
         createSyncObjects();
@@ -94,8 +101,8 @@ private:
 
     void createGraphicsPipeline()
     {
-        auto vertexShader = Vulkan::Shader(device.GetHandle(), "resources/shaders/shader.vert.spv");
-        auto fragmentShader = Vulkan::Shader(device.GetHandle(), "resources/shaders/shader.frag.spv");
+        auto vertexShader = Vulkan::Shader(device->GetHandle(), "resources/shaders/shader.vert.spv");
+        auto fragmentShader = Vulkan::Shader(device->GetHandle(), "resources/shaders/shader.frag.spv");
 
         VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
         vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -187,7 +194,7 @@ private:
         pipelineLayoutInfo.pushConstantRangeCount = 0;    // Optional
         pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
 
-        if (vkCreatePipelineLayout(device.GetHandle(), &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
+        if (vkCreatePipelineLayout(device->GetHandle(), &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
         {
             throw std::runtime_error("failed to create pipeline layout!");
         }
@@ -210,7 +217,7 @@ private:
         pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
         pipelineInfo.basePipelineIndex = -1;              // Optional
 
-        if (vkCreateGraphicsPipelines(device.GetHandle(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS)
+        if (vkCreateGraphicsPipelines(device->GetHandle(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS)
         {
             throw std::runtime_error("failed to create graphics pipeline!");
         }
@@ -219,7 +226,7 @@ private:
     void createRenderPass()
     {
         VkAttachmentDescription colorAttachment{};
-        colorAttachment.format = swapchain.GetImageFormat();
+        colorAttachment.format = swapchain->GetImageFormat();
         colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
         colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
         colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -252,17 +259,17 @@ private:
         renderPassInfo.dependencyCount = 1;
         renderPassInfo.pDependencies = &dependency;
 
-        if (vkCreateRenderPass(device.GetHandle(), &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS)
+        if (vkCreateRenderPass(device->GetHandle(), &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS)
         {
             throw std::runtime_error("failed to create render pass!");
         }
     }
 
-    void createFramebuffers()
+    void CreateFramebuffers()
     {
-        VkExtent2D extent = swapchain.GetExtent();
+        VkExtent2D extent = swapchain->GetImageExtent();
 
-        std::vector<VkImageView> views = swapchain.GetImageViews();
+        std::vector<VkImageView> views = swapchain->GetImageViews();
 
         framebuffers.resize(views.size());
 
@@ -279,7 +286,7 @@ private:
             framebufferInfo.height = extent.height;
             framebufferInfo.layers = 1;
 
-            if (vkCreateFramebuffer(device.GetHandle(), &framebufferInfo, nullptr, &framebuffers[i]) != VK_SUCCESS)
+            if (vkCreateFramebuffer(device->GetHandle(), &framebufferInfo, nullptr, &framebuffers[i]) != VK_SUCCESS)
             {
                 throw std::runtime_error("failed to create framebuffer!");
             }
@@ -288,14 +295,14 @@ private:
 
     void createCommandPool()
     {
-        uint32_t graphicsIndex = device.FindQueueIndex(Vulkan::QueueType::Graphics);
+        uint32_t graphicsIndex = device->FindQueueIndex(Vulkan::QueueType::Graphics);
 
         VkCommandPoolCreateInfo poolInfo{};
         poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
         poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
         poolInfo.queueFamilyIndex = graphicsIndex;
 
-        if (vkCreateCommandPool(device.GetHandle(), &poolInfo, nullptr, &commandPool) != VK_SUCCESS)
+        if (vkCreateCommandPool(device->GetHandle(), &poolInfo, nullptr, &commandPool) != VK_SUCCESS)
         {
             throw std::runtime_error("failed to create command pool!");
         }
@@ -311,7 +318,7 @@ private:
         allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
         allocInfo.commandBufferCount = (uint32_t)commandBuffers.size();
 
-        if (vkAllocateCommandBuffers(device.GetHandle(), &allocInfo, commandBuffers.data()) != VK_SUCCESS)
+        if (vkAllocateCommandBuffers(device->GetHandle(), &allocInfo, commandBuffers.data()) != VK_SUCCESS)
         {
             throw std::runtime_error("failed to allocate command buffers!");
         }
@@ -319,7 +326,7 @@ private:
 
     void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex)
     {
-        VkExtent2D extent = swapchain.GetExtent();
+        VkExtent2D extent = swapchain->GetImageExtent();
 
         VkCommandBufferBeginInfo beginInfo{};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -384,9 +391,9 @@ private:
 
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
         {
-            if (vkCreateSemaphore(device.GetHandle(), &semaphoreInfo, nullptr, &imageAvailableSemaphores[i]) != VK_SUCCESS ||
-                vkCreateSemaphore(device.GetHandle(), &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) != VK_SUCCESS ||
-                vkCreateFence(device.GetHandle(), &fenceInfo, nullptr, &inFlightFences[i]) != VK_SUCCESS)
+            if (vkCreateSemaphore(device->GetHandle(), &semaphoreInfo, nullptr, &imageAvailableSemaphores[i]) != VK_SUCCESS ||
+                vkCreateSemaphore(device->GetHandle(), &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) != VK_SUCCESS ||
+                vkCreateFence(device->GetHandle(), &fenceInfo, nullptr, &inFlightFences[i]) != VK_SUCCESS)
             {
 
                 throw std::runtime_error("failed to create synchronization objects for a frame!");
@@ -396,22 +403,34 @@ private:
 
     void mainLoop()
     {
-        while (!window.ShouldClose())
+        while (!window->ShouldClose())
         {
-            window.Update();
+            window->Update();
             drawFrame();
         }
 
-        vkDeviceWaitIdle(device.GetHandle());
+        device->WaitIdle();
     }
 
     void drawFrame()
     {
-        vkWaitForFences(device.GetHandle(), 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
-        vkResetFences(device.GetHandle(), 1, &inFlightFences[currentFrame]);
+        vkWaitForFences(device->GetHandle(), 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
         uint32_t imageIndex;
-        vkAcquireNextImageKHR(device.GetHandle(), swapchain.GetHandle(), UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+        auto result = vkAcquireNextImageKHR(device->GetHandle(), swapchain->GetHandle(), UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+
+        if (result == VK_ERROR_OUT_OF_DATE_KHR)
+        {
+            windowHasResized = false;
+            RecreateSwapchain();
+            return;
+        }
+        else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
+        {
+            throw std::runtime_error("failed to acquire swap chain image!");
+        }
+
+        vkResetFences(device->GetHandle(), 1, &inFlightFences[currentFrame]);
 
         vkResetCommandBuffer(commandBuffers[currentFrame], 0);
         recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
@@ -441,54 +460,65 @@ private:
         presentInfo.waitSemaphoreCount = 1;
         presentInfo.pWaitSemaphores = signalSemaphores;
 
-        VkSwapchainKHR swapchains[] = {swapchain.GetHandle()};
+        VkSwapchainKHR swapchains[] = {swapchain->GetHandle()};
         presentInfo.swapchainCount = 1;
         presentInfo.pSwapchains = swapchains;
         presentInfo.pImageIndices = &imageIndex;
 
         presentInfo.pResults = nullptr; // Optional
 
-        vkQueuePresentKHR(presentQueue, &presentInfo);
+        result = vkQueuePresentKHR(presentQueue, &presentInfo);
+
+        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || windowHasResized)
+        {
+            RecreateSwapchain();
+        }
+        else if (result != VK_SUCCESS)
+        {
+            throw std::runtime_error("failed to present swap chain image!");
+        }
 
         currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+    }
+
+    void RecreateSwapchain()
+    {
+        window->WaitForFocus();
+        device->WaitIdle();
+
+        DestroyFramebuffers();
+
+        auto size = window->GetFramebufferSize();
+        swapchain->Recreate(size.width, size.height);
+
+        CreateFramebuffers();
     }
 
     void cleanup()
     {
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
         {
-            vkDestroySemaphore(device.GetHandle(), renderFinishedSemaphores[i], nullptr);
-            vkDestroySemaphore(device.GetHandle(), imageAvailableSemaphores[i], nullptr);
-            vkDestroyFence(device.GetHandle(), inFlightFences[i], nullptr);
+            vkDestroySemaphore(device->GetHandle(), renderFinishedSemaphores[i], nullptr);
+            vkDestroySemaphore(device->GetHandle(), imageAvailableSemaphores[i], nullptr);
+            vkDestroyFence(device->GetHandle(), inFlightFences[i], nullptr);
         }
 
-        vkDestroyCommandPool(device.GetHandle(), commandPool, nullptr);
+        vkDestroyCommandPool(device->GetHandle(), commandPool, nullptr);
 
+        DestroyFramebuffers();
+
+        vkDestroyPipeline(device->GetHandle(), graphicsPipeline, nullptr);
+
+        vkDestroyPipelineLayout(device->GetHandle(), pipelineLayout, nullptr);
+
+        vkDestroyRenderPass(device->GetHandle(), renderPass, nullptr);
+    }
+
+    void DestroyFramebuffers()
+    {
         for (auto framebuffer : framebuffers)
         {
-            vkDestroyFramebuffer(device.GetHandle(), framebuffer, nullptr);
+            vkDestroyFramebuffer(device->GetHandle(), framebuffer, nullptr);
         }
-
-        vkDestroyPipeline(device.GetHandle(), graphicsPipeline, nullptr);
-
-        vkDestroyPipelineLayout(device.GetHandle(), pipelineLayout, nullptr);
-
-        vkDestroyRenderPass(device.GetHandle(), renderPass, nullptr);
-
-        std::vector<VkImageView> views = swapchain.GetImageViews();
-
-        for (auto view : views)
-        {
-            vkDestroyImageView(device.GetHandle(), view, nullptr);
-        }
-
-        vkDestroySwapchainKHR(device.GetHandle(), swapchain.GetHandle(), nullptr);
-
-        vkDestroyDevice(device.GetHandle(), nullptr);
-
-        vkDestroySurfaceKHR(instance.GetHandle(), window.GetSurface(), nullptr);
-
-        instance.Destroy();
-        window.Destroy();
     }
 };

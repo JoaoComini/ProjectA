@@ -9,7 +9,7 @@ namespace Vulkan
     class DebugMessenger
     {
     public:
-        DebugMessenger(const VkInstance instance);
+        DebugMessenger(const VkInstance &instance);
         DebugMessenger() = default;
         static VkDebugUtilsMessengerCreateInfoEXT GetCreateInfo();
 

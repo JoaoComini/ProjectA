@@ -11,15 +11,21 @@
 #include "Queue.hpp"
 
 namespace Vulkan
-{    
+{
     class Device
     {
     public:
-        static Device Create(PhysicalDevice physicalDevice);
+        ~Device();
+        static std::unique_ptr<Device> Create(PhysicalDevice physicalDevice);
         VkQueue FindQueue(QueueType type) const;
         uint32_t FindQueueIndex(QueueType type) const;
 
+        void WaitIdle();
+
+        SurfaceSupportDetails GetSurfaceSupportDetails() const;
+
         VkDevice GetHandle() const;
+
     private:
         VkDevice handle;
         PhysicalDevice physicalDevice;

@@ -5,20 +5,35 @@
 
 #include "Vulkan/Instance.hpp"
 
+struct FramebufferSize
+{
+    int height;
+    int width;
+};
+
 class Window
 {
 public:
+    Window(std::string name, int width, int height, void *userPointer, bool resizable);
+    ~Window();
+
     bool ShouldClose();
     void Update();
-    void Destroy();
-    void GetFrameBufferSize(int &width, int &height);
-    void CreateSurface(Vulkan::Instance instance);
+    void WaitForFocus();
 
-    VkSurfaceKHR GetSurface() const;
+    FramebufferSize GetFramebufferSize();
+    GLFWwindow *GetHandle() const;
+
+    template <class T>
+    T *GetUserPointer() { return static_cast<T *>(userPointer); }
+
+    void SetFramebufferSizeCallback(void (*callback)(Window *window, FramebufferSize size));
 
 private:
     GLFWwindow *handle;
-    VkSurfaceKHR surface;
+    void *userPointer = nullptr;
+
+    void (*framebufferSizeCallback)(Window *window, FramebufferSize size);
 
     friend class WindowBuilder;
 };
@@ -28,10 +43,11 @@ class WindowBuilder
 public:
     WindowBuilder Width(uint32_t width);
     WindowBuilder Height(uint32_t height);
-    Window Build();
+    WindowBuilder UserPointer(void *userPointer);
+    std::unique_ptr<Window> Build();
 
 private:
     uint32_t width;
-    uint32_t heigth;
-    Vulkan::Instance instance;
+    uint32_t height;
+    void *userPointer = nullptr;
 };

@@ -7,7 +7,7 @@ namespace Vulkan
         return this->handle;
     }
 
-    void Instance::Destroy()
+    Instance::~Instance()
     {
 #ifndef NDEBUG
         messenger.Destroy();
@@ -15,7 +15,7 @@ namespace Vulkan
         vkDestroyInstance(handle, nullptr);
     }
 
-    Instance InstanceBuilder::Build()
+    std::unique_ptr<Instance> InstanceBuilder::Build()
     {
 #ifndef NDEBUG
         if (!CheckValidationLayerSupport())
@@ -51,14 +51,14 @@ namespace Vulkan
         createInfo.pNext = nullptr;
 #endif
 
-        Instance instance;
-        if (vkCreateInstance(&createInfo, nullptr, &instance.handle) != VK_SUCCESS)
+        std::unique_ptr<Instance> instance = std::make_unique<Instance>();
+        if (vkCreateInstance(&createInfo, nullptr, &instance->handle) != VK_SUCCESS)
         {
             throw std::runtime_error("failed to create instance!");
         }
 
 #ifndef NDEBUG
-        instance.messenger = DebugMessenger(instance.handle);
+        instance->messenger = DebugMessenger(instance->handle);
 #endif
 
         return instance;
