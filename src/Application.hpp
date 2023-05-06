@@ -2,11 +2,18 @@
 
 #include <vulkan/vulkan.h>
 
+#define GLM_FORCE_RADIANS
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
+#include <tiny_obj_loader.h>
+
 #include <stdexcept>
 #include <vector>
 #include <string.h>
 #include <algorithm>
 #include <memory>
+#include <chrono>
 
 #include "Window.hpp"
 #include "WindowSurface.hpp"
@@ -23,6 +30,11 @@
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
 const int MAX_FRAMES_IN_FLIGHT = 2;
+
+struct UniformBufferObject
+{
+    glm::mat4 mvp;
+};
 
 class Application
 {
@@ -46,19 +58,89 @@ private:
     VkPipelineLayout pipelineLayout;
     VkPipeline graphicsPipeline;
     std::vector<VkFramebuffer> framebuffers;
-    VkCommandPool commandPool;
 
     std::vector<VkCommandBuffer> commandBuffers;
     std::vector<VkSemaphore> renderFinishedSemaphores;
     std::vector<VkFence> inFlightFences;
 
     std::unique_ptr<Vulkan::Buffer> vertexBuffer;
+    std::unique_ptr<Vulkan::Buffer> indexBuffer;
 
     uint32_t currentFrame = 0;
     bool windowHasResized = false;
 
+    std::vector<float> vertices;
+
     void init()
     {
+        tinyobj::attrib_t attrib;
+        // shapes contains the info for each separate object in the file
+        std::vector<tinyobj::shape_t> shapes;
+        // materials contains the information about the material of each shape, but we won't use it.
+        std::vector<tinyobj::material_t> materials;
+
+        // error and warning output from the load function
+        std::string warn;
+        std::string err;
+
+        // load the OBJ file
+        tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, "resources/models/monkey_smooth.obj", nullptr);
+        // make sure to output the warnings to the console, in case there are issues with the file
+        if (!warn.empty())
+        {
+            std::cout << "WARN: " << warn << std::endl;
+        }
+        // if we have any error, print it to the console, and break the mesh loading.
+        // This happens if the file can't be found or is malformed
+        if (!err.empty())
+        {
+            std::cerr << err << std::endl;
+            return;
+        }
+
+        for (size_t s = 0; s < shapes.size(); s++)
+        {
+            // Loop over faces(polygon)
+            size_t index_offset = 0;
+            for (size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++)
+            {
+
+                // hardcode loading to triangles
+                int fv = 3;
+
+                // Loop over vertices in the face.
+                for (size_t v = 0; v < fv; v++)
+                {
+                    // access to vertex
+                    tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v];
+
+                    // vertex position
+                    tinyobj::real_t vx = attrib.vertices[3 * idx.vertex_index + 0];
+                    tinyobj::real_t vy = attrib.vertices[3 * idx.vertex_index + 1];
+                    tinyobj::real_t vz = attrib.vertices[3 * idx.vertex_index + 2];
+                    // vertex normal
+                    tinyobj::real_t nx = attrib.normals[3 * idx.normal_index + 0];
+                    tinyobj::real_t ny = attrib.normals[3 * idx.normal_index + 1];
+                    tinyobj::real_t nz = attrib.normals[3 * idx.normal_index + 2];
+
+                    // copy it into our vertex
+                    vertices.push_back(vx);
+                    vertices.push_back(vy);
+                    vertices.push_back(vz);
+
+                    // new_vert.normal.x = nx;
+                    // new_vert.normal.y = ny;
+                    // new_vert.normal.z = nz;
+
+                    // we are setting the vertex color as the vertex normal. This is just for display purposes
+                    vertices.push_back(nx);
+                    vertices.push_back(ny);
+                    vertices.push_back(nz);
+                }
+                index_offset += fv;
+            }
+        }
+
         window = WindowBuilder()
                      .Height(HEIGHT)
                      .Width(WIDTH)
@@ -89,18 +171,10 @@ private:
         createRenderPass();
         createGraphicsPipeline();
         CreateFramebuffers();
-        createCommandPool();
-        createVertexBuffer();
+        CreateBuffers();
         createCommandBuffers();
         createSyncObjects();
     }
-
-    
-    float vertices[15] = {
-        0.0f, -0.5f, 1.0f, 0.0f, 0.0f,
-        0.5f, 0.5f, 0.0f, 1.0f, 0.0f,
-        -0.5f, 0.5f, 0.0f, 0.0f, 1.0f
-    };
 
     void createGraphicsPipeline()
     {
@@ -134,20 +208,20 @@ private:
             VkVertexInputAttributeDescription{
                 .location = 0,
                 .binding = 0,
-                .format = VK_FORMAT_R32G32_SFLOAT,
+                .format = VK_FORMAT_R32G32B32_SFLOAT,
                 .offset = 0,
             },
             VkVertexInputAttributeDescription{
                 .location = 1,
                 .binding = 0,
                 .format = VK_FORMAT_R32G32B32_SFLOAT,
-                .offset = 2 * sizeof(float),
-            }
+                .offset = 3 * sizeof(float),
+            },
         };
 
         VkVertexInputBindingDescription bindingDescription{};
         bindingDescription.binding = 0;
-        bindingDescription.stride = sizeof(float) * 5;
+        bindingDescription.stride = sizeof(float) * 6;
         bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
         VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
@@ -173,7 +247,7 @@ private:
         rasterizer.rasterizerDiscardEnable = VK_FALSE;
         rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
         rasterizer.lineWidth = 1.0f;
-        rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
+        rasterizer.cullMode = VK_CULL_MODE_NONE;
         rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
         rasterizer.depthBiasEnable = VK_FALSE;
         rasterizer.depthBiasConstantFactor = 0.0f; // Optional
@@ -210,12 +284,18 @@ private:
         colorBlending.blendConstants[2] = 0.0f; // Optional
         colorBlending.blendConstants[3] = 0.0f; // Optional
 
+        VkPushConstantRange pushConstantRanges{
+            .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+            .offset = 0,
+            .size = sizeof(UniformBufferObject),
+        };
+
         VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
         pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        pipelineLayoutInfo.setLayoutCount = 0;            // Optional
-        pipelineLayoutInfo.pSetLayouts = nullptr;         // Optional
-        pipelineLayoutInfo.pushConstantRangeCount = 0;    // Optional
-        pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
+        pipelineLayoutInfo.setLayoutCount = 0;
+        pipelineLayoutInfo.pSetLayouts = nullptr;
+        pipelineLayoutInfo.pushConstantRangeCount = 1;                // Optional
+        pipelineLayoutInfo.pPushConstantRanges = &pushConstantRanges; // Optional
 
         if (vkCreatePipelineLayout(device->GetHandle(), &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
         {
@@ -316,23 +396,21 @@ private:
         }
     }
 
-    void createCommandPool()
+    void CreateBuffers()
     {
-        uint32_t index = device->GetGraphicsQueueFamilyIndex();
+        vertexBuffer = Vulkan::BufferBuilder()
+                           .Data(vertices.data())
+                           .Size(sizeof(float) * vertices.size())
+                           .AllocationCreate(Vulkan::AllocationCreateFlags::MAPPED_BAR)
+                           .BufferUsage(Vulkan::BufferUsageFlags::VERTEX)
+                           .Build(*device);
 
-        VkCommandPoolCreateInfo poolInfo{};
-        poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-        poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-        poolInfo.queueFamilyIndex = index;
-
-        if (vkCreateCommandPool(device->GetHandle(), &poolInfo, nullptr, &commandPool) != VK_SUCCESS)
-        {
-            throw std::runtime_error("failed to create command pool!");
-        }
-    }
-
-    void createVertexBuffer() {
-        vertexBuffer = std::make_unique<Vulkan::Buffer>(*device, vertices, sizeof(vertices));
+        // indexBuffer = Vulkan::BufferBuilder()
+        //                   .Data(indices)
+        //                   .Size(sizeof(indices))
+        //                   .AllocationCreate(Vulkan::AllocationCreateFlags::MAPPED_BAR)
+        //                   .BufferUsage(Vulkan::BufferUsageFlags::INDEX)
+        //                   .Build(*device);
     }
 
     void createCommandBuffers()
@@ -341,7 +419,7 @@ private:
 
         VkCommandBufferAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-        allocInfo.commandPool = commandPool;
+        allocInfo.commandPool = device->GetCommandPool();
         allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
         allocInfo.commandBufferCount = (uint32_t)commandBuffers.size();
 
@@ -382,6 +460,7 @@ private:
         VkBuffer vertexBuffers[] = {vertexBuffer->GetHandle()};
         VkDeviceSize offsets[] = {0};
         vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+        // vkCmdBindIndexBuffer(commandBuffer, indexBuffer->GetHandle(), 0, VK_INDEX_TYPE_UINT16);
 
         VkViewport viewport{};
         viewport.x = 0.0f;
@@ -397,7 +476,23 @@ private:
         scissor.extent = extent;
         vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-        vkCmdDraw(commandBuffer, sizeof(vertices)/sizeof(float), 1, 0, 0);
+        static auto startTime = std::chrono::high_resolution_clock::now();
+
+        auto currentTime = std::chrono::high_resolution_clock::now();
+        float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+
+        glm::mat4 model = glm::rotate(glm::mat4(1.0f), glm::radians(time * 30.f), glm::vec3(0, 1, 0));
+        glm::mat4 view = glm::translate(glm::mat4(1.f), glm::vec3(0.f, 0.f, -2.f));
+        glm::mat4 proj = glm::perspective(glm::radians(60.0f), (float)extent.width / (float)extent.height, 0.1f, 1000.0f);
+        proj[1][1] *= -1;
+
+        UniformBufferObject ubo{
+            .mvp = proj * view * model,
+        };
+
+        vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(UniformBufferObject), &ubo);
+
+        vkCmdDraw(commandBuffer, vertices.size(), 1, 0, 0);
 
         vkCmdEndRenderPass(commandBuffer);
 
@@ -519,8 +614,6 @@ private:
             vkDestroySemaphore(device->GetHandle(), renderFinishedSemaphores[i], nullptr);
             vkDestroyFence(device->GetHandle(), inFlightFences[i], nullptr);
         }
-
-        vkDestroyCommandPool(device->GetHandle(), commandPool, nullptr);
 
         DestroyFramebuffers();
 

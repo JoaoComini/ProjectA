@@ -19,15 +19,17 @@ namespace Vulkan
         Device(const Instance &instance, const PhysicalDevice &physicalDevice);
         ~Device();
 
+        void CopyBuffer(VkBuffer src, VkBuffer dest, uint32_t size);
+        void WaitIdle();
+
         VkQueue GetPresentQueue() const;
         VkQueue GetGraphicsQueue() const;
 
         uint32_t GetGraphicsQueueFamilyIndex() const;
         uint32_t GetPresentQueueFamilyIndex() const;
 
+        VkCommandPool GetCommandPool() const;
         VmaAllocator GetAllocator() const;
-
-        void WaitIdle();
 
         SurfaceSupportDetails GetSurfaceSupportDetails() const;
 
@@ -35,6 +37,7 @@ namespace Vulkan
 
     private:
         VkDevice handle;
+        VkCommandPool commandPool;
         VmaAllocator allocator;
 
         VkQueue presentQueue;

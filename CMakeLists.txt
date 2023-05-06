@@ -12,12 +12,13 @@ find_package(glm REQUIRED)
 include(FindVulkan)
 
 add_subdirectory(third_party/vma)
+add_subdirectory(third_party/tinyobjloader)
 
 file(GLOB_RECURSE SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/*)
 add_executable(ProjectA ${SRC_FILES})
 
-target_include_directories(ProjectA PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_link_libraries(ProjectA ${Vulkan_LIBRARIES} glfw glm::glm VulkanMemoryAllocator)
+target_include_directories(ProjectA PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src ${Vulkan_INCLUDE_DIR})
+target_link_libraries(ProjectA ${Vulkan_LIBRARIES} glfw glm::glm VulkanMemoryAllocator tinyobjloader)
 
 set_target_properties(ProjectA VulkanMemoryAllocator PROPERTIES CXX_STANDARD 23 CXX_STANDARD_REQUIRED ON)
 
@@ -51,3 +52,7 @@ foreach(FILE IN LISTS SHADERS_SRC_FILES)
 endforeach()
 
 add_custom_target(Shaders ALL DEPENDS ${SPV_SHADERS})
+
+# -------- COPY MODELS --------
+
+file(COPY resources/models DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/resources)
