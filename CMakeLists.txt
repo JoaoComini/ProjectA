@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.25)
 project(ProjectA VERSION 0.0.1)
 
+
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Debug" STRING FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
@@ -10,14 +11,15 @@ find_package(glm REQUIRED)
 
 include(FindVulkan)
 
+add_subdirectory(third_party/vma)
+
 file(GLOB_RECURSE SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/*)
 add_executable(ProjectA ${SRC_FILES})
 
 target_include_directories(ProjectA PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_link_libraries(ProjectA ${Vulkan_LIBRARIES} glfw glm::glm)
+target_link_libraries(ProjectA ${Vulkan_LIBRARIES} glfw glm::glm VulkanMemoryAllocator)
 
-set_property(TARGET ProjectA PROPERTY CXX_STANDARD 23)
-set_property(TARGET ProjectA PROPERTY CXX_STANDARD_REQUIRED ON)
+set_target_properties(ProjectA VulkanMemoryAllocator PROPERTIES CXX_STANDARD 23 CXX_STANDARD_REQUIRED ON)
 
 # -------- COMPILE SHADERS --------
 find_program(glslc_executable NAMES glslc HINTS Vulkan::glslc)

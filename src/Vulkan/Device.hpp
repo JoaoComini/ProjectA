@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vulkan/vulkan.h>
+#include <vk_mem_alloc.h>
 
 #include <vector>
 #include <set>
@@ -15,10 +16,16 @@ namespace Vulkan
     class Device
     {
     public:
+        Device(const Instance &instance, const PhysicalDevice &physicalDevice);
         ~Device();
-        static std::unique_ptr<Device> Create(PhysicalDevice physicalDevice);
-        VkQueue FindQueue(QueueType type) const;
-        uint32_t FindQueueIndex(QueueType type) const;
+
+        VkQueue GetPresentQueue() const;
+        VkQueue GetGraphicsQueue() const;
+
+        uint32_t GetGraphicsQueueFamilyIndex() const;
+        uint32_t GetPresentQueueFamilyIndex() const;
+
+        VmaAllocator GetAllocator() const;
 
         void WaitIdle();
 
@@ -28,7 +35,15 @@ namespace Vulkan
 
     private:
         VkDevice handle;
-        PhysicalDevice physicalDevice;
+        VmaAllocator allocator;
+
+        VkQueue presentQueue;
+        VkQueue graphicsQueue;
+
+        uint32_t graphicsQueueFamilyIndex;
+        uint32_t presentQueueFamilyIndex;
+
+        const PhysicalDevice &physicalDevice;
 
         friend class SwapchainBuilder;
     };

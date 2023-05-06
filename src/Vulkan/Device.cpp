@@ -2,17 +2,12 @@
 
 namespace Vulkan
 {
-    Device::~Device()
+    Device::Device(const Instance &instance, const PhysicalDevice &physicalDevice) : physicalDevice(physicalDevice)
     {
-        vkDestroyDevice(handle, nullptr);
-    }
+        graphicsQueueFamilyIndex = physicalDevice.FindQueueIndex(QueueType::Graphics);
+        presentQueueFamilyIndex = physicalDevice.FindQueueIndex(QueueType::Present);
 
-    std::unique_ptr<Device> Device::Create(PhysicalDevice physicalDevice)
-    {
-        uint32_t graphicsIndex = physicalDevice.FindQueueIndex(QueueType::Graphics);
-        uint32_t presentIndex = physicalDevice.FindQueueIndex(QueueType::Present);
-
-        std::set<uint32_t> familyIndices = {graphicsIndex, presentIndex};
+        std::set<uint32_t> familyIndices = {graphicsQueueFamilyIndex, presentQueueFamilyIndex};
 
         std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
 
@@ -40,29 +35,56 @@ namespace Vulkan
         createInfo.ppEnabledExtensionNames = extensions.data();
         createInfo.enabledLayerCount = 0;
 
-        std::unique_ptr<Device> device = std::make_unique<Device>();
-        device->physicalDevice = physicalDevice;
-        if (vkCreateDevice(physicalDevice.handle, &createInfo, nullptr, &device->handle) != VK_SUCCESS)
+        if (vkCreateDevice(physicalDevice.handle, &createInfo, nullptr, &handle) != VK_SUCCESS)
         {
             throw std::runtime_error("failed to create logical device!");
         }
 
-        return device;
+        vkGetDeviceQueue(handle, graphicsQueueFamilyIndex, 0, &graphicsQueue);
+        vkGetDeviceQueue(handle, presentQueueFamilyIndex, 0, &presentQueue);
+
+        const VmaAllocatorCreateInfo allocatorCreateInfo{
+            .physicalDevice = physicalDevice.handle,
+            .device = handle,
+            .instance = instance.GetHandle(),
+            .vulkanApiVersion = VK_API_VERSION_1_1,
+        };
+
+        if (const auto result = vmaCreateAllocator(&allocatorCreateInfo, &allocator); result != VK_SUCCESS)
+        {
+            throw std::runtime_error("failed to create vmaCreateAllocator!");
+        }
     }
 
-    VkQueue Device::FindQueue(QueueType type) const
+    Device::~Device()
     {
-        VkQueue queue;
-        uint32_t index = physicalDevice.FindQueueIndex(type);
-
-        vkGetDeviceQueue(handle, index, 0, &queue);
-
-        return queue;
+        vmaDestroyAllocator(allocator);
+        vkDestroyDevice(handle, nullptr);
     }
 
-    uint32_t Device::FindQueueIndex(QueueType type) const
+    VkQueue Device::GetGraphicsQueue() const
     {
-        return physicalDevice.FindQueueIndex(type);
+        return graphicsQueue;
+    }
+
+    VkQueue Device::GetPresentQueue() const
+    {
+        return presentQueue;
+    }
+
+    uint32_t Device::GetGraphicsQueueFamilyIndex() const
+    {
+        return graphicsQueueFamilyIndex;
+    }
+
+    uint32_t Device::GetPresentQueueFamilyIndex() const
+    {
+        return presentQueueFamilyIndex;
+    }
+
+    VmaAllocator Device::GetAllocator() const
+    {
+        return allocator;
     }
 
     void Device::WaitIdle()
@@ -74,7 +96,6 @@ namespace Vulkan
     {
         return physicalDevice.GetSurfaceSupportDetails();
     }
-
 
     VkDevice Device::GetHandle() const
     {

@@ -8,6 +8,7 @@
 #include "Device.hpp"
 #include "Surface.hpp"
 #include "Details.hpp"
+#include "Semaphore.hpp"
 
 namespace Vulkan
 {
@@ -19,7 +20,8 @@ namespace Vulkan
             const Device &device,
             const Surface &surface,
             int width,
-            int height);
+            int height,
+            int maxFramesInFlight);
 
         ~Swapchain();
 
@@ -29,16 +31,22 @@ namespace Vulkan
         VkExtent2D GetImageExtent() const;
         VkSwapchainKHR GetHandle() const;
         std::vector<VkImageView> GetImageViews() const;
+        uint32_t GetNextImageIndex(uint32_t currentFrame);
+        std::shared_ptr<Semaphore> GetSemaphore(uint32_t currentFrame);
 
     private:
         VkSwapchainKHR handle;
         VkFormat imageFormat;
         VkExtent2D imageExtent;
+        std::vector<std::shared_ptr<Semaphore>> semaphores;
+
         const Device &device;
         const Surface &surface;
 
         std::vector<VkImage> images;
         std::vector<VkImageView> imageViews;
+
+        int maxFramesInFlight;
 
         void Setup(int width, int height, VkSwapchainKHR old = VK_NULL_HANDLE);
 
@@ -55,10 +63,12 @@ namespace Vulkan
         SwapchainBuilder() = default;
         SwapchainBuilder DesiredWidth(int width);
         SwapchainBuilder DesiredHeight(int height);
+        SwapchainBuilder MaxFramesInFlight(int maxFramesInFlight);
         std::unique_ptr<Swapchain> Build(const Device &device, const Surface &surface);
 
     private:
         int desiredWidth;
         int desiredHeight;
+        int maxFramesInFlight = 1;
     };
 } // namespace Vulkan

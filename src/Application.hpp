@@ -2,14 +2,10 @@
 
 #include <vulkan/vulkan.h>
 
-#include <iostream>
 #include <stdexcept>
 #include <vector>
-#include <set>
 #include <string.h>
-#include <limits>
 #include <algorithm>
-#include <fstream>
 #include <memory>
 
 #include "Window.hpp"
@@ -22,6 +18,7 @@
 #include "Vulkan/PhysicalDevice.hpp"
 #include "Vulkan/Device.hpp"
 #include "Vulkan/Swapchain.hpp"
+#include "Vulkan/Buffer.hpp"
 
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
@@ -45,8 +42,6 @@ private:
     std::unique_ptr<Vulkan::Device> device;
     std::unique_ptr<Vulkan::Swapchain> swapchain;
 
-    VkQueue graphicsQueue;
-    VkQueue presentQueue;
     VkRenderPass renderPass;
     VkPipelineLayout pipelineLayout;
     VkPipeline graphicsPipeline;
@@ -54,9 +49,10 @@ private:
     VkCommandPool commandPool;
 
     std::vector<VkCommandBuffer> commandBuffers;
-    std::vector<VkSemaphore> imageAvailableSemaphores;
     std::vector<VkSemaphore> renderFinishedSemaphores;
     std::vector<VkFence> inFlightFences;
+
+    std::unique_ptr<Vulkan::Buffer> vertexBuffer;
 
     uint32_t currentFrame = 0;
     bool windowHasResized = false;
@@ -80,24 +76,31 @@ private:
 
         physicalDevice = Vulkan::PhysicalDevicePicker::PickBestSuitable(*instance, surface->GetHandle());
 
-        device = Vulkan::Device::Create(physicalDevice);
-        graphicsQueue = device->FindQueue(Vulkan::QueueType::Graphics);
-        presentQueue = device->FindQueue(Vulkan::QueueType::Present);
+        device = std::make_unique<Vulkan::Device>(*instance, physicalDevice);
 
         auto size = window->GetFramebufferSize();
 
         swapchain = Vulkan::SwapchainBuilder()
                         .DesiredWidth(size.width)
                         .DesiredHeight(size.height)
+                        .MaxFramesInFlight(MAX_FRAMES_IN_FLIGHT)
                         .Build(*device, *surface);
 
         createRenderPass();
         createGraphicsPipeline();
         CreateFramebuffers();
         createCommandPool();
+        createVertexBuffer();
         createCommandBuffers();
         createSyncObjects();
     }
+
+    
+    float vertices[15] = {
+        0.0f, -0.5f, 1.0f, 0.0f, 0.0f,
+        0.5f, 0.5f, 0.0f, 1.0f, 0.0f,
+        -0.5f, 0.5f, 0.0f, 0.0f, 1.0f
+    };
 
     void createGraphicsPipeline()
     {
@@ -127,12 +130,32 @@ private:
         dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
         dynamicState.pDynamicStates = dynamicStates.data();
 
+        std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions = {
+            VkVertexInputAttributeDescription{
+                .location = 0,
+                .binding = 0,
+                .format = VK_FORMAT_R32G32_SFLOAT,
+                .offset = 0,
+            },
+            VkVertexInputAttributeDescription{
+                .location = 1,
+                .binding = 0,
+                .format = VK_FORMAT_R32G32B32_SFLOAT,
+                .offset = 2 * sizeof(float),
+            }
+        };
+
+        VkVertexInputBindingDescription bindingDescription{};
+        bindingDescription.binding = 0;
+        bindingDescription.stride = sizeof(float) * 5;
+        bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
         VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
         vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-        vertexInputInfo.vertexBindingDescriptionCount = 0;
-        vertexInputInfo.pVertexBindingDescriptions = nullptr; // Optional
-        vertexInputInfo.vertexAttributeDescriptionCount = 0;
-        vertexInputInfo.pVertexAttributeDescriptions = nullptr; // Optional
+        vertexInputInfo.vertexBindingDescriptionCount = 1;
+        vertexInputInfo.pVertexBindingDescriptions = &bindingDescription; // Optional
+        vertexInputInfo.vertexAttributeDescriptionCount = 2;
+        vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data(); // Optional
 
         VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
         inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -295,17 +318,21 @@ private:
 
     void createCommandPool()
     {
-        uint32_t graphicsIndex = device->FindQueueIndex(Vulkan::QueueType::Graphics);
+        uint32_t index = device->GetGraphicsQueueFamilyIndex();
 
         VkCommandPoolCreateInfo poolInfo{};
         poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
         poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-        poolInfo.queueFamilyIndex = graphicsIndex;
+        poolInfo.queueFamilyIndex = index;
 
         if (vkCreateCommandPool(device->GetHandle(), &poolInfo, nullptr, &commandPool) != VK_SUCCESS)
         {
             throw std::runtime_error("failed to create command pool!");
         }
+    }
+
+    void createVertexBuffer() {
+        vertexBuffer = std::make_unique<Vulkan::Buffer>(*device, vertices, sizeof(vertices));
     }
 
     void createCommandBuffers()
@@ -352,6 +379,10 @@ private:
         vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
 
+        VkBuffer vertexBuffers[] = {vertexBuffer->GetHandle()};
+        VkDeviceSize offsets[] = {0};
+        vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+
         VkViewport viewport{};
         viewport.x = 0.0f;
         viewport.y = 0.0f;
@@ -366,7 +397,7 @@ private:
         scissor.extent = extent;
         vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-        vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+        vkCmdDraw(commandBuffer, sizeof(vertices)/sizeof(float), 1, 0, 0);
 
         vkCmdEndRenderPass(commandBuffer);
 
@@ -378,7 +409,6 @@ private:
 
     void createSyncObjects()
     {
-        imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
         renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
         inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
 
@@ -391,8 +421,7 @@ private:
 
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
         {
-            if (vkCreateSemaphore(device->GetHandle(), &semaphoreInfo, nullptr, &imageAvailableSemaphores[i]) != VK_SUCCESS ||
-                vkCreateSemaphore(device->GetHandle(), &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) != VK_SUCCESS ||
+            if (vkCreateSemaphore(device->GetHandle(), &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) != VK_SUCCESS ||
                 vkCreateFence(device->GetHandle(), &fenceInfo, nullptr, &inFlightFences[i]) != VK_SUCCESS)
             {
 
@@ -416,19 +445,7 @@ private:
     {
         vkWaitForFences(device->GetHandle(), 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
-        uint32_t imageIndex;
-        auto result = vkAcquireNextImageKHR(device->GetHandle(), swapchain->GetHandle(), UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
-
-        if (result == VK_ERROR_OUT_OF_DATE_KHR)
-        {
-            windowHasResized = false;
-            RecreateSwapchain();
-            return;
-        }
-        else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
-        {
-            throw std::runtime_error("failed to acquire swap chain image!");
-        }
+        uint32_t imageIndex = swapchain->GetNextImageIndex(currentFrame);
 
         vkResetFences(device->GetHandle(), 1, &inFlightFences[currentFrame]);
 
@@ -437,7 +454,7 @@ private:
 
         VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
         VkSemaphore signalSemaphores[] = {renderFinishedSemaphores[currentFrame]};
-        VkSemaphore waitSemaphores[] = {imageAvailableSemaphores[currentFrame]};
+        VkSemaphore waitSemaphores[] = {swapchain->GetSemaphore(currentFrame)->GetHandle()};
 
         VkSubmitInfo submitInfo{};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -449,7 +466,7 @@ private:
         submitInfo.signalSemaphoreCount = 1;
         submitInfo.pSignalSemaphores = signalSemaphores;
 
-        if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS)
+        if (vkQueueSubmit(device->GetGraphicsQueue(), 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS)
         {
             throw std::runtime_error("failed to submit draw command buffer!");
         }
@@ -467,10 +484,11 @@ private:
 
         presentInfo.pResults = nullptr; // Optional
 
-        result = vkQueuePresentKHR(presentQueue, &presentInfo);
+        auto result = vkQueuePresentKHR(device->GetPresentQueue(), &presentInfo);
 
         if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || windowHasResized)
         {
+            windowHasResized = false;
             RecreateSwapchain();
         }
         else if (result != VK_SUCCESS)
@@ -499,7 +517,6 @@ private:
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
         {
             vkDestroySemaphore(device->GetHandle(), renderFinishedSemaphores[i], nullptr);
-            vkDestroySemaphore(device->GetHandle(), imageAvailableSemaphores[i], nullptr);
             vkDestroyFence(device->GetHandle(), inFlightFences[i], nullptr);
         }
 

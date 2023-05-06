@@ -7,9 +7,16 @@ namespace Vulkan
         const Device &device,
         const Surface &surface,
         int width,
-        int height) : device(device), surface(surface)
+        int height,
+        int maxFramesInFlight) : device(device), surface(surface), maxFramesInFlight(maxFramesInFlight)
     {
         Setup(width, height);
+
+        semaphores.reserve(maxFramesInFlight);
+        for (uint32_t i = 0; i < maxFramesInFlight; i++)
+        {
+            semaphores.emplace_back(std::make_shared<Semaphore>(device));
+        }
     }
 
     void Swapchain::Setup(int width, int height, VkSwapchainKHR oldSwapchain)
@@ -37,8 +44,8 @@ namespace Vulkan
         createInfo.imageArrayLayers = 1;
         createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-        uint32_t graphicsIndex = device.FindQueueIndex(Vulkan::QueueType::Graphics);
-        uint32_t presentIndex = device.FindQueueIndex(Vulkan::QueueType::Present);
+        uint32_t graphicsIndex = device.GetGraphicsQueueFamilyIndex();
+        uint32_t presentIndex = device.GetPresentQueueFamilyIndex();
 
         uint32_t queueFamilyIndices[] = {graphicsIndex, presentIndex};
 
@@ -154,6 +161,28 @@ namespace Vulkan
         return imageViews;
     }
 
+    uint32_t Swapchain::GetNextImageIndex(uint32_t currentFrame)
+    {
+        uint32_t index;
+        auto result = vkAcquireNextImageKHR(device.GetHandle(), handle, UINT64_MAX, semaphores[currentFrame]->GetHandle(), VK_NULL_HANDLE, &index);
+
+        if (result == VK_ERROR_OUT_OF_DATE_KHR)
+        {
+            Recreate(imageExtent.width, imageExtent.height);
+        }
+        else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
+        {
+            throw std::runtime_error("failed to acquire swap chain image!");
+        }
+
+        return index;
+    }
+
+    std::shared_ptr<Semaphore> Swapchain::GetSemaphore(uint32_t currentFrame)
+    {
+        return semaphores[currentFrame];
+    }
+
     VkSwapchainKHR Swapchain::GetHandle() const
     {
         return handle;
@@ -171,6 +200,12 @@ namespace Vulkan
         return *this;
     }
 
+    SwapchainBuilder SwapchainBuilder::MaxFramesInFlight(int maxFramesInFlight)
+    {
+        this->maxFramesInFlight = maxFramesInFlight;
+        return *this;
+    }
+
     std::unique_ptr<Swapchain> SwapchainBuilder::Build(const Device &device, const Surface &surface)
     {
 
@@ -178,7 +213,8 @@ namespace Vulkan
             device,
             surface,
             desiredWidth,
-            desiredHeight);
+            desiredHeight,
+            maxFramesInFlight);
     }
 
 } // namespace Vulkan
