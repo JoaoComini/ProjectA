@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.25)
+cmake_minimum_required(VERSION 3.20)
 project(ProjectA VERSION 0.0.1)
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -18,13 +18,13 @@ add_subdirectory(third_party/vma)
 
 add_subdirectory(third_party/tinyobjloader)
 
-file(GLOB_RECURSE SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/*)
+file(GLOB_RECURSE SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/**)
 add_executable(ProjectA ${SRC_FILES})
 
 target_include_directories(ProjectA PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src ${Vulkan_INCLUDE_DIR})
 target_link_libraries(ProjectA ${Vulkan_LIBRARIES} glfw glm::glm VulkanMemoryAllocator tinyobjloader)
 
-set_target_properties(ProjectA VulkanMemoryAllocator PROPERTIES CXX_STANDARD 23 CXX_STANDARD_REQUIRED ON)
+set_target_properties(ProjectA VulkanMemoryAllocator PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON)
 
 # -------- COMPILE SHADERS --------
 find_program(glslc_executable NAMES glslc HINTS Vulkan::glslc)

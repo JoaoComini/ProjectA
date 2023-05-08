@@ -1,5 +1,7 @@
 #include "Instance.hpp"
 
+#include <stdexcept>
+
 namespace Vulkan
 {
     VkInstance Instance::GetHandle() const

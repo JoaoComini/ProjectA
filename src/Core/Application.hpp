@@ -2,24 +2,27 @@
 
 #include <vulkan/vulkan.h>
 
-#define GLM_ENABLE_EXPERIMENTAL
 #define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#define GLM_FORCE_LEFT_HANDED
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/hash.hpp>
 
 #include <tiny_obj_loader.h>
 
 #include <stdexcept>
 #include <vector>
+#include <array>
 #include <string.h>
 #include <algorithm>
 #include <memory>
 #include <chrono>
 #include <unordered_map>
+#include <iostream>
 
 #include "Window.hpp"
 #include "WindowSurface.hpp"
+#include "Mesh.hpp"
 
 #include "Vulkan/Shader.hpp"
 #include "Vulkan/Instance.hpp"
@@ -39,30 +42,6 @@ struct GlobalUniform
 {
     glm::mat4 mvp;
 };
-
-struct Vertex
-{
-    glm::vec3 position;
-    glm::vec3 normal;
-    glm::vec3 color;
-
-    bool operator==(const Vertex &other) const
-    {
-        return position == other.position && color == other.color && normal == other.normal;
-    }
-};
-
-namespace std
-{
-    template <>
-    struct hash<Vertex>
-    {
-        size_t operator()(Vertex const &vertex) const
-        {
-            return ((hash<glm::vec3>()(vertex.position) ^ (hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^ (hash<glm::vec3>()(vertex.normal) << 1);
-        }
-    };
-}
 
 class Application
 {
@@ -92,75 +71,14 @@ private:
     std::vector<VkSemaphore> renderFinishedSemaphores;
     std::vector<VkFence> inFlightFences;
 
-    std::unique_ptr<Vulkan::Buffer> vertexBuffer;
-    std::unique_ptr<Vulkan::Buffer> indexBuffer;
-
     uint32_t currentFrame = 0;
     bool windowHasResized = false;
 
-    std::vector<Vertex> vertices;
-    std::vector<uint32_t> indices;
+    std::unique_ptr<Mesh> mesh;
 
     void init()
     {
-        tinyobj::attrib_t attrib;
-        // shapes contains the info for each separate object in the file
-        std::vector<tinyobj::shape_t> shapes;
-        // materials contains the information about the material of each shape, but we won't use it.
-        std::vector<tinyobj::material_t> materials;
-
-        // error and warning output from the load function
-        std::string warn;
-        std::string err;
-
-        // load the OBJ file
-        tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, "resources/models/monkey_smooth.obj", nullptr);
-        // make sure to output the warnings to the console, in case there are issues with the file
-        if (!warn.empty())
-        {
-            std::cout << "WARN: " << warn << std::endl;
-        }
-        // if we have any error, print it to the console, and break the mesh loading.
-        // This happens if the file can't be found or is malformed
-        if (!err.empty())
-        {
-            std::cerr << err << std::endl;
-            return;
-        }
-
-        std::unordered_map<Vertex, uint32_t> uniques{};
-        for (const auto &shape : shapes)
-        {
-            // Loop over faces(polygon)
-            for (const auto &index : shape.mesh.indices)
-            {
-                // vertex position
-                tinyobj::real_t vx = attrib.vertices[3 * index.vertex_index + 0];
-                tinyobj::real_t vy = attrib.vertices[3 * index.vertex_index + 1];
-                tinyobj::real_t vz = attrib.vertices[3 * index.vertex_index + 2];
-                // vertex normal
-                tinyobj::real_t nx = attrib.normals[3 * index.normal_index + 0];
-                tinyobj::real_t ny = attrib.normals[3 * index.normal_index + 1];
-                tinyobj::real_t nz = attrib.normals[3 * index.normal_index + 2];
-
-                // copy it into our vertex
-                Vertex vertex{
-                    .position = {vx, vy, vz},
-                    .normal = {nx, ny, nz},
-                    .color = {nx, ny, nz},
-                };
-
-                if (uniques.count(vertex) == 0)
-                {
-                    uniques[vertex] = static_cast<uint32_t>(vertices.size());
-                    vertices.push_back(vertex);
-                }
-
-                indices.push_back(uniques[vertex]);
-            }
-        }
-
-        window = WindowBuilder()
+       window = WindowBuilder()
                      .Height(HEIGHT)
                      .Width(WIDTH)
                      .UserPointer(this)
@@ -187,11 +105,12 @@ private:
                         .MaxFramesInFlight(MAX_FRAMES_IN_FLIGHT)
                         .Build(*device, *surface);
 
+        mesh = std::make_unique<Mesh>(*device, "resources/models/monkey_smooth.obj");
+
         CreateDepthImage();
         createRenderPass();
         createGraphicsPipeline();
         CreateFramebuffers();
-        CreateBuffers();
         createCommandBuffers();
         createSyncObjects();
     }
@@ -282,7 +201,7 @@ private:
         rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
         rasterizer.lineWidth = 1.0f;
         rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-        rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+        rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
         rasterizer.depthBiasEnable = VK_FALSE;
         rasterizer.depthBiasConstantFactor = 0.0f; // Optional
         rasterizer.depthBiasClamp = 0.0f;          // Optional
@@ -467,23 +386,6 @@ private:
         }
     }
 
-    void CreateBuffers()
-    {
-        vertexBuffer = Vulkan::BufferBuilder()
-                           .Data(vertices.data())
-                           .Size(sizeof(Vertex) * vertices.size())
-                           .AllocationCreate(Vulkan::AllocationCreateFlags::MAPPED_BAR)
-                           .BufferUsage(Vulkan::BufferUsageFlags::VERTEX)
-                           .Build(*device);
-
-        indexBuffer = Vulkan::BufferBuilder()
-                          .Data(indices.data())
-                          .Size(sizeof(int32_t) * indices.size())
-                          .AllocationCreate(Vulkan::AllocationCreateFlags::MAPPED_BAR)
-                          .BufferUsage(Vulkan::BufferUsageFlags::INDEX)
-                          .Build(*device);
-    }
-
     void createCommandBuffers()
     {
         commandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
@@ -536,16 +438,11 @@ private:
         vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
 
-        VkBuffer vertexBuffers[] = {vertexBuffer->GetHandle()};
-        VkDeviceSize offsets[] = {0};
-        vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-        vkCmdBindIndexBuffer(commandBuffer, indexBuffer->GetHandle(), 0, VK_INDEX_TYPE_UINT32);
-
         VkViewport viewport{};
         viewport.x = 0.0f;
-        viewport.y = 0.0f;
+        viewport.y = static_cast<float>(extent.height);
         viewport.width = static_cast<float>(extent.width);
-        viewport.height = static_cast<float>(extent.height);
+        viewport.height = -static_cast<float>(extent.height);
         viewport.minDepth = 0.0f;
         viewport.maxDepth = 1.0f;
         vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
@@ -560,10 +457,9 @@ private:
         auto currentTime = std::chrono::high_resolution_clock::now();
         float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
-        glm::mat4 model = glm::rotate(glm::mat4(1.0f), glm::radians(time * 30.f), glm::vec3(0, 1, 0));
-        glm::mat4 view = glm::translate(glm::mat4(1.f), glm::vec3(0.f, 0.f, -2.f));
+        glm::mat4 model = glm::scale(glm::rotate(glm::mat4(1.0f), glm::radians(time * 30.f), glm::vec3(0, 1, 0)), glm::vec3(1.f));
+        glm::mat4 view = glm::translate(glm::mat4(1.f), glm::vec3(0.f, 0.f, 2.f));
         glm::mat4 proj = glm::perspective(glm::radians(60.0f), (float)extent.width / (float)extent.height, 0.1f, 1000.0f);
-        proj[1][1] *= -1;
 
         GlobalUniform ubo{
             .mvp = proj * view * model,
@@ -571,7 +467,7 @@ private:
 
         vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(GlobalUniform), &ubo);
 
-        vkCmdDrawIndexed(commandBuffer, indices.size(), 1, 0, 0, 0);
+        mesh->Draw(commandBuffer);
 
         vkCmdEndRenderPass(commandBuffer);
 
@@ -682,6 +578,8 @@ private:
 
         auto size = window->GetFramebufferSize();
         swapchain->Recreate(size.width, size.height);
+
+        CreateDepthImage();
 
         CreateFramebuffers();
     }
