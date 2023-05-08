@@ -628,7 +628,7 @@ private:
 
         VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
         VkSemaphore signalSemaphores[] = {renderFinishedSemaphores[currentFrame]};
-        VkSemaphore waitSemaphores[] = {swapchain->GetSemaphore(currentFrame)->GetHandle()};
+        VkSemaphore waitSemaphores[] = {swapchain->GetSemaphore(currentFrame).GetHandle()};
 
         VkSubmitInfo submitInfo{};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;

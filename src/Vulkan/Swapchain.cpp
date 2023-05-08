@@ -15,11 +15,11 @@ namespace Vulkan
         semaphores.reserve(maxFramesInFlight);
         for (uint32_t i = 0; i < maxFramesInFlight; i++)
         {
-            semaphores.emplace_back(std::make_shared<Semaphore>(device));
+            semaphores.emplace_back(device);
         }
     }
 
-    void Swapchain::Setup(int width, int height, VkSwapchainKHR oldSwapchain)
+    void Swapchain::Setup(int width, int height, VkSwapchainKHR oldHandle)
     {
         Vulkan::SurfaceSupportDetails surfaceSupport = device.GetSurfaceSupportDetails();
 
@@ -64,7 +64,7 @@ namespace Vulkan
         createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
         createInfo.presentMode = presentMode;
         createInfo.clipped = VK_TRUE;
-        createInfo.oldSwapchain = oldSwapchain;
+        createInfo.oldSwapchain = oldHandle;
 
         if (vkCreateSwapchainKHR(device.GetHandle(), &createInfo, nullptr, &handle) != VK_SUCCESS)
         {
@@ -76,9 +76,9 @@ namespace Vulkan
 
         CreateImageViews();
 
-        if (oldSwapchain != nullptr)
+        if (oldHandle != nullptr)
         {
-            vkDestroySwapchainKHR(device.GetHandle(), oldSwapchain, nullptr);
+            vkDestroySwapchainKHR(device.GetHandle(), oldHandle, nullptr);
         }
     }
 
@@ -164,7 +164,7 @@ namespace Vulkan
     uint32_t Swapchain::GetNextImageIndex(uint32_t currentFrame)
     {
         uint32_t index;
-        auto result = vkAcquireNextImageKHR(device.GetHandle(), handle, UINT64_MAX, semaphores[currentFrame]->GetHandle(), VK_NULL_HANDLE, &index);
+        auto result = vkAcquireNextImageKHR(device.GetHandle(), handle, UINT64_MAX, semaphores[currentFrame].GetHandle(), VK_NULL_HANDLE, &index);
 
         if (result == VK_ERROR_OUT_OF_DATE_KHR)
         {
@@ -178,7 +178,7 @@ namespace Vulkan
         return index;
     }
 
-    std::shared_ptr<Semaphore> Swapchain::GetSemaphore(uint32_t currentFrame)
+    Semaphore& Swapchain::GetSemaphore(uint32_t currentFrame)
     {
         return semaphores[currentFrame];
     }

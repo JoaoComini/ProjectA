@@ -32,13 +32,13 @@ namespace Vulkan
         VkSwapchainKHR GetHandle() const;
         std::vector<VkImageView> GetImageViews() const;
         uint32_t GetNextImageIndex(uint32_t currentFrame);
-        std::shared_ptr<Semaphore> GetSemaphore(uint32_t currentFrame);
+        Semaphore& GetSemaphore(uint32_t currentFrame);
 
     private:
         VkSwapchainKHR handle;
         VkFormat imageFormat;
         VkExtent2D imageExtent;
-        std::vector<std::shared_ptr<Semaphore>> semaphores;
+        std::vector<Semaphore> semaphores;
 
         const Device &device;
         const Surface &surface;
