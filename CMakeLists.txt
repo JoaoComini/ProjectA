@@ -1,17 +1,21 @@
 cmake_minimum_required(VERSION 3.25)
 project(ProjectA VERSION 0.0.1)
 
-
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Debug" STRING FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
 
-find_package(glfw3 REQUIRED)
-find_package(glm REQUIRED)
-
 include(FindVulkan)
 
+add_subdirectory(third_party/glm)
+
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+add_subdirectory(third_party/glfw)
+
 add_subdirectory(third_party/vma)
+
 add_subdirectory(third_party/tinyobjloader)
 
 file(GLOB_RECURSE SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/*)
