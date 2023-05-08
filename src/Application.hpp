@@ -2,9 +2,11 @@
 
 #include <vulkan/vulkan.h>
 
+#define GLM_ENABLE_EXPERIMENTAL
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/hash.hpp>
 
 #include <tiny_obj_loader.h>
 
@@ -14,6 +16,7 @@
 #include <algorithm>
 #include <memory>
 #include <chrono>
+#include <unordered_map>
 
 #include "Window.hpp"
 #include "WindowSurface.hpp"
@@ -26,15 +29,40 @@
 #include "Vulkan/Device.hpp"
 #include "Vulkan/Swapchain.hpp"
 #include "Vulkan/Buffer.hpp"
+#include "Vulkan/Image.hpp"
 
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
-struct UniformBufferObject
+struct GlobalUniform
 {
     glm::mat4 mvp;
 };
+
+struct Vertex
+{
+    glm::vec3 position;
+    glm::vec3 normal;
+    glm::vec3 color;
+
+    bool operator==(const Vertex &other) const
+    {
+        return position == other.position && color == other.color && normal == other.normal;
+    }
+};
+
+namespace std
+{
+    template <>
+    struct hash<Vertex>
+    {
+        size_t operator()(Vertex const &vertex) const
+        {
+            return ((hash<glm::vec3>()(vertex.position) ^ (hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^ (hash<glm::vec3>()(vertex.normal) << 1);
+        }
+    };
+}
 
 class Application
 {
@@ -53,6 +81,7 @@ private:
     Vulkan::PhysicalDevice physicalDevice;
     std::unique_ptr<Vulkan::Device> device;
     std::unique_ptr<Vulkan::Swapchain> swapchain;
+    std::unique_ptr<Vulkan::Image> depthImage;
 
     VkRenderPass renderPass;
     VkPipelineLayout pipelineLayout;
@@ -69,7 +98,8 @@ private:
     uint32_t currentFrame = 0;
     bool windowHasResized = false;
 
-    std::vector<float> vertices;
+    std::vector<Vertex> vertices;
+    std::vector<uint32_t> indices;
 
     void init()
     {
@@ -98,46 +128,35 @@ private:
             return;
         }
 
-        for (size_t s = 0; s < shapes.size(); s++)
+        std::unordered_map<Vertex, uint32_t> uniques{};
+        for (const auto &shape : shapes)
         {
             // Loop over faces(polygon)
-            size_t index_offset = 0;
-            for (size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++)
+            for (const auto &index : shape.mesh.indices)
             {
+                // vertex position
+                tinyobj::real_t vx = attrib.vertices[3 * index.vertex_index + 0];
+                tinyobj::real_t vy = attrib.vertices[3 * index.vertex_index + 1];
+                tinyobj::real_t vz = attrib.vertices[3 * index.vertex_index + 2];
+                // vertex normal
+                tinyobj::real_t nx = attrib.normals[3 * index.normal_index + 0];
+                tinyobj::real_t ny = attrib.normals[3 * index.normal_index + 1];
+                tinyobj::real_t nz = attrib.normals[3 * index.normal_index + 2];
 
-                // hardcode loading to triangles
-                int fv = 3;
+                // copy it into our vertex
+                Vertex vertex{
+                    .position = {vx, vy, vz},
+                    .normal = {nx, ny, nz},
+                    .color = {nx, ny, nz},
+                };
 
-                // Loop over vertices in the face.
-                for (size_t v = 0; v < fv; v++)
+                if (uniques.count(vertex) == 0)
                 {
-                    // access to vertex
-                    tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v];
-
-                    // vertex position
-                    tinyobj::real_t vx = attrib.vertices[3 * idx.vertex_index + 0];
-                    tinyobj::real_t vy = attrib.vertices[3 * idx.vertex_index + 1];
-                    tinyobj::real_t vz = attrib.vertices[3 * idx.vertex_index + 2];
-                    // vertex normal
-                    tinyobj::real_t nx = attrib.normals[3 * idx.normal_index + 0];
-                    tinyobj::real_t ny = attrib.normals[3 * idx.normal_index + 1];
-                    tinyobj::real_t nz = attrib.normals[3 * idx.normal_index + 2];
-
-                    // copy it into our vertex
-                    vertices.push_back(vx);
-                    vertices.push_back(vy);
-                    vertices.push_back(vz);
-
-                    // new_vert.normal.x = nx;
-                    // new_vert.normal.y = ny;
-                    // new_vert.normal.z = nz;
-
-                    // we are setting the vertex color as the vertex normal. This is just for display purposes
-                    vertices.push_back(nx);
-                    vertices.push_back(ny);
-                    vertices.push_back(nz);
+                    uniques[vertex] = static_cast<uint32_t>(vertices.size());
+                    vertices.push_back(vertex);
                 }
-                index_offset += fv;
+
+                indices.push_back(uniques[vertex]);
             }
         }
 
@@ -168,12 +187,20 @@ private:
                         .MaxFramesInFlight(MAX_FRAMES_IN_FLIGHT)
                         .Build(*device, *surface);
 
+        CreateDepthImage();
         createRenderPass();
         createGraphicsPipeline();
         CreateFramebuffers();
         CreateBuffers();
         createCommandBuffers();
         createSyncObjects();
+    }
+
+    void CreateDepthImage()
+    {
+        VkExtent2D extent = swapchain->GetImageExtent();
+
+        depthImage = std::make_unique<Vulkan::Image>(*device, extent.width, extent.height);
     }
 
     void createGraphicsPipeline()
@@ -197,14 +224,15 @@ private:
 
         std::vector<VkDynamicState> dynamicStates = {
             VK_DYNAMIC_STATE_VIEWPORT,
-            VK_DYNAMIC_STATE_SCISSOR};
+            VK_DYNAMIC_STATE_SCISSOR,
+        };
 
         VkPipelineDynamicStateCreateInfo dynamicState{};
         dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
         dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
         dynamicState.pDynamicStates = dynamicStates.data();
 
-        std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions = {
+        std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions = {
             VkVertexInputAttributeDescription{
                 .location = 0,
                 .binding = 0,
@@ -215,20 +243,26 @@ private:
                 .location = 1,
                 .binding = 0,
                 .format = VK_FORMAT_R32G32B32_SFLOAT,
-                .offset = 3 * sizeof(float),
+                .offset = offsetof(Vertex, normal),
+            },
+            VkVertexInputAttributeDescription{
+                .location = 2,
+                .binding = 0,
+                .format = VK_FORMAT_R32G32B32_SFLOAT,
+                .offset = offsetof(Vertex, color),
             },
         };
 
         VkVertexInputBindingDescription bindingDescription{};
         bindingDescription.binding = 0;
-        bindingDescription.stride = sizeof(float) * 6;
+        bindingDescription.stride = sizeof(Vertex);
         bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
         VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
         vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
         vertexInputInfo.vertexBindingDescriptionCount = 1;
         vertexInputInfo.pVertexBindingDescriptions = &bindingDescription; // Optional
-        vertexInputInfo.vertexAttributeDescriptionCount = 2;
+        vertexInputInfo.vertexAttributeDescriptionCount = attributeDescriptions.size();
         vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data(); // Optional
 
         VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
@@ -247,8 +281,8 @@ private:
         rasterizer.rasterizerDiscardEnable = VK_FALSE;
         rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
         rasterizer.lineWidth = 1.0f;
-        rasterizer.cullMode = VK_CULL_MODE_NONE;
-        rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+        rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
+        rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
         rasterizer.depthBiasEnable = VK_FALSE;
         rasterizer.depthBiasConstantFactor = 0.0f; // Optional
         rasterizer.depthBiasClamp = 0.0f;          // Optional
@@ -284,10 +318,21 @@ private:
         colorBlending.blendConstants[2] = 0.0f; // Optional
         colorBlending.blendConstants[3] = 0.0f; // Optional
 
+        VkPipelineDepthStencilStateCreateInfo depthStencil{};
+        depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+        depthStencil.pNext = nullptr;
+        depthStencil.depthTestEnable = VK_TRUE;
+        depthStencil.depthWriteEnable = VK_TRUE;
+        depthStencil.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
+        depthStencil.depthBoundsTestEnable = VK_FALSE;
+        depthStencil.minDepthBounds = 0.0f; // Optional
+        depthStencil.maxDepthBounds = 1.0f; // Optional
+        depthStencil.stencilTestEnable = VK_FALSE;
+
         VkPushConstantRange pushConstantRanges{
             .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
             .offset = 0,
-            .size = sizeof(UniformBufferObject),
+            .size = sizeof(GlobalUniform),
         };
 
         VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
@@ -311,7 +356,7 @@ private:
         pipelineInfo.pViewportState = &viewportState;
         pipelineInfo.pRasterizationState = &rasterizer;
         pipelineInfo.pMultisampleState = &multisampling;
-        pipelineInfo.pDepthStencilState = nullptr; // Optional
+        pipelineInfo.pDepthStencilState = &depthStencil; // Optional
         pipelineInfo.pColorBlendState = &colorBlending;
         pipelineInfo.pDynamicState = &dynamicState;
         pipelineInfo.layout = pipelineLayout;
@@ -340,27 +385,53 @@ private:
         colorAttachmentRef.attachment = 0;
         colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
+        VkAttachmentDescription depthAttachment{};
+        depthAttachment.format = VK_FORMAT_D32_SFLOAT;
+        depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+        depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+        depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+        VkAttachmentReference depthAttachmentRef{};
+        depthAttachmentRef.attachment = 1;
+        depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
         VkSubpassDescription subpass{};
         subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
         subpass.colorAttachmentCount = 1;
         subpass.pColorAttachments = &colorAttachmentRef;
+        subpass.pDepthStencilAttachment = &depthAttachmentRef;
 
-        VkSubpassDependency dependency{};
-        dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-        dependency.dstSubpass = 0;
-        dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        dependency.srcAccessMask = 0;
-        dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        VkSubpassDependency colorDependency{};
+        colorDependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+        colorDependency.dstSubpass = 0;
+        colorDependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        colorDependency.srcAccessMask = 0;
+        colorDependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        colorDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+        VkSubpassDependency depthDependency{};
+        depthDependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+        depthDependency.dstSubpass = 0;
+        depthDependency.srcStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+        depthDependency.srcAccessMask = 0;
+        depthDependency.dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+        depthDependency.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
+        VkAttachmentDescription attachments[2] = {colorAttachment, depthAttachment};
+        VkSubpassDependency dependencies[2] = {colorDependency, depthDependency};
 
         VkRenderPassCreateInfo renderPassInfo{};
         renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-        renderPassInfo.attachmentCount = 1;
-        renderPassInfo.pAttachments = &colorAttachment;
+        renderPassInfo.attachmentCount = 2;
+        renderPassInfo.pAttachments = attachments;
         renderPassInfo.subpassCount = 1;
         renderPassInfo.pSubpasses = &subpass;
         renderPassInfo.dependencyCount = 1;
-        renderPassInfo.pDependencies = &dependency;
+        renderPassInfo.pDependencies = dependencies;
 
         if (vkCreateRenderPass(device->GetHandle(), &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS)
         {
@@ -378,12 +449,12 @@ private:
 
         for (size_t i = 0; i < views.size(); i++)
         {
-            VkImageView attachments[] = {views[i]};
+            VkImageView attachments[] = {views[i], depthImage->GetImageView()};
 
             VkFramebufferCreateInfo framebufferInfo{};
             framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
             framebufferInfo.renderPass = renderPass;
-            framebufferInfo.attachmentCount = 1;
+            framebufferInfo.attachmentCount = 2;
             framebufferInfo.pAttachments = attachments;
             framebufferInfo.width = extent.width;
             framebufferInfo.height = extent.height;
@@ -400,17 +471,17 @@ private:
     {
         vertexBuffer = Vulkan::BufferBuilder()
                            .Data(vertices.data())
-                           .Size(sizeof(float) * vertices.size())
+                           .Size(sizeof(Vertex) * vertices.size())
                            .AllocationCreate(Vulkan::AllocationCreateFlags::MAPPED_BAR)
                            .BufferUsage(Vulkan::BufferUsageFlags::VERTEX)
                            .Build(*device);
 
-        // indexBuffer = Vulkan::BufferBuilder()
-        //                   .Data(indices)
-        //                   .Size(sizeof(indices))
-        //                   .AllocationCreate(Vulkan::AllocationCreateFlags::MAPPED_BAR)
-        //                   .BufferUsage(Vulkan::BufferUsageFlags::INDEX)
-        //                   .Build(*device);
+        indexBuffer = Vulkan::BufferBuilder()
+                          .Data(indices.data())
+                          .Size(sizeof(int32_t) * indices.size())
+                          .AllocationCreate(Vulkan::AllocationCreateFlags::MAPPED_BAR)
+                          .BufferUsage(Vulkan::BufferUsageFlags::INDEX)
+                          .Build(*device);
     }
 
     void createCommandBuffers()
@@ -451,8 +522,16 @@ private:
         renderPassInfo.renderArea.extent = extent;
 
         VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
-        renderPassInfo.clearValueCount = 1;
-        renderPassInfo.pClearValues = &clearColor;
+        VkClearValue clearDepth{
+            .depthStencil = {
+                .depth = 1.f,
+            },
+        };
+
+        VkClearValue clearValues[] = {clearColor, clearDepth};
+
+        renderPassInfo.clearValueCount = 2;
+        renderPassInfo.pClearValues = clearValues;
 
         vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
@@ -460,7 +539,7 @@ private:
         VkBuffer vertexBuffers[] = {vertexBuffer->GetHandle()};
         VkDeviceSize offsets[] = {0};
         vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-        // vkCmdBindIndexBuffer(commandBuffer, indexBuffer->GetHandle(), 0, VK_INDEX_TYPE_UINT16);
+        vkCmdBindIndexBuffer(commandBuffer, indexBuffer->GetHandle(), 0, VK_INDEX_TYPE_UINT32);
 
         VkViewport viewport{};
         viewport.x = 0.0f;
@@ -486,13 +565,13 @@ private:
         glm::mat4 proj = glm::perspective(glm::radians(60.0f), (float)extent.width / (float)extent.height, 0.1f, 1000.0f);
         proj[1][1] *= -1;
 
-        UniformBufferObject ubo{
+        GlobalUniform ubo{
             .mvp = proj * view * model,
         };
 
-        vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(UniformBufferObject), &ubo);
+        vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(GlobalUniform), &ubo);
 
-        vkCmdDraw(commandBuffer, vertices.size(), 1, 0, 0);
+        vkCmdDrawIndexed(commandBuffer, indices.size(), 1, 0, 0, 0);
 
         vkCmdEndRenderPass(commandBuffer);
 
