@@ -28,9 +28,10 @@ set_target_properties(ProjectA VulkanMemoryAllocator PROPERTIES CXX_STANDARD 23 
 
 # -------- COMPILE SHADERS --------
 find_program(glslc_executable NAMES glslc HINTS Vulkan::glslc)
+get_property(PROJECTA_DIR TARGET ProjectA PROPERTY BINARY_DIR)
 
 set(SHADER_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/resources/shaders)
-set(SHADER_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/resources/shaders)
+set(SHADER_BINARY_DIR ${PROJECTA_DIR}/resources/shaders)
 
 file(GLOB SHADERS_SRC_FILES ${SHADER_SOURCE_DIR}/*)
 
@@ -59,4 +60,4 @@ add_custom_target(Shaders ALL DEPENDS ${SPV_SHADERS})
 
 # -------- COPY MODELS --------
 
-file(COPY resources/models DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/resources)
+file(COPY resources/models DESTINATION ${PROJECTA_DIR}/resources)
