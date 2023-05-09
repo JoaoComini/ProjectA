@@ -13,16 +13,29 @@ set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 add_subdirectory(third_party/glfw)
-
 add_subdirectory(third_party/vma)
-
 add_subdirectory(third_party/tinyobjloader)
 
 file(GLOB_RECURSE SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/**)
+
 add_executable(ProjectA ${SRC_FILES})
 
 target_include_directories(ProjectA PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src ${Vulkan_INCLUDE_DIR})
-target_link_libraries(ProjectA ${Vulkan_LIBRARIES} glfw glm::glm VulkanMemoryAllocator tinyobjloader)
+
+target_link_libraries(ProjectA
+    ${Vulkan_LIBRARIES}
+    glfw
+    glm::glm
+    VulkanMemoryAllocator
+    tinyobjloader
+)
+
+target_compile_definitions(ProjectA PUBLIC
+    GLFW_INCLUDE_VULKAN
+    GLM_ENABLE_EXPERIMENTAL
+    GLM_FORCE_DEPTH_ZERO_TO_ONE
+    GLM_FORCE_RADIANS
+)
 
 set_target_properties(ProjectA VulkanMemoryAllocator PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON)
 
@@ -61,3 +74,5 @@ add_custom_target(Shaders ALL DEPENDS ${SPV_SHADERS})
 # -------- COPY MODELS --------
 
 file(COPY resources/models DESTINATION ${PROJECTA_DIR}/resources)
+
+add_dependencies(ProjectA Shaders)

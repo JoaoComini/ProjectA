@@ -4,7 +4,7 @@
 
 namespace Vulkan
 {
-    Shader::Shader(VkDevice device, std::string path) : device(device)
+    Shader::Shader(const Device &device, std::string path) : device(device)
     {
         auto code = ReadFile(path);
 
@@ -13,7 +13,7 @@ namespace Vulkan
         info.codeSize = code.size();
         info.pCode = reinterpret_cast<const uint32_t *>(code.data());
 
-        if (vkCreateShaderModule(device, &info, nullptr, &module) != VK_SUCCESS)
+        if (vkCreateShaderModule(device.GetHandle(), &info, nullptr, &handle) != VK_SUCCESS)
         {
             throw std::runtime_error("failed to create shader module!");
         }
@@ -31,13 +31,9 @@ namespace Vulkan
         return std::vector<unsigned char>(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
     }
 
-    VkShaderModule Shader::GetModule()
-    {
-        return module;
-    }
 
     Shader::~Shader()
     {
-        vkDestroyShaderModule(device, module, nullptr);
+        vkDestroyShaderModule(device.GetHandle(), handle, nullptr);
     }
 }

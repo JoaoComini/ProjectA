@@ -3,20 +3,19 @@
 #include <vulkan/vulkan.h>
 
 #include "Instance.hpp"
+#include "Resource.hpp"
 
 namespace Vulkan
 {
-    class Surface
+    class Surface : public Resource<VkSurfaceKHR>
     {
     public:
         Surface(Instance &instance);
         virtual ~Surface();
 
-        VkSurfaceKHR GetHandle() const;
 
     protected:
         Instance &instance;
-        VkSurfaceKHR handle;
     };
 
 } // namespace Vulkan

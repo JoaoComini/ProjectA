@@ -5,19 +5,20 @@
 #include <fstream>
 #include <vulkan/vulkan.h>
 
+#include "Resource.hpp"
+#include "Device.hpp"
+
 namespace Vulkan
 {
 
-    class Shader
+    class Shader : public Resource<VkShaderModule>
     {
     public:
-        Shader(VkDevice device, std::string path);
+        Shader(const Device &device, std::string path);
         ~Shader();
-        VkShaderModule GetModule();
 
     private:
-        VkShaderModule module;
-        VkDevice device;
+        const Device &device;
 
     private:
         std::vector<unsigned char> ReadFile(const std::string &path);

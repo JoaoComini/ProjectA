@@ -12,9 +12,4 @@ namespace Vulkan
         vkDestroySurfaceKHR(instance.GetHandle(), handle, nullptr);
     }
 
-    VkSurfaceKHR Surface::GetHandle() const
-    {
-        return handle;
-    }
-
 } // namespace Vulkan

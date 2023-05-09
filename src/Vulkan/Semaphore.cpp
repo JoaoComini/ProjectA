@@ -14,10 +14,5 @@ namespace Vulkan
     {
         vkDestroySemaphore(device.GetHandle(), handle, nullptr);
     }
-
-    VkSemaphore Semaphore::GetHandle() const
-    {
-        return handle;
-    }
     
 } // namespace Vulkan

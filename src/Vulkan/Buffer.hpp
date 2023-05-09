@@ -4,61 +4,61 @@
 #include <vk_mem_alloc.h>
 
 #include "Device.hpp"
+#include "Resource.hpp"
 
 namespace Vulkan
 {
 
-    enum AllocationCreateFlags : uint32_t
-    {
-        MAPPED = VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
-        MAPPED_BAR = VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT,
-    };
- 
-    enum BufferUsageFlags : uint32_t
-    {
-        VERTEX = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-        INDEX = VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-        UNIFORM = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT
-    };
+	enum AllocationCreateFlags : uint32_t
+	{
+		MAPPED = VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
+		MAPPED_BAR = VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT,
+	};
 
-    class Buffer
-    {
-    public:
-        Buffer(Device &device);
-        ~Buffer();
+	enum BufferUsageFlags : uint32_t
+	{
+		VERTEX = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+		INDEX = VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+		UNIFORM = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT
+	};
 
-        VkBuffer GetHandle() const;
+	class Buffer : public Resource<VkBuffer>
+	{
+	public:
+		Buffer(Device& device);
+		~Buffer();
 
-    private:
-        VkBuffer handle;
-        VmaAllocation allocation;
-        VmaAllocationInfo allocationInfo;
+		void SetData(void* data, uint32_t size);
 
-        Device &device;
+	private:
+		VmaAllocation allocation;
+		VmaAllocationInfo allocationInfo;
 
-        friend class BufferBuilder;
-    };
+		Device& device;
 
-    class BufferBuilder
-    {
-    public:
-        BufferBuilder() = default;
-        ~BufferBuilder() = default;
+		friend class BufferBuilder;
+	};
 
-        BufferBuilder Data(void * data);
-        BufferBuilder Size(uint32_t size);
+	class BufferBuilder
+	{
+	public:
+		BufferBuilder() = default;
+		~BufferBuilder() = default;
 
-        BufferBuilder AllocationCreate(AllocationCreateFlags allocationCreate);
-        BufferBuilder BufferUsage(BufferUsageFlags bufferUsage);
+		BufferBuilder Data(void* data);
+		BufferBuilder Size(uint32_t size);
 
-        std::unique_ptr<Buffer> Build(Device &device);
+		BufferBuilder AllocationCreate(AllocationCreateFlags allocationCreate);
+		BufferBuilder BufferUsage(BufferUsageFlags bufferUsage);
 
-    private:
-        void *data = nullptr;
-        uint32_t size;
+		std::unique_ptr<Buffer> Build(Device& device);
 
-        AllocationCreateFlags allocationCreate;
-        BufferUsageFlags bufferUsage;
-    };
+	private:
+		void* data = nullptr;
+		uint32_t size;
+
+		AllocationCreateFlags allocationCreate;
+		BufferUsageFlags bufferUsage;
+	};
 
 } // namespace Vulkan

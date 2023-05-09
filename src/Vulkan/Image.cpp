@@ -46,18 +46,18 @@ namespace Vulkan
             },
         };
 
-        vkCreateImageView(device.GetHandle(), &viewCreateInfo, nullptr, &imageView);
+        vkCreateImageView(device.GetHandle(), &viewCreateInfo, nullptr, &view);
     }
 
     Image::~Image()
     {
-        vkDestroyImageView(device.GetHandle(), imageView, nullptr);
+        vkDestroyImageView(device.GetHandle(), view, nullptr);
         vmaDestroyImage(device.GetAllocator(), handle, allocation);
     }
 
-    VkImageView Image::GetImageView() const
+    VkImageView Image::GetView() const
     {
-        return imageView;
+        return view;
     }
 
 } // namespace Vulkan

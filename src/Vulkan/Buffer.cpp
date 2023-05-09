@@ -11,9 +11,9 @@ namespace Vulkan
         vmaDestroyBuffer(device.GetAllocator(), handle, allocation);
     }
 
-    VkBuffer Buffer::GetHandle() const
+    void Buffer::SetData(void* data, uint32_t size)
     {
-        return handle;
+        memcpy(allocationInfo.pMappedData, data, size);
     }
 
     BufferBuilder BufferBuilder::Data(void *data)
@@ -67,7 +67,7 @@ namespace Vulkan
 
         if (propertyFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT && allocationCreate >= AllocationCreateFlags::MAPPED)
         {
-            memcpy(buffer->allocationInfo.pMappedData, data, size);
+            buffer->SetData(data, size);
         }
         else
         {

@@ -1,14 +1,11 @@
 #include "Instance.hpp"
 
+#include <GLFW/glfw3.h>
+
 #include <stdexcept>
 
 namespace Vulkan
 {
-    VkInstance Instance::GetHandle() const
-    {
-        return this->handle;
-    }
-
     Instance::~Instance()
     {
 #ifndef NDEBUG

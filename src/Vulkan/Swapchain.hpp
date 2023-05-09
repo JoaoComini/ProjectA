@@ -9,11 +9,12 @@
 #include "Surface.hpp"
 #include "Details.hpp"
 #include "Semaphore.hpp"
+#include "Resource.hpp"
 
 namespace Vulkan
 {
 
-    class Swapchain
+    class Swapchain: public Resource<VkSwapchainKHR>
     {
     public:
         Swapchain(
@@ -29,13 +30,10 @@ namespace Vulkan
 
         VkFormat GetImageFormat() const;
         VkExtent2D GetImageExtent() const;
-        VkSwapchainKHR GetHandle() const;
         std::vector<VkImageView> GetImageViews() const;
-        uint32_t GetNextImageIndex(uint32_t currentFrame);
-        Semaphore& GetSemaphore(uint32_t currentFrame);
+        uint32_t GetNextImageIndex(const Semaphore &acquireSemaphore);
 
     private:
-        VkSwapchainKHR handle;
         VkFormat imageFormat;
         VkExtent2D imageExtent;
         std::vector<Semaphore> semaphores;

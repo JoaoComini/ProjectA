@@ -2,21 +2,19 @@
 
 #include <vulkan/vulkan.h>
 
+#include "Resource.hpp"
 #include "Device.hpp"
 
 namespace Vulkan
 {
-    class Semaphore
+    class Semaphore : public Resource<VkSemaphore>
     {
 
     public:
         Semaphore(const Device &device);
         ~Semaphore();
 
-        VkSemaphore GetHandle() const;
-
     private:
-        VkSemaphore handle;
         const Device &device;
     };
 

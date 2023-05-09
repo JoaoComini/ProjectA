@@ -1,22 +1,20 @@
 #pragma once
 
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
+#include <vulkan/vulkan.h>
 
 #include <vector>
 #include <memory>
 #include <string.h>
 
 #include "DebugMessenger.hpp"
+#include "Resource.hpp"
 
 namespace Vulkan
 {
-    struct Instance
+    struct Instance: public Resource<VkInstance>
     {
     public:
         ~Instance();
-        VkInstance GetHandle() const;
-        VkInstance handle = VK_NULL_HANDLE;
 
     private:
 #ifndef NDEBUG

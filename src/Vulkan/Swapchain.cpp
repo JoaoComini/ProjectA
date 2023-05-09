@@ -161,10 +161,10 @@ namespace Vulkan
         return imageViews;
     }
 
-    uint32_t Swapchain::GetNextImageIndex(uint32_t currentFrame)
+    uint32_t Swapchain::GetNextImageIndex(const Semaphore &acquireSemaphore)
     {
         uint32_t index;
-        auto result = vkAcquireNextImageKHR(device.GetHandle(), handle, UINT64_MAX, semaphores[currentFrame].GetHandle(), VK_NULL_HANDLE, &index);
+        auto result = vkAcquireNextImageKHR(device.GetHandle(), handle, UINT64_MAX, acquireSemaphore.GetHandle(), VK_NULL_HANDLE, &index);
 
         if (result == VK_ERROR_OUT_OF_DATE_KHR)
         {
@@ -176,16 +176,6 @@ namespace Vulkan
         }
 
         return index;
-    }
-
-    Semaphore& Swapchain::GetSemaphore(uint32_t currentFrame)
-    {
-        return semaphores[currentFrame];
-    }
-
-    VkSwapchainKHR Swapchain::GetHandle() const
-    {
-        return handle;
     }
 
     SwapchainBuilder SwapchainBuilder::DesiredWidth(int width)

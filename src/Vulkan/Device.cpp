@@ -2,156 +2,163 @@
 
 namespace Vulkan
 {
-    Device::Device(const Instance &instance, const PhysicalDevice &physicalDevice) : physicalDevice(physicalDevice)
-    {
-        graphicsQueueFamilyIndex = physicalDevice.FindQueueIndex(QueueType::Graphics);
-        presentQueueFamilyIndex = physicalDevice.FindQueueIndex(QueueType::Present);
+	Device::Device(const Instance& instance, const PhysicalDevice& physicalDevice) : physicalDevice(physicalDevice)
+	{
+		graphicsQueueFamilyIndex = physicalDevice.FindQueueIndex(QueueType::Graphics);
+		presentQueueFamilyIndex = physicalDevice.FindQueueIndex(QueueType::Present);
 
-        std::set<uint32_t> familyIndices = {graphicsQueueFamilyIndex, presentQueueFamilyIndex};
+		std::set<uint32_t> familyIndices = { graphicsQueueFamilyIndex, presentQueueFamilyIndex };
 
-        std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
+		std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
 
-        float queuePriority = 1.0f;
-        for (uint32_t index : familyIndices)
-        {
-            VkDeviceQueueCreateInfo queueCreateInfo{};
-            queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-            queueCreateInfo.queueFamilyIndex = index;
-            queueCreateInfo.queueCount = 1;
-            queueCreateInfo.pQueuePriorities = &queuePriority;
-            queueCreateInfos.push_back(queueCreateInfo);
-        }
+		float queuePriority = 1.0f;
+		for (uint32_t index : familyIndices)
+		{
+			VkDeviceQueueCreateInfo queueCreateInfo{};
+			queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+			queueCreateInfo.queueFamilyIndex = index;
+			queueCreateInfo.queueCount = 1;
+			queueCreateInfo.pQueuePriorities = &queuePriority;
+			queueCreateInfos.push_back(queueCreateInfo);
+		}
 
-        VkPhysicalDeviceFeatures deviceFeatures{};
+		VkPhysicalDeviceFeatures deviceFeatures{};
 
-        const std::vector<const char *> extensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+		const std::vector<const char*> extensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
-        VkDeviceCreateInfo deviceCreateinfo{
-            .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-            .queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size()),
-            .pQueueCreateInfos = queueCreateInfos.data(),
-            .enabledLayerCount = 0,
-            .enabledExtensionCount = static_cast<uint32_t>(extensions.size()),
-            .ppEnabledExtensionNames = extensions.data(),
-            .pEnabledFeatures = &deviceFeatures,
-        };
+		VkDeviceCreateInfo deviceCreateinfo{
+			.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+			.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size()),
+			.pQueueCreateInfos = queueCreateInfos.data(),
+			.enabledLayerCount = 0,
+			.enabledExtensionCount = static_cast<uint32_t>(extensions.size()),
+			.ppEnabledExtensionNames = extensions.data(),
+			.pEnabledFeatures = &deviceFeatures,
+		};
 
-        if (vkCreateDevice(physicalDevice.handle, &deviceCreateinfo, nullptr, &handle) != VK_SUCCESS)
-        {
-            throw std::runtime_error("failed to create logical device!");
-        }
+		if (vkCreateDevice(physicalDevice.handle, &deviceCreateinfo, nullptr, &handle) != VK_SUCCESS)
+		{
+			throw std::runtime_error("failed to create logical device!");
+		}
 
-        vkGetDeviceQueue(handle, graphicsQueueFamilyIndex, 0, &graphicsQueue);
-        vkGetDeviceQueue(handle, presentQueueFamilyIndex, 0, &presentQueue);
+		vkGetDeviceQueue(handle, graphicsQueueFamilyIndex, 0, &graphicsQueue);
+		vkGetDeviceQueue(handle, presentQueueFamilyIndex, 0, &presentQueue);
 
-        const VmaAllocatorCreateInfo allocatorCreateInfo{
-            .physicalDevice = physicalDevice.handle,
-            .device = handle,
-            .instance = instance.GetHandle(),
-            .vulkanApiVersion = VK_API_VERSION_1_1,
-        };
+		const VmaAllocatorCreateInfo allocatorCreateInfo{
+			.physicalDevice = physicalDevice.handle,
+			.device = handle,
+			.instance = instance.GetHandle(),
+			.vulkanApiVersion = VK_API_VERSION_1_1,
+		};
 
-        if (const auto result = vmaCreateAllocator(&allocatorCreateInfo, &allocator); result != VK_SUCCESS)
-        {
-            throw std::runtime_error("failed to create vmaCreateAllocator!");
-        }
+		if (const auto result = vmaCreateAllocator(&allocatorCreateInfo, &allocator); result != VK_SUCCESS)
+		{
+			throw std::runtime_error("failed to create vmaCreateAllocator!");
+		}
+	}
 
-        VkCommandPoolCreateInfo poolCreateInfo{};
-        poolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-        poolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-        poolCreateInfo.queueFamilyIndex = graphicsQueueFamilyIndex;
+	Device::~Device()
+	{
+		for (auto pool : commandPools)
+		{
+			vkDestroyCommandPool(handle, pool, nullptr);
+		}
+		vmaDestroyAllocator(allocator);
+		vkDestroyDevice(handle, nullptr);
+	}
 
-        if (vkCreateCommandPool(handle, &poolCreateInfo, nullptr, &commandPool) != VK_SUCCESS)
-        {
-            throw std::runtime_error("failed to create command pool!");
-        }
-    }
+	void Device::WaitIdle()
+	{
+		vkDeviceWaitIdle(handle);
+	}
 
-    Device::~Device()
-    {
-        vkDestroyCommandPool(handle, commandPool, nullptr);
-        vmaDestroyAllocator(allocator);
-        vkDestroyDevice(handle, nullptr);
-    }
+	void Device::CopyBuffer(VkBuffer src, VkBuffer dest, uint32_t size)
+	{
+		VkCommandBufferAllocateInfo allocInfo{};
+		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+		allocInfo.commandPool = GetCommandPool();
+		allocInfo.commandBufferCount = 1;
 
-    void Device::WaitIdle()
-    {
-        vkDeviceWaitIdle(handle);
-    }
+		VkCommandBuffer commandBuffer;
+		vkAllocateCommandBuffers(handle, &allocInfo, &commandBuffer);
 
-    void Device::CopyBuffer(VkBuffer src, VkBuffer dest, uint32_t size)
-    {
-        VkCommandBufferAllocateInfo allocInfo{};
-        allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-        allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        allocInfo.commandPool = commandPool;
-        allocInfo.commandBufferCount = 1;
+		VkCommandBufferBeginInfo beginInfo{};
+		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-        VkCommandBuffer commandBuffer;
-        vkAllocateCommandBuffers(handle, &allocInfo, &commandBuffer);
+		vkBeginCommandBuffer(commandBuffer, &beginInfo);
 
-        VkCommandBufferBeginInfo beginInfo{};
-        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+		VkBufferCopy copy{};
+		copy.srcOffset = 0; // Optional
+		copy.dstOffset = 0; // Optional
+		copy.size = size;
+		vkCmdCopyBuffer(commandBuffer, src, dest, 1, &copy);
 
-        vkBeginCommandBuffer(commandBuffer, &beginInfo);
+		vkEndCommandBuffer(commandBuffer);
 
-        VkBufferCopy copy{};
-        copy.srcOffset = 0; // Optional
-        copy.dstOffset = 0; // Optional
-        copy.size = size;
-        vkCmdCopyBuffer(commandBuffer, src, dest, 1, &copy);
+		VkSubmitInfo submitInfo{};
+		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		submitInfo.commandBufferCount = 1;
+		submitInfo.pCommandBuffers = &commandBuffer;
 
-        vkEndCommandBuffer(commandBuffer);
+		vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+		vkQueueWaitIdle(graphicsQueue);
 
-        VkSubmitInfo submitInfo{};
-        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-        submitInfo.commandBufferCount = 1;
-        submitInfo.pCommandBuffers = &commandBuffer;
+		vkFreeCommandBuffers(handle, GetCommandPool(), 1, &commandBuffer);
+	}
 
-        vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-        vkQueueWaitIdle(graphicsQueue);
-        
-        vkFreeCommandBuffers(handle, commandPool, 1, &commandBuffer);
-    }
+	VkQueue Device::GetGraphicsQueue() const
+	{
+		return graphicsQueue;
+	}
 
-    VkQueue Device::GetGraphicsQueue() const
-    {
-        return graphicsQueue;
-    }
+	VkQueue Device::GetPresentQueue() const
+	{
+		return presentQueue;
+	}
 
-    VkQueue Device::GetPresentQueue() const
-    {
-        return presentQueue;
-    }
+	uint32_t Device::GetGraphicsQueueFamilyIndex() const
+	{
+		return graphicsQueueFamilyIndex;
+	}
 
-    uint32_t Device::GetGraphicsQueueFamilyIndex() const
-    {
-        return graphicsQueueFamilyIndex;
-    }
+	uint32_t Device::GetPresentQueueFamilyIndex() const
+	{
+		return presentQueueFamilyIndex;
+	}
 
-    uint32_t Device::GetPresentQueueFamilyIndex() const
-    {
-        return presentQueueFamilyIndex;
-    }
+	VkCommandPool Device::GetCommandPool() const
+	{
 
-    VkCommandPool Device::GetCommandPool() const
-    {
-        return commandPool;
-    }
+		thread_local VkCommandPool threadCommandPool = VK_NULL_HANDLE;
 
-    VmaAllocator Device::GetAllocator() const
-    {
-        return allocator;
-    }
+		if (threadCommandPool == nullptr) {
+			VkCommandPoolCreateInfo poolCreateInfo{};
+			poolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+			poolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+			poolCreateInfo.queueFamilyIndex = graphicsQueueFamilyIndex;
 
-    SurfaceSupportDetails Device::GetSurfaceSupportDetails() const
-    {
-        return physicalDevice.GetSurfaceSupportDetails();
-    }
+			if (vkCreateCommandPool(handle, &poolCreateInfo, nullptr, &threadCommandPool) != VK_SUCCESS)
+			{
+				throw std::runtime_error("failed to create command pool!");
+			}
 
-    VkDevice Device::GetHandle() const
-    {
-        return handle;
-    }
+			std::scoped_lock locker(mutex);
+
+			commandPools.push_back(threadCommandPool);
+		}
+
+		return threadCommandPool;
+	}
+
+	VmaAllocator Device::GetAllocator() const
+	{
+		return allocator;
+	}
+
+	SurfaceSupportDetails Device::GetSurfaceSupportDetails() const
+	{
+		return physicalDevice.GetSurfaceSupportDetails();
+	}
 }
