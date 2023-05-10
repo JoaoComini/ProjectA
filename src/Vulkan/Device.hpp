@@ -12,6 +12,7 @@
 #include "Details.hpp"
 #include "Queue.hpp"
 #include "Resource.hpp"
+#include "CommandPool.hpp"
 
 namespace Vulkan
 {
@@ -30,14 +31,12 @@ namespace Vulkan
 		uint32_t GetGraphicsQueueFamilyIndex() const;
 		uint32_t GetPresentQueueFamilyIndex() const;
 
-		VkCommandPool GetCommandPool() const;
 		VmaAllocator GetAllocator() const;
 
 		SurfaceSupportDetails GetSurfaceSupportDetails() const;
 
 	private:
-		mutable std::mutex mutex;
-		mutable std::vector<VkCommandPool> commandPools;
+		std::unique_ptr<CommandPool> commandPool;
 
 		VmaAllocator allocator;
 

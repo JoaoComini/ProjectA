@@ -17,8 +17,8 @@
 
 #include "Window.hpp"
 #include "WindowSurface.hpp"
-#include "Mesh.hpp"
-#include "Renderer.hpp"
+
+#include "Rendering/Renderer.hpp"
 
 #include "Vulkan/Instance.hpp"
 #include "Vulkan/PhysicalDevice.hpp"
@@ -26,28 +26,19 @@
 #include "Vulkan/Swapchain.hpp"
 #include "Vulkan/Semaphore.hpp"
 
+#include "Rendering/Frame.hpp"
+
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
-const int MAX_FRAMES_IN_FLIGHT = 3;
-
-struct RenderFrame
-{
-	std::unique_ptr<Vulkan::Semaphore> acquireSemaphore;
-	std::unique_ptr<Vulkan::Semaphore> renderSemaphore;
-
-	VkFence renderFence;
-	VkCommandBuffer commandBuffer;
-};
-
+const int MAX_FRAMES_IN_FLIGHT = 2;
 
 class Application
 {
 public:
-	void run()
+	void Run()
 	{
-		init();
+		Init();
 		MainLoop();
-		cleanup();
 	}
 
 private:
@@ -60,12 +51,12 @@ private:
 
 	std::unique_ptr<Renderer> renderer;
 
-	std::vector<std::unique_ptr<RenderFrame>> frames;
+	std::vector<std::unique_ptr<Rendering::Frame>> frames;
 
 	uint32_t currentFrame = 0;
 	bool windowHasResized = false;
 
-	void init()
+	void Init()
 	{
 		window = WindowBuilder()
 			.Height(HEIGHT)
@@ -104,34 +95,9 @@ private:
 
 	void CreateFrames()
 	{
-		VkFenceCreateInfo fenceInfo{};
-		fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-		fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-
-		VkCommandBufferAllocateInfo allocInfo{};
-		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		allocInfo.commandPool = device->GetCommandPool();
-		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		allocInfo.commandBufferCount = 1;
-
 		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
 		{
-			std::unique_ptr<RenderFrame> frame = std::make_unique<RenderFrame>();
-			if (vkCreateFence(device->GetHandle(), &fenceInfo, nullptr, &frame->renderFence) != VK_SUCCESS)
-			{
-
-				throw std::runtime_error("failed to create synchronization objects for a frame!");
-			}
-
-			if (vkAllocateCommandBuffers(device->GetHandle(), &allocInfo, &frame->commandBuffer) != VK_SUCCESS)
-			{
-				throw std::runtime_error("failed to allocate command buffers!");
-			}
-
-			frame->acquireSemaphore = std::make_unique<Vulkan::Semaphore>(*device);
-			frame->renderSemaphore = std::make_unique<Vulkan::Semaphore>(*device);
-
-			frames.emplace_back(std::move(frame));
+			frames.emplace_back(std::make_unique<Rendering::Frame>(*device));
 		}
 	}
 
@@ -148,18 +114,21 @@ private:
 
 	void Render()
 	{
-		vkWaitForFences(device->GetHandle(), 1, &frames[currentFrame]->renderFence, VK_TRUE, UINT64_MAX);
+		VkFence renderFence = frames[currentFrame]->GetRenderFence();
+		Vulkan::Semaphore &acquireSemaphore = frames[currentFrame]->GetAcquireSemaphore();
+		Vulkan::Semaphore &renderFinishedSemaphore = frames[currentFrame]->GetRenderFinishedSemaphore();
 
-		uint32_t imageIndex = swapchain->GetNextImageIndex(*frames[currentFrame]->acquireSemaphore);
+		uint32_t imageIndex = swapchain->GetNextImageIndex(acquireSemaphore);
 
-		vkResetFences(device->GetHandle(), 1, &frames[currentFrame]->renderFence);
-		vkResetCommandBuffer(frames[currentFrame]->commandBuffer, 0);
+		frames[currentFrame]->Reset();
+		
+		VkCommandBuffer commandBuffer = frames[currentFrame]->RequestCommandBuffer();
 
-		renderer->Render(frames[currentFrame]->commandBuffer, imageIndex);
+		renderer->Render(commandBuffer, imageIndex);
 
 		VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-		VkSemaphore signalSemaphores[] = { frames[currentFrame]->renderSemaphore->GetHandle() };
-		VkSemaphore waitSemaphores[] = { frames[currentFrame]->acquireSemaphore->GetHandle() };
+		VkSemaphore signalSemaphores[] = { renderFinishedSemaphore.GetHandle() };
+		VkSemaphore waitSemaphores[] = { acquireSemaphore.GetHandle() };
 
 		VkSubmitInfo submitInfo{};
 		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -167,11 +136,11 @@ private:
 		submitInfo.pWaitSemaphores = waitSemaphores;
 		submitInfo.pWaitDstStageMask = waitStages;
 		submitInfo.commandBufferCount = 1;
-		submitInfo.pCommandBuffers = &frames[currentFrame]->commandBuffer;
+		submitInfo.pCommandBuffers = &commandBuffer;
 		submitInfo.signalSemaphoreCount = 1;
 		submitInfo.pSignalSemaphores = signalSemaphores;
 
-		if (vkQueueSubmit(device->GetGraphicsQueue(), 1, &submitInfo, frames[currentFrame]->renderFence) != VK_SUCCESS)
+		if (vkQueueSubmit(device->GetGraphicsQueue(), 1, &submitInfo, renderFence) != VK_SUCCESS)
 		{
 			throw std::runtime_error("failed to submit draw command buffer!");
 		}
@@ -215,13 +184,5 @@ private:
 		swapchain->Recreate(size.width, size.height);
 
 		renderer->CreateImages();
-	}
-
-	void cleanup()
-	{
-		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
-		{
-			vkDestroyFence(device->GetHandle(), frames[i]->renderFence, nullptr);
-		}
 	}
 };

@@ -55,14 +55,14 @@ namespace Vulkan
 		{
 			throw std::runtime_error("failed to create vmaCreateAllocator!");
 		}
+
+		commandPool = std::make_unique<CommandPool>(*this);
 	}
 
 	Device::~Device()
 	{
-		for (auto pool : commandPools)
-		{
-			vkDestroyCommandPool(handle, pool, nullptr);
-		}
+		commandPool.reset();
+
 		vmaDestroyAllocator(allocator);
 		vkDestroyDevice(handle, nullptr);
 	}
@@ -77,7 +77,7 @@ namespace Vulkan
 		VkCommandBufferAllocateInfo allocInfo{};
 		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		allocInfo.commandPool = GetCommandPool();
+		allocInfo.commandPool = commandPool->GetHandle();
 		allocInfo.commandBufferCount = 1;
 
 		VkCommandBuffer commandBuffer;
@@ -105,7 +105,7 @@ namespace Vulkan
 		vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
 		vkQueueWaitIdle(graphicsQueue);
 
-		vkFreeCommandBuffers(handle, GetCommandPool(), 1, &commandBuffer);
+		vkFreeCommandBuffers(handle, commandPool->GetHandle(), 1, &commandBuffer);
 	}
 
 	VkQueue Device::GetGraphicsQueue() const
@@ -126,30 +126,6 @@ namespace Vulkan
 	uint32_t Device::GetPresentQueueFamilyIndex() const
 	{
 		return presentQueueFamilyIndex;
-	}
-
-	VkCommandPool Device::GetCommandPool() const
-	{
-
-		thread_local VkCommandPool threadCommandPool = VK_NULL_HANDLE;
-
-		if (threadCommandPool == nullptr) {
-			VkCommandPoolCreateInfo poolCreateInfo{};
-			poolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-			poolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-			poolCreateInfo.queueFamilyIndex = graphicsQueueFamilyIndex;
-
-			if (vkCreateCommandPool(handle, &poolCreateInfo, nullptr, &threadCommandPool) != VK_SUCCESS)
-			{
-				throw std::runtime_error("failed to create command pool!");
-			}
-
-			std::scoped_lock locker(mutex);
-
-			commandPools.push_back(threadCommandPool);
-		}
-
-		return threadCommandPool;
 	}
 
 	VmaAllocator Device::GetAllocator() const
