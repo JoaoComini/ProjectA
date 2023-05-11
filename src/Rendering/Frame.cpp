@@ -34,7 +34,7 @@ namespace Rendering
 		commandPool->Reset();
 	}
 
-	VkCommandBuffer Frame::RequestCommandBuffer()
+	Vulkan::CommandBuffer& Frame::RequestCommandBuffer()
 	{
 		return commandPool->RequestCommandBuffer();
 	}

@@ -1,20 +1,24 @@
 #pragma once
 
-
 #include <vulkan/vulkan.h>
-#include <Vulkan/Device.hpp>
+
+#include "Device.hpp"
+#include "Resource.hpp"
 
 namespace Vulkan
 {
-	class CommandBuffer
+	class CommandPool;
+
+	class CommandBuffer: public Resource<VkCommandBuffer>
 	{
 	public:
-		CommandBuffer(const Device& device);
+		CommandBuffer(const Device& device, const CommandPool& commandPool);
+		~CommandBuffer();
 
-		const CommandBuffer& Begin();
-		const CommandBuffer& BeginRenderPass();
+		void Begin();
 
 	private:
-		VkCommandBuffer handle;
+		const Device& device;
+		const CommandPool& commandPool;
 	};
 }

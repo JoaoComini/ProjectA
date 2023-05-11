@@ -43,24 +43,16 @@ void Renderer::CreateImages()
 	CreateFramebuffers();
 }
 
-void Renderer::Render(VkCommandBuffer commandBuffer, uint32_t imageIndex)
+void Renderer::Render(Vulkan::CommandBuffer& commandBuffer, uint32_t imageIndex)
 {
 	RecordCommandBuffer(commandBuffer, imageIndex);
 }
 
-void Renderer::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex)
+void Renderer::RecordCommandBuffer(Vulkan::CommandBuffer& commandBuffer, uint32_t imageIndex)
 {
 	VkExtent2D extent = swapchain.GetImageExtent();
-
-	VkCommandBufferBeginInfo beginInfo{};
-	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-	beginInfo.flags = 0;                  // Optional
-	beginInfo.pInheritanceInfo = nullptr; // Optional
-
-	if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS)
-	{
-		throw std::runtime_error("failed to begin recording command buffer!");
-	}
+	
+	commandBuffer.Begin();
 
 	VkRenderPassBeginInfo renderPassInfo{};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -81,20 +73,20 @@ void Renderer::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t image
 	renderPassInfo.clearValueCount = 2;
 	renderPassInfo.pClearValues = clearValues;
 
-	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+	vkCmdBeginRenderPass(commandBuffer.GetHandle(), &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+	vkCmdBindPipeline(commandBuffer.GetHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
 	VkViewport viewport{};
 	viewport.width = static_cast<float>(extent.width);
 	viewport.height = static_cast<float>(extent.height);
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
-	vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+	vkCmdSetViewport(commandBuffer.GetHandle(), 0, 1, &viewport);
 
 	VkRect2D scissor{};
 	scissor.offset = { 0, 0 };
 	scissor.extent = extent;
-	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+	vkCmdSetScissor(commandBuffer.GetHandle(), 0, 1, &scissor);
 
 	//static auto startTime = std::chrono::high_resolution_clock::now();
 
@@ -110,13 +102,13 @@ void Renderer::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t image
 		.mvp = proj * view * model,
 	};
 
-	vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(GlobalUniform), &ubo);
+	vkCmdPushConstants(commandBuffer.GetHandle(), pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(GlobalUniform), &ubo);
 
-	mesh->Draw(commandBuffer);
+	mesh->Draw(commandBuffer.GetHandle());
 
-	vkCmdEndRenderPass(commandBuffer);
+	vkCmdEndRenderPass(commandBuffer.GetHandle());
 
-	if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
+	if (vkEndCommandBuffer(commandBuffer.GetHandle()) != VK_SUCCESS)
 	{
 		throw std::runtime_error("failed to record command buffer!");
 	}

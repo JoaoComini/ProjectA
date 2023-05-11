@@ -122,7 +122,7 @@ private:
 
 		frames[currentFrame]->Reset();
 
-		VkCommandBuffer commandBuffer = frames[currentFrame]->RequestCommandBuffer();
+		Vulkan::CommandBuffer& commandBuffer = frames[currentFrame]->RequestCommandBuffer();
 
 		renderer->Render(commandBuffer, imageIndex);
 
@@ -130,13 +130,15 @@ private:
 		VkSemaphore signalSemaphores[] = { renderFinishedSemaphore.GetHandle() };
 		VkSemaphore waitSemaphores[] = { acquireSemaphore.GetHandle() };
 
+		VkCommandBuffer commandBuffers[] = { commandBuffer.GetHandle() };
+
 		VkSubmitInfo submitInfo{};
 		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 		submitInfo.waitSemaphoreCount = 1;
 		submitInfo.pWaitSemaphores = waitSemaphores;
 		submitInfo.pWaitDstStageMask = waitStages;
 		submitInfo.commandBufferCount = 1;
-		submitInfo.pCommandBuffers = &commandBuffer;
+		submitInfo.pCommandBuffers = commandBuffers;
 		submitInfo.signalSemaphoreCount = 1;
 		submitInfo.pSignalSemaphores = signalSemaphores;
 

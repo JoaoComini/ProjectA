@@ -1,13 +1,14 @@
 #include "CommandBuffer.hpp"
 
+#include "CommandPool.hpp"
 
 namespace Vulkan
 {
-	CommandBuffer::CommandBuffer(const Device& device)
+	CommandBuffer::CommandBuffer(const Device& device, const CommandPool& commandPool) : device(device), commandPool(commandPool)
 	{
 		VkCommandBufferAllocateInfo allocateInfo{};
 		allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		allocateInfo.commandPool = VK_NULL_HANDLE;
+		allocateInfo.commandPool = commandPool.GetHandle();
 		allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 		allocateInfo.commandBufferCount = 1;
 
@@ -17,20 +18,26 @@ namespace Vulkan
 		}
 	}
 
-	const CommandBuffer& CommandBuffer::Begin()
+	CommandBuffer::~CommandBuffer()
 	{
-		VkCommandBufferBeginInfo beginInfo{
-			.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-		};
+		if (handle == VK_NULL_HANDLE)
+		{
+			return;
+		}
 
-		vkBeginCommandBuffer(handle, &beginInfo);
-
-		return *this;
+		vkFreeCommandBuffers(device.GetHandle(), commandPool.GetHandle(), 1, &handle);
 	}
 
-	const CommandBuffer& CommandBuffer::BeginRenderPass()
+	void CommandBuffer::Begin()
 	{
-		return *this;
-	}
+		VkCommandBufferBeginInfo beginInfo{};
+		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		beginInfo.flags = 0;                  // Optional
+		beginInfo.pInheritanceInfo = nullptr; // Optional
 
+		if (vkBeginCommandBuffer(handle, &beginInfo) != VK_SUCCESS)
+		{
+			throw std::runtime_error("failed to begin recording command buffer!");
+		}
+	}
 }

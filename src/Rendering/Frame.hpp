@@ -1,10 +1,9 @@
 #pragma once
 
-#include <vulkan/vulkan.h>
-
 #include "Vulkan/Semaphore.hpp"
 #include "Vulkan/Fence.hpp"
 #include "Vulkan/CommandPool.hpp"
+#include "Vulkan/CommandBuffer.hpp"
 #include "Vulkan/Device.hpp"
 
 namespace Rendering
@@ -20,7 +19,7 @@ namespace Rendering
 		Vulkan::Fence& GetRenderFence() const;
 
 		void Reset();
-		VkCommandBuffer RequestCommandBuffer();
+		Vulkan::CommandBuffer& RequestCommandBuffer();
 
 	private:
 		Vulkan::Device& device;

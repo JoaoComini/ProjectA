@@ -1,6 +1,7 @@
 #include "CommandPool.hpp"
 
 #include "Device.hpp"
+#include "CommandBuffer.hpp"
 
 
 namespace Vulkan
@@ -20,30 +21,23 @@ namespace Vulkan
 
 	CommandPool::~CommandPool()
 	{
+		commandBuffers.clear();
+
 		vkDestroyCommandPool(device.GetHandle(), handle, nullptr);
 	}
 
-	VkCommandBuffer CommandPool::RequestCommandBuffer()
+	CommandBuffer& CommandPool::RequestCommandBuffer()
 	{
 		if (activeCommandBuffersCount < commandBuffers.size())
 		{
-			return commandBuffers[activeCommandBuffersCount++];
+			return *commandBuffers[activeCommandBuffersCount++];
 		}
 
-		VkCommandBufferAllocateInfo allocInfo{};
-		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		allocInfo.commandPool = handle;
-		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		allocInfo.commandBufferCount = 1;
-
-		VkCommandBuffer commandBuffer;
-		vkAllocateCommandBuffers(device.GetHandle(), &allocInfo, &commandBuffer);
-
-		commandBuffers.emplace_back(commandBuffer);
+		commandBuffers.emplace_back(std::make_unique<CommandBuffer>(device, *this));
 
 		activeCommandBuffersCount++;
 
-		return commandBuffers.back();
+		return *commandBuffers.back();
 	}
 
 	void CommandPool::Reset()

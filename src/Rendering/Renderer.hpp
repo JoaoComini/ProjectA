@@ -4,10 +4,12 @@
 
 #include <glm/glm.hpp>
 
-#include "../Vulkan/Device.hpp"
-#include "../Vulkan/Swapchain.hpp"
-#include "../Vulkan/Image.hpp"
-#include "../Vulkan/Buffer.hpp"
+#include "Vulkan/Device.hpp"
+#include "Vulkan/Swapchain.hpp"
+#include "Vulkan/Image.hpp"
+#include "Vulkan/Buffer.hpp"
+#include "Vulkan/CommandBuffer.hpp"
+
 #include "Mesh.hpp"
 
 struct GlobalUniform
@@ -21,7 +23,7 @@ public:
 	Renderer(Vulkan::Device& device, const Vulkan::Swapchain& swapchain);
 	~Renderer();
 
-	void Render(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+	void Render(Vulkan::CommandBuffer& commandBuffer, uint32_t imageIndex);
 	void ResetImages();
 	void CreateImages();
 
@@ -41,7 +43,7 @@ private:
 	void CreatePipeline();
 	void CreateFramebuffers();
 
-	void RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+	void RecordCommandBuffer(Vulkan::CommandBuffer& commandBuffer, uint32_t imageIndex);
 
 };
 
