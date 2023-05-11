@@ -5,23 +5,10 @@ namespace Rendering
 
 	Frame::Frame(Vulkan::Device& device): device(device)
 	{
-		VkFenceCreateInfo fenceInfo{};
-		fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-		fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-
-		if (vkCreateFence(device.GetHandle(), &fenceInfo, nullptr, &renderFence) != VK_SUCCESS)
-		{
-
-			throw std::runtime_error("failed to create synchronization objects for a frame!");
-		}
-
+		commandPool = std::make_unique<Vulkan::CommandPool>(device);
 		acquireSemaphore = std::make_unique<Vulkan::Semaphore>(device);
 		renderFinishedSemaphore = std::make_unique<Vulkan::Semaphore>(device);
-	}
-
-	Frame::~Frame()
-	{
-		vkDestroyFence(device.GetHandle(), renderFence, nullptr);
+		renderFence = std::make_unique<Vulkan::Fence>(device);
 	}
 
 	Vulkan::Semaphore& Frame::GetAcquireSemaphore() const
@@ -34,34 +21,22 @@ namespace Rendering
 		return *renderFinishedSemaphore;
 	}
 
-	VkFence Frame::GetRenderFence() const
+	Vulkan::Fence& Frame::GetRenderFence() const
 	{
-		return renderFence;
+		return *renderFence;
 	}
 
 	void Frame::Reset()
 	{
-		vkWaitForFences(device.GetHandle(), 1, &renderFence, VK_TRUE, UINT64_MAX);
+		renderFence->Wait();
+		renderFence->Reset();
 
-		vkResetFences(device.GetHandle(), 1, &renderFence);
-		GetThreadCommandPool().Reset();
+		commandPool->Reset();
 	}
 
 	VkCommandBuffer Frame::RequestCommandBuffer()
 	{
-		return GetThreadCommandPool().RequestCommandBuffer();
+		return commandPool->RequestCommandBuffer();
 	}
-
-	Vulkan::CommandPool& Frame::GetThreadCommandPool()
-	{
-		thread_local Vulkan::CommandPool* threadCommandPool = nullptr;
-
-		if (threadCommandPool == nullptr) {
-			threadCommandPool = commandPools.emplace_back(std::make_unique<Vulkan::CommandPool>(device)).get();
-		}
-
-		return *threadCommandPool;
-	}
-
 	
 }

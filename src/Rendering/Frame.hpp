@@ -3,6 +3,7 @@
 #include <vulkan/vulkan.h>
 
 #include "Vulkan/Semaphore.hpp"
+#include "Vulkan/Fence.hpp"
 #include "Vulkan/CommandPool.hpp"
 #include "Vulkan/Device.hpp"
 
@@ -12,26 +13,21 @@ namespace Rendering
 	{
 	public:
 		Frame(Vulkan::Device& device);
-		~Frame();
+		~Frame() = default;
 
 		Vulkan::Semaphore& GetAcquireSemaphore() const;
 		Vulkan::Semaphore& GetRenderFinishedSemaphore() const;
-		VkFence GetRenderFence() const;
+		Vulkan::Fence& GetRenderFence() const;
 
 		void Reset();
 		VkCommandBuffer RequestCommandBuffer();
 
 	private:
-		Vulkan::CommandPool& GetThreadCommandPool();
-
 		Vulkan::Device& device;
 
+		std::unique_ptr<Vulkan::CommandPool> commandPool;
 		std::unique_ptr<Vulkan::Semaphore> acquireSemaphore;
 		std::unique_ptr<Vulkan::Semaphore> renderFinishedSemaphore;
-		std::vector<std::unique_ptr<Vulkan::CommandPool>> commandPools;
-
-		VkFence renderFence;
-
-		std::mutex mutex;
+		std::unique_ptr<Vulkan::Fence> renderFence;
 	};
 }

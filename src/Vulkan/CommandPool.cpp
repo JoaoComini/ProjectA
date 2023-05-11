@@ -50,11 +50,6 @@ namespace Vulkan
 	{
 		vkResetCommandPool(device.GetHandle(), handle, 0);
 
-		for (auto buffer : commandBuffers)
-		{
-			vkResetCommandBuffer(buffer, 0);
-		}
-
 		activeCommandBuffersCount = 0;
 	}
 }

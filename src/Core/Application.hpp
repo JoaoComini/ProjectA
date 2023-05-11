@@ -15,18 +15,18 @@
 #include <unordered_map>
 #include <iostream>
 
-#include "Window.hpp"
-#include "WindowSurface.hpp"
-
-#include "Rendering/Renderer.hpp"
-
 #include "Vulkan/Instance.hpp"
 #include "Vulkan/PhysicalDevice.hpp"
 #include "Vulkan/Device.hpp"
 #include "Vulkan/Swapchain.hpp"
 #include "Vulkan/Semaphore.hpp"
+#include "Vulkan/Semaphore.hpp"
 
+#include "Rendering/Renderer.hpp"
 #include "Rendering/Frame.hpp"
+
+#include "Window.hpp"
+#include "WindowSurface.hpp"
 
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
@@ -114,14 +114,14 @@ private:
 
 	void Render()
 	{
-		VkFence renderFence = frames[currentFrame]->GetRenderFence();
-		Vulkan::Semaphore &acquireSemaphore = frames[currentFrame]->GetAcquireSemaphore();
-		Vulkan::Semaphore &renderFinishedSemaphore = frames[currentFrame]->GetRenderFinishedSemaphore();
+		Vulkan::Fence& renderFence = frames[currentFrame]->GetRenderFence();
+		Vulkan::Semaphore& acquireSemaphore = frames[currentFrame]->GetAcquireSemaphore();
+		Vulkan::Semaphore& renderFinishedSemaphore = frames[currentFrame]->GetRenderFinishedSemaphore();
 
 		uint32_t imageIndex = swapchain->GetNextImageIndex(acquireSemaphore);
 
 		frames[currentFrame]->Reset();
-		
+
 		VkCommandBuffer commandBuffer = frames[currentFrame]->RequestCommandBuffer();
 
 		renderer->Render(commandBuffer, imageIndex);
@@ -140,7 +140,7 @@ private:
 		submitInfo.signalSemaphoreCount = 1;
 		submitInfo.pSignalSemaphores = signalSemaphores;
 
-		if (vkQueueSubmit(device->GetGraphicsQueue(), 1, &submitInfo, renderFence) != VK_SUCCESS)
+		if (vkQueueSubmit(device->GetGraphicsQueue(), 1, &submitInfo, renderFence.GetHandle()) != VK_SUCCESS)
 		{
 			throw std::runtime_error("failed to submit draw command buffer!");
 		}
@@ -155,7 +155,6 @@ private:
 		presentInfo.swapchainCount = 1;
 		presentInfo.pSwapchains = swapchains;
 		presentInfo.pImageIndices = &imageIndex;
-
 		presentInfo.pResults = nullptr; // Optional
 
 		auto result = vkQueuePresentKHR(device->GetPresentQueue(), &presentInfo);
@@ -177,7 +176,7 @@ private:
 	{
 		window->WaitForFocus();
 		device->WaitIdle();
-		
+
 		renderer->ResetImages();
 
 		auto size = window->GetFramebufferSize();
