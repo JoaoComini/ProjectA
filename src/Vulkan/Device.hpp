@@ -8,10 +8,10 @@
 #include <set>
 #include <stdexcept>
 
+#include "Resource.hpp"
 #include "PhysicalDevice.hpp"
 #include "Details.hpp"
 #include "Queue.hpp"
-#include "Resource.hpp"
 #include "CommandPool.hpp"
 
 namespace Vulkan
@@ -25,8 +25,8 @@ namespace Vulkan
 		void CopyBuffer(VkBuffer src, VkBuffer dest, uint32_t size);
 		void WaitIdle();
 
-		VkQueue GetPresentQueue() const;
-		VkQueue GetGraphicsQueue() const;
+		Queue& GetPresentQueue() const;
+		Queue& GetGraphicsQueue() const;
 
 		uint32_t GetGraphicsQueueFamilyIndex() const;
 		uint32_t GetPresentQueueFamilyIndex() const;
@@ -40,11 +40,8 @@ namespace Vulkan
 
 		VmaAllocator allocator;
 
-		VkQueue presentQueue;
-		VkQueue graphicsQueue;
-
-		uint32_t graphicsQueueFamilyIndex;
-		uint32_t presentQueueFamilyIndex;
+		std::unique_ptr<Queue> presentQueue;
+		std::unique_ptr<Queue> graphicsQueue;
 
 		const PhysicalDevice& physicalDevice;
 

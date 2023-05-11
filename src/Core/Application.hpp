@@ -130,19 +130,17 @@ private:
 		VkSemaphore signalSemaphores[] = { renderFinishedSemaphore.GetHandle() };
 		VkSemaphore waitSemaphores[] = { acquireSemaphore.GetHandle() };
 
-		VkCommandBuffer commandBuffers[] = { commandBuffer.GetHandle() };
-
 		VkSubmitInfo submitInfo{};
 		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 		submitInfo.waitSemaphoreCount = 1;
 		submitInfo.pWaitSemaphores = waitSemaphores;
 		submitInfo.pWaitDstStageMask = waitStages;
 		submitInfo.commandBufferCount = 1;
-		submitInfo.pCommandBuffers = commandBuffers;
+		submitInfo.pCommandBuffers = &commandBuffer.GetHandle();
 		submitInfo.signalSemaphoreCount = 1;
 		submitInfo.pSignalSemaphores = signalSemaphores;
 
-		if (vkQueueSubmit(device->GetGraphicsQueue(), 1, &submitInfo, renderFence.GetHandle()) != VK_SUCCESS)
+		if (vkQueueSubmit(device->GetGraphicsQueue().GetHandle(), 1, &submitInfo, renderFence.GetHandle()) != VK_SUCCESS)
 		{
 			throw std::runtime_error("failed to submit draw command buffer!");
 		}
@@ -159,7 +157,7 @@ private:
 		presentInfo.pImageIndices = &imageIndex;
 		presentInfo.pResults = nullptr; // Optional
 
-		auto result = vkQueuePresentKHR(device->GetPresentQueue(), &presentInfo);
+		auto result = vkQueuePresentKHR(device->GetPresentQueue().GetHandle(), &presentInfo);
 
 		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || windowHasResized)
 		{

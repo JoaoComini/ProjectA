@@ -23,7 +23,7 @@ namespace Vulkan
         PhysicalDevice() = default;
         PhysicalDevice(VkPhysicalDevice handle, VkSurfaceKHR surface);
 
-        uint32_t FindQueueIndex(QueueType type) const;
+        uint32_t FindQueueIndex(Queue::Type type) const;
         uint32_t FindPresentQueueIndex() const;
 
         SurfaceSupportDetails GetSurfaceSupportDetails() const;

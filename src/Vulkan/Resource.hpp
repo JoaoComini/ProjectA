@@ -10,7 +10,7 @@ namespace Vulkan
 		Resource(THandle handle = VK_NULL_HANDLE) : handle(handle) {}
 		virtual ~Resource() = default;
 
-		inline THandle GetHandle() const
+		inline const THandle &GetHandle() const
 		{
 			return handle;
 		}

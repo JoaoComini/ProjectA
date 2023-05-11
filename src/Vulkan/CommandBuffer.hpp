@@ -2,20 +2,35 @@
 
 #include <vulkan/vulkan.h>
 
-#include "Device.hpp"
 #include "Resource.hpp"
 
 namespace Vulkan
 {
 	class CommandPool;
+	class Device;
 
-	class CommandBuffer: public Resource<VkCommandBuffer>
+	class CommandBuffer : public Resource<VkCommandBuffer>
 	{
 	public:
-		CommandBuffer(const Device& device, const CommandPool& commandPool);
+		enum class Level
+		{
+			Primary,
+			Secondary
+		};
+
+		enum class BeginFlags
+		{
+			None = 0x0,
+			OneTimeSubmit = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+		};
+
+		CommandBuffer(const Device& device, const CommandPool& commandPool, const Level level = Level::Primary);
 		~CommandBuffer();
 
-		void Begin();
+		void Begin(BeginFlags flags = BeginFlags::None);
+		void End();
+		void Free();
+		void CopyBuffer(VkBuffer src, VkBuffer dst, uint32_t size);
 
 	private:
 		const Device& device;

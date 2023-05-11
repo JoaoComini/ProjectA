@@ -13,15 +13,15 @@ namespace Vulkan
         vkGetPhysicalDeviceQueueFamilyProperties(handle, &count, families.data());
     }
 
-    uint32_t PhysicalDevice::FindQueueIndex(QueueType type) const
+    uint32_t PhysicalDevice::FindQueueIndex(Queue::Type type) const
     {
         VkQueueFlagBits flag;
 
         switch (type)
         {
-        case Graphics:
+        case Queue::Type::Graphics:
             return FindFirstQueueIndex(VK_QUEUE_GRAPHICS_BIT);
-        case Present:
+        case Queue::Type::Present:
             return FindPresentQueueIndex();
         }
 
@@ -115,8 +115,8 @@ namespace Vulkan
 
     bool PhysicalDevicePicker::HasSuitableQueueFamily(PhysicalDevice device)
     {
-        bool hasGraphicsQueue = device.FindQueueIndex(QueueType::Graphics) != Details::QUEUE_INDEX_MAX_VALUE;
-        bool hasPresentQueue = device.FindQueueIndex(QueueType::Present) != Details::QUEUE_INDEX_MAX_VALUE;
+        bool hasGraphicsQueue = device.FindQueueIndex(Queue::Type::Graphics) != Details::QUEUE_INDEX_MAX_VALUE;
+        bool hasPresentQueue = device.FindQueueIndex(Queue::Type::Present) != Details::QUEUE_INDEX_MAX_VALUE;
 
         return hasGraphicsQueue && hasPresentQueue;
     }

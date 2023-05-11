@@ -1,11 +1,13 @@
 #include "Device.hpp"
 
+#include "CommandBuffer.hpp"
+
 namespace Vulkan
 {
 	Device::Device(const Instance& instance, const PhysicalDevice& physicalDevice) : physicalDevice(physicalDevice)
 	{
-		graphicsQueueFamilyIndex = physicalDevice.FindQueueIndex(QueueType::Graphics);
-		presentQueueFamilyIndex = physicalDevice.FindQueueIndex(QueueType::Present);
+		uint32_t graphicsQueueFamilyIndex = physicalDevice.FindQueueIndex(Queue::Type::Graphics);
+		uint32_t presentQueueFamilyIndex = physicalDevice.FindQueueIndex(Queue::Type::Present);
 
 		std::set<uint32_t> familyIndices = { graphicsQueueFamilyIndex, presentQueueFamilyIndex };
 
@@ -41,14 +43,14 @@ namespace Vulkan
 			throw std::runtime_error("failed to create logical device!");
 		}
 
-		vkGetDeviceQueue(handle, graphicsQueueFamilyIndex, 0, &graphicsQueue);
-		vkGetDeviceQueue(handle, presentQueueFamilyIndex, 0, &presentQueue);
+		graphicsQueue = std::make_unique<Queue>(*this, graphicsQueueFamilyIndex);
+		presentQueue = std::make_unique<Queue>(*this, presentQueueFamilyIndex);
 
 		const VmaAllocatorCreateInfo allocatorCreateInfo{
 			.physicalDevice = physicalDevice.handle,
 			.device = handle,
 			.instance = instance.GetHandle(),
-			.vulkanApiVersion = VK_API_VERSION_1_1,
+			.vulkanApiVersion = VK_API_VERSION_1_3,
 		};
 
 		if (const auto result = vmaCreateAllocator(&allocatorCreateInfo, &allocator); result != VK_SUCCESS)
@@ -72,60 +74,39 @@ namespace Vulkan
 		vkDeviceWaitIdle(handle);
 	}
 
-	void Device::CopyBuffer(VkBuffer src, VkBuffer dest, uint32_t size)
+	void Device::CopyBuffer(VkBuffer src, VkBuffer dst, uint32_t size)
 	{
-		VkCommandBufferAllocateInfo allocInfo{};
-		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		allocInfo.commandPool = commandPool->GetHandle();
-		allocInfo.commandBufferCount = 1;
+		CommandBuffer& commandBuffer = commandPool->RequestCommandBuffer();
 
-		VkCommandBuffer commandBuffer;
-		vkAllocateCommandBuffers(handle, &allocInfo, &commandBuffer);
+		commandBuffer.Begin(CommandBuffer::BeginFlags::OneTimeSubmit);
+		commandBuffer.CopyBuffer(src, dst, size);
+		commandBuffer.End();
 
-		VkCommandBufferBeginInfo beginInfo{};
-		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+		graphicsQueue->Submit(commandBuffer);
 
-		vkBeginCommandBuffer(commandBuffer, &beginInfo);
+		graphicsQueue->WaitIdle();
 
-		VkBufferCopy copy{};
-		copy.srcOffset = 0; // Optional
-		copy.dstOffset = 0; // Optional
-		copy.size = size;
-		vkCmdCopyBuffer(commandBuffer, src, dest, 1, &copy);
-
-		vkEndCommandBuffer(commandBuffer);
-
-		VkSubmitInfo submitInfo{};
-		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		submitInfo.commandBufferCount = 1;
-		submitInfo.pCommandBuffers = &commandBuffer;
-
-		vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-		vkQueueWaitIdle(graphicsQueue);
-
-		vkFreeCommandBuffers(handle, commandPool->GetHandle(), 1, &commandBuffer);
+		commandBuffer.Free();
 	}
 
-	VkQueue Device::GetGraphicsQueue() const
+	Queue& Device::GetGraphicsQueue() const
 	{
-		return graphicsQueue;
+		return *graphicsQueue;
 	}
 
-	VkQueue Device::GetPresentQueue() const
+	Queue& Device::GetPresentQueue() const
 	{
-		return presentQueue;
+		return *presentQueue;
 	}
 
 	uint32_t Device::GetGraphicsQueueFamilyIndex() const
 	{
-		return graphicsQueueFamilyIndex;
+		return graphicsQueue->GetFamilyIndex();
 	}
 
 	uint32_t Device::GetPresentQueueFamilyIndex() const
 	{
-		return presentQueueFamilyIndex;
+		return presentQueue->GetFamilyIndex();
 	}
 
 	VmaAllocator Device::GetAllocator() const
