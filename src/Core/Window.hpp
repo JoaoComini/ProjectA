@@ -15,26 +15,18 @@ struct FramebufferSize
 class Window
 {
 public:
-    Window(std::string name, int width, int height, void *userPointer, bool resizable);
+    Window(std::string name, int width, int height, bool resizable);
     ~Window();
 
     bool ShouldClose();
     void Update();
     void WaitForFocus();
 
-    FramebufferSize GetFramebufferSize();
+    FramebufferSize GetFramebufferSize() const;
     GLFWwindow *GetHandle() const;
-
-    template <class T>
-    T *GetUserPointer() { return static_cast<T *>(userPointer); }
-
-    void SetFramebufferSizeCallback(void (*callback)(Window *window, FramebufferSize size));
 
 private:
     GLFWwindow *handle;
-    void *userPointer = nullptr;
-
-    void (*framebufferSizeCallback)(Window *window, FramebufferSize size);
 
     friend class WindowBuilder;
 };
@@ -44,11 +36,9 @@ class WindowBuilder
 public:
     WindowBuilder Width(uint32_t width);
     WindowBuilder Height(uint32_t height);
-    WindowBuilder UserPointer(void *userPointer);
     std::unique_ptr<Window> Build();
 
 private:
     uint32_t width;
     uint32_t height;
-    void *userPointer = nullptr;
 };

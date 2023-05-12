@@ -69,7 +69,7 @@ namespace Vulkan
 		vkDestroyDevice(handle, nullptr);
 	}
 
-	void Device::WaitIdle()
+	void Device::WaitIdle() const
 	{
 		vkDeviceWaitIdle(handle);
 	}

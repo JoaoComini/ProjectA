@@ -1,6 +1,6 @@
 #include "Window.hpp"
 
-Window::Window(std::string name, int width, int height, void *userPointer, bool resizable) : userPointer(userPointer)
+Window::Window(std::string name, int width, int height, bool resizable)
 {
     glfwInit();
 
@@ -10,14 +10,6 @@ Window::Window(std::string name, int width, int height, void *userPointer, bool 
     handle = glfwCreateWindow(width, height, name.c_str(), nullptr, nullptr);
 
     glfwSetWindowUserPointer(handle, this);
-
-    auto lambda = [](GLFWwindow *window, int width, int height)
-    {
-        auto pointer = static_cast<Window *>(glfwGetWindowUserPointer(window));
-        pointer->framebufferSizeCallback(pointer, FramebufferSize{height, width});
-    };
-
-    glfwSetFramebufferSizeCallback(handle, lambda);
 }
 
 Window::~Window()
@@ -51,7 +43,7 @@ GLFWwindow *Window::GetHandle() const
     return handle;
 }
 
-FramebufferSize Window::GetFramebufferSize()
+FramebufferSize Window::GetFramebufferSize() const
 {
     FramebufferSize size;
     glfwGetFramebufferSize(handle, &size.width, &size.height);
@@ -59,15 +51,11 @@ FramebufferSize Window::GetFramebufferSize()
     return size;
 }
 
-void Window::SetFramebufferSizeCallback(void (*callback)(Window *window, FramebufferSize size))
-{
-    this->framebufferSizeCallback = callback;
-}
 
 std::unique_ptr<Window> WindowBuilder::Build()
 {
 
-    std::unique_ptr<Window> window = std::make_unique<Window>("Vulkan", width, height, userPointer, false);
+    std::unique_ptr<Window> window = std::make_unique<Window>("Vulkan", width, height, false);
 
     return window;
 }
@@ -81,11 +69,5 @@ WindowBuilder WindowBuilder::Width(uint32_t width)
 WindowBuilder WindowBuilder::Height(uint32_t height)
 {
     this->height = height;
-    return *this;
-}
-
-WindowBuilder WindowBuilder::UserPointer(void *userPointer)
-{
-    this->userPointer = userPointer;
     return *this;
 }

@@ -14,59 +14,58 @@
 namespace Vulkan
 {
 
-    class Swapchain: public Resource<VkSwapchainKHR>
-    {
-    public:
-        Swapchain(
-            const Device &device,
-            const Surface &surface,
-            int width,
-            int height);
+	class Swapchain : public Resource<VkSwapchainKHR>
+	{
+	public:
+		Swapchain(
+			const Device& device,
+			const Surface& surface,
+			int width,
+			int height);
 
-        ~Swapchain();
+		~Swapchain();
 
-        uint32_t AcquireNextImageIndex(const Semaphore& acquireSemaphore);
+		VkResult AcquireNextImageIndex(uint32_t& index, const Semaphore& acquireSemaphore);
 
-        void Recreate(int width, int height);
+		void Recreate(int width, int height);
 
-        VkFormat GetImageFormat() const;
-        VkExtent2D GetImageExtent() const;
-        std::vector<VkImageView> GetImageViews() const;
-        uint32_t GetImageCount() const;
+		VkFormat GetImageFormat() const;
+		VkExtent2D GetImageExtent() const;
+		std::vector<VkImageView> GetImageViews() const;
+		uint32_t GetImageCount() const;
 
+	private:
+		VkFormat imageFormat;
+		VkExtent2D imageExtent;
+		std::vector<Semaphore> semaphores;
 
-    private:
-        VkFormat imageFormat;
-        VkExtent2D imageExtent;
-        std::vector<Semaphore> semaphores;
+		const Device& device;
+		const Surface& surface;
 
-        const Device &device;
-        const Surface &surface;
+		std::vector<VkImage> images;
+		std::vector<VkImageView> imageViews;
 
-        std::vector<VkImage> images;
-        std::vector<VkImageView> imageViews;
+		void Setup(int width, int height, VkSwapchainKHR old = VK_NULL_HANDLE);
 
-        void Setup(int width, int height, VkSwapchainKHR old = VK_NULL_HANDLE);
+		void CreateImages();
+		void CreateImageViews();
 
-        void CreateImages();
-        void CreateImageViews();
+		friend class SwapchainBuilder;
+	};
 
-        friend class SwapchainBuilder;
-    };
+	class SwapchainBuilder
+	{
 
-    class SwapchainBuilder
-    {
+	public:
+		SwapchainBuilder() = default;
+		SwapchainBuilder DesiredWidth(int width);
+		SwapchainBuilder DesiredHeight(int height);
+		SwapchainBuilder MinImageCount(int minImageCount);
+		std::unique_ptr<Swapchain> Build(const Device& device, const Surface& surface);
 
-    public:
-        SwapchainBuilder() = default;
-        SwapchainBuilder DesiredWidth(int width);
-        SwapchainBuilder DesiredHeight(int height);
-        SwapchainBuilder MinImageCount(int minImageCount);
-        std::unique_ptr<Swapchain> Build(const Device &device, const Surface &surface);
-
-    private:
-        int desiredWidth;
-        int desiredHeight;
-        int minImageCount = 2;
-    };
+	private:
+		int desiredWidth;
+		int desiredHeight;
+		int minImageCount = 2;
+	};
 } // namespace Vulkan

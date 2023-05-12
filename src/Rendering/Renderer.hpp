@@ -4,6 +4,8 @@
 
 #include <glm/glm.hpp>
 
+#include "Core/Window.hpp"
+
 #include "Vulkan/Device.hpp"
 #include "Vulkan/Swapchain.hpp"
 #include "Vulkan/Image.hpp"
@@ -11,41 +13,49 @@
 #include "Vulkan/CommandBuffer.hpp"
 
 #include "Mesh.hpp"
+#include "Frame.hpp"
 
-struct GlobalUniform
+namespace Rendering
 {
-	glm::mat4 mvp;
-};
+	struct GlobalUniform
+	{
+		glm::mat4 mvp;
+	};
 
-class Renderer
-{
-public:
-	Renderer(Vulkan::Device& device, const Vulkan::Swapchain& swapchain);
-	~Renderer();
+	class Renderer
+	{
+	public:
+		Renderer(Vulkan::Device& device, const Vulkan::Surface& surface, const Window& window);
+		~Renderer();
 
-	void Init();
-	void Render(Vulkan::CommandBuffer& commandBuffer, uint32_t imageIndex);
+		void Render();
 
+		void ResetImages();
+		void CreateImages();
 
-	void ResetImages();
-	void CreateImages();
+	private:
+		void CreateRenderPass();
+		void CreatePipeline();
+		void CreateFramebuffers();
+		void RecordCommandBuffer(Vulkan::CommandBuffer& commandBuffer, uint32_t imageIndex);
+		bool RecreateSwapchain(bool force = false);
 
-private:
-	VkRenderPass renderPass;
-	VkPipelineLayout pipelineLayout;
-	VkPipeline pipeline;
-	std::vector<VkFramebuffer> framebuffers;
+	private:
+		uint32_t currentImageIndex = 0;
 
-	const Vulkan::Device& device;
-	const Vulkan::Swapchain& swapchain;
-	std::unique_ptr<Vulkan::Image> depthImage;
+		const Vulkan::Device& device;
+		const Vulkan::Surface& surface;
 
-	std::unique_ptr<Mesh> mesh;
+		std::unique_ptr<Vulkan::Swapchain> swapchain;
+		std::unique_ptr<Vulkan::Image> depthImage;
 
-	void CreateRenderPass();
-	void CreatePipeline();
-	void CreateFramebuffers();
+		std::vector<std::unique_ptr<Frame>> frames;
 
-	void RecordCommandBuffer(Vulkan::CommandBuffer& commandBuffer, uint32_t imageIndex);
+		VkRenderPass renderPass;
+		VkPipelineLayout pipelineLayout;
+		VkPipeline pipeline;
+		std::vector<VkFramebuffer> framebuffers;
 
-};
+		std::unique_ptr<Mesh> mesh;
+	};
+}

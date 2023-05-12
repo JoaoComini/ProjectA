@@ -23,7 +23,7 @@ namespace Vulkan
 		~Device();
 
 		void CopyBuffer(VkBuffer src, VkBuffer dest, uint32_t size);
-		void WaitIdle();
+		void WaitIdle() const;
 
 		Queue& GetPresentQueue() const;
 		Queue& GetGraphicsQueue() const;

@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "Instance.hpp"
+#include "Surface.hpp"
 #include "Queue.hpp"
 #include "Details.hpp"
 
@@ -21,7 +22,7 @@ namespace Vulkan
     {
     public:
         PhysicalDevice() = default;
-        PhysicalDevice(VkPhysicalDevice handle, VkSurfaceKHR surface);
+        PhysicalDevice(VkPhysicalDevice handle, const Surface &surface);
 
         uint32_t FindQueueIndex(Queue::Type type) const;
         uint32_t FindPresentQueueIndex() const;
@@ -32,7 +33,7 @@ namespace Vulkan
         uint32_t FindFirstQueueIndex(VkQueueFlagBits flag) const;
 
         VkPhysicalDevice handle;
-        VkSurfaceKHR surface;
+        const Surface& surface;
         std::vector<VkQueueFamilyProperties> families;
 
         friend class PhysicalDevicePicker;
@@ -45,7 +46,7 @@ namespace Vulkan
     public:
         virtual ~PhysicalDevicePicker() = default;
 
-        static PhysicalDevice PickBestSuitable(const Instance &instance, VkSurfaceKHR surface);
+        static std::unique_ptr<PhysicalDevice> PickBestSuitable(const Instance &instance, const Surface& surface);
 
     private:
         static bool IsDeviceSuitable(PhysicalDevice device);

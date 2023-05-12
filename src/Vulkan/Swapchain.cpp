@@ -165,21 +165,9 @@ namespace Vulkan
 		return images.size();
 	}
 
-	uint32_t Swapchain::AcquireNextImageIndex(const Semaphore& acquireSemaphore)
+	VkResult Swapchain::AcquireNextImageIndex(uint32_t& index, const Semaphore& acquireSemaphore)
 	{
-		uint32_t index;
-		auto result = vkAcquireNextImageKHR(device.GetHandle(), handle, UINT64_MAX, acquireSemaphore.GetHandle(), VK_NULL_HANDLE, &index);
-
-		if (result == VK_ERROR_OUT_OF_DATE_KHR)
-		{
-			Recreate(imageExtent.width, imageExtent.height);
-		}
-		else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
-		{
-			throw std::runtime_error("failed to acquire swap chain image!");
-		}
-
-		return index;
+		return vkAcquireNextImageKHR(device.GetHandle(), handle, UINT64_MAX, acquireSemaphore.GetHandle(), VK_NULL_HANDLE, &index);
 	}
 
 	SwapchainBuilder SwapchainBuilder::DesiredWidth(int width)

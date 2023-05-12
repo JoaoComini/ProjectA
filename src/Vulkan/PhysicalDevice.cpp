@@ -4,7 +4,7 @@
 
 namespace Vulkan
 {
-    PhysicalDevice::PhysicalDevice(VkPhysicalDevice handle, VkSurfaceKHR surface) : handle(handle), surface(surface)
+    PhysicalDevice::PhysicalDevice(VkPhysicalDevice handle, const Surface& surface) : handle(handle), surface(surface)
     {
         uint32_t count = 0;
         vkGetPhysicalDeviceQueueFamilyProperties(handle, &count, nullptr);
@@ -46,7 +46,7 @@ namespace Vulkan
         for (int i = 0; i < families.size(); i++)
         {
             VkBool32 supported = false;
-            vkGetPhysicalDeviceSurfaceSupportKHR(handle, i, surface, &supported);
+            vkGetPhysicalDeviceSurfaceSupportKHR(handle, i, surface.GetHandle(), &supported);
 
             if (supported)
             {
@@ -61,30 +61,30 @@ namespace Vulkan
     {
         SurfaceSupportDetails details;
 
-        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(handle, surface, &details.capabilities);
+        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(handle, surface.GetHandle(), &details.capabilities);
 
         uint32_t formatCount;
-        vkGetPhysicalDeviceSurfaceFormatsKHR(handle, surface, &formatCount, nullptr);
+        vkGetPhysicalDeviceSurfaceFormatsKHR(handle, surface.GetHandle(), &formatCount, nullptr);
 
         if (formatCount != 0)
         {
             details.formats.resize(formatCount);
-            vkGetPhysicalDeviceSurfaceFormatsKHR(handle, surface, &formatCount, details.formats.data());
+            vkGetPhysicalDeviceSurfaceFormatsKHR(handle, surface.GetHandle(), &formatCount, details.formats.data());
         }
 
         uint32_t presentModeCount;
-        vkGetPhysicalDeviceSurfacePresentModesKHR(handle, surface, &presentModeCount, nullptr);
+        vkGetPhysicalDeviceSurfacePresentModesKHR(handle, surface.GetHandle(), &presentModeCount, nullptr);
 
         if (presentModeCount != 0)
         {
             details.presentModes.resize(presentModeCount);
-            vkGetPhysicalDeviceSurfacePresentModesKHR(handle, surface, &presentModeCount, details.presentModes.data());
+            vkGetPhysicalDeviceSurfacePresentModesKHR(handle, surface.GetHandle(), &presentModeCount, details.presentModes.data());
         }
 
         return details;
     }
 
-    PhysicalDevice PhysicalDevicePicker::PickBestSuitable(const Instance &instance, VkSurfaceKHR surface)
+    std::unique_ptr<PhysicalDevice> PhysicalDevicePicker::PickBestSuitable(const Instance &instance, const Surface& surface)
     {
         uint32_t count = 0;
         vkEnumeratePhysicalDevices(instance.GetHandle(), &count, nullptr);
@@ -101,7 +101,7 @@ namespace Vulkan
             PhysicalDevice physicalDevice(device, surface);
             if (IsDeviceSuitable(physicalDevice))
             {
-                return physicalDevice;
+                return std::make_unique<PhysicalDevice>(std::move(physicalDevice));
             }
         }
 
@@ -144,13 +144,13 @@ namespace Vulkan
     {
         VkSurfaceCapabilitiesKHR capabilities;
 
-        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device.handle, device.surface, &capabilities);
+        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device.handle, device.surface.GetHandle(), &capabilities);
 
         uint32_t formatCount;
-        vkGetPhysicalDeviceSurfaceFormatsKHR(device.handle, device.surface, &formatCount, nullptr);
+        vkGetPhysicalDeviceSurfaceFormatsKHR(device.handle, device.surface.GetHandle(), &formatCount, nullptr);
 
         uint32_t presentModeCount;
-        vkGetPhysicalDeviceSurfacePresentModesKHR(device.handle, device.surface, &presentModeCount, nullptr);
+        vkGetPhysicalDeviceSurfacePresentModesKHR(device.handle, device.surface.GetHandle(), &presentModeCount, nullptr);
 
         return formatCount > 0 && presentModeCount > 0;
     }
