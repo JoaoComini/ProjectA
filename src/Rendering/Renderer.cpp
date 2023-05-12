@@ -43,6 +43,11 @@ void Renderer::CreateImages()
 	CreateFramebuffers();
 }
 
+void Renderer::Init()
+{
+
+}
+
 void Renderer::Render(Vulkan::CommandBuffer& commandBuffer, uint32_t imageIndex)
 {
 	RecordCommandBuffer(commandBuffer, imageIndex);

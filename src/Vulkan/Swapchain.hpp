@@ -21,17 +21,19 @@ namespace Vulkan
             const Device &device,
             const Surface &surface,
             int width,
-            int height,
-            int maxFramesInFlight);
+            int height);
 
         ~Swapchain();
+
+        uint32_t AcquireNextImageIndex(const Semaphore& acquireSemaphore);
 
         void Recreate(int width, int height);
 
         VkFormat GetImageFormat() const;
         VkExtent2D GetImageExtent() const;
         std::vector<VkImageView> GetImageViews() const;
-        uint32_t GetNextImageIndex(const Semaphore &acquireSemaphore);
+        uint32_t GetImageCount() const;
+
 
     private:
         VkFormat imageFormat;
@@ -43,8 +45,6 @@ namespace Vulkan
 
         std::vector<VkImage> images;
         std::vector<VkImageView> imageViews;
-
-        int maxFramesInFlight;
 
         void Setup(int width, int height, VkSwapchainKHR old = VK_NULL_HANDLE);
 
@@ -61,12 +61,12 @@ namespace Vulkan
         SwapchainBuilder() = default;
         SwapchainBuilder DesiredWidth(int width);
         SwapchainBuilder DesiredHeight(int height);
-        SwapchainBuilder MaxFramesInFlight(int maxFramesInFlight);
+        SwapchainBuilder MinImageCount(int minImageCount);
         std::unique_ptr<Swapchain> Build(const Device &device, const Surface &surface);
 
     private:
         int desiredWidth;
         int desiredHeight;
-        int maxFramesInFlight = 1;
+        int minImageCount = 2;
     };
 } // namespace Vulkan

@@ -3,7 +3,6 @@
 #include "Device.hpp"
 #include "CommandBuffer.hpp"
 
-
 namespace Vulkan
 {
 	CommandPool::CommandPool(Device &device) : device(device)

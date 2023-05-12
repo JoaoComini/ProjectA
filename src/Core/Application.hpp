@@ -30,7 +30,6 @@
 
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
-const int MAX_FRAMES_IN_FLIGHT = 2;
 
 class Application
 {
@@ -53,7 +52,7 @@ private:
 
 	std::vector<std::unique_ptr<Rendering::Frame>> frames;
 
-	uint32_t currentFrame = 0;
+	uint32_t currentImageIndex = 0;
 	bool windowHasResized = false;
 
 	void Init()
@@ -85,7 +84,7 @@ private:
 		swapchain = Vulkan::SwapchainBuilder()
 			.DesiredWidth(size.width)
 			.DesiredHeight(size.height)
-			.MaxFramesInFlight(MAX_FRAMES_IN_FLIGHT)
+			.MinImageCount(3)
 			.Build(*device, *surface);
 
 		renderer = std::make_unique<Renderer>(*device, *swapchain);
@@ -95,7 +94,7 @@ private:
 
 	void CreateFrames()
 	{
-		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+		for (size_t i = 0; i < swapchain->GetImageCount(); i++)
 		{
 			frames.emplace_back(std::make_unique<Rendering::Frame>(*device));
 		}
@@ -114,17 +113,18 @@ private:
 
 	void Render()
 	{
-		Vulkan::Fence& renderFence = frames[currentFrame]->GetRenderFence();
-		Vulkan::Semaphore& acquireSemaphore = frames[currentFrame]->GetAcquireSemaphore();
-		Vulkan::Semaphore& renderFinishedSemaphore = frames[currentFrame]->GetRenderFinishedSemaphore();
+		Vulkan::Semaphore& acquireSemaphore = frames[currentImageIndex]->RequestSemaphore();
 
-		uint32_t imageIndex = swapchain->GetNextImageIndex(acquireSemaphore);
+		currentImageIndex = swapchain->AcquireNextImageIndex(acquireSemaphore);
 
-		frames[currentFrame]->Reset();
+		frames[currentImageIndex]->Reset();
 
-		Vulkan::CommandBuffer& commandBuffer = frames[currentFrame]->RequestCommandBuffer();
+		Vulkan::Semaphore& renderFinishedSemaphore = frames[currentImageIndex]->RequestSemaphore();
+		Vulkan::Fence& renderFence = frames[currentImageIndex]->GetRenderFence();
 
-		renderer->Render(commandBuffer, imageIndex);
+		Vulkan::CommandBuffer& commandBuffer = frames[currentImageIndex]->RequestCommandBuffer();
+
+		renderer->Render(commandBuffer, currentImageIndex);
 
 		VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 		VkSemaphore signalSemaphores[] = { renderFinishedSemaphore.GetHandle() };
@@ -154,7 +154,7 @@ private:
 		VkSwapchainKHR swapchains[] = { swapchain->GetHandle() };
 		presentInfo.swapchainCount = 1;
 		presentInfo.pSwapchains = swapchains;
-		presentInfo.pImageIndices = &imageIndex;
+		presentInfo.pImageIndices = &currentImageIndex;
 		presentInfo.pResults = nullptr; // Optional
 
 		auto result = vkQueuePresentKHR(device->GetPresentQueue().GetHandle(), &presentInfo);
@@ -168,8 +168,6 @@ private:
 		{
 			throw std::runtime_error("failed to present swap chain image!");
 		}
-
-		currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 	}
 
 	void RecreateSwapchain()

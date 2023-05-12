@@ -23,7 +23,10 @@ public:
 	Renderer(Vulkan::Device& device, const Vulkan::Swapchain& swapchain);
 	~Renderer();
 
+	void Init();
 	void Render(Vulkan::CommandBuffer& commandBuffer, uint32_t imageIndex);
+
+
 	void ResetImages();
 	void CreateImages();
 
@@ -46,5 +49,3 @@ private:
 	void RecordCommandBuffer(Vulkan::CommandBuffer& commandBuffer, uint32_t imageIndex);
 
 };
-
-
