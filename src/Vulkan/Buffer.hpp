@@ -3,38 +3,39 @@
 #include <vulkan/vulkan.h>
 #include <vk_mem_alloc.h>
 
-#include "Device.hpp"
+#include <memory>
+
 #include "Resource.hpp"
 
 namespace Vulkan
 {
+	class Device;
 
-	enum AllocationCreateFlags : uint32_t
-	{
-		MAPPED = VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
-		MAPPED_BAR = VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT,
-	};
-
-	enum BufferUsageFlags : uint32_t
+	enum class BufferUsageFlags : uint32_t
 	{
 		VERTEX = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
 		INDEX = VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-		UNIFORM = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT
+		UNIFORM = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+		STAGING = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
 	};
 
 	class Buffer : public Resource<VkBuffer>
 	{
 	public:
-		Buffer(Device& device);
+		Buffer(Device& device, uint32_t size);
 		~Buffer();
 
 		void SetData(void* data, uint32_t size);
+		void Flush();
+		bool IsHostVisible();
 
 	private:
 		VmaAllocation allocation;
 		VmaAllocationInfo allocationInfo;
+		VkMemoryPropertyFlags propertyFlags;
 
 		Device& device;
+		uint32_t size;
 
 		friend class BufferBuilder;
 	};
@@ -45,20 +46,18 @@ namespace Vulkan
 		BufferBuilder() = default;
 		~BufferBuilder() = default;
 
-		BufferBuilder Data(void* data);
 		BufferBuilder Size(uint32_t size);
-
-		BufferBuilder AllocationCreate(AllocationCreateFlags allocationCreate);
+		BufferBuilder Persistent();
+		BufferBuilder AllowTransfer();
+		BufferBuilder SequentialWrite();
 		BufferBuilder BufferUsage(BufferUsageFlags bufferUsage);
 
 		std::unique_ptr<Buffer> Build(Device& device);
 
 	private:
-		void* data = nullptr;
-		uint32_t size;
-
-		AllocationCreateFlags allocationCreate;
-		BufferUsageFlags bufferUsage;
+		uint32_t size = 0;
+		BufferUsageFlags bufferUsage = BufferUsageFlags::VERTEX;
+		VmaAllocationCreateFlags allocationCreate = 0;
 	};
 
 } // namespace Vulkan

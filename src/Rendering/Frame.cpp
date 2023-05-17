@@ -8,6 +8,14 @@ namespace Rendering
 		commandPool = std::make_unique<Vulkan::CommandPool>(device);
 		semaphorePool = std::make_unique<Vulkan::SemaphorePool>(device);
 		renderFence = std::make_unique<Vulkan::Fence>(device);
+
+		uniformBuffer = Vulkan::BufferBuilder()
+			.Persistent()
+			.AllowTransfer()
+			.SequentialWrite()
+			.BufferUsage(Vulkan::BufferUsageFlags::UNIFORM)
+			.Size(sizeof(CameraUniform))
+			.Build(device);
 	}
 
 	Vulkan::Fence& Frame::GetRenderFence() const

@@ -17,9 +17,9 @@
 
 namespace Rendering
 {
-	struct GlobalUniform
+	struct ModelConstant
 	{
-		glm::mat4 mvp;
+		glm::mat4 model;
 	};
 
 	class Renderer
@@ -34,10 +34,11 @@ namespace Rendering
 		void CreateImages();
 
 	private:
+		void CreateDescriptors();
 		void CreateRenderPass();
 		void CreatePipeline();
 		void CreateFramebuffers();
-		void RecordCommandBuffer(Vulkan::CommandBuffer& commandBuffer, uint32_t imageIndex);
+		void RecordCommandBuffer(Vulkan::CommandBuffer& commandBuffer);
 		bool RecreateSwapchain(bool force = false);
 
 	private:
@@ -50,6 +51,9 @@ namespace Rendering
 		std::unique_ptr<Vulkan::Image> depthImage;
 
 		std::vector<std::unique_ptr<Frame>> frames;
+
+		VkDescriptorPool descriptorPool;
+		VkDescriptorSetLayout descriptorSetLayout;
 
 		VkRenderPass renderPass;
 		VkPipelineLayout pipelineLayout;

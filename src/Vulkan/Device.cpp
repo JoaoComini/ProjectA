@@ -74,18 +74,17 @@ namespace Vulkan
 		vkDeviceWaitIdle(handle);
 	}
 
-	void Device::CopyBuffer(VkBuffer src, VkBuffer dst, uint32_t size)
+	void Device::CopyBuffer(const Buffer& src, const Buffer& dst, uint32_t size)
 	{
 		CommandBuffer& commandBuffer = commandPool->RequestCommandBuffer();
 
 		commandBuffer.Begin(CommandBuffer::BeginFlags::OneTimeSubmit);
-		commandBuffer.CopyBuffer(src, dst, size);
+		commandBuffer.CopyBuffer(src.GetHandle(), dst.GetHandle(), size);
 		commandBuffer.End();
 
 		graphicsQueue->Submit(commandBuffer);
 
 		graphicsQueue->WaitIdle();
-
 		commandBuffer.Free();
 	}
 

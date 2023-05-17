@@ -24,14 +24,45 @@ namespace Rendering
 			.MinImageCount(3)
 			.Build(device, surface);
 
-		for (size_t i = 0; i < swapchain->GetImageCount(); i++)
-		{
-			frames.emplace_back(std::make_unique<Frame>(device));
-		}
-
+		CreateDescriptors();
 		CreateRenderPass();
 		CreatePipeline();
 		CreateImages();
+
+		for (size_t i = 0; i < swapchain->GetImageCount(); i++)
+		{
+			auto frame = std::make_unique<Frame>(device);
+
+			VkDescriptorSetAllocateInfo allocateInfo = {
+				.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+				.pNext = nullptr,
+				.descriptorPool = descriptorPool,
+				.descriptorSetCount = 1,
+				.pSetLayouts = &descriptorSetLayout,
+			};
+
+			vkAllocateDescriptorSets(device.GetHandle(), &allocateInfo, &frame->descriptorSet);
+
+			VkDescriptorBufferInfo bufferInfo = {
+				.buffer = frame->uniformBuffer->GetHandle(),
+				.offset = 0,
+				.range = sizeof(CameraUniform),
+			};
+
+			VkWriteDescriptorSet setWrite = {
+				.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+				.pNext = nullptr,
+				.dstSet = frame->descriptorSet,
+				.dstBinding = 0,
+				.descriptorCount = 1,
+				.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+				.pBufferInfo = &bufferInfo,
+			};
+
+			vkUpdateDescriptorSets(device.GetHandle(), 1, &setWrite, 0, nullptr);
+
+			frames.emplace_back(std::move(frame));
+		}
 	}
 
 	Renderer::~Renderer()
@@ -41,6 +72,8 @@ namespace Rendering
 		vkDestroyPipeline(device.GetHandle(), pipeline, nullptr);
 		vkDestroyPipelineLayout(device.GetHandle(), pipelineLayout, nullptr);
 		vkDestroyRenderPass(device.GetHandle(), renderPass, nullptr);
+		vkDestroyDescriptorSetLayout(device.GetHandle(), descriptorSetLayout, nullptr);
+		vkDestroyDescriptorPool(device.GetHandle(), descriptorPool, nullptr);
 	}
 
 	void Renderer::ResetImages()
@@ -117,7 +150,7 @@ namespace Rendering
 
 		Vulkan::CommandBuffer& commandBuffer = frames[currentImageIndex]->RequestCommandBuffer();
 
-		RecordCommandBuffer(commandBuffer, currentImageIndex);
+		RecordCommandBuffer(commandBuffer);
 
 		VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 		VkSemaphore signalSemaphores[] = { renderFinishedSemaphore.GetHandle() };
@@ -140,13 +173,10 @@ namespace Rendering
 
 		VkPresentInfoKHR presentInfo{};
 		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-
 		presentInfo.waitSemaphoreCount = 1;
 		presentInfo.pWaitSemaphores = signalSemaphores;
-
-		VkSwapchainKHR swapchains[] = { swapchain->GetHandle() };
 		presentInfo.swapchainCount = 1;
-		presentInfo.pSwapchains = swapchains;
+		presentInfo.pSwapchains = &swapchain->GetHandle();
 		presentInfo.pImageIndices = &currentImageIndex;
 		presentInfo.pResults = nullptr; // Optional
 
@@ -164,7 +194,7 @@ namespace Rendering
 		}
 	}
 
-	void Renderer::RecordCommandBuffer(Vulkan::CommandBuffer& commandBuffer, uint32_t imageIndex)
+	void Renderer::RecordCommandBuffer(Vulkan::CommandBuffer& commandBuffer)
 	{
 		VkExtent2D extent = swapchain->GetImageExtent();
 
@@ -173,7 +203,7 @@ namespace Rendering
 		VkRenderPassBeginInfo renderPassInfo{};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 		renderPassInfo.renderPass = renderPass;
-		renderPassInfo.framebuffer = framebuffers[imageIndex];
+		renderPassInfo.framebuffer = framebuffers[currentImageIndex];
 		renderPassInfo.renderArea.offset = { 0, 0 };
 		renderPassInfo.renderArea.extent = extent;
 
@@ -204,30 +234,70 @@ namespace Rendering
 		scissor.extent = extent;
 		vkCmdSetScissor(commandBuffer.GetHandle(), 0, 1, &scissor);
 
-		//static auto startTime = std::chrono::high_resolution_clock::now();
+		static auto startTime = std::chrono::high_resolution_clock::now();
 
-		//auto currentTime = std::chrono::high_resolution_clock::now();
-		//float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+		auto currentTime = std::chrono::high_resolution_clock::now();
+		float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
-		glm::mat4 model = glm::mat4(1.f);
-		glm::mat4 view = glm::translate(glm::mat4(1.f), glm::vec3(0.f, 0.f, -3.f));
-		glm::mat4 proj = glm::perspective(glm::radians(60.0f), (float)extent.width / (float)extent.height, 0.1f, 1000.0f);
-		proj[1][1] *= -1;
+		glm::mat4 view = glm::translate(glm::mat4(1.f), { 0.f, 0.f, -4.f });
+		glm::mat4 projection = glm::perspective(glm::radians(60.f), (float)extent.width / (float)extent.height, 0.1f, 200.0f);
+		projection[1][1] *= -1;
 
-		GlobalUniform ubo{
-			.mvp = proj * view * model,
+		CameraUniform uniform{
+			.view = view,
+			.projection = projection,
 		};
 
-		vkCmdPushConstants(commandBuffer.GetHandle(), pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(GlobalUniform), &ubo);
+		frames[currentImageIndex]->uniformBuffer->SetData(&uniform, sizeof(CameraUniform));
+
+		vkCmdBindDescriptorSets(commandBuffer.GetHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &frames[currentImageIndex]->descriptorSet, 0, nullptr);
+
+		ModelConstant constant{
+			.model = glm::mat4(1.f),
+		};
+
+		vkCmdPushConstants(commandBuffer.GetHandle(), pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(ModelConstant), &constant);
 
 		mesh->Draw(commandBuffer.GetHandle());
 
 		vkCmdEndRenderPass(commandBuffer.GetHandle());
 
-		if (vkEndCommandBuffer(commandBuffer.GetHandle()) != VK_SUCCESS)
+		commandBuffer.End();
+	}
+
+	void Renderer::CreateDescriptors()
+	{
+		VkDescriptorSetLayoutBinding uniformBufferBinding = {
+			.binding = 0,
+			.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+			.descriptorCount = 1,
+			.stageFlags = VK_SHADER_STAGE_VERTEX_BIT
+		};
+
+		VkDescriptorSetLayoutCreateInfo layoutCreateInfo = {
+			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+			.pNext = nullptr,
+			.flags = 0,
+			.bindingCount = 1,
+			.pBindings = &uniformBufferBinding
+		};
+
+		vkCreateDescriptorSetLayout(device.GetHandle(), &layoutCreateInfo, nullptr, &descriptorSetLayout);
+
+		std::vector<VkDescriptorPoolSize> sizes =
 		{
-			throw std::runtime_error("failed to record command buffer!");
-		}
+			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 10 }
+		};
+
+		VkDescriptorPoolCreateInfo poolCreateInfo = {
+			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+			.flags = 0,
+			.maxSets = 10,
+			.poolSizeCount = (uint32_t)sizes.size(),
+			.pPoolSizes = sizes.data()
+		};
+
+		vkCreateDescriptorPool(device.GetHandle(), &poolCreateInfo, nullptr, &descriptorPool);
 	}
 
 	void Renderer::CreateRenderPass()
@@ -332,7 +402,7 @@ namespace Rendering
 				.location = 0,
 				.binding = 0,
 				.format = VK_FORMAT_R32G32B32_SFLOAT,
-				.offset = 0,
+				.offset = offsetof(Vertex, position),
 			},
 			VkVertexInputAttributeDescription{
 				.location = 1,
@@ -427,15 +497,15 @@ namespace Rendering
 		VkPushConstantRange pushConstantRanges{
 			.stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
 			.offset = 0,
-			.size = sizeof(GlobalUniform),
+			.size = sizeof(ModelConstant),
 		};
 
 		VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		pipelineLayoutInfo.setLayoutCount = 0;
-		pipelineLayoutInfo.pSetLayouts = nullptr;
-		pipelineLayoutInfo.pushConstantRangeCount = 1;                // Optional
-		pipelineLayoutInfo.pPushConstantRanges = &pushConstantRanges; // Optional
+		pipelineLayoutInfo.setLayoutCount = 1;
+		pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
+		pipelineLayoutInfo.pushConstantRangeCount = 1;
+		pipelineLayoutInfo.pPushConstantRanges = &pushConstantRanges;
 
 		if (vkCreatePipelineLayout(device.GetHandle(), &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
 		{

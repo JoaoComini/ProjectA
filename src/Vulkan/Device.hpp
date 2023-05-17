@@ -13,6 +13,7 @@
 #include "Details.hpp"
 #include "Queue.hpp"
 #include "CommandPool.hpp"
+#include "Buffer.hpp"
 
 namespace Vulkan
 {
@@ -22,7 +23,7 @@ namespace Vulkan
 		Device(const Instance& instance, const PhysicalDevice& physicalDevice);
 		~Device();
 
-		void CopyBuffer(VkBuffer src, VkBuffer dest, uint32_t size);
+		void CopyBuffer(const Buffer& src, const Buffer& dest, uint32_t size);
 		void WaitIdle() const;
 
 		Queue& GetPresentQueue() const;
