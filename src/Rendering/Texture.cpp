@@ -24,6 +24,7 @@ namespace Rendering
 		staging->SetData(pixels, size);
 
 		image = std::make_unique<Vulkan::Image>(device, Vulkan::ImageUsage::SAMPLED, Vulkan::ImageFormat::RGBA32_SRGB, width, height);
+		imageView = std::make_unique<Vulkan::ImageView>(device, *image, Vulkan::ImageFormat::RGBA32_SRGB);
 
 		stbi_image_free(pixels);
 
@@ -32,8 +33,8 @@ namespace Rendering
 		device.SetImageLayout(*image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	}
 
-	Vulkan::Image& Texture::GetImage() const
+	Vulkan::ImageView& Texture::GetImageView() const
 	{
-		return *image;
+		return *imageView;
 	}
 }

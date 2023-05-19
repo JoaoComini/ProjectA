@@ -74,7 +74,7 @@ namespace Rendering
 
 			VkDescriptorImageInfo imageInfo = {
 				.sampler = sampler,
-				.imageView = texture->GetImage().GetView(),
+				.imageView = texture->GetImageView().GetHandle(),
 				.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 			};
 
@@ -130,6 +130,7 @@ namespace Rendering
 	{
 		VkExtent2D extent = swapchain->GetImageExtent();
 		depthImage = std::make_unique<Vulkan::Image>(device, Vulkan::ImageUsage::DEPTH_STENCIL, Vulkan::ImageFormat::D32_SFLOAT, extent.width, extent.height);
+		depthImageView = std::make_unique<Vulkan::ImageView>(device, *depthImage, Vulkan::ImageFormat::D32_SFLOAT);
 
 		CreateFramebuffers();
 	}
@@ -602,7 +603,7 @@ namespace Rendering
 
 		for (size_t i = 0; i < views.size(); i++)
 		{
-			VkImageView attachments[] = { views[i], depthImage->GetView() };
+			VkImageView attachments[] = { views[i], depthImageView->GetHandle() };
 
 			VkFramebufferCreateInfo framebufferInfo{};
 			framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;

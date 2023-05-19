@@ -25,13 +25,11 @@ namespace Vulkan
 	{
 	public:
 		Image(const Device& device, ImageUsage usage, ImageFormat format, uint32_t width, uint32_t height);
+		Image(const Device& device, VkImage handle);
 		~Image();
 
-		VkImageView GetView() const;
-
 	private:
-		VkImageView view;
-		VmaAllocation allocation;
+		VmaAllocation allocation = VK_NULL_HANDLE;
 
 		const Device& device;
 	};

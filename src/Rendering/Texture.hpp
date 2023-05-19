@@ -2,6 +2,7 @@
 
 #include "Vulkan/Device.hpp"
 #include "Vulkan/Image.hpp"
+#include "Vulkan/ImageView.hpp"
 
 namespace Rendering
 {
@@ -12,11 +13,12 @@ namespace Rendering
 		Texture(const Vulkan::Device& device, std::string path);
 		~Texture() = default;
 
-		Vulkan::Image& GetImage() const;
+		Vulkan::ImageView& GetImageView() const;
 
 	private:
 		const Vulkan::Device& device;
 		std::unique_ptr<Vulkan::Image> image;
+		std::unique_ptr<Vulkan::ImageView> imageView;
 	};
 
 }

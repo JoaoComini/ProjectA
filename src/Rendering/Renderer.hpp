@@ -9,6 +9,7 @@
 #include "Vulkan/Device.hpp"
 #include "Vulkan/Swapchain.hpp"
 #include "Vulkan/Image.hpp"
+#include "Vulkan/ImageView.hpp"
 #include "Vulkan/Buffer.hpp"
 #include "Vulkan/CommandBuffer.hpp"
 
@@ -50,6 +51,7 @@ namespace Rendering
 
 		std::unique_ptr<Vulkan::Swapchain> swapchain;
 		std::unique_ptr<Vulkan::Image> depthImage;
+		std::unique_ptr<Vulkan::ImageView> depthImageView;
 
 		std::vector<std::unique_ptr<Frame>> frames;
 
