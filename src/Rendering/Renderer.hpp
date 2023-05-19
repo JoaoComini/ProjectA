@@ -13,6 +13,7 @@
 #include "Vulkan/CommandBuffer.hpp"
 
 #include "Mesh.hpp"
+#include "Texture.hpp"
 #include "Frame.hpp"
 
 namespace Rendering
@@ -54,6 +55,7 @@ namespace Rendering
 
 		VkDescriptorPool descriptorPool;
 		VkDescriptorSetLayout descriptorSetLayout;
+		VkSampler sampler;
 
 		VkRenderPass renderPass;
 		VkPipelineLayout pipelineLayout;
@@ -61,5 +63,6 @@ namespace Rendering
 		std::vector<VkFramebuffer> framebuffers;
 
 		std::unique_ptr<Mesh> mesh;
+		std::unique_ptr<Texture> texture;
 	};
 }

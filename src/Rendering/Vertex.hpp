@@ -8,10 +8,11 @@ struct Vertex
     glm::vec3 position;
     glm::vec3 normal;
     glm::vec3 color;
+    glm::vec2 texCoord;
 
     bool operator==(const Vertex& other) const
     {
-        return position == other.position && color == other.color && normal == other.normal;
+        return position == other.position && color == other.color && normal == other.normal && texCoord == other.texCoord;
     }
 };
 

@@ -1,8 +1,10 @@
 #include "Image.hpp"
 
+#include "Device.hpp"
+
 namespace Vulkan
 {
-    Image::Image(const Device &device, uint32_t width, uint32_t height) : device(device)
+    Image::Image(const Device &device, ImageUsage usage, ImageFormat format, uint32_t width, uint32_t height) : device(device)
     {
         VkExtent3D extent = {
             width,
@@ -14,13 +16,14 @@ namespace Vulkan
             .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
             .pNext = nullptr,
             .imageType = VK_IMAGE_TYPE_2D,
-            .format = VK_FORMAT_D32_SFLOAT,
+            .format = static_cast<VkFormat>(format),
             .extent = extent,
             .mipLevels = 1,
             .arrayLayers = 1,
             .samples = VK_SAMPLE_COUNT_1_BIT,
             .tiling = VK_IMAGE_TILING_OPTIMAL,
-            .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+            .usage = static_cast<VkImageUsageFlags>(usage),
+            .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
         };
 
         VmaAllocationCreateInfo allocationCreateInfo{
@@ -31,14 +34,16 @@ namespace Vulkan
 
         vmaCreateImage(device.GetAllocator(), &createInfo, &allocationCreateInfo, &handle, &allocation, nullptr);
 
+        VkImageAspectFlags aspectMask = usage == ImageUsage::DEPTH_STENCIL ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
+
         VkImageViewCreateInfo viewCreateInfo = {
             .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
             .pNext = nullptr,
             .image = handle,
             .viewType = VK_IMAGE_VIEW_TYPE_2D,
-            .format = VK_FORMAT_D32_SFLOAT,
+            .format = static_cast<VkFormat>(format),
             .subresourceRange = {
-                .aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT,
+                .aspectMask = aspectMask,
                 .baseMipLevel = 0,
                 .levelCount = 1,
                 .baseArrayLayer = 0,

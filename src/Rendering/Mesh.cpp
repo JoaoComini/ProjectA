@@ -44,10 +44,14 @@ Mesh::Mesh(Vulkan::Device &device, std::string path)
             tinyobj::real_t ny = attrib.normals[3L * index.normal_index + 1];
             tinyobj::real_t nz = attrib.normals[3L * index.normal_index + 2];
 
+            tinyobj::real_t tx = attrib.texcoords[2L * index.texcoord_index + 0];
+            tinyobj::real_t ty = 1.f - attrib.texcoords[2L * index.texcoord_index + 1];
+
             Vertex vertex{
                 .position = {vx, vy, vz},
                 .normal = {nx, ny, nz},
-                .color = {nx, ny, nz},
+                .color = {1.0f, 1.0f, 1.0f},
+                .texCoord = {tx, ty},
             };
 
             if (uniques.count(vertex) == 0)

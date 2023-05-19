@@ -14,6 +14,7 @@
 #include "Queue.hpp"
 #include "CommandPool.hpp"
 #include "Buffer.hpp"
+#include "Image.hpp"
 
 namespace Vulkan
 {
@@ -24,6 +25,8 @@ namespace Vulkan
 		~Device();
 
 		void CopyBuffer(const Buffer& src, const Buffer& dest, uint32_t size);
+		void CopyBufferToImage(const Buffer& src, const Image& dest, uint32_t width, uint32_t height) const;
+		void SetImageLayout(const Image& image, VkImageLayout oldLayout, VkImageLayout newLayout) const;
 		void WaitIdle() const;
 
 		Queue& GetPresentQueue() const;
@@ -35,7 +38,8 @@ namespace Vulkan
 		VmaAllocator GetAllocator() const;
 
 		SurfaceSupportDetails GetSurfaceSupportDetails() const;
-
+		VkPhysicalDeviceProperties GetPhysicalDeviceProperties() const;
+ 
 	private:
 		std::unique_ptr<CommandPool> commandPool;
 

@@ -35,6 +35,7 @@ target_compile_definitions(ProjectA PUBLIC
     GLM_ENABLE_EXPERIMENTAL
     GLM_FORCE_DEPTH_ZERO_TO_ONE
     GLM_FORCE_RADIANS
+    STB_IMAGE_IMPLEMENTATION
 )
 
 set_target_properties(ProjectA VulkanMemoryAllocator PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON)

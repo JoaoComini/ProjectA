@@ -22,7 +22,7 @@ namespace Vulkan
 	class Buffer : public Resource<VkBuffer>
 	{
 	public:
-		Buffer(Device& device, uint32_t size);
+		Buffer(const Device& device, uint32_t size);
 		~Buffer();
 
 		void SetData(void* data, uint32_t size);
@@ -34,7 +34,7 @@ namespace Vulkan
 		VmaAllocationInfo allocationInfo;
 		VkMemoryPropertyFlags propertyFlags;
 
-		Device& device;
+		const Device& device;
 		uint32_t size;
 
 		friend class BufferBuilder;
@@ -52,7 +52,7 @@ namespace Vulkan
 		BufferBuilder SequentialWrite();
 		BufferBuilder BufferUsage(BufferUsageFlags bufferUsage);
 
-		std::unique_ptr<Buffer> Build(Device& device);
+		std::unique_ptr<Buffer> Build(const Device& device);
 
 	private:
 		uint32_t size = 0;

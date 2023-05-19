@@ -28,6 +28,7 @@ namespace Vulkan
         uint32_t FindPresentQueueIndex() const;
 
         SurfaceSupportDetails GetSurfaceSupportDetails() const;
+        VkPhysicalDeviceProperties GetProperties() const;
 
     private:
         uint32_t FindFirstQueueIndex(VkQueueFlagBits flag) const;

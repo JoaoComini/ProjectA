@@ -4,7 +4,7 @@
 
 namespace Vulkan
 {
-    Buffer::Buffer(Device &device, uint32_t size) : device(device), size(size)
+    Buffer::Buffer(const Device &device, uint32_t size) : device(device), size(size)
     {
     }
 
@@ -59,7 +59,7 @@ namespace Vulkan
         return *this;
     }
 
-    std::unique_ptr<Buffer> BufferBuilder::Build(Device &device)
+    std::unique_ptr<Buffer> BufferBuilder::Build(const Device &device)
     {
         VkBufferCreateInfo bufferCreateInfo{
             .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,

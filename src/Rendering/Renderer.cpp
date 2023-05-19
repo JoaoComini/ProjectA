@@ -3,9 +3,7 @@
 
 #include <array>
 
-
 #include "Vulkan/Shader.hpp"
-
 #include "Vertex.hpp"
 
 
@@ -14,7 +12,8 @@ namespace Rendering
 
 	Renderer::Renderer(Vulkan::Device& device, const Vulkan::Surface& surface, const Window& window) : device(device), surface(surface)
 	{
-		mesh = std::make_unique<Mesh>(device, "resources/models/monkey_smooth.obj");
+		mesh = std::make_unique<Mesh>(device, "resources/models/viking_room.obj");
+		texture = std::make_unique<Texture>(device, "resources/models/viking_room.png");
 
 		auto size = window.GetFramebufferSize();
 
@@ -28,6 +27,30 @@ namespace Rendering
 		CreateRenderPass();
 		CreatePipeline();
 		CreateImages();
+
+		auto properties = device.GetPhysicalDeviceProperties();
+
+		VkSamplerCreateInfo samplerInfo{};
+		samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+		samplerInfo.magFilter = VK_FILTER_LINEAR;
+		samplerInfo.minFilter = VK_FILTER_LINEAR;
+		samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+		samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+		samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+		samplerInfo.anisotropyEnable = VK_TRUE;
+		samplerInfo.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
+		samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+		samplerInfo.unnormalizedCoordinates = VK_FALSE;
+		samplerInfo.compareEnable = VK_FALSE;
+		samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+		samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+		samplerInfo.mipLodBias = 0.0f;
+		samplerInfo.minLod = 0.0f;
+		samplerInfo.maxLod = 0.0f;
+
+		if (vkCreateSampler(device.GetHandle(), &samplerInfo, nullptr, &sampler) != VK_SUCCESS) {
+			throw std::runtime_error("failed to create texture sampler!");
+		}
 
 		for (size_t i = 0; i < swapchain->GetImageCount(); i++)
 		{
@@ -49,9 +72,14 @@ namespace Rendering
 				.range = sizeof(CameraUniform),
 			};
 
-			VkWriteDescriptorSet setWrite = {
+			VkDescriptorImageInfo imageInfo = {
+				.sampler = sampler,
+				.imageView = texture->GetImage().GetView(),
+				.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+			};
+
+			VkWriteDescriptorSet uniformBufferWrite = {
 				.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-				.pNext = nullptr,
 				.dstSet = frame->descriptorSet,
 				.dstBinding = 0,
 				.descriptorCount = 1,
@@ -59,7 +87,18 @@ namespace Rendering
 				.pBufferInfo = &bufferInfo,
 			};
 
-			vkUpdateDescriptorSets(device.GetHandle(), 1, &setWrite, 0, nullptr);
+			VkWriteDescriptorSet samplerWrite = {
+				.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+				.dstSet = frame->descriptorSet,
+				.dstBinding = 1,
+				.descriptorCount = 1,
+				.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+				.pImageInfo = &imageInfo,
+			};
+
+			std::array<VkWriteDescriptorSet, 2> writes{ uniformBufferWrite, samplerWrite };
+
+			vkUpdateDescriptorSets(device.GetHandle(), writes.size(), writes.data(), 0, nullptr);
 
 			frames.emplace_back(std::move(frame));
 		}
@@ -74,6 +113,7 @@ namespace Rendering
 		vkDestroyRenderPass(device.GetHandle(), renderPass, nullptr);
 		vkDestroyDescriptorSetLayout(device.GetHandle(), descriptorSetLayout, nullptr);
 		vkDestroyDescriptorPool(device.GetHandle(), descriptorPool, nullptr);
+		vkDestroySampler(device.GetHandle(), sampler, nullptr);
 	}
 
 	void Renderer::ResetImages()
@@ -89,7 +129,7 @@ namespace Rendering
 	void Renderer::CreateImages()
 	{
 		VkExtent2D extent = swapchain->GetImageExtent();
-		depthImage = std::make_unique<Vulkan::Image>(device, extent.width, extent.height);
+		depthImage = std::make_unique<Vulkan::Image>(device, Vulkan::ImageUsage::DEPTH_STENCIL, Vulkan::ImageFormat::D32_SFLOAT, extent.width, extent.height);
 
 		CreateFramebuffers();
 	}
@@ -239,8 +279,8 @@ namespace Rendering
 		auto currentTime = std::chrono::high_resolution_clock::now();
 		float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
-		glm::mat4 view = glm::translate(glm::mat4(1.f), { 0.f, 0.f, -4.f });
-		glm::mat4 projection = glm::perspective(glm::radians(60.f), (float)extent.width / (float)extent.height, 0.1f, 200.0f);
+		glm::mat4 view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+		glm::mat4 projection = glm::perspective(glm::radians(45.f), (float)extent.width / (float)extent.height, 0.1f, 200.0f);
 		projection[1][1] *= -1;
 
 		CameraUniform uniform{
@@ -253,7 +293,7 @@ namespace Rendering
 		vkCmdBindDescriptorSets(commandBuffer.GetHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &frames[currentImageIndex]->descriptorSet, 0, nullptr);
 
 		ModelConstant constant{
-			.model = glm::mat4(1.f),
+			.model = glm::rotate(glm::mat4(1.f), glm::radians(30.f) * time, glm::vec3(0.f, 0.f, 1.f)),
 		};
 
 		vkCmdPushConstants(commandBuffer.GetHandle(), pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(ModelConstant), &constant);
@@ -274,24 +314,34 @@ namespace Rendering
 			.stageFlags = VK_SHADER_STAGE_VERTEX_BIT
 		};
 
+		VkDescriptorSetLayoutBinding samplerBinding = {
+			.binding = 1,
+			.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+			.descriptorCount = 1,
+			.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+			.pImmutableSamplers = nullptr,
+		};
+
+		std::array<VkDescriptorSetLayoutBinding, 2> bindings = { uniformBufferBinding, samplerBinding };
+
 		VkDescriptorSetLayoutCreateInfo layoutCreateInfo = {
 			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
 			.pNext = nullptr,
 			.flags = 0,
-			.bindingCount = 1,
-			.pBindings = &uniformBufferBinding
+			.bindingCount = bindings.size(),
+			.pBindings = bindings.data()
 		};
 
 		vkCreateDescriptorSetLayout(device.GetHandle(), &layoutCreateInfo, nullptr, &descriptorSetLayout);
 
 		std::vector<VkDescriptorPoolSize> sizes =
 		{
-			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 10 }
+			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 10 },
+			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 10}
 		};
 
 		VkDescriptorPoolCreateInfo poolCreateInfo = {
 			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-			.flags = 0,
 			.maxSets = 10,
 			.poolSizeCount = (uint32_t)sizes.size(),
 			.pPoolSizes = sizes.data()
@@ -397,7 +447,7 @@ namespace Rendering
 		dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
 		dynamicState.pDynamicStates = dynamicStates.data();
 
-		std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions = {
+		std::array<VkVertexInputAttributeDescription, 4> attributeDescriptions = {
 			VkVertexInputAttributeDescription{
 				.location = 0,
 				.binding = 0,
@@ -415,6 +465,12 @@ namespace Rendering
 				.binding = 0,
 				.format = VK_FORMAT_R32G32B32_SFLOAT,
 				.offset = offsetof(Vertex, color),
+			},
+			VkVertexInputAttributeDescription{
+				.location = 3,
+				.binding = 0,
+				.format = VK_FORMAT_R32G32_SFLOAT,
+				.offset = offsetof(Vertex, texCoord),
 			},
 		};
 

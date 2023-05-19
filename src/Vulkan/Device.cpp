@@ -24,7 +24,9 @@ namespace Vulkan
 			queueCreateInfos.push_back(queueCreateInfo);
 		}
 
-		VkPhysicalDeviceFeatures deviceFeatures{};
+		VkPhysicalDeviceFeatures deviceFeatures{
+			.samplerAnisotropy = VK_TRUE,
+		};
 
 		const std::vector<const char*> extensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
@@ -83,9 +85,31 @@ namespace Vulkan
 		commandBuffer.End();
 
 		graphicsQueue->Submit(commandBuffer);
-
 		graphicsQueue->WaitIdle();
-		commandBuffer.Free();
+	}
+
+	void Device::CopyBufferToImage(const Buffer& src, const Image& dest, uint32_t width, uint32_t height) const
+	{
+		CommandBuffer& commandBuffer = commandPool->RequestCommandBuffer();
+
+		commandBuffer.Begin(CommandBuffer::BeginFlags::OneTimeSubmit);
+		commandBuffer.CopyBufferToImage(src.GetHandle(), dest.GetHandle(), width, height);
+		commandBuffer.End();
+
+		graphicsQueue->Submit(commandBuffer);
+		graphicsQueue->WaitIdle();
+	}
+
+	void Device::SetImageLayout(const Image& image, VkImageLayout oldLayout, VkImageLayout newLayout) const
+	{
+		CommandBuffer& commandBuffer = commandPool->RequestCommandBuffer();
+
+		commandBuffer.Begin(CommandBuffer::BeginFlags::OneTimeSubmit);
+		commandBuffer.SetImageLayout(image.GetHandle(), oldLayout, newLayout);
+		commandBuffer.End();
+
+		graphicsQueue->Submit(commandBuffer);
+		graphicsQueue->WaitIdle();
 	}
 
 	Queue& Device::GetGraphicsQueue() const
@@ -116,5 +140,10 @@ namespace Vulkan
 	SurfaceSupportDetails Device::GetSurfaceSupportDetails() const
 	{
 		return physicalDevice.GetSurfaceSupportDetails();
+	}
+
+	VkPhysicalDeviceProperties Device::GetPhysicalDeviceProperties() const
+	{
+		return physicalDevice.GetProperties();
 	}
 }

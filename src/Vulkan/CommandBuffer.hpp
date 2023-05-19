@@ -31,6 +31,8 @@ namespace Vulkan
 		void End();
 		void Free();
 		void CopyBuffer(VkBuffer src, VkBuffer dst, uint32_t size);
+		void CopyBufferToImage(VkBuffer src, VkImage dst, uint32_t width, uint32_t height);
+		void SetImageLayout(VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout);
 
 	private:
 		const Device& device;
