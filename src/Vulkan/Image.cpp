@@ -4,7 +4,7 @@
 
 namespace Vulkan
 {
-    Image::Image(const Device &device, ImageUsage usage, ImageFormat format, uint32_t width, uint32_t height) : device(device)
+    Image::Image(const Device &device, VkImageUsageFlags usage, VkFormat format, uint32_t width, uint32_t height) : device(device), format(format)
     {
         VkExtent3D extent = {
             width,
@@ -16,13 +16,13 @@ namespace Vulkan
             .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
             .pNext = nullptr,
             .imageType = VK_IMAGE_TYPE_2D,
-            .format = static_cast<VkFormat>(format),
+            .format = format,
             .extent = extent,
             .mipLevels = 1,
             .arrayLayers = 1,
             .samples = VK_SAMPLE_COUNT_1_BIT,
             .tiling = VK_IMAGE_TILING_OPTIMAL,
-            .usage = static_cast<VkImageUsageFlags>(usage),
+            .usage = usage,
             .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
         };
 
@@ -35,7 +35,7 @@ namespace Vulkan
         vmaCreateImage(device.GetAllocator(), &createInfo, &allocationCreateInfo, &handle, &allocation, nullptr);
     }
 
-    Image::Image(const Device& device, VkImage handle) : device(device), Resource(handle)
+    Image::Image(const Device& device, VkImage handle, VkFormat format) : device(device), Resource(handle), format(format)
     {
     }
 
@@ -47,6 +47,11 @@ namespace Vulkan
         }
 
         vmaDestroyImage(device.GetAllocator(), handle, allocation);
+    }
+
+    VkFormat Image::GetFormat() const
+    {
+        return format;
     }
 
 } // namespace Vulkan

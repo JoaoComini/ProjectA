@@ -5,7 +5,7 @@
 
 namespace Vulkan
 {
-	CommandPool::CommandPool(Device &device) : device(device)
+	CommandPool::CommandPool(const Device &device) : device(device)
 	{
 		VkCommandPoolCreateInfo poolCreateInfo{};
 		poolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;

@@ -12,6 +12,7 @@
 #include "Vulkan/ImageView.hpp"
 #include "Vulkan/Buffer.hpp"
 #include "Vulkan/CommandBuffer.hpp"
+#include "Vulkan/Framebuffer.hpp"
 
 #include "Mesh.hpp"
 #include "Texture.hpp"
@@ -32,14 +33,14 @@ namespace Rendering
 
 		void Render();
 
-		void ResetImages();
-		void CreateImages();
-
 	private:
 		void CreateDescriptors();
 		void CreateRenderPass();
 		void CreatePipeline();
+		void CreateSampler();
+		void CreateFrames();
 		void CreateFramebuffers();
+
 		void RecordCommandBuffer(Vulkan::CommandBuffer& commandBuffer);
 		bool RecreateSwapchain(bool force = false);
 
@@ -50,10 +51,9 @@ namespace Rendering
 		const Vulkan::Surface& surface;
 
 		std::unique_ptr<Vulkan::Swapchain> swapchain;
-		std::unique_ptr<Vulkan::Image> depthImage;
-		std::unique_ptr<Vulkan::ImageView> depthImageView;
 
 		std::vector<std::unique_ptr<Frame>> frames;
+		std::vector<std::unique_ptr<Vulkan::Framebuffer>> framebuffers;
 
 		VkDescriptorPool descriptorPool;
 		VkDescriptorSetLayout descriptorSetLayout;
@@ -62,7 +62,6 @@ namespace Rendering
 		VkRenderPass renderPass;
 		VkPipelineLayout pipelineLayout;
 		VkPipeline pipeline;
-		std::vector<VkFramebuffer> framebuffers;
 
 		std::unique_ptr<Mesh> mesh;
 		std::unique_ptr<Texture> texture;

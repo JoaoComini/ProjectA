@@ -12,6 +12,8 @@
 #include "Vulkan/Device.hpp"
 #include "Vulkan/Buffer.hpp"
 
+#include "Target.hpp"
+
 namespace Rendering
 {
 	struct CameraUniform
@@ -23,7 +25,7 @@ namespace Rendering
 	class Frame
 	{
 	public:
-		Frame(Vulkan::Device& device);
+		Frame(const Vulkan::Device& device, std::unique_ptr<Target> target);
 		~Frame() = default;
 
 		Vulkan::Fence& GetRenderFence() const;
@@ -32,15 +34,19 @@ namespace Rendering
 		Vulkan::CommandBuffer& RequestCommandBuffer();
 		Vulkan::Semaphore& RequestSemaphore();
 
+		void SetTarget(std::unique_ptr<Target> target);
+		Target& GetTarget() const;
 
 		std::unique_ptr<Vulkan::Buffer> uniformBuffer;
 		VkDescriptorSet descriptorSet;
 
 	private:
-		Vulkan::Device& device;
+		const Vulkan::Device& device;
 
 		std::unique_ptr<Vulkan::CommandPool> commandPool;
 		std::unique_ptr<Vulkan::SemaphorePool> semaphorePool;
 		std::unique_ptr<Vulkan::Fence> renderFence;
+
+		std::unique_ptr<Target> target;
 	};
 }

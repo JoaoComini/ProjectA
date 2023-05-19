@@ -31,13 +31,12 @@ namespace Vulkan
 
 		VkFormat GetImageFormat() const;
 		VkExtent2D GetImageExtent() const;
-		std::vector<VkImageView> GetImageViews() const;
+		std::vector<VkImage> GetImages() const;
 		uint32_t GetImageCount() const;
 
 	private:
 		VkFormat imageFormat;
 		VkExtent2D imageExtent;
-		std::vector<Semaphore> semaphores;
 
 		const Device& device;
 		const Surface& surface;

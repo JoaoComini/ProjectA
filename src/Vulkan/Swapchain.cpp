@@ -10,12 +10,6 @@ namespace Vulkan
 		int height) : device(device), surface(surface)
 	{
 		Setup(width, height);
-
-		semaphores.reserve(GetImageCount());
-		for (uint32_t i = 0; i < GetImageCount(); i++)
-		{
-			semaphores.emplace_back(device);
-		}
 	}
 
 	void Swapchain::Setup(int width, int height, VkSwapchainKHR oldHandle)
@@ -155,9 +149,9 @@ namespace Vulkan
 		return imageExtent;
 	}
 
-	std::vector<VkImageView> Swapchain::GetImageViews() const
+	std::vector<VkImage> Swapchain::GetImages() const
 	{
-		return imageViews;
+		return images;
 	}
 
 	uint32_t Swapchain::GetImageCount() const

@@ -26,136 +26,19 @@ namespace Rendering
 		CreateDescriptors();
 		CreateRenderPass();
 		CreatePipeline();
-		CreateImages();
-
-		auto properties = device.GetPhysicalDeviceProperties();
-
-		VkSamplerCreateInfo samplerInfo{};
-		samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-		samplerInfo.magFilter = VK_FILTER_LINEAR;
-		samplerInfo.minFilter = VK_FILTER_LINEAR;
-		samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-		samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-		samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-		samplerInfo.anisotropyEnable = VK_TRUE;
-		samplerInfo.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
-		samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
-		samplerInfo.unnormalizedCoordinates = VK_FALSE;
-		samplerInfo.compareEnable = VK_FALSE;
-		samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
-		samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-		samplerInfo.mipLodBias = 0.0f;
-		samplerInfo.minLod = 0.0f;
-		samplerInfo.maxLod = 0.0f;
-
-		if (vkCreateSampler(device.GetHandle(), &samplerInfo, nullptr, &sampler) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create texture sampler!");
-		}
-
-		for (size_t i = 0; i < swapchain->GetImageCount(); i++)
-		{
-			auto frame = std::make_unique<Frame>(device);
-
-			VkDescriptorSetAllocateInfo allocateInfo = {
-				.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-				.pNext = nullptr,
-				.descriptorPool = descriptorPool,
-				.descriptorSetCount = 1,
-				.pSetLayouts = &descriptorSetLayout,
-			};
-
-			vkAllocateDescriptorSets(device.GetHandle(), &allocateInfo, &frame->descriptorSet);
-
-			VkDescriptorBufferInfo bufferInfo = {
-				.buffer = frame->uniformBuffer->GetHandle(),
-				.offset = 0,
-				.range = sizeof(CameraUniform),
-			};
-
-			VkDescriptorImageInfo imageInfo = {
-				.sampler = sampler,
-				.imageView = texture->GetImageView().GetHandle(),
-				.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-			};
-
-			VkWriteDescriptorSet uniformBufferWrite = {
-				.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-				.dstSet = frame->descriptorSet,
-				.dstBinding = 0,
-				.descriptorCount = 1,
-				.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-				.pBufferInfo = &bufferInfo,
-			};
-
-			VkWriteDescriptorSet samplerWrite = {
-				.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-				.dstSet = frame->descriptorSet,
-				.dstBinding = 1,
-				.descriptorCount = 1,
-				.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-				.pImageInfo = &imageInfo,
-			};
-
-			std::array<VkWriteDescriptorSet, 2> writes{ uniformBufferWrite, samplerWrite };
-
-			vkUpdateDescriptorSets(device.GetHandle(), writes.size(), writes.data(), 0, nullptr);
-
-			frames.emplace_back(std::move(frame));
-		}
+		CreateSampler();
+		CreateFrames();
+		CreateFramebuffers();
 	}
 
 	Renderer::~Renderer()
 	{
-		ResetImages();
-
 		vkDestroyPipeline(device.GetHandle(), pipeline, nullptr);
 		vkDestroyPipelineLayout(device.GetHandle(), pipelineLayout, nullptr);
 		vkDestroyRenderPass(device.GetHandle(), renderPass, nullptr);
 		vkDestroyDescriptorSetLayout(device.GetHandle(), descriptorSetLayout, nullptr);
 		vkDestroyDescriptorPool(device.GetHandle(), descriptorPool, nullptr);
 		vkDestroySampler(device.GetHandle(), sampler, nullptr);
-	}
-
-	void Renderer::ResetImages()
-	{
-		for (auto framebuffer : framebuffers)
-		{
-			vkDestroyFramebuffer(device.GetHandle(), framebuffer, nullptr);
-		}
-
-		depthImage.reset();
-	}
-
-	void Renderer::CreateImages()
-	{
-		VkExtent2D extent = swapchain->GetImageExtent();
-		depthImage = std::make_unique<Vulkan::Image>(device, Vulkan::ImageUsage::DEPTH_STENCIL, Vulkan::ImageFormat::D32_SFLOAT, extent.width, extent.height);
-		depthImageView = std::make_unique<Vulkan::ImageView>(device, *depthImage, Vulkan::ImageFormat::D32_SFLOAT);
-
-		CreateFramebuffers();
-	}
-
-	bool Renderer::RecreateSwapchain(bool force)
-	{
-		auto details = device.GetSurfaceSupportDetails();
-
-		VkExtent2D currentExtent = details.capabilities.currentExtent;
-		VkExtent2D swapchainExtent = swapchain->GetImageExtent();
-
-		if (currentExtent.width != swapchainExtent.width || currentExtent.height != swapchainExtent.height || force)
-		{
-			device.WaitIdle();
-
-			ResetImages();
-
-			swapchain->Recreate(currentExtent.width, currentExtent.height);
-
-			CreateImages();
-
-			return true;
-		}
-
-		return false;
 	}
 
 	void Renderer::Render()
@@ -235,6 +118,49 @@ namespace Rendering
 		}
 	}
 
+	bool Renderer::RecreateSwapchain(bool force)
+	{
+		auto details = device.GetSurfaceSupportDetails();
+
+		VkExtent2D currentExtent = details.capabilities.currentExtent;
+		VkExtent2D swapchainExtent = swapchain->GetImageExtent();
+
+		if (currentExtent.width == swapchainExtent.width && currentExtent.height == swapchainExtent.height && !force)
+		{
+			return false;
+		}
+
+		device.WaitIdle();
+
+		swapchain->Recreate(currentExtent.width, currentExtent.height);
+
+		VkExtent2D extent = swapchain->GetImageExtent();
+		VkFormat format = swapchain->GetImageFormat();
+
+		auto frameIterator = frames.begin();
+
+		for (auto& image : swapchain->GetImages())
+		{
+			auto swapchainImage = std::make_unique<Vulkan::Image>(device, image, format);
+
+			auto target = TargetBuilder()
+				.Extent(extent)
+				.AddImage(std::move(swapchainImage))
+				.EnableDepthStencil()
+				.Build(device);
+
+			(*frameIterator)->SetTarget(std::move(target));
+
+			frameIterator++;
+		}
+
+		framebuffers.clear();
+
+		CreateFramebuffers();
+
+		return true;
+	}
+
 	void Renderer::RecordCommandBuffer(Vulkan::CommandBuffer& commandBuffer)
 	{
 		VkExtent2D extent = swapchain->GetImageExtent();
@@ -244,7 +170,7 @@ namespace Rendering
 		VkRenderPassBeginInfo renderPassInfo{};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 		renderPassInfo.renderPass = renderPass;
-		renderPassInfo.framebuffer = framebuffers[currentImageIndex];
+		renderPassInfo.framebuffer = framebuffers[currentImageIndex]->GetHandle();
 		renderPassInfo.renderArea.offset = { 0, 0 };
 		renderPassInfo.renderArea.extent = extent;
 
@@ -294,7 +220,7 @@ namespace Rendering
 		vkCmdBindDescriptorSets(commandBuffer.GetHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &frames[currentImageIndex]->descriptorSet, 0, nullptr);
 
 		ModelConstant constant{
-			.model = glm::rotate(glm::mat4(1.f), glm::radians(30.f) * time, glm::vec3(0.f, 0.f, 1.f)),
+			.model = glm::rotate(glm::mat4(1.f), glm::radians(30.f) * 0.f, glm::vec3(0.f, 0.f, 1.f)),
 		};
 
 		vkCmdPushConstants(commandBuffer.GetHandle(), pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(ModelConstant), &constant);
@@ -593,31 +519,105 @@ namespace Rendering
 		}
 	}
 
+	void Renderer::CreateSampler()
+	{
+		auto properties = device.GetPhysicalDeviceProperties();
+
+		VkSamplerCreateInfo samplerInfo{};
+		samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+		samplerInfo.magFilter = VK_FILTER_LINEAR;
+		samplerInfo.minFilter = VK_FILTER_LINEAR;
+		samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+		samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+		samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+		samplerInfo.anisotropyEnable = VK_TRUE;
+		samplerInfo.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
+		samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+		samplerInfo.unnormalizedCoordinates = VK_FALSE;
+		samplerInfo.compareEnable = VK_FALSE;
+		samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+		samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+		samplerInfo.mipLodBias = 0.0f;
+		samplerInfo.minLod = 0.0f;
+		samplerInfo.maxLod = 0.0f;
+
+		if (vkCreateSampler(device.GetHandle(), &samplerInfo, nullptr, &sampler) != VK_SUCCESS) {
+			throw std::runtime_error("failed to create texture sampler!");
+		}
+	}
+
+	void Renderer::CreateFrames()
+	{
+		VkExtent2D extent = swapchain->GetImageExtent();
+		VkFormat format = swapchain->GetImageFormat();
+
+		for (auto image : swapchain->GetImages())
+		{
+			auto swapchainImage = std::make_unique<Vulkan::Image>(device, image, format);
+
+			auto target = TargetBuilder()
+				.Extent(extent)
+				.AddImage(std::move(swapchainImage))
+				.EnableDepthStencil()
+				.Build(device);
+
+			auto frame = std::make_unique<Frame>(device, std::move(target));
+
+			VkDescriptorSetAllocateInfo allocateInfo = {
+				.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+				.pNext = nullptr,
+				.descriptorPool = descriptorPool,
+				.descriptorSetCount = 1,
+				.pSetLayouts = &descriptorSetLayout,
+			};
+
+			vkAllocateDescriptorSets(device.GetHandle(), &allocateInfo, &frame->descriptorSet);
+
+			VkDescriptorBufferInfo bufferInfo = {
+				.buffer = frame->uniformBuffer->GetHandle(),
+				.offset = 0,
+				.range = sizeof(CameraUniform),
+			};
+
+			VkDescriptorImageInfo imageInfo = {
+				.sampler = sampler,
+				.imageView = texture->GetImageView().GetHandle(),
+				.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+			};
+
+			VkWriteDescriptorSet uniformBufferWrite = {
+				.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+				.dstSet = frame->descriptorSet,
+				.dstBinding = 0,
+				.descriptorCount = 1,
+				.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+				.pBufferInfo = &bufferInfo,
+			};
+
+			VkWriteDescriptorSet samplerWrite = {
+				.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+				.dstSet = frame->descriptorSet,
+				.dstBinding = 1,
+				.descriptorCount = 1,
+				.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+				.pImageInfo = &imageInfo,
+			};
+
+			std::array<VkWriteDescriptorSet, 2> writes{ uniformBufferWrite, samplerWrite };
+
+			vkUpdateDescriptorSets(device.GetHandle(), writes.size(), writes.data(), 0, nullptr);
+
+			frames.emplace_back(std::move(frame));
+		}
+	}
+
 	void Renderer::CreateFramebuffers()
 	{
 		VkExtent2D extent = swapchain->GetImageExtent();
 
-		std::vector<VkImageView> views = swapchain->GetImageViews();
-
-		framebuffers.resize(views.size());
-
-		for (size_t i = 0; i < views.size(); i++)
+		for (auto& frame : frames)
 		{
-			VkImageView attachments[] = { views[i], depthImageView->GetHandle() };
-
-			VkFramebufferCreateInfo framebufferInfo{};
-			framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-			framebufferInfo.renderPass = renderPass;
-			framebufferInfo.attachmentCount = 2;
-			framebufferInfo.pAttachments = attachments;
-			framebufferInfo.width = extent.width;
-			framebufferInfo.height = extent.height;
-			framebufferInfo.layers = 1;
-
-			if (vkCreateFramebuffer(device.GetHandle(), &framebufferInfo, nullptr, &framebuffers[i]) != VK_SUCCESS)
-			{
-				throw std::runtime_error("failed to create framebuffer!");
-			}
+			framebuffers.push_back(std::make_unique<Vulkan::Framebuffer>(device, frame->GetTarget().GetViews(), renderPass, extent));
 		}
 	}
 }

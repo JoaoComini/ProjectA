@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.20)
+ cmake_minimum_required(VERSION 3.20)
 project(ProjectA VERSION 0.0.1)
 
 if(NOT CMAKE_BUILD_TYPE)

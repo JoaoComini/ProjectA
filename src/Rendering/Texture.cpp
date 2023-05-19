@@ -23,8 +23,8 @@ namespace Rendering
 
 		staging->SetData(pixels, size);
 
-		image = std::make_unique<Vulkan::Image>(device, Vulkan::ImageUsage::SAMPLED, Vulkan::ImageFormat::RGBA32_SRGB, width, height);
-		imageView = std::make_unique<Vulkan::ImageView>(device, *image, Vulkan::ImageFormat::RGBA32_SRGB);
+		image = std::make_unique<Vulkan::Image>(device, VK_IMAGE_USAGE_SAMPLED_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_FORMAT_R8G8B8A8_SRGB, width, height);
+		imageView = std::make_unique<Vulkan::ImageView>(device, *image);
 
 		stbi_image_free(pixels);
 

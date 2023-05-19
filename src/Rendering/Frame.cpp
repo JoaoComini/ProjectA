@@ -3,7 +3,7 @@
 namespace Rendering
 {
 
-	Frame::Frame(Vulkan::Device& device): device(device)
+	Frame::Frame(const Vulkan::Device& device, std::unique_ptr<Target> target): device(device), target(std::move(target))
 	{
 		commandPool = std::make_unique<Vulkan::CommandPool>(device);
 		semaphorePool = std::make_unique<Vulkan::SemaphorePool>(device);
@@ -41,5 +41,14 @@ namespace Rendering
 	{
 		return semaphorePool->RequestSemaphore();
 	}
-	
+
+	void Frame::SetTarget(std::unique_ptr<Target> target)
+	{
+		this->target = std::move(target);
+	}
+
+	Target& Frame::GetTarget() const
+	{
+		return *target;
+	}
 }

@@ -15,7 +15,7 @@ namespace Vulkan
 	class CommandPool : public Resource<VkCommandPool>
 	{
 	public:
-		CommandPool(Device &device);
+		CommandPool(const Device &device);
 		~CommandPool();
 
 		CommandBuffer& RequestCommandBuffer();
@@ -23,7 +23,7 @@ namespace Vulkan
 		void Reset();
 
 	private:
-		Device& device;
+		const Device& device;
 
 		std::vector<std::unique_ptr<CommandBuffer>> commandBuffers;
 
