@@ -13,6 +13,8 @@
 #include "Vulkan/Buffer.hpp"
 #include "Vulkan/CommandBuffer.hpp"
 #include "Vulkan/Framebuffer.hpp"
+#include "Vulkan/Pipeline.hpp"
+#include "Vulkan/PipelineLayout.hpp"
 
 #include "Mesh.hpp"
 #include "Texture.hpp"
@@ -55,13 +57,14 @@ namespace Rendering
 		std::vector<std::unique_ptr<Frame>> frames;
 		std::vector<std::unique_ptr<Vulkan::Framebuffer>> framebuffers;
 
+		std::unique_ptr<Vulkan::Pipeline> pipeline;
+		std::unique_ptr<Vulkan::PipelineLayout> pipelineLayout;
+
 		VkDescriptorPool descriptorPool;
 		VkDescriptorSetLayout descriptorSetLayout;
 		VkSampler sampler;
 
 		VkRenderPass renderPass;
-		VkPipelineLayout pipelineLayout;
-		VkPipeline pipeline;
 
 		std::unique_ptr<Mesh> mesh;
 		std::unique_ptr<Texture> texture;

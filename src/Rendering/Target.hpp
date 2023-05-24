@@ -30,8 +30,6 @@ namespace Rendering
 		TargetBuilder() = default;
 
 		TargetBuilder& AddImage(std::unique_ptr<Vulkan::Image> image);
-		TargetBuilder& EnableDepthStencil();
-		TargetBuilder& Extent(VkExtent2D extent);
 
 		std::unique_ptr<Target> Build(const Vulkan::Device& device);
 
