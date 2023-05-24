@@ -4,6 +4,7 @@
 
 #include "Device.hpp"
 #include "PipelineLayout.hpp"
+#include "RenderPass.hpp"
 #include "Resource.hpp"
 
 namespace Vulkan
@@ -23,7 +24,7 @@ namespace Vulkan
 	class Pipeline : public Resource<VkPipeline>
 	{
 	public:
-		Pipeline(const Device& device, const PipelineLayout& layout, VkRenderPass renderPass, PipelineSpec spec);
+		Pipeline(const Device& device, const PipelineLayout& layout, const RenderPass& renderPass, PipelineSpec spec);
 		~Pipeline();
 
 	private:

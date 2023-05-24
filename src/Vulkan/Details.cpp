@@ -19,7 +19,7 @@ namespace Vulkan::Details
     {
         for (const auto &availablePresentMode : availablePresentModes)
         {
-            if (availablePresentMode == VK_PRESENT_MODE_FIFO_KHR)
+            if (availablePresentMode == VK_PRESENT_MODE_IMMEDIATE_KHR)
             {
                 return availablePresentMode;
             }

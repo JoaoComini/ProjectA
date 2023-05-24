@@ -14,7 +14,7 @@ namespace Rendering
 			.AllowTransfer()
 			.SequentialWrite()
 			.BufferUsage(Vulkan::BufferUsageFlags::UNIFORM)
-			.Size(sizeof(CameraUniform))
+			.Size(sizeof(GlobalUniform))
 			.Build(device);
 	}
 

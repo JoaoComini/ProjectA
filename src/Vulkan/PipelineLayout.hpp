@@ -13,7 +13,7 @@ namespace Vulkan
 	class PipelineLayout : public Resource<VkPipelineLayout>
 	{
 	public:
-		PipelineLayout(const Device& device, std::vector<VkDescriptorSetLayout> descriptorSetLayouts, std::vector<VkPushConstantRange> pushConstantRanges);
+		PipelineLayout(const Device& device, std::vector<VkDescriptorSetLayout> descriptorSetLayouts);
 		~PipelineLayout();
 
 	private:

@@ -16,10 +16,10 @@
 
 namespace Rendering
 {
-	struct CameraUniform
+	struct GlobalUniform
 	{
-		glm::mat4 view;
-		glm::mat4 projection;
+		glm::mat4 viewProjection;
+		glm::mat4 model;
 	};
 
 	class Frame

@@ -15,6 +15,7 @@
 #include "Vulkan/Framebuffer.hpp"
 #include "Vulkan/Pipeline.hpp"
 #include "Vulkan/PipelineLayout.hpp"
+#include "Vulkan/RenderPass.hpp"
 
 #include "Mesh.hpp"
 #include "Texture.hpp"
@@ -22,11 +23,6 @@
 
 namespace Rendering
 {
-	struct ModelConstant
-	{
-		glm::mat4 model;
-	};
-
 	class Renderer
 	{
 	public:
@@ -37,7 +33,6 @@ namespace Rendering
 
 	private:
 		void CreateDescriptors();
-		void CreateRenderPass();
 		void CreatePipeline();
 		void CreateSampler();
 		void CreateFrames();
@@ -60,11 +55,11 @@ namespace Rendering
 		std::unique_ptr<Vulkan::Pipeline> pipeline;
 		std::unique_ptr<Vulkan::PipelineLayout> pipelineLayout;
 
+		std::unique_ptr<Vulkan::RenderPass> renderPass;
+
 		VkDescriptorPool descriptorPool;
 		VkDescriptorSetLayout descriptorSetLayout;
 		VkSampler sampler;
-
-		VkRenderPass renderPass;
 
 		std::unique_ptr<Mesh> mesh;
 		std::unique_ptr<Texture> texture;

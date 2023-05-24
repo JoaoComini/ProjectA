@@ -4,7 +4,7 @@
 
 namespace Vulkan
 {
-	Framebuffer::Framebuffer(const Device& device, std::vector<std::unique_ptr<ImageView>>& attachments, VkRenderPass renderPass, VkExtent2D extent): device(device)
+	Framebuffer::Framebuffer(const Device& device, const RenderPass& renderPass, std::vector<std::unique_ptr<ImageView>>& attachments, VkExtent2D extent): device(device)
 	{
 		std::vector<VkImageView> views;
 		
@@ -15,7 +15,7 @@ namespace Vulkan
 
 		VkFramebufferCreateInfo framebufferInfo{};
 		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		framebufferInfo.renderPass = renderPass;
+		framebufferInfo.renderPass = renderPass.GetHandle();
 		framebufferInfo.attachmentCount = views.size();
 		framebufferInfo.pAttachments = views.data();
 		framebufferInfo.width = extent.width;

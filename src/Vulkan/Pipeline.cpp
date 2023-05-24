@@ -4,7 +4,7 @@
 
 namespace Vulkan
 {
-	Pipeline::Pipeline(const Device& device, const PipelineLayout& layout, VkRenderPass renderPass, PipelineSpec spec) : device(device)
+	Pipeline::Pipeline(const Device& device, const PipelineLayout& layout, const RenderPass& renderPass, PipelineSpec spec) : device(device)
 	{
 		auto vertexShader = Shader(device, "resources/shaders/shader.vert.spv");
 		auto fragmentShader = Shader(device, "resources/shaders/shader.frag.spv");
@@ -117,7 +117,7 @@ namespace Vulkan
 		createInfo.pColorBlendState = &colorBlending;
 		createInfo.pDynamicState = &dynamicState;
 		createInfo.layout = layout.GetHandle();
-		createInfo.renderPass = renderPass;
+		createInfo.renderPass = renderPass.GetHandle();
 		createInfo.subpass = 0;
 		createInfo.basePipelineHandle = VK_NULL_HANDLE;
 		createInfo.basePipelineIndex = -1;
