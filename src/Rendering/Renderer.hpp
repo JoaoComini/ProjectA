@@ -11,7 +11,6 @@
 #include "Vulkan/Image.hpp"
 #include "Vulkan/ImageView.hpp"
 #include "Vulkan/Buffer.hpp"
-#include "Vulkan/CommandBuffer.hpp"
 #include "Vulkan/Framebuffer.hpp"
 #include "Vulkan/Pipeline.hpp"
 #include "Vulkan/PipelineLayout.hpp"
@@ -19,6 +18,8 @@
 
 #include "Mesh.hpp"
 #include "Texture.hpp"
+#include "Material.hpp"
+#include "Camera.hpp"
 #include "Frame.hpp"
 
 namespace Rendering
@@ -29,7 +30,9 @@ namespace Rendering
 		Renderer(Vulkan::Device& device, const Vulkan::Surface& surface, const Window& window);
 		~Renderer();
 
-		void Render();
+		void Begin(Camera& camera);
+		void Draw(Mesh& mesh, glm::mat4 transform);
+		void End();
 
 	private:
 		void CreateDescriptors();
@@ -38,7 +41,7 @@ namespace Rendering
 		void CreateFrames();
 		void CreateFramebuffers();
 
-		void RecordCommandBuffer(Vulkan::CommandBuffer& commandBuffer);
+		void BeginCommandBuffer();
 		bool RecreateSwapchain(bool force = false);
 
 	private:
@@ -47,7 +50,11 @@ namespace Rendering
 		const Vulkan::Device& device;
 		const Vulkan::Surface& surface;
 
+		Camera *camera;
+
 		std::unique_ptr<Vulkan::Swapchain> swapchain;
+		Vulkan::Semaphore* acquireSemaphore;
+		Vulkan::CommandBuffer* activeCommandBuffer;
 
 		std::vector<std::unique_ptr<Frame>> frames;
 		std::vector<std::unique_ptr<Vulkan::Framebuffer>> framebuffers;
@@ -61,7 +68,6 @@ namespace Rendering
 		VkDescriptorSetLayout descriptorSetLayout;
 		VkSampler sampler;
 
-		std::unique_ptr<Mesh> mesh;
 		std::unique_ptr<Texture> texture;
 	};
 }

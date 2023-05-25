@@ -10,18 +10,20 @@
 #include "Vulkan/Device.hpp"
 #include "Vulkan/Buffer.hpp"
 
-class Mesh
+namespace Rendering
 {
+	class Mesh
+	{
 
-public:
-    Mesh(Vulkan::Device &device, std::string path);
+	public:
+		Mesh(Vulkan::Device& device, std::string path);
 
-    void Draw(const VkCommandBuffer commandBuffer);
-private:
-    std::vector<Vertex> vertices;
-    std::vector<uint32_t> indices;
+		void Draw(const VkCommandBuffer commandBuffer);
+	private:
+		std::vector<Vertex> vertices;
+		std::vector<uint32_t> indices;
 
-    std::unique_ptr<Vulkan::Buffer> vertexBuffer;
-    std::unique_ptr<Vulkan::Buffer> indexBuffer;
-
-};
+		std::unique_ptr<Vulkan::Buffer> vertexBuffer;
+		std::unique_ptr<Vulkan::Buffer> indexBuffer;
+	};
+}

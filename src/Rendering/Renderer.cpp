@@ -1,18 +1,18 @@
 #include "Renderer.hpp"
 
-
 #include <array>
 
+#include "Vulkan/CommandBuffer.hpp"
 #include "Vulkan/Shader.hpp"
-#include "Vertex.hpp"
 
+#include "Vertex.hpp"
 
 namespace Rendering
 {
 
-	Renderer::Renderer(Vulkan::Device& device, const Vulkan::Surface& surface, const Window& window) : device(device), surface(surface)
+	Renderer::Renderer(Vulkan::Device& device, const Vulkan::Surface& surface, const Window& window)
+		: device(device), surface(surface), camera(camera)
 	{
-		mesh = std::make_unique<Mesh>(device, "resources/models/viking_room.obj");
 		texture = std::make_unique<Texture>(device, "resources/models/viking_room.png");
 
 		auto size = window.GetFramebufferSize();
@@ -38,6 +38,7 @@ namespace Rendering
 		vkDestroyDescriptorPool(device.GetHandle(), descriptorPool, nullptr);
 		vkDestroySampler(device.GetHandle(), sampler, nullptr);
 	}
+
 
 	void Renderer::CreateDescriptors()
 	{
@@ -234,44 +235,106 @@ namespace Rendering
 		}
 	}
 
-	void Renderer::Render()
+	void Renderer::Begin(Camera& camera)
 	{
+		this->camera = &camera;
+
 		auto& previousFrame = frames[currentImageIndex];
 
-		Vulkan::Semaphore& acquireSemaphore = previousFrame->RequestSemaphore();
+		acquireSemaphore = &previousFrame->RequestSemaphore();
 
+		auto result = swapchain->AcquireNextImageIndex(currentImageIndex, *acquireSemaphore);
+
+		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
 		{
-			auto result = swapchain->AcquireNextImageIndex(currentImageIndex, acquireSemaphore);
+			bool recreated = RecreateSwapchain(result == VK_ERROR_OUT_OF_DATE_KHR);
 
-			if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+			if (recreated)
 			{
-				bool recreated = RecreateSwapchain(result == VK_ERROR_OUT_OF_DATE_KHR);
+				result = swapchain->AcquireNextImageIndex(currentImageIndex, *acquireSemaphore);
+			}
 
-				if (recreated)
-				{
-					result = swapchain->AcquireNextImageIndex(currentImageIndex, acquireSemaphore);
-				}
-
-				if (result != VK_SUCCESS)
-				{
-					previousFrame.reset();
-					return;
-				}
+			if (result != VK_SUCCESS)
+			{
+				previousFrame.reset();
+				return;
 			}
 		}
 
 		frames[currentImageIndex]->Reset();
 
+		activeCommandBuffer = &frames[currentImageIndex]->RequestCommandBuffer();
+
+		BeginCommandBuffer();
+	}
+
+	void Renderer::Draw(Mesh& mesh, glm::mat4 transform)
+	{
+		VkExtent2D extent = swapchain->GetImageExtent();
+
+		GlobalUniform uniform{
+			.viewProjection = camera->GetViewProjection(),
+			.model = transform,
+		};
+
+		frames[currentImageIndex]->uniformBuffer->SetData(&uniform, sizeof(GlobalUniform));
+
+		vkCmdBindDescriptorSets(activeCommandBuffer->GetHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout->GetHandle(), 0, 1, &frames[currentImageIndex]->descriptorSet, 0, nullptr);
+
+		mesh.Draw(activeCommandBuffer->GetHandle());
+	}
+
+	void Renderer::BeginCommandBuffer()
+	{
+		activeCommandBuffer->Begin();
+
+		VkExtent2D extent = swapchain->GetImageExtent();
+
+		VkClearValue clearColor = { {{0.0f, 0.0f, 0.0f, 1.0f}} };
+		VkClearValue clearDepth{
+			.depthStencil = {
+				.depth = 1.f,
+			},
+		};
+
+		VkClearValue clearValues[] = { clearColor, clearDepth };
+
+		VkRenderPassBeginInfo renderPassInfo{};
+		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		renderPassInfo.renderPass = renderPass->GetHandle();
+		renderPassInfo.framebuffer = framebuffers[currentImageIndex]->GetHandle();
+		renderPassInfo.renderArea.offset = { 0, 0 };
+		renderPassInfo.renderArea.extent = extent;
+		renderPassInfo.clearValueCount = 2;
+		renderPassInfo.pClearValues = clearValues;
+
+		vkCmdBeginRenderPass(activeCommandBuffer->GetHandle(), &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+		vkCmdBindPipeline(activeCommandBuffer->GetHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->GetHandle());
+
+		VkViewport viewport{};
+		viewport.width = static_cast<float>(extent.width);
+		viewport.height = static_cast<float>(extent.height);
+		viewport.minDepth = 0.0f;
+		viewport.maxDepth = 1.0f;
+		vkCmdSetViewport(activeCommandBuffer->GetHandle(), 0, 1, &viewport);
+
+		VkRect2D scissor{};
+		scissor.offset = { 0, 0 };
+		scissor.extent = extent;
+		vkCmdSetScissor(activeCommandBuffer->GetHandle(), 0, 1, &scissor);
+	}
+
+	void Renderer::End()
+	{
+		vkCmdEndRenderPass(activeCommandBuffer->GetHandle());
+		activeCommandBuffer->End();
+
 		Vulkan::Semaphore& renderFinishedSemaphore = frames[currentImageIndex]->RequestSemaphore();
 		Vulkan::Fence& renderFence = frames[currentImageIndex]->GetRenderFence();
 
-		Vulkan::CommandBuffer& commandBuffer = frames[currentImageIndex]->RequestCommandBuffer();
-
-		RecordCommandBuffer(commandBuffer);
-
 		VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 		VkSemaphore signalSemaphores[] = { renderFinishedSemaphore.GetHandle() };
-		VkSemaphore waitSemaphores[] = { acquireSemaphore.GetHandle() };
+		VkSemaphore waitSemaphores[] = { acquireSemaphore->GetHandle() };
 
 		VkSubmitInfo submitInfo{};
 		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -279,7 +342,7 @@ namespace Rendering
 		submitInfo.pWaitSemaphores = waitSemaphores;
 		submitInfo.pWaitDstStageMask = waitStages;
 		submitInfo.commandBufferCount = 1;
-		submitInfo.pCommandBuffers = &commandBuffer.GetHandle();
+		submitInfo.pCommandBuffers = &activeCommandBuffer->GetHandle();
 		submitInfo.signalSemaphoreCount = 1;
 		submitInfo.pSignalSemaphores = signalSemaphores;
 
@@ -297,17 +360,15 @@ namespace Rendering
 		presentInfo.pImageIndices = &currentImageIndex;
 		presentInfo.pResults = nullptr; // Optional
 
-		{
-			auto result = vkQueuePresentKHR(device.GetPresentQueue().GetHandle(), &presentInfo);
+		auto result = vkQueuePresentKHR(device.GetPresentQueue().GetHandle(), &presentInfo);
 
-			if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
-			{
-				RecreateSwapchain();
-			}
-			else if (result != VK_SUCCESS)
-			{
-				throw std::runtime_error("failed to present swap chain image!");
-			}
+		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+		{
+			RecreateSwapchain();
+		}
+		else if (result != VK_SUCCESS)
+		{
+			throw std::runtime_error("failed to present swap chain image!");
 		}
 	}
 
@@ -352,70 +413,5 @@ namespace Rendering
 		CreateFramebuffers();
 
 		return true;
-	}
-
-	void Renderer::RecordCommandBuffer(Vulkan::CommandBuffer& commandBuffer)
-	{
-		VkExtent2D extent = swapchain->GetImageExtent();
-
-		commandBuffer.Begin();
-
-		VkRenderPassBeginInfo renderPassInfo{};
-		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		renderPassInfo.renderPass = renderPass->GetHandle();
-		renderPassInfo.framebuffer = framebuffers[currentImageIndex]->GetHandle();
-		renderPassInfo.renderArea.offset = { 0, 0 };
-		renderPassInfo.renderArea.extent = extent;
-
-		VkClearValue clearColor = { {{0.0f, 0.0f, 0.0f, 1.0f}} };
-		VkClearValue clearDepth{
-			.depthStencil = {
-				.depth = 1.f,
-			},
-		};
-
-		VkClearValue clearValues[] = { clearColor, clearDepth };
-
-		renderPassInfo.clearValueCount = 2;
-		renderPassInfo.pClearValues = clearValues;
-
-		vkCmdBeginRenderPass(commandBuffer.GetHandle(), &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-		vkCmdBindPipeline(commandBuffer.GetHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->GetHandle());
-
-		VkViewport viewport{};
-		viewport.width = static_cast<float>(extent.width);
-		viewport.height = static_cast<float>(extent.height);
-		viewport.minDepth = 0.0f;
-		viewport.maxDepth = 1.0f;
-		vkCmdSetViewport(commandBuffer.GetHandle(), 0, 1, &viewport);
-
-		VkRect2D scissor{};
-		scissor.offset = { 0, 0 };
-		scissor.extent = extent;
-		vkCmdSetScissor(commandBuffer.GetHandle(), 0, 1, &scissor);
-
-		static auto startTime = std::chrono::high_resolution_clock::now();
-
-		auto currentTime = std::chrono::high_resolution_clock::now();
-		float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
-
-		glm::mat4 view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-		glm::mat4 projection = glm::perspective(glm::radians(45.f), (float)extent.width / (float)extent.height, 0.1f, 200.0f);
-		projection[1][1] *= -1;
-
-		GlobalUniform uniform{
-			.viewProjection = projection * view,
-			.model = glm::rotate(glm::mat4(1.f), glm::radians(30.f) * 0.f, glm::vec3(0.f, 0.f, 1.f)),
-		};
-
-		frames[currentImageIndex]->uniformBuffer->SetData(&uniform, sizeof(GlobalUniform));
-
-		vkCmdBindDescriptorSets(commandBuffer.GetHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout->GetHandle(), 0, 1, &frames[currentImageIndex]->descriptorSet, 0, nullptr);
-
-		mesh->Draw(commandBuffer.GetHandle());
-
-		vkCmdEndRenderPass(commandBuffer.GetHandle());
-
-		commandBuffer.End();
 	}
 }
