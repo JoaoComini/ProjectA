@@ -37,7 +37,6 @@ namespace Rendering
 	private:
 		void CreateDescriptors();
 		void CreatePipeline();
-		void CreateSampler();
 		void CreateFrames();
 		void CreateFramebuffers();
 
@@ -68,7 +67,6 @@ namespace Rendering
 
 		VkDescriptorPool descriptorPool;
 		VkDescriptorSetLayout descriptorSetLayout;
-		VkSampler sampler;
 
 		std::unique_ptr<Texture> texture;
 	};

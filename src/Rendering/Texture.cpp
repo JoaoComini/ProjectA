@@ -31,10 +31,17 @@ namespace Rendering
 		device.SetImageLayout(*image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 		device.CopyBufferToImage(*staging, *image, width, height);
 		device.SetImageLayout(*image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+		sampler = std::make_unique<Vulkan::Sampler>(device);
 	}
 
 	Vulkan::ImageView& Texture::GetImageView() const
 	{
 		return *imageView;
+	}
+
+	Vulkan::Sampler& Texture::GetSampler() const
+	{
+		return *sampler;
 	}
 }
