@@ -53,8 +53,7 @@ namespace Rendering
                 Vertex vertex{
                     .position = {vx, vy, vz},
                     .normal = {nx, ny, nz},
-                    .color = {1.0f, 1.0f, 1.0f},
-                    .texCoord = {tx, ty},
+                    .uv = {tx, ty},
                 };
 
                 if (uniques.count(vertex) == 0)

@@ -1,6 +1,8 @@
 #pragma once
 
 #include <vulkan/vulkan.h>
+
+#include <vector>
  
 #include "Resource.hpp"
 
@@ -8,6 +10,9 @@ namespace Vulkan
 {
 	class CommandPool;
 	class Device;
+	class RenderPass;
+	class Framebuffer;
+	class Pipeline;
 
 	class CommandBuffer : public Resource<VkCommandBuffer>
 	{
@@ -29,6 +34,13 @@ namespace Vulkan
 
 		void Begin(BeginFlags flags = BeginFlags::None);
 		void End();
+
+		void BeginRenderPass(const RenderPass& renderPass, const Framebuffer& framebuffer, const std::vector<VkClearValue>& clearValues, VkExtent2D extent);
+		void SetViewport(const std::vector<VkViewport>& viewports);
+		void SetScissor(const std::vector<VkRect2D>& scissors);
+		void BindPipeline(const Pipeline& pipeline);
+		void EndRenderPass();
+
 		void Free();
 		void CopyBuffer(VkBuffer src, VkBuffer dst, uint32_t size);
 		void CopyBufferToImage(VkBuffer src, VkImage dst, uint32_t width, uint32_t height);

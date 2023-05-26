@@ -19,9 +19,9 @@ namespace Vulkan
 
         switch (type)
         {
-        case Queue::Type::Graphics:
+        case Queue::Type::GRAPHICS:
             return FindFirstQueueIndex(VK_QUEUE_GRAPHICS_BIT);
-        case Queue::Type::Present:
+        case Queue::Type::PRESENT:
             return FindPresentQueueIndex();
         }
 
@@ -123,8 +123,8 @@ namespace Vulkan
 
     bool PhysicalDevicePicker::HasSuitableQueueFamily(PhysicalDevice device)
     {
-        bool hasGraphicsQueue = device.FindQueueIndex(Queue::Type::Graphics) != Details::QUEUE_INDEX_MAX_VALUE;
-        bool hasPresentQueue = device.FindQueueIndex(Queue::Type::Present) != Details::QUEUE_INDEX_MAX_VALUE;
+        bool hasGraphicsQueue = device.FindQueueIndex(Queue::Type::GRAPHICS) != Details::QUEUE_INDEX_MAX_VALUE;
+        bool hasPresentQueue = device.FindQueueIndex(Queue::Type::PRESENT) != Details::QUEUE_INDEX_MAX_VALUE;
 
         return hasGraphicsQueue && hasPresentQueue;
     }

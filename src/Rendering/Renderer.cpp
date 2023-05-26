@@ -110,14 +110,8 @@ namespace Rendering
 					VkVertexInputAttributeDescription{
 						.location = 2,
 						.binding = 0,
-						.format = VK_FORMAT_R32G32B32_SFLOAT,
-						.offset = offsetof(Vertex, color),
-					},
-					VkVertexInputAttributeDescription{
-						.location = 3,
-						.binding = 0,
 						.format = VK_FORMAT_R32G32_SFLOAT,
-						.offset = offsetof(Vertex, texCoord),
+						.offset = offsetof(Vertex, uv),
 					},
 				},
 				.bindings = {
@@ -270,8 +264,6 @@ namespace Rendering
 
 	void Renderer::Draw(Mesh& mesh, glm::mat4 transform)
 	{
-		VkExtent2D extent = swapchain->GetImageExtent();
-
 		GlobalUniform uniform{
 			.viewProjection = camera->GetViewProjection(),
 			.model = transform,
@@ -290,77 +282,61 @@ namespace Rendering
 
 		VkExtent2D extent = swapchain->GetImageExtent();
 
-		VkClearValue clearColor = { {{0.0f, 0.0f, 0.0f, 1.0f}} };
-		VkClearValue clearDepth{
-			.depthStencil = {
-				.depth = 1.f,
-			},
+		std::vector<VkClearValue> clearValues = {
+			{ { 0.0f, 0.0f, 0.0f, 1.0f } },
+			{ 1.0f, 0 }
 		};
 
-		VkClearValue clearValues[] = { clearColor, clearDepth };
+		activeCommandBuffer->BeginRenderPass(*renderPass, *framebuffers[currentImageIndex], clearValues, extent);
 
-		VkRenderPassBeginInfo renderPassInfo{};
-		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		renderPassInfo.renderPass = renderPass->GetHandle();
-		renderPassInfo.framebuffer = framebuffers[currentImageIndex]->GetHandle();
-		renderPassInfo.renderArea.offset = { 0, 0 };
-		renderPassInfo.renderArea.extent = extent;
-		renderPassInfo.clearValueCount = 2;
-		renderPassInfo.pClearValues = clearValues;
+		std::vector<VkViewport> viewports = {
+			{
+				.width = static_cast<float>(extent.width),
+				.height = static_cast<float>(extent.height),
+				.minDepth = 0.0f,
+				.maxDepth = 1.0f,
+			}	
+		};
+		
+		activeCommandBuffer->SetViewport(viewports);
 
-		vkCmdBeginRenderPass(activeCommandBuffer->GetHandle(), &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-		vkCmdBindPipeline(activeCommandBuffer->GetHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->GetHandle());
+		std::vector<VkRect2D> scissors = {
+			{
+				.extent = extent
+			}
+		};
 
-		VkViewport viewport{};
-		viewport.width = static_cast<float>(extent.width);
-		viewport.height = static_cast<float>(extent.height);
-		viewport.minDepth = 0.0f;
-		viewport.maxDepth = 1.0f;
-		vkCmdSetViewport(activeCommandBuffer->GetHandle(), 0, 1, &viewport);
+		activeCommandBuffer->SetScissor(scissors);
 
-		VkRect2D scissor{};
-		scissor.offset = { 0, 0 };
-		scissor.extent = extent;
-		vkCmdSetScissor(activeCommandBuffer->GetHandle(), 0, 1, &scissor);
+		activeCommandBuffer->BindPipeline(*pipeline);
 	}
 
 	void Renderer::End()
 	{
-		vkCmdEndRenderPass(activeCommandBuffer->GetHandle());
+		activeCommandBuffer->EndRenderPass();
 		activeCommandBuffer->End();
 
+		Vulkan::Semaphore& waitSemaphore = Submit();
+
+		Present(waitSemaphore);
+
+		activeCommandBuffer = nullptr;
+		acquireSemaphore = nullptr;
+	}
+
+	Vulkan::Semaphore& Renderer::Submit()
+	{
 		Vulkan::Semaphore& renderFinishedSemaphore = frames[currentImageIndex]->RequestSemaphore();
 		Vulkan::Fence& renderFence = frames[currentImageIndex]->GetRenderFence();
 
-		VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-		VkSemaphore signalSemaphores[] = { renderFinishedSemaphore.GetHandle() };
-		VkSemaphore waitSemaphores[] = { acquireSemaphore->GetHandle() };
+		device.GetGraphicsQueue().Submit(*activeCommandBuffer, *acquireSemaphore, renderFinishedSemaphore, renderFence);
 
-		VkSubmitInfo submitInfo{};
-		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		submitInfo.waitSemaphoreCount = 1;
-		submitInfo.pWaitSemaphores = waitSemaphores;
-		submitInfo.pWaitDstStageMask = waitStages;
-		submitInfo.commandBufferCount = 1;
-		submitInfo.pCommandBuffers = &activeCommandBuffer->GetHandle();
-		submitInfo.signalSemaphoreCount = 1;
-		submitInfo.pSignalSemaphores = signalSemaphores;
+		return renderFinishedSemaphore;
+	}
 
-		if (vkQueueSubmit(device.GetGraphicsQueue().GetHandle(), 1, &submitInfo, renderFence.GetHandle()) != VK_SUCCESS)
-		{
-			throw std::runtime_error("failed to submit draw command buffer!");
-		}
-
-		VkPresentInfoKHR presentInfo{};
-		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-		presentInfo.waitSemaphoreCount = 1;
-		presentInfo.pWaitSemaphores = signalSemaphores;
-		presentInfo.swapchainCount = 1;
-		presentInfo.pSwapchains = &swapchain->GetHandle();
-		presentInfo.pImageIndices = &currentImageIndex;
-		presentInfo.pResults = nullptr; // Optional
-
-		auto result = vkQueuePresentKHR(device.GetPresentQueue().GetHandle(), &presentInfo);
+	void Renderer::Present(Vulkan::Semaphore& waitSemaphore)
+	{
+		auto result = device.GetPresentQueue().Present(*swapchain, waitSemaphore, currentImageIndex);
 
 		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
 		{
@@ -391,7 +367,7 @@ namespace Rendering
 		VkExtent2D extent = swapchain->GetImageExtent();
 		VkFormat format = swapchain->GetImageFormat();
 
-		auto frameIterator = frames.begin();
+		auto it = frames.begin();
 
 		for (auto& image : swapchain->GetImages())
 		{
@@ -403,9 +379,9 @@ namespace Rendering
 				.AddImage(std::move(depthImage))
 				.Build(device);
 
-			(*frameIterator)->SetTarget(std::move(target));
+			(*it)->SetTarget(std::move(target));
 
-			frameIterator++;
+			it++;
 		}
 
 		framebuffers.clear();

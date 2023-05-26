@@ -6,8 +6,8 @@ namespace Vulkan
 {
 	Device::Device(const Instance& instance, const PhysicalDevice& physicalDevice) : physicalDevice(physicalDevice)
 	{
-		uint32_t graphicsQueueFamilyIndex = physicalDevice.FindQueueIndex(Queue::Type::Graphics);
-		uint32_t presentQueueFamilyIndex = physicalDevice.FindQueueIndex(Queue::Type::Present);
+		uint32_t graphicsQueueFamilyIndex = physicalDevice.FindQueueIndex(Queue::Type::GRAPHICS);
+		uint32_t presentQueueFamilyIndex = physicalDevice.FindQueueIndex(Queue::Type::PRESENT);
 
 		std::set<uint32_t> familyIndices = { graphicsQueueFamilyIndex, presentQueueFamilyIndex };
 

@@ -2,6 +2,9 @@
 
 #include "Device.hpp"
 #include "CommandPool.hpp"
+#include "RenderPass.hpp"
+#include "Framebuffer.hpp"
+#include "Pipeline.hpp"
 
 namespace Vulkan
 {
@@ -45,6 +48,42 @@ namespace Vulkan
 	void CommandBuffer::End()
 	{
 		vkEndCommandBuffer(handle);
+	}
+
+	void CommandBuffer::BeginRenderPass(const RenderPass& renderPass, const Framebuffer& framebuffer, const std::vector<VkClearValue>& clearValues, VkExtent2D extent)
+	{
+		VkRenderPassBeginInfo info{
+			.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+			.renderPass = renderPass.GetHandle(),
+			.framebuffer = framebuffer.GetHandle(),
+			.renderArea = {
+				.extent = extent,
+			},
+			.clearValueCount = static_cast<uint32_t>(clearValues.size()),
+			.pClearValues = clearValues.data()
+		};
+
+		vkCmdBeginRenderPass(handle, &info, VK_SUBPASS_CONTENTS_INLINE);
+	}
+
+	void CommandBuffer::SetViewport(const std::vector<VkViewport>& viewports)
+	{
+		vkCmdSetViewport(handle, 0, viewports.size(), viewports.data());
+	}
+
+	void CommandBuffer::SetScissor(const std::vector<VkRect2D>& scissors)
+	{
+		vkCmdSetScissor(handle, 0, scissors.size(), scissors.data());
+	}
+
+	void CommandBuffer::BindPipeline(const Pipeline& pipeline)
+	{
+		vkCmdBindPipeline(handle, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.GetHandle());
+	}
+
+	void CommandBuffer::EndRenderPass()
+	{
+		vkCmdEndRenderPass(handle);
 	}
 
 	void CommandBuffer::Free()

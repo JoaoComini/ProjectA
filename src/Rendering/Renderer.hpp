@@ -42,6 +42,8 @@ namespace Rendering
 		void CreateFramebuffers();
 
 		void BeginCommandBuffer();
+		Vulkan::Semaphore& Submit();
+		void Present(Vulkan::Semaphore& waitSemaphore);
 		bool RecreateSwapchain(bool force = false);
 
 	private:
