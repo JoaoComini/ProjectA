@@ -15,6 +15,7 @@
 #include "Vulkan/Pipeline.hpp"
 #include "Vulkan/PipelineLayout.hpp"
 #include "Vulkan/RenderPass.hpp"
+#include "Vulkan/DescriptorSetLayout.hpp"
 
 #include "Mesh.hpp"
 #include "Texture.hpp"
@@ -28,7 +29,7 @@ namespace Rendering
 	{
 	public:
 		Renderer(Vulkan::Device& device, const Vulkan::Surface& surface, const Window& window);
-		~Renderer();
+		~Renderer() = default;
 
 		void Begin(Camera& camera);
 		void Draw(Mesh& mesh, glm::mat4 transform);
@@ -64,9 +65,9 @@ namespace Rendering
 		std::unique_ptr<Vulkan::PipelineLayout> pipelineLayout;
 
 		std::unique_ptr<Vulkan::RenderPass> renderPass;
+		std::shared_ptr<Vulkan::DescriptorSetLayout> descriptorSetLayout;
 
-		VkDescriptorPool descriptorPool;
-		VkDescriptorSetLayout descriptorSetLayout;
+		std::unique_ptr<Vulkan::DescriptorPool> descriptorPool;
 
 		std::unique_ptr<Texture> texture;
 	};

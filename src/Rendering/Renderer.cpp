@@ -31,13 +31,6 @@ namespace Rendering
 		CreateFramebuffers();
 	}
 
-	Renderer::~Renderer()
-	{
-		vkDestroyDescriptorSetLayout(device.GetHandle(), descriptorSetLayout, nullptr);
-		vkDestroyDescriptorPool(device.GetHandle(), descriptorPool, nullptr);
-	}
-
-
 	void Renderer::CreateDescriptors()
 	{
 		VkDescriptorSetLayoutBinding uniformBufferBinding = {
@@ -55,38 +48,20 @@ namespace Rendering
 			.pImmutableSamplers = nullptr,
 		};
 
-		std::array<VkDescriptorSetLayoutBinding, 2> bindings = { uniformBufferBinding, samplerBinding };
+		descriptorSetLayout = std::make_shared<Vulkan::DescriptorSetLayout>(
+			device,
+			std::vector<VkDescriptorSetLayoutBinding>{ uniformBufferBinding, samplerBinding }
+		);
 
-		VkDescriptorSetLayoutCreateInfo layoutCreateInfo = {
-			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-			.pNext = nullptr,
-			.flags = 0,
-			.bindingCount = bindings.size(),
-			.pBindings = bindings.data()
-		};
-
-		vkCreateDescriptorSetLayout(device.GetHandle(), &layoutCreateInfo, nullptr, &descriptorSetLayout);
-
-		std::vector<VkDescriptorPoolSize> sizes =
-		{
-			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 10 },
-			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 10}
-		};
-
-		VkDescriptorPoolCreateInfo poolCreateInfo = {
-			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-			.maxSets = 10,
-			.poolSizeCount = (uint32_t)sizes.size(),
-			.pPoolSizes = sizes.data()
-		};
-
-		vkCreateDescriptorPool(device.GetHandle(), &poolCreateInfo, nullptr, &descriptorPool);
+		descriptorPool = std::make_unique<Vulkan::DescriptorPool>(device, *descriptorSetLayout, 10);
 	}
 
 	void Renderer::CreatePipeline()
 	{
-
-		pipelineLayout = std::make_unique<Vulkan::PipelineLayout>(device, std::vector<VkDescriptorSetLayout>{descriptorSetLayout});
+		pipelineLayout = std::make_unique<Vulkan::PipelineLayout>(
+			device,
+			std::vector<std::shared_ptr<Vulkan::DescriptorSetLayout>>{ descriptorSetLayout }
+		);
 
 		auto spec = Vulkan::PipelineSpec
 		{
@@ -140,17 +115,9 @@ namespace Rendering
 				.AddImage(std::move(depthImage))
 				.Build(device);
 
-			auto frame = std::make_unique<Frame>(device, std::move(target));
+			auto frame = std::make_unique<Frame>(device, *descriptorSetLayout, std::move(target));
 
-			VkDescriptorSetAllocateInfo allocateInfo = {
-				.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-				.pNext = nullptr,
-				.descriptorPool = descriptorPool,
-				.descriptorSetCount = 1,
-				.pSetLayouts = &descriptorSetLayout,
-			};
-
-			vkAllocateDescriptorSets(device.GetHandle(), &allocateInfo, &frame->descriptorSet);
+			frame->descriptorSet = descriptorPool->Allocate();
 
 			VkDescriptorBufferInfo bufferInfo = {
 				.buffer = frame->uniformBuffer->GetHandle(),
@@ -266,9 +233,9 @@ namespace Rendering
 				.height = static_cast<float>(extent.height),
 				.minDepth = 0.0f,
 				.maxDepth = 1.0f,
-			}	
+			}
 		};
-		
+
 		activeCommandBuffer->SetViewport(viewports);
 
 		std::vector<VkRect2D> scissors = {

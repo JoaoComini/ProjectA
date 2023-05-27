@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "Resource.hpp"
+#include "DescriptorSetLayout.hpp"
 
 namespace Vulkan
 {
@@ -13,7 +14,7 @@ namespace Vulkan
 	class PipelineLayout : public Resource<VkPipelineLayout>
 	{
 	public:
-		PipelineLayout(const Device& device, std::vector<VkDescriptorSetLayout> descriptorSetLayouts);
+		PipelineLayout(const Device& device, const std::vector<std::shared_ptr<DescriptorSetLayout>>& descriptorSetLayouts);
 		~PipelineLayout();
 
 	private:
