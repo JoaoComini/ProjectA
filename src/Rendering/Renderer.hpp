@@ -32,7 +32,7 @@ namespace Rendering
 		~Renderer() = default;
 
 		void Begin(Camera& camera);
-		void Draw(Mesh& mesh, glm::mat4 transform);
+		void Draw(Mesh& mesh, Material& material, glm::mat4 transform);
 		void End();
 
 	private:
@@ -68,7 +68,5 @@ namespace Rendering
 		std::shared_ptr<Vulkan::DescriptorSetLayout> descriptorSetLayout;
 
 		std::unique_ptr<Vulkan::DescriptorPool> descriptorPool;
-
-		std::unique_ptr<Texture> texture;
 	};
 }

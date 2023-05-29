@@ -23,7 +23,7 @@ namespace Vulkan
 			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
 			.maxSets = size,
 			.poolSizeCount = (uint32_t)sizes.size(),
-			.pPoolSizes = sizes.data()
+			.pPoolSizes = sizes.data(),
 		};
 
 		vkCreateDescriptorPool(device.GetHandle(), &createInfo, nullptr, &handle);

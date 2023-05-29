@@ -21,17 +21,24 @@ Application::Application()
 void Application::Run()
 {
 	Rendering::Mesh mesh = Rendering::Mesh(*device, "resources/models/viking_room.obj");
+	Rendering::Texture diffuse = Rendering::Texture(*device, "resources/models/viking_room.png");
+	Rendering::Material material = Rendering::Material(&diffuse);
 
 	auto size = window->GetFramebufferSize();
 	Rendering::Camera camera = Rendering::Camera(glm::radians(45.f), (float)size.width / (float)size.height, 0.1f, 200.0f);
 
+	static int frame = 0;
 	while (!window->ShouldClose())
 	{
 		window->Update();
 
 		renderer->Begin(camera);
-		renderer->Draw(mesh, glm::rotate(glm::mat4(1.f), glm::radians(45.f), glm::vec3(0.f, 0.f, 1.f)));
+		renderer->Draw(mesh, material, glm::rotate(glm::mat4(1.f), glm::radians(0.01f) * frame, glm::vec3(0.f, 0.f, 1.f)));
+
+		renderer->Draw(mesh, material, glm::rotate(glm::mat4(1.f), glm::radians(0.02f) * frame, glm::vec3(0.f, 0.f, 1.f)));
 		renderer->End();
+
+		frame++;
 	}
 
 	device->WaitIdle();

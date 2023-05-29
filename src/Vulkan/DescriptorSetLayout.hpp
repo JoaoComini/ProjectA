@@ -15,8 +15,10 @@ namespace Vulkan
 
 		const std::vector<VkDescriptorSetLayoutBinding>& GetBindings() const;
 
+		const VkDescriptorSetLayoutBinding* GetBinding(uint32_t binding) const;
+
 	private:
 		const Device& device;
-		const std::vector<VkDescriptorSetLayoutBinding> bindings;
+		std::vector<VkDescriptorSetLayoutBinding> bindings;
 	};
 };

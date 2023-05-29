@@ -13,6 +13,7 @@ namespace Vulkan
 	class RenderPass;
 	class Framebuffer;
 	class Pipeline;
+	class PipelineLayout;
 
 	class CommandBuffer : public Resource<VkCommandBuffer>
 	{
@@ -38,7 +39,8 @@ namespace Vulkan
 		void BeginRenderPass(const RenderPass& renderPass, const Framebuffer& framebuffer, const std::vector<VkClearValue>& clearValues, VkExtent2D extent);
 		void SetViewport(const std::vector<VkViewport>& viewports);
 		void SetScissor(const std::vector<VkRect2D>& scissors);
-		void BindPipeline(const Pipeline& pipeline);
+		void BindPipeline(const Pipeline& pipeline, VkPipelineBindPoint bindPoint);
+		void BindDescriptorSet(VkPipelineBindPoint bindPoint, const PipelineLayout& pipelineLayout, VkDescriptorSet descriptorSet);
 		void EndRenderPass();
 
 		void Free();

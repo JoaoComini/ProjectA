@@ -25,4 +25,17 @@ namespace Vulkan
 	{
 		return bindings;
 	}
+
+	const VkDescriptorSetLayoutBinding* DescriptorSetLayout::GetBinding(uint32_t binding) const
+	{
+		for (auto& it : bindings)
+		{
+			if (it.binding == binding)
+			{
+				return &it;
+			}
+		}
+
+		return nullptr;
+	}
 };

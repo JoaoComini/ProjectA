@@ -13,8 +13,6 @@ namespace Rendering
 	Renderer::Renderer(Vulkan::Device& device, const Vulkan::Surface& surface, const Window& window)
 		: device(device), surface(surface), camera(camera)
 	{
-		texture = std::make_unique<Texture>(device, "resources/models/viking_room.png");
-
 		auto size = window.GetFramebufferSize();
 
 		swapchain = Vulkan::SwapchainBuilder()
@@ -117,42 +115,6 @@ namespace Rendering
 
 			auto frame = std::make_unique<Frame>(device, *descriptorSetLayout, std::move(target));
 
-			frame->descriptorSet = descriptorPool->Allocate();
-
-			VkDescriptorBufferInfo bufferInfo = {
-				.buffer = frame->uniformBuffer->GetHandle(),
-				.offset = 0,
-				.range = sizeof(GlobalUniform),
-			};
-
-			VkDescriptorImageInfo imageInfo = {
-				.sampler = texture->GetSampler().GetHandle(),
-				.imageView = texture->GetImageView().GetHandle(),
-				.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-			};
-
-			VkWriteDescriptorSet uniformBufferWrite = {
-				.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-				.dstSet = frame->descriptorSet,
-				.dstBinding = 0,
-				.descriptorCount = 1,
-				.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-				.pBufferInfo = &bufferInfo,
-			};
-
-			VkWriteDescriptorSet samplerWrite = {
-				.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-				.dstSet = frame->descriptorSet,
-				.dstBinding = 1,
-				.descriptorCount = 1,
-				.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-				.pImageInfo = &imageInfo,
-			};
-
-			std::array<VkWriteDescriptorSet, 2> writes{ uniformBufferWrite, samplerWrite };
-
-			vkUpdateDescriptorSets(device.GetHandle(), writes.size(), writes.data(), 0, nullptr);
-
 			frames.emplace_back(std::move(frame));
 		}
 	}
@@ -200,16 +162,38 @@ namespace Rendering
 		BeginCommandBuffer();
 	}
 
-	void Renderer::Draw(Mesh& mesh, glm::mat4 transform)
+	void Renderer::Draw(Mesh& mesh, Material& material, glm::mat4 transform)
 	{
-		GlobalUniform uniform{
+		GlobalUniform uniform {
 			.viewProjection = camera->GetViewProjection(),
 			.model = transform,
 		};
 
-		frames[currentImageIndex]->uniformBuffer->SetData(&uniform, sizeof(GlobalUniform));
+		auto& frame = frames[currentImageIndex];
 
-		vkCmdBindDescriptorSets(activeCommandBuffer->GetHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout->GetHandle(), 0, 1, &frames[currentImageIndex]->descriptorSet, 0, nullptr);
+		auto& buffer = frame->RequestBuffer(Vulkan::BufferUsageFlags::UNIFORM, sizeof(GlobalUniform));
+
+		buffer.SetData(&uniform, sizeof(GlobalUniform));
+
+		BindingMap<VkDescriptorBufferInfo> bufferInfos = {
+			{ 0, { { 0, VkDescriptorBufferInfo{
+				.buffer = buffer.GetHandle(),
+				.offset = 0,
+				.range = sizeof(GlobalUniform),
+			} } } }
+		};
+
+		BindingMap<VkDescriptorImageInfo> imageInfos = {
+			{ 1, { { 0, VkDescriptorImageInfo{
+				.sampler = material.GetDiffuse()->GetSampler().GetHandle(),
+				.imageView = material.GetDiffuse()->GetImageView().GetHandle(),
+				.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+			} } } }
+		};
+
+		auto descriptorSet = frame->RequestDescriptorSet(bufferInfos, imageInfos);
+
+		activeCommandBuffer->BindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, *pipelineLayout, descriptorSet);
 
 		mesh.Draw(activeCommandBuffer->GetHandle());
 	}
@@ -246,7 +230,7 @@ namespace Rendering
 
 		activeCommandBuffer->SetScissor(scissors);
 
-		activeCommandBuffer->BindPipeline(*pipeline);
+		activeCommandBuffer->BindPipeline(*pipeline, VK_PIPELINE_BIND_POINT_GRAPHICS);
 	}
 
 	void Renderer::End()
