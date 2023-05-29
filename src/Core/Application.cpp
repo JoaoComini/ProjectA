@@ -27,18 +27,19 @@ void Application::Run()
 	auto size = window->GetFramebufferSize();
 	Rendering::Camera camera = Rendering::Camera(glm::radians(45.f), (float)size.width / (float)size.height, 0.1f, 200.0f);
 
-	static int frame = 0;
+	window->OnResize(
+		[&camera](int width, int height) {
+			camera.SetAspect((float)width / height);
+		}
+	);
+
 	while (!window->ShouldClose())
 	{
 		window->Update();
 
 		renderer->Begin(camera);
-		renderer->Draw(mesh, material, glm::rotate(glm::mat4(1.f), glm::radians(0.01f) * frame, glm::vec3(0.f, 0.f, 1.f)));
-
-		renderer->Draw(mesh, material, glm::rotate(glm::mat4(1.f), glm::radians(0.02f) * frame, glm::vec3(0.f, 0.f, 1.f)));
+		renderer->Draw(mesh, material, glm::rotate(glm::mat4(1.f), glm::radians(0.01f), glm::vec3(0.f, 0.f, 1.f)));
 		renderer->End();
-
-		frame++;
 	}
 
 	device->WaitIdle();

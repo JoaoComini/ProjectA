@@ -3,6 +3,7 @@
 #include <GLFW/glfw3.h>
 
 #include <string>
+#include <functional>
 
 #include "Vulkan/Instance.hpp"
 
@@ -22,11 +23,15 @@ public:
     void Update();
     void WaitForFocus();
 
+    void OnResize(std::function<void(int, int)> callback);
+
     FramebufferSize GetFramebufferSize() const;
     GLFWwindow *GetHandle() const;
 
 private:
     GLFWwindow *handle;
+    std::function<void(int, int)> resizeFn = nullptr;
+
 
     friend class WindowBuilder;
 };
