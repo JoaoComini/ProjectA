@@ -39,7 +39,10 @@ void Application::Run()
 		window->Update();
 
 		renderer->Begin(camera);
-		renderer->Draw(mesh, material, glm::rotate(glm::mat4(1.f), glm::radians(0.01f), glm::vec3(0.f, 0.f, 1.f)));
+		for (int i = 0; i < 1000; i++)
+		{
+			renderer->Draw(mesh, material, glm::rotate(glm::mat4(1.f), glm::radians(0.01f), glm::vec3(0.f, 0.f, 1.f)));
+		}
 		renderer->End();
 	}
 

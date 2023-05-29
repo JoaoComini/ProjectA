@@ -19,6 +19,8 @@ namespace Rendering
 			.Build(device);
 
 		descriptorPool = std::make_unique<Vulkan::DescriptorPool>(device, descriptorSetLayout, 1000);
+
+		bufferPool = std::make_unique<BufferPool>(device);
 	}
 
 	Vulkan::Fence& Frame::GetRenderFence() const
@@ -34,7 +36,7 @@ namespace Rendering
 		commandPool->Reset();
 		semaphorePool->Reset();
 
-		buffers.clear();
+		bufferPool->Reset();
 
 		descriptorPool->Reset();
 	}
@@ -108,18 +110,9 @@ namespace Rendering
 		return handle;
 	}
 
-	Vulkan::Buffer& Frame::RequestBuffer(Vulkan::BufferUsageFlags usage, uint32_t size)
+	BufferAllocation Frame::RequestBufferAllocation(Vulkan::BufferUsageFlags usage, uint32_t size)
 	{
-		auto buffer = Vulkan::BufferBuilder()
-			.BufferUsage(usage)
-			.Persistent()
-			.SequentialWrite()
-			.Size(size)
-			.Build(device);
-
-		buffers.push_back(std::move(buffer));
-
-		return *buffers.back();
+		return bufferPool->Allocate(size);
 	}
 
 	void Frame::SetTarget(std::unique_ptr<Target> target)

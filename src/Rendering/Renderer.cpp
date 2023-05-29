@@ -171,15 +171,15 @@ namespace Rendering
 
 		auto& frame = frames[currentImageIndex];
 
-		auto& buffer = frame->RequestBuffer(Vulkan::BufferUsageFlags::UNIFORM, sizeof(GlobalUniform));
+		auto allocation = frame->RequestBufferAllocation(Vulkan::BufferUsageFlags::UNIFORM, sizeof(GlobalUniform));
 
-		buffer.SetData(&uniform, sizeof(GlobalUniform));
+		allocation.SetData(&uniform);
 
 		BindingMap<VkDescriptorBufferInfo> bufferInfos = {
 			{ 0, { { 0, VkDescriptorBufferInfo{
-				.buffer = buffer.GetHandle(),
-				.offset = 0,
-				.range = sizeof(GlobalUniform),
+				.buffer = allocation.GetBuffer().GetHandle(),
+				.offset = allocation.GetOffset(),
+				.range = allocation.GetSize(),
 			} } } }
 		};
 

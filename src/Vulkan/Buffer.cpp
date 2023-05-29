@@ -13,9 +13,9 @@ namespace Vulkan
         vmaDestroyBuffer(device.GetAllocator(), handle, allocation);
     }
 
-    void Buffer::SetData(void* data, uint32_t size)
+    void Buffer::SetData(void* data, uint32_t size, uint32_t offset)
     {
-        memcpy(allocationInfo.pMappedData, data, size);
+        memcpy(mappedData + offset, data, size);
         Flush();
     }
 
@@ -73,36 +73,15 @@ namespace Vulkan
         };
 
         std::unique_ptr<Buffer> buffer = std::make_unique<Buffer>(device, size);
-        vmaCreateBuffer(device.GetAllocator(), &bufferCreateInfo, &allocationCreateInfo, &buffer->handle, &buffer->allocation, &buffer->allocationInfo);
+
+        VmaAllocationInfo allocationInfo{};
+        vmaCreateBuffer(device.GetAllocator(), &bufferCreateInfo, &allocationCreateInfo, &buffer->handle, &buffer->allocation, &allocationInfo);
 
         vmaGetAllocationMemoryProperties(device.GetAllocator(), buffer->allocation, &buffer->propertyFlags);
 
-        //{
-        //    VkBuffer staging;
-
-        //    VkBufferCreateInfo stagingCreateInfo{
-        //        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-        //        .size = size,
-        //        .usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-        //    };
-
-        //    VmaAllocationCreateInfo stagingAllocationCreateInfo{
-        //        .flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT,
-        //        .usage = VMA_MEMORY_USAGE_AUTO,
-        //    };
-
-        //    VmaAllocation stagingAllocation;
-        //    VmaAllocationInfo stagingAllocationInfo;
-        //    vmaCreateBuffer(device.GetAllocator(), &stagingCreateInfo, &stagingAllocationCreateInfo, &staging, &stagingAllocation, &stagingAllocationInfo);
-
-        //    memcpy(stagingAllocationInfo.pMappedData, data, size);
-
-        //    device.CopyBuffer(staging, buffer->handle, size);
-
-        //    vmaDestroyBuffer(device.GetAllocator(), staging, stagingAllocation);
-        //}
+        buffer->mappedData = static_cast<uint8_t*>(allocationInfo.pMappedData);
 
         return buffer;
     }
 
-} // namespace Vulkan
+}

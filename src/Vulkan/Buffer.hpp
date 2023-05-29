@@ -25,16 +25,17 @@ namespace Vulkan
 		Buffer(const Device& device, uint32_t size);
 		~Buffer();
 
-		void SetData(void* data, uint32_t size);
+		void SetData(void* data, uint32_t size, uint32_t offset = 0);
 		void Flush();
 		bool IsHostVisible();
 
 	private:
 		VmaAllocation allocation;
-		VmaAllocationInfo allocationInfo;
 		VkMemoryPropertyFlags propertyFlags;
 
 		const Device& device;
+
+		uint8_t* mappedData;
 		uint32_t size;
 
 		friend class BufferBuilder;

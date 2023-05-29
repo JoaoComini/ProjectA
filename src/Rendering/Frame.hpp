@@ -18,6 +18,7 @@
 #include "Vulkan/Buffer.hpp"
 
 #include "Target.hpp"
+#include "BufferPool.hpp"
 
 namespace Rendering
 {
@@ -43,7 +44,7 @@ namespace Rendering
 		Vulkan::Semaphore& RequestSemaphore();
 		VkDescriptorSet RequestDescriptorSet(BindingMap<VkDescriptorBufferInfo> bufferInfos, BindingMap<VkDescriptorImageInfo> imageInfos);
 
-		Vulkan::Buffer& RequestBuffer(Vulkan::BufferUsageFlags usage, uint32_t size);
+		BufferAllocation RequestBufferAllocation(Vulkan::BufferUsageFlags usage, uint32_t size);
 
 		void SetTarget(std::unique_ptr<Target> target);
 		Target& GetTarget() const;
@@ -62,6 +63,6 @@ namespace Rendering
 
 		std::unique_ptr<Target> target;
 
-		std::vector<std::unique_ptr<Vulkan::Buffer>> buffers;
+		std::unique_ptr<BufferPool> bufferPool;
 	};
 }
