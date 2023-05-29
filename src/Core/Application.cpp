@@ -25,6 +25,7 @@ void Application::Run()
 	Rendering::Material material = Rendering::Material(&diffuse);
 
 	auto size = window->GetFramebufferSize();
+
 	Rendering::Camera camera = Rendering::Camera(glm::radians(45.f), (float)size.width / (float)size.height, 0.1f, 200.0f);
 
 	window->OnResize(

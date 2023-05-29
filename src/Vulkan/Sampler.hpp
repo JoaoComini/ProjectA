@@ -10,7 +10,7 @@ namespace Vulkan
 	class Sampler : public Resource<VkSampler>
 	{
 	public:
-		Sampler(const Device &device);
+		Sampler(const Device &device, float maxLod);
 		~Sampler();
 
 	private:

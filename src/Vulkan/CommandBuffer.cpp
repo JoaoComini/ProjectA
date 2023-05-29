@@ -5,6 +5,7 @@
 #include "RenderPass.hpp"
 #include "Framebuffer.hpp"
 #include "Pipeline.hpp"
+#include "Image.hpp"
 
 namespace Vulkan
 {
@@ -128,7 +129,7 @@ namespace Vulkan
 		vkCmdCopyBufferToImage(handle, src, dst, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy);
 	}
 
-	void CommandBuffer::SetImageLayout(VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout)
+	void CommandBuffer::SetImageLayout(const Image& image, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t baseMipLevel, uint32_t mipLevels)
 	{
 
 		VkImageMemoryBarrier barrier{};
@@ -137,10 +138,10 @@ namespace Vulkan
 		barrier.newLayout = newLayout;
 		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		barrier.image = image;
+		barrier.image = image.GetHandle();
 		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		barrier.subresourceRange.baseMipLevel = 0;
-		barrier.subresourceRange.levelCount = 1;
+		barrier.subresourceRange.baseMipLevel = baseMipLevel;
+		barrier.subresourceRange.levelCount = mipLevels;
 		barrier.subresourceRange.baseArrayLayer = 0;
 		barrier.subresourceRange.layerCount = 1;
 
@@ -162,6 +163,12 @@ namespace Vulkan
 			barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 			sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
 			break;
+		case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
+			// Image is a transfer source
+			// Make sure any reads from the image have been finished
+			barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+			sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+			break;
 		default:
 			// Other source layouts aren't handled (yet)
 			break;
@@ -173,6 +180,13 @@ namespace Vulkan
 			// Image will be used as a transfer destination
 			// Make sure any writes to the image have been finished
 			barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+			destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+			break;
+
+		case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
+			// Image will be used as a transfer source
+			// Make sure any reads from the image have been finished
+			barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
 			destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
 			break;
 
@@ -200,5 +214,47 @@ namespace Vulkan
 			0, nullptr,
 			1, &barrier
 		);
+	}
+
+	void CommandBuffer::GenerateMipMaps(const Image& image)
+	{
+		VkExtent3D extent = image.GetExtent();
+
+		int width = extent.width;
+		int height = extent.height;
+
+		for (uint32_t i = 1; i < image.GetMipLevels(); i++)
+		{
+			SetImageLayout(image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, i - 1, 1);
+
+			VkImageBlit blit{};
+			blit.srcOffsets[0] = { 0, 0, 0 };
+			blit.srcOffsets[1] = { width, height, 1 };
+			blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			blit.srcSubresource.mipLevel = i - 1;
+			blit.srcSubresource.baseArrayLayer = 0;
+			blit.srcSubresource.layerCount = 1;
+			blit.dstOffsets[0] = { 0, 0, 0 };
+			blit.dstOffsets[1] = { width > 1 ? width / 2 : 1, height > 1 ? height / 2 : 1, 1 };
+			blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			blit.dstSubresource.mipLevel = i;
+			blit.dstSubresource.baseArrayLayer = 0;
+			blit.dstSubresource.layerCount = 1;
+
+			vkCmdBlitImage(
+				handle,
+				image.GetHandle(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+				image.GetHandle(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+				1, &blit,
+				VK_FILTER_LINEAR
+			);
+
+			SetImageLayout(image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, i - 1, 1);
+
+			width = width > 1 ? width / 2 : width;
+			height = height > 1 ? height / 2 : height;
+		}
+
+		SetImageLayout(image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, image.GetMipLevels() - 1, 1);
 	}
 }

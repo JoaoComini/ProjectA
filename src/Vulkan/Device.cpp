@@ -105,7 +105,19 @@ namespace Vulkan
 		CommandBuffer& commandBuffer = commandPool->RequestCommandBuffer();
 
 		commandBuffer.Begin(CommandBuffer::BeginFlags::OneTimeSubmit);
-		commandBuffer.SetImageLayout(image.GetHandle(), oldLayout, newLayout);
+		commandBuffer.SetImageLayout(image, oldLayout, newLayout, 0, image.GetMipLevels());
+		commandBuffer.End();
+
+		graphicsQueue->Submit(commandBuffer);
+		graphicsQueue->WaitIdle();
+	}
+
+	void Device::GenerateMipMaps(const Image& image) const
+	{
+		CommandBuffer& commandBuffer = commandPool->RequestCommandBuffer();
+
+		commandBuffer.Begin(CommandBuffer::BeginFlags::OneTimeSubmit);
+		commandBuffer.GenerateMipMaps(image);
 		commandBuffer.End();
 
 		graphicsQueue->Submit(commandBuffer);

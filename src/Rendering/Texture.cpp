@@ -1,8 +1,11 @@
 #include "Texture.hpp"
 
+#include <stb_image.h>
+
+#include <cmath>
+
 #include "Vulkan/Buffer.hpp"
 
-#include <stb_image.h>
 
 namespace Rendering
 {
@@ -23,16 +26,24 @@ namespace Rendering
 
 		staging->SetData(pixels, size);
 
-		image = std::make_unique<Vulkan::Image>(device, VK_IMAGE_USAGE_SAMPLED_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_FORMAT_R8G8B8A8_SRGB, width, height);
-		imageView = std::make_unique<Vulkan::ImageView>(device, *image);
+		VkExtent3D extent = {
+			.width = static_cast<uint32_t>(width),
+			.height = static_cast<uint32_t>(height),
+			.depth = 1
+		};
+
+		int mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(width, height)))) + 1;
+
+		image = std::make_unique<Vulkan::Image>(device, VK_IMAGE_USAGE_SAMPLED_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_FORMAT_R8G8B8A8_SRGB, extent, mipLevels);
+		imageView = std::make_unique<Vulkan::ImageView>(device, *image, mipLevels);
 
 		stbi_image_free(pixels);
 
 		device.SetImageLayout(*image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 		device.CopyBufferToImage(*staging, *image, width, height);
-		device.SetImageLayout(*image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		device.GenerateMipMaps(*image);
 
-		sampler = std::make_unique<Vulkan::Sampler>(device);
+		sampler = std::make_unique<Vulkan::Sampler>(device, static_cast<float>(mipLevels));
 	}
 
 	Vulkan::ImageView& Texture::GetImageView() const

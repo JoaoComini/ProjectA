@@ -12,15 +12,19 @@ namespace Vulkan
 	class Image : public Resource<VkImage>
 	{
 	public:
-		Image(const Device& device, VkImageUsageFlags usage, VkFormat format, uint32_t width, uint32_t height);
+		Image(const Device& device, VkImageUsageFlags usage, VkFormat format, VkExtent3D extent, uint32_t mipLevels = 1);
 		Image(const Device& device, VkImage handle, VkFormat format);
 		~Image();
 
 		VkFormat GetFormat() const;
+		VkExtent3D GetExtent() const;
+		uint32_t GetMipLevels() const;
 
 	private:
 		VmaAllocation allocation = VK_NULL_HANDLE;
 		VkFormat format;
+		VkExtent3D extent;
+		uint32_t mipLevels;
 
 		const Device& device;
 	};

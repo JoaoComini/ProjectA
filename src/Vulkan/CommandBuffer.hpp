@@ -14,6 +14,7 @@ namespace Vulkan
 	class Framebuffer;
 	class Pipeline;
 	class PipelineLayout;
+	class Image;
 
 	class CommandBuffer : public Resource<VkCommandBuffer>
 	{
@@ -46,7 +47,8 @@ namespace Vulkan
 		void Free();
 		void CopyBuffer(VkBuffer src, VkBuffer dst, uint32_t size);
 		void CopyBufferToImage(VkBuffer src, VkImage dst, uint32_t width, uint32_t height);
-		void SetImageLayout(VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout);
+		void SetImageLayout(const Image& image, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t baseMipLevel, uint32_t mipLevels);
+		void GenerateMipMaps(const Image& image);
 
 	private:
 		const Device& device;

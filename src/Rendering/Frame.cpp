@@ -18,7 +18,7 @@ namespace Rendering
 			.Size(sizeof(GlobalUniform))
 			.Build(device);
 
-		descriptorPool = std::make_unique<Vulkan::DescriptorPool>(device, descriptorSetLayout, 10);
+		descriptorPool = std::make_unique<Vulkan::DescriptorPool>(device, descriptorSetLayout, 1000);
 	}
 
 	Vulkan::Fence& Frame::GetRenderFence() const

@@ -4,7 +4,7 @@
 namespace Vulkan
 {
 
-	Sampler::Sampler(const Device& device) : device(device)
+	Sampler::Sampler(const Device& device, float maxLod) : device(device)
 	{
 		auto properties = device.GetPhysicalDeviceProperties();
 
@@ -24,7 +24,7 @@ namespace Vulkan
 		createInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
 		createInfo.mipLodBias = 0.0f;
 		createInfo.minLod = 0.0f;
-		createInfo.maxLod = 0.0f;
+		createInfo.maxLod = maxLod;
 
 		if (vkCreateSampler(device.GetHandle(), &createInfo, nullptr, &handle) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create texture sampler!");

@@ -4,7 +4,7 @@
 namespace Vulkan
 {
 
-	ImageView::ImageView(const Device& device, Image& image): device(device), image(image)
+	ImageView::ImageView(const Device& device, Image& image, uint32_t mipLevels): device(device), image(image)
 	{
         VkImageAspectFlags aspectMask = image.GetFormat() == VK_FORMAT_D32_SFLOAT ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
 
@@ -17,7 +17,7 @@ namespace Vulkan
             .subresourceRange = {
                 .aspectMask = aspectMask,
                 .baseMipLevel = 0,
-                .levelCount = 1,
+                .levelCount = mipLevels,
                 .baseArrayLayer = 0,
                 .layerCount = 1,
             },

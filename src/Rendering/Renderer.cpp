@@ -106,7 +106,7 @@ namespace Rendering
 		for (auto image : swapchain->GetImages())
 		{
 			auto swapchainImage = std::make_unique<Vulkan::Image>(device, image, format);
-			auto depthImage = std::make_unique<Vulkan::Image>(device, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_FORMAT_D32_SFLOAT, extent.width, extent.height);
+			auto depthImage = std::make_unique<Vulkan::Image>(device, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_FORMAT_D32_SFLOAT, VkExtent3D{ extent.width, extent.height, 1 });
 
 			auto target = TargetBuilder()
 				.AddImage(std::move(swapchainImage))
@@ -294,7 +294,7 @@ namespace Rendering
 		for (auto& image : swapchain->GetImages())
 		{
 			auto swapchainImage = std::make_unique<Vulkan::Image>(device, image, format);
-			auto depthImage = std::make_unique<Vulkan::Image>(device, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_FORMAT_D32_SFLOAT, extent.width, extent.height);
+			auto depthImage = std::make_unique<Vulkan::Image>(device, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_FORMAT_D32_SFLOAT, VkExtent3D{ extent.width, extent.height, 1 });
 
 			auto target = TargetBuilder()
 				.AddImage(std::move(swapchainImage))
