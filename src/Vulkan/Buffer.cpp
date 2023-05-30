@@ -29,6 +29,11 @@ namespace Vulkan
         return propertyFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
     }
 
+    uint32_t Buffer::GetSize() const
+    {
+        return size;
+    }
+
     BufferBuilder BufferBuilder::Size(uint32_t size)
     {
         this->size = size;

@@ -2,21 +2,68 @@
 
 namespace Rendering
 {
-	BufferPool::BufferPool(const Vulkan::Device& device)
+	BufferPool::BufferPool(const Vulkan::Device& device, Vulkan::BufferUsageFlags usage)
+		: device(device), usage(usage)
+	{
+		blocks.emplace_back(std::make_unique<BufferBlock>(device, blockSize, usage));
+	}
+
+	BufferAllocation BufferPool::Allocate(uint32_t size)
+	{
+		auto& activeBlock = blocks[activeBlockIndex];
+
+		if (activeBlock->CanAllocate(size))
+		{
+			return activeBlock->Allocate(size);
+		}
+
+		if (activeBlockIndex + 1 < blocks.size())
+		{
+			activeBlockIndex++;
+			return blocks[activeBlockIndex]->Allocate(size);
+		}
+
+		blocks.emplace_back(std::make_unique<BufferBlock>(device, blockSize, usage));
+		
+		activeBlockIndex++;
+		return blocks[activeBlockIndex]->Allocate(size);
+	}
+
+	void BufferPool::Reset()
+	{
+		for (auto& block : blocks)
+		{
+			block->Reset();
+		}
+
+		activeBlockIndex = 0;
+	}
+
+	BufferBlock::BufferBlock(const Vulkan::Device& device, uint32_t size, Vulkan::BufferUsageFlags usage)
 	{
 		buffer = Vulkan::BufferBuilder()
 			.Persistent()
 			.SequentialWrite()
-			.BufferUsage(Vulkan::BufferUsageFlags::UNIFORM)
-			.Size(256 * 1024)
+			.BufferUsage(usage)
+			.Size(size)
 			.Build(device);
 
 		auto properties = device.GetPhysicalDeviceProperties();
 
-		alignment = properties.limits.minUniformBufferOffsetAlignment;
+		if (usage == Vulkan::BufferUsageFlags::UNIFORM)
+		{
+			alignment = properties.limits.minUniformBufferOffsetAlignment;
+		}
 	}
 
-	BufferAllocation BufferPool::Allocate(uint32_t size)
+	bool BufferBlock::CanAllocate(uint32_t size)
+	{
+		uint32_t aligned = (offset + alignment - 1) & ~(alignment - 1);
+
+		return buffer->GetSize() >= aligned + size;
+	}
+
+	BufferAllocation BufferBlock::Allocate(uint32_t size)
 	{
 		uint32_t aligned = (offset + alignment - 1) & ~(alignment - 1);
 
@@ -25,7 +72,7 @@ namespace Rendering
 		return BufferAllocation(*buffer, size, aligned);
 	}
 
-	void BufferPool::Reset()
+	void BufferBlock::Reset()
 	{
 		offset = 0;
 	}
@@ -52,4 +99,5 @@ namespace Rendering
 	{
 		buffer.SetData(data, size, offset);
 	}
+
 }

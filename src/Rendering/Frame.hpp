@@ -48,9 +48,6 @@ namespace Rendering
 
 		void SetTarget(std::unique_ptr<Target> target);
 		Target& GetTarget() const;
-
-		std::unique_ptr<Vulkan::Buffer> uniformBuffer;
-
 	private:
 		const Vulkan::Device& device;
 		const Vulkan::DescriptorSetLayout& descriptorSetLayout;

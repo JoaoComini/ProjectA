@@ -10,17 +10,9 @@ namespace Rendering
 		semaphorePool = std::make_unique<Vulkan::SemaphorePool>(device);
 		renderFence = std::make_unique<Vulkan::Fence>(device);
 
-		uniformBuffer = Vulkan::BufferBuilder()
-			.Persistent()
-			.AllowTransfer()
-			.SequentialWrite()
-			.BufferUsage(Vulkan::BufferUsageFlags::UNIFORM)
-			.Size(sizeof(GlobalUniform))
-			.Build(device);
-
 		descriptorPool = std::make_unique<Vulkan::DescriptorPool>(device, descriptorSetLayout, 1000);
 
-		bufferPool = std::make_unique<BufferPool>(device);
+		bufferPool = std::make_unique<BufferPool>(device, Vulkan::BufferUsageFlags::UNIFORM);
 	}
 
 	Vulkan::Fence& Frame::GetRenderFence() const

@@ -29,6 +29,8 @@ namespace Vulkan
 		void Flush();
 		bool IsHostVisible();
 
+		uint32_t GetSize() const;
+
 	private:
 		VmaAllocation allocation;
 		VkMemoryPropertyFlags propertyFlags;
