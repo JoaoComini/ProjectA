@@ -2,8 +2,8 @@
 
 namespace Rendering
 {
-	BufferPool::BufferPool(const Vulkan::Device& device, Vulkan::BufferUsageFlags usage)
-		: device(device), usage(usage)
+	BufferPool::BufferPool(const Vulkan::Device& device, Vulkan::BufferUsageFlags usage, uint32_t blockSize)
+		: device(device), usage(usage), blockSize(blockSize)
 	{
 		blocks.emplace_back(std::make_unique<BufferBlock>(device, blockSize, usage));
 	}
@@ -17,15 +17,13 @@ namespace Rendering
 			return activeBlock->Allocate(size);
 		}
 
-		if (activeBlockIndex + 1 < blocks.size())
-		{
-			activeBlockIndex++;
-			return blocks[activeBlockIndex]->Allocate(size);
-		}
-
-		blocks.emplace_back(std::make_unique<BufferBlock>(device, blockSize, usage));
-		
 		activeBlockIndex++;
+
+		if (blocks.size() <= activeBlockIndex)
+		{
+			blocks.emplace_back(std::make_unique<BufferBlock>(device, blockSize, usage));
+		}
+		
 		return blocks[activeBlockIndex]->Allocate(size);
 	}
 

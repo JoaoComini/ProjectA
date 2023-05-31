@@ -1,5 +1,7 @@
 #include "Application.hpp"
 
+#include "glm/gtc/random.hpp"
+
 Application::Application()
 {
 	window = WindowBuilder()
@@ -34,14 +36,22 @@ void Application::Run()
 		}
 	);
 
+	std::vector<glm::mat4> transforms(1000);
+
+	std::generate(transforms.begin(), transforms.end(), []() {
+		glm::mat4 transform = glm::translate(glm::mat4(1.f), glm::sphericalRand(10.f));
+		return glm::rotate(transform, glm::radians(45.f), glm::vec3(0.f, 0.f, 1.f));
+	});
+
+
 	while (!window->ShouldClose())
 	{
 		window->Update();
 
 		renderer->Begin(camera);
-		for (int i = 0; i < 1000; i++)
+		for (int i = 0; i < transforms.size(); i++)
 		{
-			renderer->Draw(mesh, material, glm::rotate(glm::mat4(1.f), glm::radians(0.01f), glm::vec3(0.f, 0.f, 1.f)));
+			renderer->Draw(mesh, material, transforms[i]);
 		}
 		renderer->End();
 	}

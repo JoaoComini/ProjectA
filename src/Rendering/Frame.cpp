@@ -7,12 +7,11 @@ namespace Rendering
 		: device(device), descriptorSetLayout(descriptorSetLayout), target(std::move(target))
 	{
 		commandPool = std::make_unique<Vulkan::CommandPool>(device);
-		semaphorePool = std::make_unique<Vulkan::SemaphorePool>(device);
+		semaphorePool = std::make_unique<SemaphorePool>(device);
 		renderFence = std::make_unique<Vulkan::Fence>(device);
 
-		descriptorPool = std::make_unique<Vulkan::DescriptorPool>(device, descriptorSetLayout, 1000);
-
-		bufferPool = std::make_unique<BufferPool>(device, Vulkan::BufferUsageFlags::UNIFORM);
+		descriptorPool = std::make_unique<DescriptorPool>(device, descriptorSetLayout, DESCRIPTOR_POOL_MAX_SETS);
+		bufferPool = std::make_unique<BufferPool>(device, Vulkan::BufferUsageFlags::UNIFORM, BUFFER_POOL_BLOCK_SIZE);
 	}
 
 	Vulkan::Fence& Frame::GetRenderFence() const

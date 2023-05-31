@@ -1,19 +1,19 @@
 #include "SemaphorePool.hpp"
 
-namespace Vulkan
+namespace Rendering
 {
-	SemaphorePool::SemaphorePool(const Device& device) : device(device)
+	SemaphorePool::SemaphorePool(const Vulkan::Device& device) : device(device)
 	{
 	}
 
-	Semaphore& SemaphorePool::RequestSemaphore()
+	Vulkan::Semaphore& SemaphorePool::RequestSemaphore()
 	{
 		if (activeSemaphoresCount < semaphores.size())
 		{
 			return *semaphores[activeSemaphoresCount++];
 		}
 
-		semaphores.emplace_back(std::make_unique<Semaphore>(device));
+		semaphores.emplace_back(std::make_unique<Vulkan::Semaphore>(device));
 
 		activeSemaphoresCount++;
 

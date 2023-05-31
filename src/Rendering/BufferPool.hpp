@@ -45,7 +45,7 @@ namespace Rendering
 	class BufferPool
 	{
 	public:
-		BufferPool(const Vulkan::Device& device, Vulkan::BufferUsageFlags usage);
+		BufferPool(const Vulkan::Device& device, Vulkan::BufferUsageFlags usage, uint32_t blockSize);
 		~BufferPool() = default;
 
 		BufferAllocation Allocate(uint32_t size);
@@ -54,10 +54,11 @@ namespace Rendering
 	private:
 		const Vulkan::Device& device;
 		Vulkan::BufferUsageFlags usage;
-
-		uint32_t blockSize = 256 * 1024;
+		uint32_t blockSize;
 
 		std::vector<std::unique_ptr<BufferBlock>> blocks;
 		uint32_t activeBlockIndex = 0;
+
+
 	};
 }

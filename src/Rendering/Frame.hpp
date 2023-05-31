@@ -7,18 +7,18 @@
 #include <map>
 
 #include "Vulkan/Semaphore.hpp"
-#include "Vulkan/SemaphorePool.hpp"
 #include "Vulkan/Fence.hpp"
 #include "Vulkan/CommandPool.hpp"
 #include "Vulkan/CommandBuffer.hpp"
 #include "Vulkan/Device.hpp"
 #include "Vulkan/Buffer.hpp"
 #include "Vulkan/DescriptorSetLayout.hpp"
-#include "Vulkan/DescriptorPool.hpp"
 #include "Vulkan/Buffer.hpp"
 
 #include "Target.hpp"
 #include "BufferPool.hpp"
+#include "DescriptorPool.hpp"
+#include "SemaphorePool.hpp"
 
 namespace Rendering
 {
@@ -34,6 +34,9 @@ namespace Rendering
 	class Frame
 	{
 	public:
+		static constexpr uint32_t BUFFER_POOL_BLOCK_SIZE = 256 * 1024;
+		static constexpr uint32_t DESCRIPTOR_POOL_MAX_SETS = 256;
+
 		Frame(const Vulkan::Device& device, const Vulkan::DescriptorSetLayout& descriptorSetLayout, std::unique_ptr<Target> target);
 		~Frame() = default;
 
@@ -53,8 +56,8 @@ namespace Rendering
 		const Vulkan::DescriptorSetLayout& descriptorSetLayout;
 
 		std::unique_ptr<Vulkan::CommandPool> commandPool;
-		std::unique_ptr<Vulkan::SemaphorePool> semaphorePool;
-		std::unique_ptr<Vulkan::DescriptorPool> descriptorPool;
+		std::unique_ptr<SemaphorePool> semaphorePool;
+		std::unique_ptr<DescriptorPool> descriptorPool;
 
 		std::unique_ptr<Vulkan::Fence> renderFence;
 

@@ -25,7 +25,7 @@ namespace Rendering
 
 		glm::mat4 projection;
 		glm::mat4 view{ 1 };
-		glm::vec3 position{ 2 };
+		glm::vec3 position{ 25 };
 
 	};
 }
