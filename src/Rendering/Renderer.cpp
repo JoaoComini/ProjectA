@@ -31,34 +31,49 @@ namespace Rendering
 
 	void Renderer::CreateDescriptors()
 	{
-		VkDescriptorSetLayoutBinding uniformBufferBinding = {
-			.binding = 0,
-			.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-			.descriptorCount = 1,
-			.stageFlags = VK_SHADER_STAGE_VERTEX_BIT
-		};
+		{
+			VkDescriptorSetLayoutBinding uniformBufferBinding = {
+				.binding = 0,
+				.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+				.descriptorCount = 1,
+				.stageFlags = VK_SHADER_STAGE_VERTEX_BIT
+			};
 
-		VkDescriptorSetLayoutBinding samplerBinding = {
-			.binding = 1,
-			.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-			.descriptorCount = 1,
-			.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
-			.pImmutableSamplers = nullptr,
-		};
+			globalDescriptorSetLayout = std::make_shared<Vulkan::DescriptorSetLayout>(
+				device,
+				std::vector<VkDescriptorSetLayoutBinding>{ uniformBufferBinding }
+			);
+		}
 
-		descriptorSetLayout = std::make_shared<Vulkan::DescriptorSetLayout>(
-			device,
-			std::vector<VkDescriptorSetLayoutBinding>{ uniformBufferBinding, samplerBinding }
-		);
+		{
+			VkDescriptorSetLayoutBinding uniformBufferBinding = {
+				.binding = 0,
+				.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+				.descriptorCount = 1,
+				.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT
+			};
 
-		descriptorPool = std::make_unique<Vulkan::DescriptorPool>(device, *descriptorSetLayout, 10);
+			VkDescriptorSetLayoutBinding samplerBinding = {
+				.binding = 1,
+				.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+				.descriptorCount = 1,
+				.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+				.pImmutableSamplers = nullptr,
+			};
+
+			modelDescriptorSetLayout = std::make_shared<Vulkan::DescriptorSetLayout>(
+				device,
+				std::vector<VkDescriptorSetLayoutBinding>{ uniformBufferBinding, samplerBinding }
+			);
+		}
+
 	}
 
 	void Renderer::CreatePipeline()
 	{
 		pipelineLayout = std::make_unique<Vulkan::PipelineLayout>(
 			device,
-			std::vector<std::shared_ptr<Vulkan::DescriptorSetLayout>>{ descriptorSetLayout }
+			std::vector<std::shared_ptr<Vulkan::DescriptorSetLayout>>{ globalDescriptorSetLayout, modelDescriptorSetLayout }
 		);
 
 		auto spec = Vulkan::PipelineSpec
@@ -105,15 +120,9 @@ namespace Rendering
 
 		for (auto image : swapchain->GetImages())
 		{
-			auto swapchainImage = std::make_unique<Vulkan::Image>(device, image, format);
-			auto depthImage = std::make_unique<Vulkan::Image>(device, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_FORMAT_D32_SFLOAT, VkExtent3D{ extent.width, extent.height, 1 });
+			auto target = CreateTarget(image, format, extent);
 
-			auto target = TargetBuilder()
-				.AddImage(std::move(swapchainImage))
-				.AddImage(std::move(depthImage))
-				.Build(device);
-
-			auto frame = std::make_unique<Frame>(device, *descriptorSetLayout, std::move(target));
+			auto frame = std::make_unique<Frame>(device, std::move(target));
 
 			frames.emplace_back(std::move(frame));
 		}
@@ -133,9 +142,9 @@ namespace Rendering
 	{
 		this->camera = &camera;
 
-		auto& previousFrame = frames[currentImageIndex];
+		auto& previousFrame = GetCurrentFrame();
 
-		acquireSemaphore = &previousFrame->RequestSemaphore();
+		acquireSemaphore = &previousFrame.RequestSemaphore();
 
 		auto result = swapchain->AcquireNextImageIndex(currentImageIndex, *acquireSemaphore);
 
@@ -150,28 +159,87 @@ namespace Rendering
 
 			if (result != VK_SUCCESS)
 			{
-				previousFrame.reset();
+				previousFrame.Reset();
 				return;
 			}
 		}
 
-		frames[currentImageIndex]->Reset();
+		auto& frame = GetCurrentFrame();
+		frame.Reset();
 
-		activeCommandBuffer = &frames[currentImageIndex]->RequestCommandBuffer();
+		activeCommandBuffer = &frame.RequestCommandBuffer();
 
 		BeginCommandBuffer();
+		UpdateGlobalUniform();
 	}
+
+	void Renderer::BeginCommandBuffer()
+	{
+		activeCommandBuffer->Begin();
+
+		VkExtent2D extent = swapchain->GetImageExtent();
+
+		std::vector<VkClearValue> clearValues = {
+			{ { 0.f, 0.f, 0.f, 1.f } },
+			{ 1.f, 0.f }
+		};
+
+		activeCommandBuffer->BeginRenderPass(*renderPass, *framebuffers[currentImageIndex], clearValues, extent);
+
+		activeCommandBuffer->SetViewport({
+			{
+				.width = static_cast<float>(extent.width),
+				.height = static_cast<float>(extent.height),
+				.minDepth = 0.0f,
+				.maxDepth = 1.0f,
+			}
+		});
+
+		activeCommandBuffer->SetScissor({
+			{
+				.extent = extent
+			}
+		});
+
+		activeCommandBuffer->BindPipeline(*pipeline, VK_PIPELINE_BIND_POINT_GRAPHICS);
+	}
+
+	void Renderer::UpdateGlobalUniform()
+	{
+		GlobalUniform uniform{
+			.viewProjection = camera->GetViewProjection(),
+		};
+
+		auto& frame = GetCurrentFrame();
+
+		auto allocation = frame.RequestBufferAllocation(Vulkan::BufferUsageFlags::UNIFORM, sizeof(GlobalUniform));
+
+		allocation.SetData(&uniform);
+
+		BindingMap<VkDescriptorBufferInfo> bufferInfos = {
+			{ 0,{ { 0, VkDescriptorBufferInfo{
+				.buffer = allocation.GetBuffer().GetHandle(),
+				.offset = allocation.GetOffset(),
+				.range = allocation.GetSize(),
+		} } } }
+		};
+
+		auto descriptorSet = frame.RequestDescriptorSet(*globalDescriptorSetLayout, bufferInfos, {});
+
+		activeCommandBuffer->BindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, *pipelineLayout, 0, descriptorSet);
+	}
+
 
 	void Renderer::Draw(Mesh& mesh, Material& material, glm::mat4 transform)
 	{
-		GlobalUniform uniform {
-			.viewProjection = camera->GetViewProjection(),
+		ModelUniform uniform{
 			.model = transform,
+			.color = material.GetColor(),
 		};
 
-		auto& frame = frames[currentImageIndex];
+		auto& frame = GetCurrentFrame();
 
-		auto allocation = frame->RequestBufferAllocation(Vulkan::BufferUsageFlags::UNIFORM, sizeof(GlobalUniform));
+		auto allocation = frame.RequestBufferAllocation(Vulkan::BufferUsageFlags::UNIFORM, sizeof(ModelUniform));
 
 		allocation.SetData(&uniform);
 
@@ -191,46 +259,11 @@ namespace Rendering
 			} } } }
 		};
 
-		auto descriptorSet = frame->RequestDescriptorSet(bufferInfos, imageInfos);
+		auto descriptorSet = frame.RequestDescriptorSet(*modelDescriptorSetLayout, bufferInfos, imageInfos);
 
-		activeCommandBuffer->BindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, *pipelineLayout, descriptorSet);
+		activeCommandBuffer->BindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, *pipelineLayout, 1, descriptorSet);
 
 		mesh.Draw(activeCommandBuffer->GetHandle());
-	}
-
-	void Renderer::BeginCommandBuffer()
-	{
-		activeCommandBuffer->Begin();
-
-		VkExtent2D extent = swapchain->GetImageExtent();
-
-		std::vector<VkClearValue> clearValues = {
-			{ { 0.0f, 0.0f, 0.0f, 1.0f } },
-			{ 1.0f, 0 }
-		};
-
-		activeCommandBuffer->BeginRenderPass(*renderPass, *framebuffers[currentImageIndex], clearValues, extent);
-
-		std::vector<VkViewport> viewports = {
-			{
-				.width = static_cast<float>(extent.width),
-				.height = static_cast<float>(extent.height),
-				.minDepth = 0.0f,
-				.maxDepth = 1.0f,
-			}
-		};
-
-		activeCommandBuffer->SetViewport(viewports);
-
-		std::vector<VkRect2D> scissors = {
-			{
-				.extent = extent
-			}
-		};
-
-		activeCommandBuffer->SetScissor(scissors);
-
-		activeCommandBuffer->BindPipeline(*pipeline, VK_PIPELINE_BIND_POINT_GRAPHICS);
 	}
 
 	void Renderer::End()
@@ -248,8 +281,9 @@ namespace Rendering
 
 	Vulkan::Semaphore& Renderer::Submit()
 	{
-		Vulkan::Semaphore& renderFinishedSemaphore = frames[currentImageIndex]->RequestSemaphore();
-		Vulkan::Fence& renderFence = frames[currentImageIndex]->GetRenderFence();
+		auto& frame = GetCurrentFrame();
+		Vulkan::Semaphore& renderFinishedSemaphore = frame.RequestSemaphore();
+		Vulkan::Fence& renderFence = frame.GetRenderFence();
 
 		device.GetGraphicsQueue().Submit(*activeCommandBuffer, *acquireSemaphore, renderFinishedSemaphore, renderFence);
 
@@ -293,13 +327,7 @@ namespace Rendering
 
 		for (auto& image : swapchain->GetImages())
 		{
-			auto swapchainImage = std::make_unique<Vulkan::Image>(device, image, format);
-			auto depthImage = std::make_unique<Vulkan::Image>(device, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_FORMAT_D32_SFLOAT, VkExtent3D{ extent.width, extent.height, 1 });
-
-			auto target = TargetBuilder()
-				.AddImage(std::move(swapchainImage))
-				.AddImage(std::move(depthImage))
-				.Build(device);
+			auto target = CreateTarget(image, format, extent);
 
 			(*it)->SetTarget(std::move(target));
 
@@ -311,5 +339,21 @@ namespace Rendering
 		CreateFramebuffers();
 
 		return true;
+	}
+
+	Frame& Renderer::GetCurrentFrame() const
+	{
+		return *frames[currentImageIndex];
+	}
+
+	std::unique_ptr<Target> Renderer::CreateTarget(VkImage image, VkFormat format, VkExtent2D extent)
+	{
+		auto swapchainImage = std::make_unique<Vulkan::Image>(device, image, format);
+		auto depthImage = std::make_unique<Vulkan::Image>(device, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_FORMAT_D32_SFLOAT, VkExtent3D{ extent.width, extent.height, 1 });
+
+		return TargetBuilder()
+			.AddImage(std::move(swapchainImage))
+			.AddImage(std::move(depthImage))
+			.Build(device);
 	}
 }

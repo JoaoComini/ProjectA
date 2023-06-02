@@ -1,5 +1,7 @@
 #include "Mesh.hpp"
 
+#include "Utils/Hash.hpp"
+
 #include <iostream>
 #include <unordered_map>
 #include <stdexcept>

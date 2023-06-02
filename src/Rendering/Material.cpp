@@ -12,4 +12,9 @@ namespace Rendering
 		return this->diffuse;
 	}
 
+	glm::vec4 Material::GetColor() const
+	{
+		return this->color;
+	}
+
 };

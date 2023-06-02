@@ -6,12 +6,16 @@ layout(location = 2) in vec2 inUV;
 
 layout(set = 0, binding = 0) uniform GlobalUniform {
     mat4 viewProjection;
-    mat4 model;
 } global;
+
+layout(set = 1, binding = 0) uniform ModelUniform {
+    mat4 model;
+    vec4 color;
+} model;
 
 layout(location = 0) out vec2 outUV;
 
 void main() {
-    gl_Position = global.viewProjection * global.model * vec4(inPosition, 1.0);
+    gl_Position = global.viewProjection * model.model * vec4(inPosition, 1.0);
     outUV = inUV;
 }

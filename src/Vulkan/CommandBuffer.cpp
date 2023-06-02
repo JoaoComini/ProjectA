@@ -82,9 +82,9 @@ namespace Vulkan
 		vkCmdBindPipeline(handle, bindPoint, pipeline.GetHandle());
 	}
 
-	void CommandBuffer::BindDescriptorSet(VkPipelineBindPoint bindPoint, const PipelineLayout& pipelineLayout, VkDescriptorSet descriptorSet)
+	void CommandBuffer::BindDescriptorSet(VkPipelineBindPoint bindPoint, const PipelineLayout& pipelineLayout, uint32_t firstSet, VkDescriptorSet descriptorSet)
 	{
-		vkCmdBindDescriptorSets(handle, bindPoint, pipelineLayout.GetHandle(), 0, 1, &descriptorSet, 0, nullptr);
+		vkCmdBindDescriptorSets(handle, bindPoint, pipelineLayout.GetHandle(), firstSet, 1, &descriptorSet, 0, nullptr);
 	}
 
 	void CommandBuffer::EndRenderPass()

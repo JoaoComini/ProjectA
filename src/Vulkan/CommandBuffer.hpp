@@ -41,7 +41,7 @@ namespace Vulkan
 		void SetViewport(const std::vector<VkViewport>& viewports);
 		void SetScissor(const std::vector<VkRect2D>& scissors);
 		void BindPipeline(const Pipeline& pipeline, VkPipelineBindPoint bindPoint);
-		void BindDescriptorSet(VkPipelineBindPoint bindPoint, const PipelineLayout& pipelineLayout, VkDescriptorSet descriptorSet);
+		void BindDescriptorSet(VkPipelineBindPoint bindPoint, const PipelineLayout& pipelineLayout, uint32_t firstSet, VkDescriptorSet descriptorSet);
 		void EndRenderPass();
 
 		void Free();

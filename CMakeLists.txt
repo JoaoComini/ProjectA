@@ -17,7 +17,7 @@ add_subdirectory(third_party/tinyobjloader)
 
 file(GLOB_RECURSE SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/**)
 
-add_executable(ProjectA ${SRC_FILES} "src/Vulkan/ImageView.cpp")
+add_executable(ProjectA ${SRC_FILES})
 
 target_include_directories(ProjectA PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src ${Vulkan_INCLUDE_DIR} third_party/stb)
 

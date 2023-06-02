@@ -1,16 +1,17 @@
 #include "Frame.hpp"
 
+#include "Utils/Hash.hpp"
+
 namespace Rendering
 {
 
-	Frame::Frame(const Vulkan::Device& device, const Vulkan::DescriptorSetLayout& descriptorSetLayout, std::unique_ptr<Target> target)
-		: device(device), descriptorSetLayout(descriptorSetLayout), target(std::move(target))
+	Frame::Frame(const Vulkan::Device& device, std::unique_ptr<Target> target)
+		: device(device), target(std::move(target))
 	{
 		commandPool = std::make_unique<Vulkan::CommandPool>(device);
 		semaphorePool = std::make_unique<SemaphorePool>(device);
 		renderFence = std::make_unique<Vulkan::Fence>(device);
 
-		descriptorPool = std::make_unique<DescriptorPool>(device, descriptorSetLayout, DESCRIPTOR_POOL_MAX_SETS);
 		bufferPool = std::make_unique<BufferPool>(device, Vulkan::BufferUsageFlags::UNIFORM, BUFFER_POOL_BLOCK_SIZE);
 	}
 
@@ -29,7 +30,10 @@ namespace Rendering
 
 		bufferPool->Reset();
 
-		descriptorPool->Reset();
+		for (auto& [_, pool]:descriptorPools)
+		{
+			pool->Reset();
+		}
 	}
 
 	Vulkan::CommandBuffer& Frame::RequestCommandBuffer()
@@ -42,9 +46,9 @@ namespace Rendering
 		return semaphorePool->RequestSemaphore();
 	}
 
-	VkDescriptorSet Frame::RequestDescriptorSet(BindingMap<VkDescriptorBufferInfo> bufferInfos, BindingMap<VkDescriptorImageInfo> imageInfos)
+	VkDescriptorSet Frame::RequestDescriptorSet(const Vulkan::DescriptorSetLayout& descriptorSetLayout, const BindingMap<VkDescriptorBufferInfo>& bufferInfos, const BindingMap<VkDescriptorImageInfo>& imageInfos)
 	{
-		auto handle = descriptorPool->Allocate();
+		auto handle = GetDescriptorPool(descriptorSetLayout).Allocate();
 
 		std::vector<VkWriteDescriptorSet> writes;
 
@@ -114,5 +118,21 @@ namespace Rendering
 	Target& Frame::GetTarget() const
 	{
 		return *target;
+	}
+
+	DescriptorPool& Frame::GetDescriptorPool(const Vulkan::DescriptorSetLayout& descriptorSetLayout)
+	{
+		std::size_t hash = Hash(descriptorSetLayout);
+
+		auto it = descriptorPools.find(hash);
+
+		if (it != descriptorPools.end())
+		{
+			return *it->second;
+		}
+
+		auto [res, _] = descriptorPools.emplace(hash, std::make_unique<DescriptorPool>(device, descriptorSetLayout, DESCRIPTOR_POOL_MAX_SETS));
+
+		return *res->second;
 	}
 }

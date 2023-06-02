@@ -14,8 +14,10 @@ namespace Rendering
 
 		Texture* GetDiffuse() const;
 
+		glm::vec4 GetColor() const;
+
 	private:
-		glm::vec4 color = glm::vec4(1.0f, 0.f, 0.f, 1.0f);
+		glm::vec4 color = glm::vec4(1.f, 1.f, 1.f, 1.1f);
 
 		Texture* diffuse;
 	};

@@ -25,6 +25,18 @@
 
 namespace Rendering
 {
+
+	struct GlobalUniform
+	{
+		glm::mat4 viewProjection;
+	};
+
+	struct ModelUniform
+	{
+		glm::mat4 model;
+		glm::vec4 color;
+	};
+
 	class Renderer
 	{
 	public:
@@ -42,11 +54,15 @@ namespace Rendering
 		void CreateFramebuffers();
 
 		void BeginCommandBuffer();
+		void UpdateGlobalUniform();
 		Vulkan::Semaphore& Submit();
 		void Present(Vulkan::Semaphore& waitSemaphore);
 		bool RecreateSwapchain(bool force = false);
 
 	private:
+		Frame& GetCurrentFrame() const;
+		std::unique_ptr<Target> CreateTarget(VkImage image, VkFormat format, VkExtent2D extent);
+
 		uint32_t currentImageIndex = 0;
 
 		const Vulkan::Device& device;
@@ -65,8 +81,7 @@ namespace Rendering
 		std::unique_ptr<Vulkan::PipelineLayout> pipelineLayout;
 
 		std::unique_ptr<Vulkan::RenderPass> renderPass;
-		std::shared_ptr<Vulkan::DescriptorSetLayout> descriptorSetLayout;
-
-		std::unique_ptr<Vulkan::DescriptorPool> descriptorPool;
+		std::shared_ptr<Vulkan::DescriptorSetLayout> globalDescriptorSetLayout;
+		std::shared_ptr<Vulkan::DescriptorSetLayout> modelDescriptorSetLayout;
 	};
 }
