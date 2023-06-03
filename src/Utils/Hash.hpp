@@ -37,7 +37,13 @@ namespace std
 	{
 		size_t operator()(const Vertex& vertex) const
 		{
-			return ((hash<glm::vec3>()(vertex.position) ^ (hash<glm::vec2>()(vertex.uv) << 1)) >> 1) ^ (hash<glm::vec3>()(vertex.normal) << 1);
+			std::size_t result = 0U;
+
+			HashCombine(result, vertex.position);
+			HashCombine(result, vertex.uv);
+			HashCombine(result, vertex.normal);
+
+			return result;
 		}
 	};
 
