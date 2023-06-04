@@ -40,6 +40,8 @@ namespace Vulkan
 
 		SurfaceSupportDetails GetSurfaceSupportDetails() const;
 		VkPhysicalDeviceProperties GetPhysicalDeviceProperties() const;
+
+		VkSampleCountFlagBits GetMaxSampleCount() const;
  
 	private:
 		std::unique_ptr<CommandPool> commandPool;

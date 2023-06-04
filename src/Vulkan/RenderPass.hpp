@@ -7,7 +7,7 @@
 #include "Resource.hpp"
 
 namespace Vulkan
-{
+{	
 	class RenderPass : public Resource<VkRenderPass>
 	{
 	public:

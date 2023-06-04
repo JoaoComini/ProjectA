@@ -4,7 +4,7 @@
 
 namespace Vulkan
 {
-    Image::Image(const Device &device, VkImageUsageFlags usage, VkFormat format, VkExtent3D extent, uint32_t mipLevels)
+    Image::Image(const Device &device, VkImageUsageFlags usage, VkFormat format, VkExtent3D extent, VkSampleCountFlagBits samples, uint32_t mipLevels)
         : device(device), format(format), extent(extent), mipLevels(mipLevels)
     {
 
@@ -16,7 +16,7 @@ namespace Vulkan
             .extent = extent,
             .mipLevels = mipLevels,
             .arrayLayers = 1,
-            .samples = VK_SAMPLE_COUNT_1_BIT,
+            .samples = samples,
             .tiling = VK_IMAGE_TILING_OPTIMAL,
             .usage = usage,
             .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,

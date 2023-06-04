@@ -193,13 +193,13 @@ namespace Rendering
 				.minDepth = 0.0f,
 				.maxDepth = 1.0f,
 			}
-		});
+			});
 
 		activeCommandBuffer->SetScissor({
 			{
 				.extent = extent
 			}
-		});
+			});
 
 		activeCommandBuffer->BindPipeline(*pipeline, VK_PIPELINE_BIND_POINT_GRAPHICS);
 	}
@@ -349,11 +349,27 @@ namespace Rendering
 	std::unique_ptr<Target> Renderer::CreateTarget(VkImage image, VkFormat format, VkExtent2D extent)
 	{
 		auto swapchainImage = std::make_unique<Vulkan::Image>(device, image, format);
-		auto depthImage = std::make_unique<Vulkan::Image>(device, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_FORMAT_D32_SFLOAT, VkExtent3D{ extent.width, extent.height, 1 });
+
+		auto depthImage = std::make_unique<Vulkan::Image>(
+			device,
+			VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+			VK_FORMAT_D32_SFLOAT,
+			VkExtent3D{ extent.width, extent.height, 1 },
+			device.GetMaxSampleCount()
+		);
+
+		auto colorImage = std::make_unique<Vulkan::Image>(
+			device,
+			VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+			format,
+			VkExtent3D{ extent.width, extent.height, 1 },
+			device.GetMaxSampleCount()
+		);
 
 		return TargetBuilder()
-			.AddImage(std::move(swapchainImage))
+			.AddImage(std::move(colorImage))
 			.AddImage(std::move(depthImage))
+			.AddImage(std::move(swapchainImage))
 			.Build(device);
 	}
 }
