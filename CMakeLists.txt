@@ -1,4 +1,4 @@
- cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.20)
 project(ProjectA VERSION 0.0.1)
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -7,19 +7,30 @@ endif(NOT CMAKE_BUILD_TYPE)
 
 include(FindVulkan)
 
+add_subdirectory(third_party/glm)
+add_subdirectory(third_party/vma)
+add_subdirectory(third_party/tinyobjloader)
+
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 add_subdirectory(third_party/glfw)
-add_subdirectory(third_party/glm)
-add_subdirectory(third_party/vma)
-add_subdirectory(third_party/tinyobjloader)
+
+set(TINYGLTF_HEADER_ONLY ON CACHE INTERNAL "" FORCE)
+set(TINYGLTF_INSTALL OFF CACHE INTERNAL "" FORCE)
+set(TINYGLTF_BUILD_LOADER_EXAMPLE OFF CACHE INTERNAL "" FORCE)
+add_subdirectory(third_party/tinygltf)
 
 file(GLOB_RECURSE SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/**)
 
 add_executable(ProjectA ${SRC_FILES})
 
-target_include_directories(ProjectA PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src ${Vulkan_INCLUDE_DIR} third_party/stb)
+target_include_directories(ProjectA
+  PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/src
+  ${Vulkan_INCLUDE_DIR}
+  third_party/stb
+)
 
 target_link_libraries(ProjectA
     ${Vulkan_LIBRARIES}
@@ -27,14 +38,15 @@ target_link_libraries(ProjectA
     glm::glm
     VulkanMemoryAllocator
     tinyobjloader
+    tinygltf
 )
 
-target_compile_definitions(ProjectA PUBLIC
-    GLFW_INCLUDE_VULKAN
-    GLM_ENABLE_EXPERIMENTAL
-    GLM_FORCE_DEPTH_ZERO_TO_ONE
-    GLM_FORCE_RADIANS
-    STB_IMAGE_IMPLEMENTATION
+target_compile_definitions(ProjectA PRIVATE
+  GLFW_INCLUDE_VULKAN
+  GLM_ENABLE_EXPERIMENTAL
+  GLM_FORCE_DEPTH_ZERO_TO_ONE
+  GLM_FORCE_RADIANS
+  TINYGLTF_USE_CPP14
 )
 
 set_target_properties(ProjectA VulkanMemoryAllocator PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON)

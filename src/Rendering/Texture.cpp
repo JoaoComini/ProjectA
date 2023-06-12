@@ -1,11 +1,11 @@
 #include "Texture.hpp"
 
+#define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
 #include <cmath>
 
 #include "Vulkan/Buffer.hpp"
-
 
 namespace Rendering
 {
@@ -34,7 +34,7 @@ namespace Rendering
 
 		int mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(width, height)))) + 1;
 
-		image = std::make_unique<Vulkan::Image>(device, VK_IMAGE_USAGE_SAMPLED_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_FORMAT_R8G8B8A8_SRGB, extent, VK_SAMPLE_COUNT_1_BIT, mipLevels);
+		image = std::make_unique<Vulkan::Image>(device, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_FORMAT_R8G8B8A8_SRGB, extent, VK_SAMPLE_COUNT_1_BIT, mipLevels);
 		imageView = std::make_unique<Vulkan::ImageView>(device, *image, mipLevels);
 
 		stbi_image_free(pixels);

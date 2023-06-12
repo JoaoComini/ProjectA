@@ -1,7 +1,5 @@
 #include "Mesh.hpp"
 
-#include "Utils/Hash.hpp"
-
 #include <iostream>
 #include <unordered_map>
 #include <stdexcept>
@@ -9,12 +7,25 @@
 
 #include <tiny_obj_loader.h>
 
+#define TINYGLTF_IMPLEMENTATION
+#include <tiny_gltf.h>
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <stb_image_write.h>
+
+#include "Utils/Hash.hpp"
+
 namespace Rendering
 {
 
     Mesh::Mesh(Vulkan::Device& device, std::string path)
     {
+        // LoadFromObj(device, path);
+        LoadFromGltf(device, path);
+    }
 
+    void Mesh::LoadFromObj(Vulkan::Device& device, std::string path)
+    {
         tinyobj::attrib_t attrib;
         std::vector<tinyobj::shape_t> shapes;
         std::vector<tinyobj::material_t> materials;
@@ -87,6 +98,29 @@ namespace Rendering
             .Build(device);
 
         indexBuffer->SetData(indices.data(), sizeof(int32_t) * indices.size());
+    }
+
+    void Mesh::LoadFromGltf(Vulkan::Device& device, std::string path)
+    {
+        tinygltf::Model model;
+        tinygltf::TinyGLTF loader;
+        std::string err;
+        std::string warn;
+
+        loader.LoadBinaryFromFile(&model, &err, &warn, path.c_str());
+
+        if (!warn.empty())
+        {
+            std::cout << "WARN: " << warn << std::endl;
+        }
+
+        if (!err.empty())
+        {
+            std::stringstream ss;
+            ss << "failed to load " << path << ": " << err;
+            throw std::runtime_error(ss.str());
+        }
+
     }
 
     void Mesh::Draw(const VkCommandBuffer commandBuffer)

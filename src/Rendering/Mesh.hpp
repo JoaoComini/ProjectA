@@ -20,6 +20,9 @@ namespace Rendering
 
 		void Draw(const VkCommandBuffer commandBuffer);
 	private:
+		void LoadFromObj(Vulkan::Device& device, std::string path);
+		void LoadFromGltf(Vulkan::Device& device, std::string path);
+
 		std::vector<Vertex> vertices;
 		std::vector<uint32_t> indices;
 
