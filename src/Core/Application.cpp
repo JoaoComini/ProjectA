@@ -23,7 +23,9 @@ Application::Application()
 
 void Application::Run()
 {
-	Rendering::Mesh mesh = Rendering::Mesh(*device, "resources/models/duck.glb");
+	Rendering::Mesh mesh = Rendering::Mesh(*device, "resources/models/viking_room.obj");
+	Rendering::Texture diffuse = Rendering::Texture(*device, "resources/models/viking_room.png");
+	Rendering::Material material = Rendering::Material(&diffuse);
 
 	auto size = window->GetFramebufferSize();
 
@@ -34,14 +36,15 @@ void Application::Run()
 			camera.SetAspect((float)width / height);
 		}
 	);
-		
-	auto transform = glm::rotate(glm::mat4(1.f), glm::radians(45.f), glm::vec3(0.f, 0.f, 1.f));
+
+	auto transform = glm::rotate(glm::mat4(1.f), glm::radians(25.f), glm::vec3(0.f, 0.f, 1.f));
 
 	while (!window->ShouldClose())
 	{
 		window->Update();
 
 		renderer->Begin(camera);
+		renderer->Draw(mesh, material, transform);
 		renderer->End();
 	}
 
