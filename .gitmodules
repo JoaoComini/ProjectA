@@ -17,3 +17,9 @@
 	path = third_party/tinygltf
 	url = https://github.com/syoyo/tinygltf
 
+[submodule "third_party/catch2"]
+	path = third_party/catch2
+	url = https://github.com/catchorg/Catch2
+[submodule "third_party/entt"]
+	path = third_party/entt
+	url = https://github.com/skypjack/entt.git
