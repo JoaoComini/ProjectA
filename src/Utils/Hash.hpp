@@ -33,9 +33,9 @@ inline std::size_t Hash(const T& t)
 namespace std
 {
 	template <>
-	struct hash<Vertex>
+	struct hash<Rendering::Vertex>
 	{
-		size_t operator()(const Vertex& vertex) const
+		size_t operator()(const Rendering::Vertex& vertex) const
 		{
 			std::size_t result = 0U;
 

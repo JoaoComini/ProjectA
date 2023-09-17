@@ -22,13 +22,18 @@ Window::Window(std::string name, int width, int height, bool resizable)
 
 Window::~Window()
 {
-    glfwDestroyWindow(handle);
-    glfwTerminate();
+    Close();
 }
 
 bool Window::ShouldClose()
 {
     return glfwWindowShouldClose(handle);
+}
+
+void Window::Close()
+{
+    glfwDestroyWindow(handle);
+    glfwTerminate();
 }
 
 void Window::Update()

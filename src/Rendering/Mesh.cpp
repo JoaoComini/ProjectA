@@ -1,4 +1,8 @@
 #include "Mesh.hpp"
+#include "Mesh.hpp"
+#include "Mesh.hpp"
+#include "Mesh.hpp"
+#include "Mesh.hpp"
 
 #include "Utils/Hash.hpp"
 
@@ -11,90 +15,61 @@
 
 namespace Rendering
 {
-
-    Mesh::Mesh(Vulkan::Device& device, std::string path)
+    Mesh::Mesh(Vulkan::Device& device, const Material &material, std::vector<Vertex> vertices) : material(&material), device(device)
     {
+        BuildVertexBuffer(vertices);
+    }
 
-        tinyobj::attrib_t attrib;
-        std::vector<tinyobj::shape_t> shapes;
-        std::vector<tinyobj::material_t> materials;
-
-        std::string warn;
-        std::string err;
-
-        tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, path.c_str(), nullptr);
-
-        if (!warn.empty())
-        {
-            std::cout << "WARN: " << warn << std::endl;
-        }
-
-        if (!err.empty())
-        {
-            std::stringstream ss;
-            ss << "failed to load " << path << ": " << err;
-            throw std::runtime_error(ss.str());
-        }
-
-        std::unordered_map<Vertex, uint32_t> uniques{};
-        for (const auto& shape : shapes)
-        {
-            for (const auto& index : shape.mesh.indices)
-            {
-                tinyobj::real_t vx = attrib.vertices[3L * index.vertex_index + 0];
-                tinyobj::real_t vy = attrib.vertices[3L * index.vertex_index + 1];
-                tinyobj::real_t vz = attrib.vertices[3L * index.vertex_index + 2];
-
-                tinyobj::real_t nx = attrib.normals[3L * index.normal_index + 0];
-                tinyobj::real_t ny = attrib.normals[3L * index.normal_index + 1];
-                tinyobj::real_t nz = attrib.normals[3L * index.normal_index + 2];
-
-                tinyobj::real_t tx = attrib.texcoords[2L * index.texcoord_index + 0];
-                tinyobj::real_t ty = 1.f - attrib.texcoords[2L * index.texcoord_index + 1];
-
-                Vertex vertex{
-                    .position = {vx, vy, vz},
-                    .normal = {nx, ny, nz},
-                    .uv = {tx, ty},
-                };
-
-                if (uniques.count(vertex) == 0)
-                {
-                    uniques[vertex] = static_cast<uint32_t>(vertices.size());
-                    vertices.push_back(vertex);
-                }
-
-                indices.push_back(uniques[vertex]);
-            }
-        }
+    void Mesh::BuildVertexBuffer(std::vector<Vertex> vertices)
+    {
+        vertexCount = vertices.size();
 
         vertexBuffer = Vulkan::BufferBuilder()
-            .Size(sizeof(Vertex) * vertices.size())
+            .Size(sizeof(Vertex) * vertexCount)
             .Persistent()
             .AllowTransfer()
             .SequentialWrite()
             .BufferUsage(Vulkan::BufferUsageFlags::VERTEX)
             .Build(device);
 
-        vertexBuffer->SetData(vertices.data(), sizeof(Vertex) * vertices.size());
+        vertexBuffer->SetData(vertices.data(), sizeof(Vertex) * vertexCount);
+    }
+
+    void Mesh::BuildIndexBuffer(void* indices, uint32_t size, uint32_t count, VkIndexType type)
+    {
+        indexCount = count;
+        indexType = type;
 
         indexBuffer = Vulkan::BufferBuilder()
-            .Size(sizeof(int32_t) * indices.size())
+            .Size(size)
             .Persistent()
             .AllowTransfer()
             .SequentialWrite()
             .BufferUsage(Vulkan::BufferUsageFlags::INDEX)
             .Build(device);
 
-        indexBuffer->SetData(indices.data(), sizeof(int32_t) * indices.size());
+        indexBuffer->SetData(indices, size);
     }
 
     void Mesh::Draw(const VkCommandBuffer commandBuffer)
     {
         VkDeviceSize offsets[] = { 0 };
         vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer->GetHandle(), offsets);
-        vkCmdBindIndexBuffer(commandBuffer, indexBuffer->GetHandle(), 0, VK_INDEX_TYPE_UINT32);
+         
+        if (indexBuffer != nullptr)
+        {
+            vkCmdBindIndexBuffer(commandBuffer, indexBuffer->GetHandle(), 0, indexType);
+            vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, 0);
 
-        vkCmdDrawIndexed(commandBuffer, indices.size(), 1, 0, 0, 0);
+            return;
+        }
+
+        vkCmdDraw(commandBuffer, vertexCount, 1, 0, 0);
     }
+
+    const Material* Mesh::GetMaterial() const
+    {
+        return material;
+    }
+
 }

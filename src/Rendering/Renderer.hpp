@@ -44,7 +44,7 @@ namespace Rendering
 		~Renderer() = default;
 
 		void Begin(Camera& camera);
-		void Draw(Mesh& mesh, Material& material, glm::mat4 transform);
+		void Draw(Mesh& mesh, glm::mat4 transform);
 		void End();
 
 	private:
@@ -59,7 +59,6 @@ namespace Rendering
 		void Present(Vulkan::Semaphore& waitSemaphore);
 		bool RecreateSwapchain(bool force = false);
 
-	private:
 		Frame& GetCurrentFrame() const;
 		std::unique_ptr<Target> CreateTarget(VkImage image, VkFormat format, VkExtent2D extent);
 

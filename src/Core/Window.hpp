@@ -19,6 +19,7 @@ public:
     Window(std::string name, int width, int height, bool resizable);
     ~Window();
 
+    void Close();
     bool ShouldClose();
     void Update();
     void WaitForFocus();

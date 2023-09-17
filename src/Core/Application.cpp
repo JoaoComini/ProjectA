@@ -3,6 +3,8 @@
 #include "glm/gtc/random.hpp"
 #include "glm/ext/matrix_transform.hpp"
 
+#include "Rendering/Model.hpp"
+
 Application::Application()
 {
 	window = WindowBuilder()
@@ -23,13 +25,17 @@ Application::Application()
 
 void Application::Run()
 {
-	Rendering::Mesh mesh = Rendering::Mesh(*device, "resources/models/viking_room.obj");
-	Rendering::Texture diffuse = Rendering::Texture(*device, "resources/models/viking_room.png");
-	Rendering::Material material = Rendering::Material(&diffuse);
+	//Rendering::Texture diffuse = Rendering::Texture(*device, "resources/models/viking_room.png");
+	//Rendering::Material material = Rendering::Material(&diffuse);
+
+	//Rendering::Mesh mesh = Rendering::Mesh(*device, material, "resources/models/viking_room.obj");
+
+
+	Rendering::Model model(*device, "resources/models/duck.glb");
 
 	auto size = window->GetFramebufferSize();
 
-	Rendering::Camera camera = Rendering::Camera(glm::radians(45.f), (float)size.width / (float)size.height, 0.1f, 200.0f);
+	Rendering::Camera camera = Rendering::Camera(glm::radians(45.f), (float)size.width / (float)size.height, 0.1f, 2000.0f);
 
 	window->OnResize(
 		[&camera](int width, int height) {
@@ -37,14 +43,19 @@ void Application::Run()
 		}
 	);
 
-	auto transform = glm::rotate(glm::mat4(1.f), glm::radians(25.f), glm::vec3(0.f, 0.f, 1.f));
+	auto transform = glm::translate(glm::mat4(1.f), glm::vec3(-400));
 
 	while (!window->ShouldClose())
 	{
 		window->Update();
 
 		renderer->Begin(camera);
-		renderer->Draw(mesh, material, transform);
+
+		for (auto& mesh : model.GetMeshes())
+		{
+			renderer->Draw(*mesh, transform);
+		}
+
 		renderer->End();
 	}
 
