@@ -2,7 +2,7 @@
 
 #include <tiny_gltf.h>
 
-#include "Scene.hpp"
+#include "EntityManager.hpp"
 
 #include "Rendering/Texture.hpp"
 #include "Rendering/Mesh.hpp"
@@ -15,7 +15,7 @@ namespace Scene
 	class Loader
 	{
 	public:
-		Loader(const Vulkan::Device& device, Scene& scene);
+		Loader(const Vulkan::Device& device, EntityManager& entityManager);
 
 
 		void LoadFromGltf(std::string path);
@@ -24,9 +24,10 @@ namespace Scene
 		void LoadTextures(tinygltf::Model& model);
 		void LoadMaterials(tinygltf::Model& model);
 		void LoadMeshes(tinygltf::Model& model);
+		void LoadNodes(tinygltf::Model& model);
 
 		const Vulkan::Device& device;
-		Scene& scene;
+		EntityManager& scene;
 
 		std::vector<std::shared_ptr<Rendering::Texture>> textures;
 		std::vector<std::shared_ptr<Rendering::Mesh>> meshes;

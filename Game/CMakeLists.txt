@@ -1,7 +1,13 @@
 cmake_minimum_required(VERSION 3.20)
 project(Game VERSION 0.0.1)
 
-add_executable(Game src/main.cpp)
+add_executable(Game src/main.cpp "../Engine/src/Core/RenderSystem.hpp")
+
+target_include_directories(Game
+    PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
 target_link_libraries(Game Engine)
 set_target_properties(Game PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON)
 
@@ -16,9 +22,9 @@ add_custom_target(Models)
 
 add_custom_command(
     TARGET Models
+    COMMAND ${CMAKE_COMMAND} -E echo "Copying ${MODELS_SRC_DIR} to ${MODELS_OUT_DIR}"
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${MODELS_SRC_DIR} ${MODELS_OUT_DIR}
     DEPENDS ${MODEL_SRC_FILES} ${MODELS_SRC_DIR}
-    COMMENT "Copying ${MODELS_SRC_DIR} to ${MODELS_OUT_DIR}"
 )
 
 add_dependencies(Game Models)

@@ -57,10 +57,10 @@ set(ENGINE_SRC_FILES
     src/Vulkan/ShaderModule.cpp
     src/Vulkan/Surface.cpp
     src/Vulkan/Swapchain.cpp
-    src/Scene/Scene.cpp
+    "src/Scene/EntityManager.cpp"
     src/Scene/Entity.cpp
     src/Scene/Loader.cpp
-)
+ )
 
 add_library(Engine STATIC ${ENGINE_SRC_FILES})
 
@@ -97,7 +97,7 @@ add_subdirectory(third_party/catch2)
 include(CTest)
 include(Catch)
 
-set(ENGINE_TEST_FILES test/Scene/ManagerTest.cpp test/Scene/EntityTest.cpp)
+set(ENGINE_TEST_FILES test/Scene/SceneTest.cpp test/Scene/EntityTest.cpp)
 
 add_executable(tests ${ENGINE_TEST_FILES})
 

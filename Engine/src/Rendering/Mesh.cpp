@@ -49,7 +49,7 @@ namespace Rendering
         indexBuffer->SetData(indices, size);
     }
 
-    void Mesh::Draw(const VkCommandBuffer commandBuffer)
+    void Mesh::Draw(const VkCommandBuffer commandBuffer) const
     {
         VkDeviceSize offsets[] = { 0 };
         vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer->GetHandle(), offsets);

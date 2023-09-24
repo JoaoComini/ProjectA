@@ -8,14 +8,6 @@ namespace Rendering
 	Camera::Camera(float fov, float aspect, float near, float far) : fov(fov), aspect(aspect), near(near), far(far)
 	{
 		UpdateProjection();
-
-		this->view = glm::lookAt(position, glm::vec3(0), glm::vec3(0.f, 0.f, 0.1));
-	}
-
-	void Camera::SetPosition(glm::vec3 position)
-	{
-		this->position = position;
-		this->view = glm::lookAt(position, glm::vec3(0), glm::vec3(0.f, 0.f, 0.1));
 	}
 
 	void Camera::SetAspect(float aspect)
@@ -25,9 +17,9 @@ namespace Rendering
 		UpdateProjection();
 	}
 
-	glm::mat4 Camera::GetViewProjection()
+	glm::mat4 Camera::GetProjection() const
 	{
-		return this->projection * this->view;
+		return this->projection;
 	}
 
 	void Camera::UpdateProjection()

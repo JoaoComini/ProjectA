@@ -43,8 +43,8 @@ namespace Rendering
 		Renderer(Vulkan::Device& device, const Vulkan::Surface& surface, const Window& window);
 		~Renderer() = default;
 
-		void Begin(Camera& camera);
-		void Draw(Mesh& mesh, glm::mat4 transform);
+		void Begin(const Camera& camera, const glm::mat4& transform);
+		void Draw(const Mesh& mesh, const glm::mat4& transform);
 		void End();
 
 	private:
@@ -67,7 +67,7 @@ namespace Rendering
 		const Vulkan::Device& device;
 		const Vulkan::Surface& surface;
 
-		Camera *camera;
+		GlobalUniform globalUniform;
 
 		std::unique_ptr<Vulkan::Swapchain> swapchain;
 		Vulkan::Semaphore* acquireSemaphore;

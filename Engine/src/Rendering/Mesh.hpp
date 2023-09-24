@@ -20,7 +20,7 @@ namespace Rendering
 	public:
 		Mesh(const Vulkan::Device& device, const Material& material, std::vector<Vertex> vertices);
 
-		void Draw(const VkCommandBuffer commandBuffer);
+		void Draw(const VkCommandBuffer commandBuffer) const;
 
 		void BuildIndexBuffer(void* indices, uint32_t size, uint32_t count, VkIndexType type);
 		void BuildVertexBuffer(std::vector<Vertex> vertices);

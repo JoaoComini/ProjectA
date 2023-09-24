@@ -11,7 +11,7 @@ namespace Rendering
 {
 
 	Renderer::Renderer(Vulkan::Device& device, const Vulkan::Surface& surface, const Window& window)
-		: device(device), surface(surface), camera(camera)
+		: device(device), surface(surface)
 	{
 		auto size = window.GetFramebufferSize();
 
@@ -138,9 +138,9 @@ namespace Rendering
 		}
 	}
 
-	void Renderer::Begin(Camera& camera)
+	void Renderer::Begin(const Camera& camera, const glm::mat4& transform)
 	{
-		this->camera = &camera;
+		globalUniform.viewProjection = camera.GetProjection() * glm::inverse(transform);
 
 		auto& previousFrame = GetCurrentFrame();
 
@@ -206,15 +206,11 @@ namespace Rendering
 
 	void Renderer::UpdateGlobalUniform()
 	{
-		GlobalUniform uniform{
-			.viewProjection = camera->GetViewProjection(),
-		};
-
 		auto& frame = GetCurrentFrame();
 
 		auto allocation = frame.RequestBufferAllocation(Vulkan::BufferUsageFlags::UNIFORM, sizeof(GlobalUniform));
 
-		allocation.SetData(&uniform);
+		allocation.SetData(&globalUniform);
 
 		BindingMap<VkDescriptorBufferInfo> bufferInfos = {
 			{ 0,{ { 0, VkDescriptorBufferInfo{
@@ -230,7 +226,7 @@ namespace Rendering
 	}
 
 
-	void Renderer::Draw(Mesh& mesh, glm::mat4 transform)
+	void Renderer::Draw(const Mesh& mesh, const glm::mat4& transform)
 	{
 		const Material* material = mesh.GetMaterial();
 

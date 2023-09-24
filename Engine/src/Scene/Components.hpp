@@ -3,8 +3,10 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/euler_angles.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
 
 #include "Rendering/Mesh.hpp"
+#include "Rendering/Camera.hpp"
 
 namespace Scene::Component
 {
@@ -26,8 +28,17 @@ namespace Scene::Component
 	struct MeshRenderer
 	{
 		Rendering::Mesh* mesh;
-		Rendering::Material* material;
 	};
 
+	struct OnWindowResize
+	{
+		int width;
+		int height;
+	};
+
+	struct Camera
+	{
+		Rendering::Camera camera;
+	};
 };
 

@@ -1,6 +1,6 @@
 #include "Loader.hpp"
 
-#include "Scene.hpp"
+#include "EntityManager.hpp"
 #include "Entity.hpp"
 #include "Components.hpp"
 
@@ -11,7 +11,7 @@
 
 namespace Scene
 {
-	Loader::Loader(const Vulkan::Device& device, Scene& scene) : device(device), scene(scene)
+	Loader::Loader(const Vulkan::Device& device, EntityManager& entityManager) : device(device), scene(entityManager)
 	{
 	}
 
@@ -39,7 +39,8 @@ namespace Scene
 
 		LoadTextures(model);
 		LoadMaterials(model);
-		LoadMeshes(model);
+        LoadMeshes(model);
+        LoadNodes(model);
 	}
 
 	void Loader::LoadTextures(tinygltf::Model& model)
@@ -61,7 +62,9 @@ namespace Scene
 			Rendering::Texture* diffuse = nullptr;
 
 			if (values.find("baseColorTexture") != values.end()) {
-				diffuse = textures[values["baseColorTexture"].TextureIndex()].get();
+                auto index = values["baseColorTexture"].TextureIndex();
+
+				diffuse = textures[index].get();
 			}
 
 			materials.emplace_back(diffuse);
@@ -140,18 +143,38 @@ namespace Scene
                     mesh->BuildIndexBuffer(data, size, count, type);
                 }
 
-
-                auto entity = scene.CreateEntity();
-
-                auto& transform = entity.AddComponent<Component::Transform>();
-                transform.position = glm::vec3(-100);
-
-                auto& renderer = entity.AddComponent<Component::MeshRenderer>();
-                renderer.mesh = mesh.get();
-                renderer.material = &materials[primitive.material];
-
                 meshes.push_back(mesh);
             }
         }
 	}
+
+    void Loader::LoadNodes(tinygltf::Model& model)
+    {
+        for (auto& node : model.nodes)
+        {
+            auto entity = scene.CreateEntity();
+
+            if (node.mesh >= 0)
+            {
+                auto& renderer = entity.AddComponent<Component::MeshRenderer>();
+                renderer.mesh = meshes[node.mesh].get();
+            }
+
+            auto& transform = entity.AddComponent<Component::Transform>();
+
+            if (!node.translation.empty())
+            {
+                std::transform(node.translation.begin(), node.translation.end(), glm::value_ptr(transform.position), [](auto value) { return static_cast<float>(value); });
+            }
+
+            if (!node.rotation.empty())
+            {
+                glm::quat rotation;
+
+                std::transform(node.rotation.begin(), node.rotation.end(), glm::value_ptr(rotation), [](auto value) { return static_cast<float>(value); });
+
+                transform.rotation = glm::eulerAngles(rotation);
+            }
+        }
+    }
 }

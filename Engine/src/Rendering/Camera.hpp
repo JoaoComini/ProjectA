@@ -7,13 +7,13 @@ namespace Rendering
 	class Camera
 	{
 	public:
+		Camera() = default;
 		Camera(float fov, float aspect, float near, float far);
 		~Camera() = default;
 
-		void SetPosition(glm::vec3 position);
 		void SetAspect(float aspect);
 
-		glm::mat4 GetViewProjection();
+		glm::mat4 GetProjection() const;
 
 	private:
 		void UpdateProjection();
@@ -24,8 +24,5 @@ namespace Rendering
 		float far;
 
 		glm::mat4 projection;
-		glm::mat4 view{ 1 };
-		glm::vec3 position{ 2 };
-
 	};
 }
