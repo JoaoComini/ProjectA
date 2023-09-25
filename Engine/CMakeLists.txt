@@ -27,7 +27,6 @@ set(ENGINE_SRC_FILES
     src/Rendering/Frame.cpp
     src/Rendering/Material.cpp
     src/Rendering/Mesh.cpp
-    src/Rendering/Model.cpp
     src/Rendering/Renderer.cpp
     src/Rendering/SemaphorePool.cpp
     src/Rendering/Target.cpp

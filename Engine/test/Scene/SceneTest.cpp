@@ -16,8 +16,4 @@ TEST_CASE("it should create an entity", "[Scene]")
 
     auto entity = manager.CreateEntity();
     entity.AddComponent<Component>();
-
-    manager.ForEachEntity<Component>([](auto& entity, auto& component) {
-        component.x = 10;
-    });
 }
