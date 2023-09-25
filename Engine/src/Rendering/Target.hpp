@@ -8,7 +8,7 @@
 #include "Vulkan/Image.hpp"
 #include "Vulkan/ImageView.hpp"
 
-namespace Rendering
+namespace Engine
 {
 	class Target
 	{

@@ -12,7 +12,7 @@
 
 #include "Material.hpp"
 
-namespace Rendering
+namespace Engine
 {
 	class Mesh
 	{

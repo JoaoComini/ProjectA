@@ -10,7 +10,7 @@
 
 #include "Vulkan/Device.hpp"
 
-namespace Scene
+namespace Engine
 {
 	class Loader
 	{
@@ -30,10 +30,10 @@ namespace Scene
 		const Vulkan::Device& device;
 		EntityManager& scene;
 
-		std::vector<std::shared_ptr<Rendering::Texture>> textures;
-		std::vector<std::shared_ptr<Rendering::Mesh>> meshes;
-		std::vector<Rendering::Material> materials;
+		std::vector<std::shared_ptr<Engine::Texture>> textures;
+		std::vector<std::shared_ptr<Engine::Mesh>> meshes;
+		std::vector<Engine::Material> materials;
 
-		std::vector<Scene::Entity> entities;
+		std::vector<Engine::Entity> entities;
 	};
 }

@@ -6,7 +6,7 @@
 #include "Vulkan/Buffer.hpp"
 #include "Vulkan/Device.hpp"
 
-namespace Rendering
+namespace Engine
 {
 	class BufferAllocation
 	{

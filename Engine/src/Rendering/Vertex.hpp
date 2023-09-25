@@ -3,7 +3,7 @@
 #include <glm/glm.hpp>
 
 
-namespace Rendering
+namespace Engine
 {
 
     struct Vertex

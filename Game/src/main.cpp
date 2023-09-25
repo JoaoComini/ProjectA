@@ -3,7 +3,7 @@
 #include <iostream>
 
 int main() {
-    Application app;
+    Engine::Application app;
 
     try {
         app.Run();

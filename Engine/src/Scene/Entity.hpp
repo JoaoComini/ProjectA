@@ -2,7 +2,7 @@
 
 #include <entt/entt.hpp>
 
-namespace Scene
+namespace Engine
 {
 	class Entity
 	{

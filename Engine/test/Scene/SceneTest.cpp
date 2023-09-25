@@ -12,7 +12,7 @@ struct Component
 TEST_CASE("it should create an entity", "[Scene]")
 {
 
-    Scene::EntityManager manager;
+    Engine::EntityManager manager;
 
     auto entity = manager.CreateEntity();
     entity.AddComponent<Component>();

@@ -1,6 +1,6 @@
 #include "Target.hpp"
 
-namespace Rendering
+namespace Engine
 {
 
 	Target::Target(const Vulkan::Device& device, std::vector<std::unique_ptr<Vulkan::Image>>& images) : images(std::move(images))

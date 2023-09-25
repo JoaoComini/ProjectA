@@ -7,7 +7,7 @@
 
 #include "Vertex.hpp"
 
-namespace Rendering
+namespace Engine
 {
 
 	Renderer::Renderer(Vulkan::Device& device, const Vulkan::Surface& surface, const Window& window)

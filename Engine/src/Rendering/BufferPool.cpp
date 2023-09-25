@@ -1,6 +1,6 @@
 #include "BufferPool.hpp"
 
-namespace Rendering
+namespace Engine
 {
 	BufferPool::BufferPool(const Vulkan::Device& device, Vulkan::BufferUsageFlags usage, uint32_t blockSize)
 		: device(device), usage(usage), blockSize(blockSize)

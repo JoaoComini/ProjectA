@@ -7,44 +7,48 @@
 
 #include "Vulkan/Instance.hpp"
 
-struct FramebufferSize
-{
-    int height;
-    int width;
-};
 
-class Window
-{
-public:
-    Window(std::string name, int width, int height, bool resizable);
-    ~Window();
+namespace Engine {
 
-    void Close();
-    bool ShouldClose();
-    void Update();
-    void WaitForFocus();
+    struct FramebufferSize
+    {
+        int height;
+        int width;
+    };
 
-    void OnResize(std::function<void(int, int)> callback);
+    class Window
+    {
+    public:
+        Window(std::string name, int width, int height, bool resizable);
+        ~Window();
 
-    FramebufferSize GetFramebufferSize() const;
-    GLFWwindow *GetHandle() const;
+        void Close();
+        bool ShouldClose();
+        void Update();
+        void WaitForFocus();
 
-private:
-    GLFWwindow *handle;
-    std::function<void(int, int)> resizeFn = nullptr;
+        void OnResize(std::function<void(int, int)> callback);
+
+        FramebufferSize GetFramebufferSize() const;
+        GLFWwindow* GetHandle() const;
+
+    private:
+        GLFWwindow* handle;
+        std::function<void(int, int)> resizeFn = nullptr;
 
 
-    friend class WindowBuilder;
-};
+        friend class WindowBuilder;
+    };
 
-class WindowBuilder
-{
-public:
-    WindowBuilder Width(uint32_t width);
-    WindowBuilder Height(uint32_t height);
-    std::unique_ptr<Window> Build();
+    class WindowBuilder
+    {
+    public:
+        WindowBuilder Width(uint32_t width);
+        WindowBuilder Height(uint32_t height);
+        std::unique_ptr<Window> Build();
 
-private:
-    uint32_t width;
-    uint32_t height;
-};
+    private:
+        uint32_t width;
+        uint32_t height;
+    };
+}

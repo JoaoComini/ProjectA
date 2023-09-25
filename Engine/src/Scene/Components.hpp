@@ -8,7 +8,7 @@
 #include "Rendering/Mesh.hpp"
 #include "Rendering/Camera.hpp"
 
-namespace Scene::Component
+namespace Engine::Component
 {
 	struct Transform
 	{
@@ -26,23 +26,17 @@ namespace Scene::Component
 
 	struct Relationship
 	{
-		Scene::Entity parent;
+		Engine::Entity parent;
 	};
 
 	struct MeshRenderer
 	{
-		Rendering::Mesh* mesh;
-	};
-
-	struct OnWindowResize
-	{
-		int width;
-		int height;
+		Engine::Mesh* mesh;
 	};
 
 	struct Camera
 	{
-		Rendering::Camera camera;
+		Engine::Camera camera;
 	};
 };
 

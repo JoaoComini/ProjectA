@@ -5,7 +5,7 @@
 #include "Vulkan/Semaphore.hpp"
 #include "Vulkan/Device.hpp"
 
-namespace Rendering
+namespace Engine
 {
 	class SemaphorePool
 	{

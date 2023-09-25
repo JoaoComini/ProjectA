@@ -2,7 +2,7 @@
 
 #include "Utils/Hash.hpp"
 
-namespace Rendering
+namespace Engine
 {
 
 	Frame::Frame(const Vulkan::Device& device, std::unique_ptr<Target> target)

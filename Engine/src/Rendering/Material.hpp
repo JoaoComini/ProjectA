@@ -4,7 +4,7 @@
 
 #include "Texture.hpp"
 
-namespace Rendering
+namespace Engine
 {
 	struct Material
 	{

@@ -5,11 +5,16 @@
 #include "Vulkan/Instance.hpp"
 #include "Vulkan/Surface.hpp"
 
-class WindowSurface : public Vulkan::Surface
-{
-public:
-    WindowSurface(Vulkan::Instance &instance, GLFWwindow *window);
 
-private:
-    GLFWwindow *window;
-};
+namespace Engine {
+
+    class WindowSurface : public Vulkan::Surface
+    {
+    public:
+        WindowSurface(Vulkan::Instance& instance, GLFWwindow* window);
+
+    private:
+        GLFWwindow* window;
+    };
+
+}

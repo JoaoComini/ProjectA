@@ -1,7 +1,7 @@
 #include "Entity.hpp"
 
 
-namespace Scene
+namespace Engine
 {
     Entity::Entity(entt::entity handle, entt::registry* registry) : handle(handle), registry(registry)
     {

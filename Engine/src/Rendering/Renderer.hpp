@@ -23,7 +23,7 @@
 #include "Camera.hpp"
 #include "Frame.hpp"
 
-namespace Rendering
+namespace Engine
 {
 
 	struct GlobalUniform

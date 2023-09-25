@@ -1,6 +1,6 @@
 #include "SemaphorePool.hpp"
 
-namespace Rendering
+namespace Engine
 {
 	SemaphorePool::SemaphorePool(const Vulkan::Device& device) : device(device)
 	{

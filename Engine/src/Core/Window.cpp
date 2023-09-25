@@ -1,90 +1,95 @@
 #include "Window.hpp"
 
-Window::Window(std::string name, int width, int height, bool resizable)
-{
-    glfwInit();
 
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_RESIZABLE, resizable ? GLFW_TRUE : GLFW_FALSE);
+namespace Engine {
 
-    handle = glfwCreateWindow(width, height, name.c_str(), nullptr, nullptr);
-
-    glfwSetWindowUserPointer(handle, this);
-
-    glfwSetFramebufferSizeCallback(handle, [](GLFWwindow* window, int width, int height) {
-        Window* pointer = (Window*)glfwGetWindowUserPointer(window);
-        if (pointer->resizeFn)
-        {
-            pointer->resizeFn(width, height);
-        }
-    });
-}
-
-Window::~Window()
-{
-    Close();
-}
-
-bool Window::ShouldClose()
-{
-    return glfwWindowShouldClose(handle);
-}
-
-void Window::Close()
-{
-    glfwDestroyWindow(handle);
-    glfwTerminate();
-}
-
-void Window::Update()
-{
-    glfwPollEvents();
-}
-
-void Window::WaitForFocus()
-{
-    auto size = GetFramebufferSize();
-    while (size.width == 0 || size.height == 0)
+    Window::Window(std::string name, int width, int height, bool resizable)
     {
-        size = GetFramebufferSize();
-        glfwWaitEvents();
+        glfwInit();
+
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+        glfwWindowHint(GLFW_RESIZABLE, resizable ? GLFW_TRUE : GLFW_FALSE);
+
+        handle = glfwCreateWindow(width, height, name.c_str(), nullptr, nullptr);
+
+        glfwSetWindowUserPointer(handle, this);
+
+        glfwSetFramebufferSizeCallback(handle, [](GLFWwindow* window, int width, int height) {
+            Window* pointer = (Window*)glfwGetWindowUserPointer(window);
+            if (pointer->resizeFn)
+            {
+                pointer->resizeFn(width, height);
+            }
+            });
     }
-}
 
-GLFWwindow *Window::GetHandle() const
-{
-    return handle;
-}
+    Window::~Window()
+    {
+        Close();
+    }
 
-void Window::OnResize(std::function<void(int, int)> callback)
-{
-    this->resizeFn = callback;
-}
+    bool Window::ShouldClose()
+    {
+        return glfwWindowShouldClose(handle);
+    }
 
-FramebufferSize Window::GetFramebufferSize() const
-{
-    FramebufferSize size;
-    glfwGetFramebufferSize(handle, &size.width, &size.height);
+    void Window::Close()
+    {
+        glfwDestroyWindow(handle);
+        glfwTerminate();
+    }
 
-    return size;
-}
+    void Window::Update()
+    {
+        glfwPollEvents();
+    }
 
-std::unique_ptr<Window> WindowBuilder::Build()
-{
+    void Window::WaitForFocus()
+    {
+        auto size = GetFramebufferSize();
+        while (size.width == 0 || size.height == 0)
+        {
+            size = GetFramebufferSize();
+            glfwWaitEvents();
+        }
+    }
 
-    std::unique_ptr<Window> window = std::make_unique<Window>("Vulkan", width, height, true);
+    GLFWwindow* Window::GetHandle() const
+    {
+        return handle;
+    }
 
-    return window;
-}
+    void Window::OnResize(std::function<void(int, int)> callback)
+    {
+        this->resizeFn = callback;
+    }
 
-WindowBuilder WindowBuilder::Width(uint32_t width)
-{
-    this->width = width;
-    return *this;
-}
+    FramebufferSize Window::GetFramebufferSize() const
+    {
+        FramebufferSize size;
+        glfwGetFramebufferSize(handle, &size.width, &size.height);
 
-WindowBuilder WindowBuilder::Height(uint32_t height)
-{
-    this->height = height;
-    return *this;
+        return size;
+    }
+
+    std::unique_ptr<Window> WindowBuilder::Build()
+    {
+
+        std::unique_ptr<Window> window = std::make_unique<Window>("Vulkan", width, height, true);
+
+        return window;
+    }
+
+    WindowBuilder WindowBuilder::Width(uint32_t width)
+    {
+        this->width = width;
+        return *this;
+    }
+
+    WindowBuilder WindowBuilder::Height(uint32_t height)
+    {
+        this->height = height;
+        return *this;
+    }
+
 }

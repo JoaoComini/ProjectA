@@ -2,16 +2,20 @@
 
 #include "Scene/EntityManager.hpp"
 
-class System
-{
-public:
-	System(Scene::EntityManager& entityManager): entityManager(entityManager) {}
+namespace Engine {
 
-	virtual ~System() = default;
+	class System
+	{
+	public:
+		System(EntityManager& entityManager) : entityManager(entityManager) {}
 
-	virtual void Update(float timestep) {}
+		virtual ~System() = default;
 
-protected:
+		virtual void Update(float timestep) {}
 
-	Scene::EntityManager& entityManager;
-};
+	protected:
+
+		EntityManager& entityManager;
+	};
+
+}

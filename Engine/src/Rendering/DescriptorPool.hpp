@@ -6,7 +6,7 @@
 
 #include <vector>
 
-namespace Rendering
+namespace Engine
 {
 	class DescriptorPoolEntry
 	{

@@ -6,7 +6,7 @@
 
 #include "Rendering/Renderer.hpp"
 
-namespace Scene
+namespace Engine
 {
 	class EntityManager
 	{

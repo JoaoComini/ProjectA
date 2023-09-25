@@ -9,7 +9,7 @@
 
 #include "Vulkan/Buffer.hpp"
 
-namespace Rendering
+namespace Engine
 {
 
 	Texture::Texture(const Vulkan::Device & device, std::string path)

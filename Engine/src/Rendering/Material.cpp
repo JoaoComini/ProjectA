@@ -1,7 +1,7 @@
 #include "Material.hpp"
 
 
-namespace Rendering
+namespace Engine
 {
 	Material::Material(Texture* diffuse) : diffuse(diffuse)
 	{

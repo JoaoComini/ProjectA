@@ -17,7 +17,7 @@ TEST_CASE("it should add components to itself", "[Entity]")
 
     auto handle = registry.create();
 
-    Scene::Entity entity(handle, &registry);
+    Engine::Entity entity(handle, &registry);
 
     auto comp = entity.AddComponent<Component>(1, 2);
 

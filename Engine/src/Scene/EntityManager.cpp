@@ -2,7 +2,7 @@
 
 #include "Components.hpp"
 
-namespace Scene
+namespace Engine
 {
     Entity EntityManager::CreateEntity()
     {

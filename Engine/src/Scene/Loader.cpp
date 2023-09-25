@@ -16,7 +16,7 @@
 
 #include <glm/ext.hpp>
 
-namespace Scene
+namespace Engine
 {
 	Loader::Loader(const Vulkan::Device& device, EntityManager& entityManager) : device(device), scene(entityManager)
 	{
@@ -57,7 +57,7 @@ namespace Scene
 		{
 			auto& image = model.images[texture.source];
 
-			textures.push_back(std::make_shared<Rendering::Texture>(device, image.width, image.height, image.image));
+			textures.push_back(std::make_shared<Engine::Texture>(device, image.width, image.height, image.image));
 		}
 	}
 
@@ -67,7 +67,7 @@ namespace Scene
 		{
 			auto& values = material.values;
 
-			Rendering::Texture* diffuse = nullptr;
+			Engine::Texture* diffuse = nullptr;
 
 			if (values.find("baseColorTexture") != values.end()) {
                 auto index = values["baseColorTexture"].TextureIndex();
@@ -85,7 +85,7 @@ namespace Scene
         {
             for (size_t i = 0; i < mesh.primitives.size(); i++)
             {
-                std::vector<Rendering::Vertex> vertices;
+                std::vector<Engine::Vertex> vertices;
 
                 const auto& primitive = mesh.primitives[i];
 
@@ -123,7 +123,7 @@ namespace Scene
                     }
                 }
 
-                auto mesh = std::make_shared<Rendering::Mesh>(device, materials[primitive.material], vertices);
+                auto mesh = std::make_shared<Engine::Mesh>(device, materials[primitive.material], vertices);
 
                 if (primitive.indices >= 0)
                 {
@@ -192,7 +192,7 @@ namespace Scene
 
             for (auto child : node.children)
             {
-                entities[child].AddComponent<Scene::Component::Relationship>(entities[i]);
+                entities[child].AddComponent<Engine::Component::Relationship>(entities[i]);
             }
         }
     }

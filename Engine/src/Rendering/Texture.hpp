@@ -5,7 +5,7 @@
 #include "Vulkan/ImageView.hpp"
 #include "Vulkan/Sampler.hpp"
 
-namespace Rendering
+namespace Engine
 {
 
 	class Texture

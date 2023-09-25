@@ -11,7 +11,7 @@
 #include <stdexcept>
 #include <sstream>
 
-namespace Rendering
+namespace Engine
 {
     Mesh::Mesh(const Vulkan::Device& device, const Material &material, std::vector<Vertex> vertices) : material(&material), device(device)
     {

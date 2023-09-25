@@ -1,7 +1,7 @@
 #include "DescriptorPool.hpp"
 
 
-namespace Rendering
+namespace Engine
 {
 	DescriptorPool::DescriptorPool(const Vulkan::Device& device, const Vulkan::DescriptorSetLayout& descriptorSetLayout, uint32_t size)
 		: device(device), descriptorSetLayout(descriptorSetLayout), size(size)
