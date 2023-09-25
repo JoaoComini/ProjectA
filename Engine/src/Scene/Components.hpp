@@ -13,17 +13,21 @@ namespace Scene::Component
 	struct Transform
 	{
 		glm::vec3 position{ 0.0f, 0.0f, 0.0f };
-		glm::vec3 rotation{ 0.0f, 0.0f, 0.0f };
+		glm::quat rotation{ 1.0f, 0.0f, 0.0f, 0.0f };
 		glm::vec3 scale{ 1.0f, 1.0f, 1.0f };
 
-		glm::mat4 Get() const
+		glm::mat4 GetLocalMatrix() const
 		{
 			return glm::translate(glm::mat4(1.0f), position)
-				* glm::eulerAngleXYZ(rotation.x, rotation.y, rotation.z)
+				* glm::mat4_cast(rotation)
 				* glm::scale(glm::mat4(1.0f), scale);
 		}
 	};
 
+	struct Relationship
+	{
+		Scene::Entity parent;
+	};
 
 	struct MeshRenderer
 	{

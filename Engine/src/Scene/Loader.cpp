@@ -6,6 +6,7 @@
 
 #include <sstream>
 #include <iostream>
+#include <queue>
 
 #include <glm/ext.hpp>
 
@@ -41,6 +42,7 @@ namespace Scene
 		LoadMaterials(model);
         LoadMeshes(model);
         LoadNodes(model);
+        LoadRelationships(model);
 	}
 
 	void Loader::LoadTextures(tinygltf::Model& model)
@@ -169,11 +171,22 @@ namespace Scene
 
             if (!node.rotation.empty())
             {
-                glm::quat rotation;
+                std::transform(node.rotation.begin(), node.rotation.end(), glm::value_ptr(transform.rotation), [](auto value) { return static_cast<float>(value); });
+            }
 
-                std::transform(node.rotation.begin(), node.rotation.end(), glm::value_ptr(rotation), [](auto value) { return static_cast<float>(value); });
+            entities.push_back(entity);
+        }
+    }
 
-                transform.rotation = glm::eulerAngles(rotation);
+    void Loader::LoadRelationships(tinygltf::Model& model)
+    {
+        for (size_t i = 0; i < model.nodes.size(); i++)
+        {
+            auto& node = model.nodes[i];
+
+            for (auto child : node.children)
+            {
+                entities[child].AddComponent<Scene::Component::Relationship>(entities[i]);
             }
         }
     }

@@ -25,6 +25,7 @@ namespace Scene
 		void LoadMaterials(tinygltf::Model& model);
 		void LoadMeshes(tinygltf::Model& model);
 		void LoadNodes(tinygltf::Model& model);
+		void LoadRelationships(tinygltf::Model& model);
 
 		const Vulkan::Device& device;
 		EntityManager& scene;
@@ -32,5 +33,7 @@ namespace Scene
 		std::vector<std::shared_ptr<Rendering::Texture>> textures;
 		std::vector<std::shared_ptr<Rendering::Mesh>> meshes;
 		std::vector<Rendering::Material> materials;
+
+		std::vector<Scene::Entity> entities;
 	};
 }

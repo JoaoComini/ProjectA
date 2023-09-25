@@ -25,14 +25,12 @@ void Application::Run()
 {
 	CreateRenderer();
 	CreateCamera();
+	AddSystem<RenderSystem>(*renderer);
 
 	Scene::Loader loader(*device, *entityManager);
 	loader.LoadFromGltf("resources/models/Lantern.glb");
 
 	auto lastTime = std::chrono::high_resolution_clock::now();
-
-	AddSystem<RenderSystem>(*renderer);
-
 	while (!window->ShouldClose())
 	{
 		window->Update();
@@ -70,8 +68,7 @@ void Application::CreateCamera()
 	auto entity = entityManager->CreateEntity();
 
 	auto& transform = entity.AddComponent<Scene::Component::Transform>();
-
-	transform.position = glm::vec3(0, 10, 50);
+	transform.position = glm::vec3(0, -10, 50);
 
 	auto camera = Rendering::Camera(glm::radians(45.f), (float)size.width / (float)size.height, 0.1f, 2000.0f);
 	auto& component = entity.AddComponent<Scene::Component::Camera>(camera);

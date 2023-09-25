@@ -21,31 +21,49 @@ public:
 
 	void Update(float timestep) override
 	{
-		Rendering::Camera* camera = nullptr;
-		glm::mat4 transform;
+		Rendering::Camera* mainCamera = nullptr;
+		glm::mat4 viewMatrix;
 
 		entityManager.ForEachEntity<Scene::Component::Transform, Scene::Component::Camera>(
-			[&](const auto entity, auto& t, auto& c)
+			[&](const auto entity, auto& transform, auto& camera)
 			{
-				camera = &c.camera;
-				transform = t.Get();
+				mainCamera = &camera.camera;
+				viewMatrix = transform.GetLocalMatrix();
 			}
 		);
 
-		if (camera == nullptr)
+		if (mainCamera == nullptr)
 		{
 			return;
 		}
 
-		renderer.Begin(*camera, transform);
+		renderer.Begin(*mainCamera, viewMatrix);
 
 		entityManager.ForEachEntity<Scene::Component::Transform, Scene::Component::MeshRenderer>(
-			[&](const auto entity, const auto& transform, const auto& mesh) {
-				renderer.Draw(*mesh.mesh, transform.Get());
+			[&](auto entity, const auto& transform, const auto& mesh) {
+				
+				auto matrix = GetWorldMatrix(entity, transform);
+
+				renderer.Draw(*mesh.mesh, matrix);
 			}
 		);
 
 		renderer.End();
+	}
+
+	glm::mat4 GetWorldMatrix(Scene::Entity entity, Scene::Component::Transform transform)
+	{
+		auto relationship = entity.TryGetComponent<Scene::Component::Relationship>();
+
+		if (relationship == nullptr)
+		{
+			return transform.GetLocalMatrix();
+		}
+
+		auto parentEntity = relationship->parent;
+		auto parentTransform = parentEntity.TryGetComponent<Scene::Component::Transform>();
+
+		return GetWorldMatrix(parentEntity, *parentTransform) * transform.GetLocalMatrix();
 	}
 
 private:
