@@ -9,16 +9,16 @@ namespace Engine
 	struct Material
 	{
 	public:
-		Material(Texture* diffuse);
+		Material(std::shared_ptr<Texture> diffuse);
 		~Material() = default;
 
-		Texture* GetDiffuse() const;
+		Texture& GetDiffuse() const;
 
 		glm::vec4 GetColor() const;
 
 	private:
 		glm::vec4 color = glm::vec4(1.f, 1.f, 1.f, 1.1f);
 
-		Texture* diffuse;
+		std::shared_ptr<Texture> diffuse;
 	};
 };

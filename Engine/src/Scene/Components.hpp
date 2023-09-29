@@ -29,9 +29,9 @@ namespace Engine::Component
 		Engine::Entity parent;
 	};
 
-	struct MeshRenderer
+	struct MeshRender
 	{
-		Engine::Mesh* mesh;
+		std::shared_ptr<Engine::Mesh> mesh;
 	};
 
 	struct Camera

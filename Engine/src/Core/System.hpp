@@ -1,21 +1,21 @@
 #pragma once
 
-#include "Scene/EntityManager.hpp"
+#include "Scene/Scene.hpp"
 
 namespace Engine {
 
 	class System
 	{
 	public:
-		System(EntityManager& entityManager) : entityManager(entityManager) {}
+		System(Scene& scene) : scene(scene) {}
 
 		virtual ~System() = default;
 
 		virtual void Update(float timestep) {}
+		virtual void OnResize(float width, float height) {}
 
 	protected:
-
-		EntityManager& entityManager;
+		Scene& scene;
 	};
 
 }

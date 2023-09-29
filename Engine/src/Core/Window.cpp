@@ -1,26 +1,44 @@
 #include "Window.hpp"
 
+#include "WindowSurface.hpp"
 
 namespace Engine {
 
-    Window::Window(std::string name, int width, int height, bool resizable)
+    Window::Window(std::string title, int width, int height, bool resizable)
     {
         glfwInit();
 
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         glfwWindowHint(GLFW_RESIZABLE, resizable ? GLFW_TRUE : GLFW_FALSE);
 
-        handle = glfwCreateWindow(width, height, name.c_str(), nullptr, nullptr);
+        handle = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
 
         glfwSetWindowUserPointer(handle, this);
 
         glfwSetFramebufferSizeCallback(handle, [](GLFWwindow* window, int width, int height) {
             Window* pointer = (Window*)glfwGetWindowUserPointer(window);
-            if (pointer->resizeFn)
+            if (pointer->onResizeFn)
             {
-                pointer->resizeFn(width, height);
+                pointer->onResizeFn(width, height);
             }
-            });
+        });
+
+        glfwSetKeyCallback(handle, [](GLFWwindow* window, int key, int scancode, int action, int mods) {
+            Window* pointer = (Window*)glfwGetWindowUserPointer(window);
+            if (pointer->onKeyFn)
+            {
+                pointer->onKeyFn(key, action);
+            }
+        });
+
+        glfwSetWindowCloseCallback(handle, [](GLFWwindow* window) {
+            Window* pointer = (Window*)glfwGetWindowUserPointer(window);
+            if (pointer->onCloseFn)
+            {
+                pointer->onCloseFn();
+            }
+        });
+
     }
 
     Window::~Window()
@@ -61,7 +79,22 @@ namespace Engine {
 
     void Window::OnResize(std::function<void(int, int)> callback)
     {
-        this->resizeFn = callback;
+        this->onResizeFn = callback;
+    }
+
+    void Window::OnKey(std::function<void(int, int)> callback)
+    {
+        this->onKeyFn = callback;
+    }
+
+    void Window::OnClose(std::function<void()> callback)
+    {
+        this->onCloseFn = callback;
+    }
+
+    std::unique_ptr<Vulkan::Surface> Window::CreateSurface(Vulkan::Instance& instance)
+    {
+        return std::make_unique<WindowSurface>(instance, handle);
     }
 
     FramebufferSize Window::GetFramebufferSize() const
@@ -75,7 +108,7 @@ namespace Engine {
     std::unique_ptr<Window> WindowBuilder::Build()
     {
 
-        std::unique_ptr<Window> window = std::make_unique<Window>("Vulkan", width, height, true);
+        std::unique_ptr<Window> window = std::make_unique<Window>(title, width, height, true);
 
         return window;
     }
@@ -89,6 +122,12 @@ namespace Engine {
     WindowBuilder WindowBuilder::Height(uint32_t height)
     {
         this->height = height;
+        return *this;
+    }
+
+    WindowBuilder WindowBuilder::Title(std::string title)
+    {
+        this->title = title;
         return *this;
     }
 

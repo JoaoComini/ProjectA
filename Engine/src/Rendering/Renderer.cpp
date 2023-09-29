@@ -228,11 +228,11 @@ namespace Engine
 
 	void Renderer::Draw(const Mesh& mesh, const glm::mat4& transform)
 	{
-		const Material* material = mesh.GetMaterial();
+		const Material& material = mesh.GetMaterial();
 
 		ModelUniform uniform{
 			.model = transform,
-			.color = material->GetColor(),
+			.color = material.GetColor(),
 		};
 
 		auto& frame = GetCurrentFrame();
@@ -251,8 +251,8 @@ namespace Engine
 
 		BindingMap<VkDescriptorImageInfo> imageInfos = {
 			{ 1, { { 0, VkDescriptorImageInfo{
-				.sampler = material->GetDiffuse()->GetSampler().GetHandle(),
-				.imageView = material->GetDiffuse()->GetImageView().GetHandle(),
+				.sampler = material.GetDiffuse().GetSampler().GetHandle(),
+				.imageView = material.GetDiffuse().GetImageView().GetHandle(),
 				.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 			} } } }
 		};

@@ -13,7 +13,7 @@
 
 namespace Engine
 {
-    Mesh::Mesh(const Vulkan::Device& device, const Material &material, std::vector<Vertex> vertices) : material(&material), device(device)
+    Mesh::Mesh(const Vulkan::Device& device, const Material material, std::vector<Vertex> vertices) : material(material), device(device)
     {
         BuildVertexBuffer(vertices);
     }
@@ -65,7 +65,7 @@ namespace Engine
         vkCmdDraw(commandBuffer, vertexCount, 1, 0, 0);
     }
 
-    const Material* Mesh::GetMaterial() const
+    const Material& Mesh::GetMaterial() const
     {
         return material;
     }

@@ -8,7 +8,7 @@
 #include "Vulkan/Device.hpp"
 
 #include "Rendering/Renderer.hpp"
-#include "Scene/EntityManager.hpp"
+#include "Scene/Scene.hpp"
 
 #include "Window.hpp"
 #include "WindowSurface.hpp"
@@ -17,18 +17,26 @@
 
 namespace Engine {
 
+	struct ApplicationSpec
+	{
+		std::string name = "Engine Application";
+	};
+
 	class Application
 	{
 	public:
-		Application();
+		Application(ApplicationSpec &spec);
+		~Application();
+
 		void Run();
 
 		template<typename T, typename... Args>
 		void AddSystem(Args&&... args)
 		{
-			systems.push_back(std::make_unique<T>(*entityManager, std::forward<Args>(args)...));
+			systems.push_back(std::make_unique<T>(*scene, std::forward<Args>(args)...));
 		}
 
+		FramebufferSize GetFramebufferSize() const;
 
 	private:
 		void CreateRenderer();
@@ -36,7 +44,7 @@ namespace Engine {
 
 		std::unique_ptr<Window> window;
 		std::unique_ptr<Vulkan::Instance> instance;
-		std::unique_ptr<WindowSurface> surface;
+		std::unique_ptr<Vulkan::Surface> surface;
 		std::unique_ptr<Vulkan::PhysicalDevice> physicalDevice;
 		std::unique_ptr<Vulkan::Device> device;
 
@@ -44,8 +52,10 @@ namespace Engine {
 
 		std::unique_ptr<Renderer> renderer;
 
-		std::unique_ptr<EntityManager> entityManager;
+		std::unique_ptr<Scene> scene;
 
-
+		bool running = false;
 	};
+
+	std::unique_ptr<Application> CreateApplication();
 }

@@ -1,4 +1,4 @@
-#include "Loader.hpp"
+#include "SceneLoader.hpp"
 
 #define TINYGLTF_IMPLEMENTATION
 #include <tiny_gltf.h>
@@ -6,7 +6,7 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
 
-#include "EntityManager.hpp"
+#include "Scene.hpp"
 #include "Entity.hpp"
 #include "Components.hpp"
 
@@ -18,11 +18,11 @@
 
 namespace Engine
 {
-	Loader::Loader(const Vulkan::Device& device, EntityManager& entityManager) : device(device), scene(entityManager)
+	SceneLoader::SceneLoader(const Vulkan::Device& device, Scene& scene) : device(device), scene(scene)
 	{
 	}
 
-	void Loader::LoadFromGltf(std::string path)
+	void SceneLoader::LoadFromGltf(std::string path)
 	{
 		tinygltf::Model model;
 		tinygltf::TinyGLTF loader;
@@ -51,7 +51,7 @@ namespace Engine
         LoadRelationships(model);
 	}
 
-	void Loader::LoadTextures(tinygltf::Model& model)
+	void SceneLoader::LoadTextures(tinygltf::Model& model)
 	{
 		for (auto& texture : model.textures)
 		{
@@ -61,25 +61,25 @@ namespace Engine
 		}
 	}
 
-	void Loader::LoadMaterials(tinygltf::Model& model)
+	void SceneLoader::LoadMaterials(tinygltf::Model& model)
 	{
 		for (auto& material : model.materials)
 		{
 			auto& values = material.values;
 
-			Engine::Texture* diffuse = nullptr;
+			std::shared_ptr<Engine::Texture> diffuse = nullptr;
 
 			if (values.find("baseColorTexture") != values.end()) {
                 auto index = values["baseColorTexture"].TextureIndex();
 
-				diffuse = textures[index].get();
+                diffuse = textures[index];
 			}
 
 			materials.emplace_back(diffuse);
 		}
 	}
 
-	void Loader::LoadMeshes(tinygltf::Model& model)
+	void SceneLoader::LoadMeshes(tinygltf::Model& model)
 	{
         for (auto& mesh : model.meshes)
         {
@@ -151,12 +151,12 @@ namespace Engine
                     mesh->BuildIndexBuffer(data, size, count, type);
                 }
 
-                meshes.push_back(mesh);
+                meshes.push_back(std::move(mesh));
             }
         }
 	}
 
-    void Loader::LoadNodes(tinygltf::Model& model)
+    void SceneLoader::LoadNodes(tinygltf::Model& model)
     {
         for (auto& node : model.nodes)
         {
@@ -164,8 +164,8 @@ namespace Engine
 
             if (node.mesh >= 0)
             {
-                auto& renderer = entity.AddComponent<Component::MeshRenderer>();
-                renderer.mesh = meshes[node.mesh].get();
+                auto& renderer = entity.AddComponent<Component::MeshRender>();
+                renderer.mesh = meshes[node.mesh];
             }
 
             auto& transform = entity.AddComponent<Component::Transform>();
@@ -184,7 +184,7 @@ namespace Engine
         }
     }
 
-    void Loader::LoadRelationships(tinygltf::Model& model)
+    void SceneLoader::LoadRelationships(tinygltf::Model& model)
     {
         for (size_t i = 0; i < model.nodes.size(); i++)
         {

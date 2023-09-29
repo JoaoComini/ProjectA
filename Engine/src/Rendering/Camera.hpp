@@ -8,10 +8,10 @@ namespace Engine
 	{
 	public:
 		Camera() = default;
-		Camera(float fov, float aspect, float near, float far);
+		Camera(float fov, float aspectRatio, float near, float far);
 		~Camera() = default;
 
-		void SetAspect(float aspect);
+		void SetAspectRatio(float aspectRatio);
 
 		glm::mat4 GetProjection() const;
 
@@ -19,7 +19,7 @@ namespace Engine
 		void UpdateProjection();
 
 		float fov;
-		float aspect;
+		float aspectRatio;
 		float near;
 		float far;
 

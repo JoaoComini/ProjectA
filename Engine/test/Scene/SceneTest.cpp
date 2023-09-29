@@ -1,6 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include "Scene/EntityManager.hpp"
+#include "Scene/Scene.hpp"
 
 struct Component
 {
@@ -12,8 +12,8 @@ struct Component
 TEST_CASE("it should create an entity", "[Scene]")
 {
 
-    Engine::EntityManager manager;
+    Engine::Scene scene;
 
-    auto entity = manager.CreateEntity();
+    auto entity = scene.CreateEntity();
     entity.AddComponent<Component>();
 }

@@ -7,6 +7,7 @@ namespace Engine
 	class Entity
 	{
 	public:
+		Entity() = default;
 		Entity(entt::entity handle, entt::registry* registry);
 
 		template<typename T, typename... Args>
@@ -19,6 +20,12 @@ namespace Engine
 		T* TryGetComponent()
 		{
 			return registry->try_get<T>(handle);
+		}
+
+		template<typename T>
+		T& GetComponent()
+		{
+			return registry->get<T>(handle);
 		}
 
 	private:

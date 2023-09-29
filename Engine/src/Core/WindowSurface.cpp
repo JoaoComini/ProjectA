@@ -5,7 +5,7 @@
 
 namespace Engine {
 
-    WindowSurface::WindowSurface(Vulkan::Instance& instance, GLFWwindow* window) : Vulkan::Surface(instance), window(window)
+    WindowSurface::WindowSurface(Vulkan::Instance& instance, GLFWwindow* window) : Vulkan::Surface(instance)
     {
         if (glfwCreateWindowSurface(instance.GetHandle(), window, nullptr, &handle) != VK_SUCCESS)
         {

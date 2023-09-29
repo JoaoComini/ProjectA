@@ -12,9 +12,6 @@ namespace Engine {
     {
     public:
         WindowSurface(Vulkan::Instance& instance, GLFWwindow* window);
-
-    private:
-        GLFWwindow* window;
     };
 
 }

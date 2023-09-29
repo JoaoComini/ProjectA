@@ -18,48 +18,50 @@ set(TINYGLTF_BUILD_LOADER_EXAMPLE OFF CACHE INTERNAL "" FORCE)
 add_subdirectory(third_party/tinygltf)
 
 set(ENGINE_SRC_FILES
-    src/Core/Application.cpp
-    src/Core/Window.cpp
-    src/Core/WindowSurface.cpp
-    src/Rendering/BufferPool.cpp
-    src/Rendering/Camera.cpp
-    src/Rendering/DescriptorPool.cpp
-    src/Rendering/Frame.cpp
-    src/Rendering/Material.cpp
-    src/Rendering/Mesh.cpp
-    src/Rendering/Renderer.cpp
-    src/Rendering/SemaphorePool.cpp
-    src/Rendering/Target.cpp
-    src/Rendering/Texture.cpp
-    src/Utils/FileSystem.cpp
-    src/Vulkan/Buffer.cpp
-    src/Vulkan/CommandBuffer.cpp
-    src/Vulkan/CommandPool.cpp
-    src/Vulkan/DebugMessenger.cpp
-    src/Vulkan/DescriptorPool.cpp
-    src/Vulkan/DescriptorSetLayout.cpp
-    src/Vulkan/Details.cpp
-    src/Vulkan/Device.cpp
-    src/Vulkan/Fence.cpp
-    src/Vulkan/Framebuffer.cpp
-    src/Vulkan/Image.cpp
-    src/Vulkan/ImageView.cpp
-    src/Vulkan/Instance.cpp
-    src/Vulkan/PhysicalDevice.cpp
-    src/Vulkan/Pipeline.cpp
-    src/Vulkan/PipelineLayout.cpp
-    src/Vulkan/Queue.cpp
-    src/Vulkan/RenderPass.cpp
-    src/Vulkan/Sampler.cpp
-    src/Vulkan/Semaphore.cpp
-    src/Vulkan/Shader.cpp
-    src/Vulkan/ShaderModule.cpp
-    src/Vulkan/Surface.cpp
-    src/Vulkan/Swapchain.cpp
-    "src/Scene/EntityManager.cpp"
-    src/Scene/Entity.cpp
-    src/Scene/Loader.cpp
- )
+    "src/Core/Application.cpp"
+    "src/Core/RenderSystem.cpp"
+    "src/Core/Window.cpp"
+    "src/Core/WindowSurface.cpp"
+    "src/Core/WindowInput.cpp"
+    "src/Rendering/BufferPool.cpp"
+    "src/Rendering/Camera.cpp"
+    "src/Rendering/DescriptorPool.cpp"
+    "src/Rendering/Frame.cpp"
+    "src/Rendering/Material.cpp"
+    "src/Rendering/Mesh.cpp"
+    "src/Rendering/Renderer.cpp"
+    "src/Rendering/SemaphorePool.cpp"
+    "src/Rendering/Target.cpp"
+    "src/Rendering/Texture.cpp"
+    "src/Utils/FileSystem.cpp"
+    "src/Vulkan/Buffer.cpp"
+    "src/Vulkan/CommandBuffer.cpp"
+    "src/Vulkan/CommandPool.cpp"
+    "src/Vulkan/DebugMessenger.cpp"
+    "src/Vulkan/DescriptorPool.cpp"
+    "src/Vulkan/DescriptorSetLayout.cpp"
+    "src/Vulkan/Details.cpp"
+    "src/Vulkan/Device.cpp"
+    "src/Vulkan/Fence.cpp"
+    "src/Vulkan/Framebuffer.cpp"
+    "src/Vulkan/Image.cpp"
+    "src/Vulkan/ImageView.cpp"
+    "src/Vulkan/Instance.cpp"
+    "src/Vulkan/PhysicalDevice.cpp"
+    "src/Vulkan/Pipeline.cpp"
+    "src/Vulkan/PipelineLayout.cpp"
+    "src/Vulkan/Queue.cpp"
+    "src/Vulkan/RenderPass.cpp"
+    "src/Vulkan/Sampler.cpp"
+    "src/Vulkan/Semaphore.cpp"
+    "src/Vulkan/Shader.cpp"
+    "src/Vulkan/ShaderModule.cpp"
+    "src/Vulkan/Surface.cpp"
+    "src/Vulkan/Swapchain.cpp"
+    "src/Scene/Scene.cpp"
+    "src/Scene/Entity.cpp"
+    "src/Scene/SceneLoader.cpp"
+    "src/Core/Input.cpp")
 
 add_library(Engine STATIC ${ENGINE_SRC_FILES})
 
@@ -105,37 +107,3 @@ target_link_libraries(tests PRIVATE Catch2::Catch2WithMain Engine)
 set_target_properties(tests PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON)
 
 catch_discover_tests(tests)
-
-# -------- COMPILE SHADERS --------
-find_program(glslc_executable NAMES glslc HINTS Vulkan::glslc)
-
-set(SHADER_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/resources/shaders)
-set(SHADER_BINARY_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources/shaders)
-
-file(GLOB SHADERS_SRC_FILES ${SHADER_SOURCE_DIR}/*)
-
-add_custom_command(
-    COMMAND
-    ${CMAKE_COMMAND} -E make_directory ${SHADER_BINARY_DIR}
-    OUTPUT ${SHADER_BINARY_DIR}
-    COMMENT "Creating ${SHADER_BINARY_DIR}"
-)
-
-foreach(FILE IN LISTS SHADERS_SRC_FILES)
-    get_filename_component(FILENAME ${FILE} NAME)
-    add_custom_command(
-        COMMAND
-        ${glslc_executable}
-        -o ${SHADER_BINARY_DIR}/${FILENAME}.spv
-        ${FILE}
-        OUTPUT ${SHADER_BINARY_DIR}/${FILENAME}.spv
-        DEPENDS ${FILE} ${SHADER_BINARY_DIR}
-        COMMENT "Compiling ${FILENAME}"
-    )
-    list(APPEND SPV_SHADERS ${SHADER_BINARY_DIR}/${FILENAME}.spv)
-endforeach()
-
-add_custom_target(Shaders ALL DEPENDS ${SPV_SHADERS})
-
-add_dependencies(Engine Shaders)
-

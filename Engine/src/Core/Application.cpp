@@ -3,37 +3,58 @@
 #include "glm/gtc/random.hpp"
 #include "glm/ext/matrix_transform.hpp"
 
-#include "Scene/Loader.hpp"
-#include "Scene/EntityManager.hpp"
+#include "GLFW/glfw3.h"
+
+#include "Scene/SceneLoader.hpp"
+#include "Scene/Scene.hpp"
 #include "Scene/Components.hpp"
 
 #include "RenderSystem.hpp"
+#include "Input.hpp"
 
 #include <iostream>
 
 namespace Engine {
 
-	Application::Application()
+	Application::Application(ApplicationSpec &spec)
 	{
 		window = WindowBuilder()
-			.Width(800)
-			.Height(600)
+			.Width(1600)
+			.Height(900)
+			.Title(spec.name)
 			.Build();
 
-		entityManager = std::make_unique<EntityManager>();
+		window->OnClose([&]() {
+			running = false;
+		});
+
+		Input::Setup(*window);
+
+		scene = std::make_unique<Scene>();
+
+		CreateRenderer();
+		CreateCamera();
+
+		AddSystem<RenderSystem>(*renderer);
+	}
+
+	Application::~Application()
+	{
+		device->WaitIdle();
 	}
 
 	void Application::Run()
 	{
-		CreateRenderer();
-		CreateCamera();
-		AddSystem<RenderSystem>(*renderer);
+		running = true;
 
-		Loader loader(*device, *entityManager);
-		loader.LoadFromGltf("resources/models/Lantern.glb");
+		{
+			SceneLoader loader(*device, *scene);
+			loader.LoadFromGltf("resources/models/Lantern.glb");
+		}
 
 		auto lastTime = std::chrono::high_resolution_clock::now();
-		while (!window->ShouldClose())
+
+		while (running)
 		{
 			window->Update();
 
@@ -46,15 +67,18 @@ namespace Engine {
 				system->Update(timestep.count());
 			}
 		}
+	}
 
-		device->WaitIdle();
+	FramebufferSize Application::GetFramebufferSize() const
+	{
+		return window->GetFramebufferSize();
 	}
 
 	void Application::CreateRenderer()
 	{
 		instance = Vulkan::InstanceBuilder().Build();
 
-		surface = std::make_unique<WindowSurface>(*instance, window->GetHandle());
+		surface = window->CreateSurface(*instance);
 
 		physicalDevice = Vulkan::PhysicalDevicePicker::PickBestSuitable(*instance, *surface);
 
@@ -65,19 +89,18 @@ namespace Engine {
 
 	void Application::CreateCamera()
 	{
-		auto size = window->GetFramebufferSize();
-
-		auto entity = entityManager->CreateEntity();
-
-		auto& transform = entity.AddComponent<Component::Transform>();
-		transform.position = glm::vec3(0, -10, 50);
-
-		auto camera = Camera(glm::radians(45.f), (float)size.width / (float)size.height, 0.1f, 2000.0f);
-		auto& component = entity.AddComponent<Component::Camera>(camera);
-
 		window->OnResize(
 			[&](int width, int height) {
-				component.camera.SetAspect((float)width / height);
+				auto [entity, found] = scene->FindFirstEntity<Component::Camera, Component::Transform>();
+
+				if (!found)
+				{
+					return;
+				}
+
+				auto& component = entity.GetComponent<Component::Camera>();
+
+				component.camera.SetAspectRatio((float)width / height);
 			}
 		);
 	}

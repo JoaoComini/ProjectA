@@ -5,14 +5,14 @@
 
 namespace Engine
 {
-	Camera::Camera(float fov, float aspect, float near, float far) : fov(fov), aspect(aspect), near(near), far(far)
+	Camera::Camera(float fov, float aspectRatio, float near, float far) : fov(fov), aspectRatio(aspectRatio), near(near), far(far)
 	{
 		UpdateProjection();
 	}
 
-	void Camera::SetAspect(float aspect)
+	void Camera::SetAspectRatio(float aspectRatio)
 	{
-		this->aspect = aspect;
+		this->aspectRatio = aspectRatio;
 
 		UpdateProjection();
 	}
@@ -24,7 +24,7 @@ namespace Engine
 
 	void Camera::UpdateProjection()
 	{
-		this->projection = glm::perspective(fov, aspect, near, far);
+		this->projection = glm::perspective(fov, aspectRatio, near, far);
 		this->projection[1][1] *= -1;
 	}
 }
