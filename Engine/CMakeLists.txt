@@ -100,10 +100,15 @@ include(Catch)
 
 set(ENGINE_TEST_FILES test/Scene/SceneTest.cpp test/Scene/EntityTest.cpp)
 
-add_executable(tests ${ENGINE_TEST_FILES})
+add_executable(Engine_Test ${ENGINE_TEST_FILES})
 
-target_link_libraries(tests PRIVATE Catch2::Catch2WithMain Engine)
+target_include_directories(Engine_Test
+    PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/test
+)
 
-set_target_properties(tests PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON)
+target_link_libraries(Engine_Test PRIVATE Catch2::Catch2WithMain Engine)
 
-catch_discover_tests(tests)
+set_target_properties(Engine_Test PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON)
+
+catch_discover_tests(Engine_Test)

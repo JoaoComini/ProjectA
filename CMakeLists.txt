@@ -11,6 +11,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/build/bin)
 
 add_subdirectory(Engine)
 add_subdirectory(Game)
+add_subdirectory(Editor)
 
 # -------- COPY MODELS --------
 
@@ -29,6 +30,7 @@ add_custom_command(
 )
 
 add_dependencies(Game Models)
+add_dependencies(Editor Models)
 
 # -------- COMPILE SHADERS --------
 find_program(glslc_executable NAMES glslc HINTS Vulkan::glslc)

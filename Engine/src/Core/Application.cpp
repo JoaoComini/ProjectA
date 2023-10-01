@@ -49,7 +49,7 @@ namespace Engine {
 
 		{
 			SceneLoader loader(*device, *scene);
-			loader.LoadFromGltf("resources/models/Lantern.glb");
+			loader.LoadFromGltf("resources/models/DamagedHelmet.glb");
 		}
 
 		auto lastTime = std::chrono::high_resolution_clock::now();

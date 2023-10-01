@@ -1,14 +1,16 @@
 #include "Core/Application.hpp"
 #include "Core/Main.hpp"
 
+#include "System/CameraSystem.hpp"
 
 namespace Engine
 {
-    class ProjectA : public Application
+    class Editor : public Application
     {
     public:
-        ProjectA(ApplicationSpec& spec) : Application(spec)
+        Editor(ApplicationSpec& spec) : Application(spec)
         {
+            AddSystem<CameraSystem>();
         }
     };
 
@@ -19,7 +21,7 @@ namespace Engine
             .name = "ProjectA"
         };
 
-        return std::make_unique<ProjectA>(spec);
+        return std::make_unique<Editor>(spec);
     }
 
 }

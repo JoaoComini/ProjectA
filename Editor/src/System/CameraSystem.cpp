@@ -1,10 +1,10 @@
-#include "InputSystem.hpp"
+#include "CameraSystem.hpp"
 
 #include "Core/KeyCode.hpp"
 
 #include <iostream>
 
-InputSystem::InputSystem(Engine::Scene& scene): System(scene)
+CameraSystem::CameraSystem(Engine::Scene& scene): System(scene)
 {
     input = Engine::Input::GetInstance();
 
@@ -13,11 +13,11 @@ InputSystem::InputSystem(Engine::Scene& scene): System(scene)
     auto& transform = entity.AddComponent<Engine::Component::Transform>();
     transform.position = glm::vec3(0, -10, 50);
 
-    auto camera = Engine::Camera(glm::radians(45.f), (float)16 / 9, 0.1f, 2000.0f);
+    auto camera = Engine::Camera(glm::radians(60.f), (float)16 / 9, 0.1f, 2000.0f);
     entity.AddComponent<Engine::Component::Camera>(camera);
 }
 
-void InputSystem::Update(float timestep)
+void CameraSystem::Update(float timestep)
 {
     if (input == nullptr)
     {

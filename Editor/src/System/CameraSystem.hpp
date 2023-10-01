@@ -6,10 +6,10 @@
 #include "Scene/Entity.hpp"
 #include "Scene/Components.hpp"
 
-class InputSystem: public Engine::System
+class CameraSystem: public Engine::System
 {
 public:
-	InputSystem(Engine::Scene& scene);
+	CameraSystem(Engine::Scene& scene);
 
 	void Update(float timestep) override;
 

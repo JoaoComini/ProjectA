@@ -1,0 +1,14 @@
+cmake_minimum_required(VERSION 3.20)
+project(Editor VERSION 0.0.1)
+
+set(EDITOR_SRC_FILES "src/System/CameraSystem.cpp")
+    
+add_executable(Editor "src/Editor.cpp" ${EDITOR_SRC_FILES})
+
+target_include_directories(Editor
+    PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
+target_link_libraries(Editor Engine)
+set_target_properties(Editor PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON)
