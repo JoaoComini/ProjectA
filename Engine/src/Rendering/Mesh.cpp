@@ -13,7 +13,8 @@
 
 namespace Engine
 {
-    Mesh::Mesh(const Vulkan::Device& device, const Material material, std::vector<Vertex> vertices) : material(material), device(device)
+    Mesh::Mesh(const Vulkan::Device& device, const Material material, std::vector<Vertex> vertices, std::string path)
+        : material(material), device(device), path(path)
     {
         BuildVertexBuffer(vertices);
     }
@@ -68,6 +69,11 @@ namespace Engine
     const Material& Mesh::GetMaterial() const
     {
         return material;
+    }
+
+    const std::string& Mesh::GetPath()
+    {
+        return path;
     }
 
 }

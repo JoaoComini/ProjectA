@@ -17,12 +17,47 @@ set(TINYGLTF_INSTALL OFF CACHE INTERNAL "" FORCE)
 set(TINYGLTF_BUILD_LOADER_EXAMPLE OFF CACHE INTERNAL "" FORCE)
 add_subdirectory(third_party/tinygltf)
 
+# -------- STB --------
+
+add_library(stb INTERFACE)
+
+target_include_directories(stb INTERFACE third_party/stb)
+
+# -------- IMGUI --------
+
+set(IMGUI_SRC_FILES
+    "third_party/imgui/imgui.cpp"
+    "third_party/imgui/imgui_demo.cpp"
+    "third_party/imgui/imgui_draw.cpp"
+    "third_party/imgui/imgui_widgets.cpp"
+    "third_party/imgui/imgui_tables.cpp"
+    "third_party/imgui/backends/imgui_impl_vulkan.cpp"
+    "third_party/imgui/backends/imgui_impl_glfw.cpp"
+    "third_party/imgui/misc/cpp/imgui_stdlib.cpp"
+)
+
+add_library(ImGui STATIC ${IMGUI_SRC_FILES})
+
+target_include_directories(ImGui
+    PUBLIC
+    third_party/imgui
+    ${Vulkan_INCLUDE_DIR}
+)
+
+target_link_libraries(ImGui
+    ${Vulkan_LIBRARIES}
+    glfw
+)
+
+# -----------------------
+
 set(ENGINE_SRC_FILES
     "src/Core/Application.cpp"
     "src/Core/RenderSystem.cpp"
     "src/Core/Window.cpp"
     "src/Core/WindowSurface.cpp"
     "src/Core/WindowInput.cpp"
+    "src/Core/Input.cpp"
     "src/Rendering/BufferPool.cpp"
     "src/Rendering/Camera.cpp"
     "src/Rendering/DescriptorPool.cpp"
@@ -61,15 +96,14 @@ set(ENGINE_SRC_FILES
     "src/Scene/Scene.cpp"
     "src/Scene/Entity.cpp"
     "src/Scene/SceneLoader.cpp"
-    "src/Core/Input.cpp")
+ "src/Rendering/Gui.cpp")
 
 add_library(Engine STATIC ${ENGINE_SRC_FILES})
 
 target_include_directories(Engine
     PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    src
     ${Vulkan_INCLUDE_DIR}
-    third_party/stb
 )
 
 target_link_libraries(Engine
@@ -77,8 +111,10 @@ target_link_libraries(Engine
     glfw
     glm::glm
     VulkanMemoryAllocator
+    stb
     tinygltf
     EnTT
+    ImGui
 )
 
 target_compile_definitions(Engine PRIVATE
@@ -112,3 +148,5 @@ target_link_libraries(Engine_Test PRIVATE Catch2::Catch2WithMain Engine)
 set_target_properties(Engine_Test PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON)
 
 catch_discover_tests(Engine_Test)
+
+# -----------------------

@@ -23,3 +23,6 @@
 [submodule "third_party/entt"]
 	path = Engine/third_party/entt
 	url = https://github.com/skypjack/entt.git
+[submodule "Engine/third_party/imgui"]
+	path = Engine/third_party/imgui
+	url = https://github.com/ocornut/imgui.git

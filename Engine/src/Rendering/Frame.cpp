@@ -46,7 +46,7 @@ namespace Engine
 		return semaphorePool->RequestSemaphore();
 	}
 
-	VkDescriptorSet Frame::RequestDescriptorSet(const Vulkan::DescriptorSetLayout& descriptorSetLayout, const BindingMap<VkDescriptorBufferInfo>& bufferInfos, const BindingMap<VkDescriptorImageInfo>& imageInfos)
+	VkDescriptorSet Frame::RequestDescriptorSet(std::shared_ptr<Vulkan::DescriptorSetLayout> descriptorSetLayout, const BindingMap<VkDescriptorBufferInfo>& bufferInfos, const BindingMap<VkDescriptorImageInfo>& imageInfos)
 	{
 		auto handle = GetDescriptorPool(descriptorSetLayout).Allocate();
 
@@ -57,7 +57,7 @@ namespace Engine
 			uint32_t index = info.first;
 			auto& infos = info.second;
 
-			if (auto binding = descriptorSetLayout.GetBinding(index))
+			if (auto binding = descriptorSetLayout->GetBinding(index))
 			{
 				for (auto& it : infos)
 				{
@@ -80,7 +80,7 @@ namespace Engine
 				uint32_t index = info.first;
 				auto& infos = info.second;
 
-				if (auto binding = descriptorSetLayout.GetBinding(index))
+				if (auto binding = descriptorSetLayout->GetBinding(index))
 				{
 					for (auto& it : infos)
 					{
@@ -120,7 +120,7 @@ namespace Engine
 		return *target;
 	}
 
-	DescriptorPool& Frame::GetDescriptorPool(const Vulkan::DescriptorSetLayout& descriptorSetLayout)
+	DescriptorPool& Frame::GetDescriptorPool(std::shared_ptr<Vulkan::DescriptorSetLayout> descriptorSetLayout)
 	{
 		std::size_t hash = Hash(descriptorSetLayout);
 

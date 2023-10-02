@@ -15,6 +15,15 @@ namespace Engine
 
 		glm::mat4 GetProjection() const;
 
+		float GetFov();
+		void SetFov(float fov);
+
+		float GetNear();
+		void SetNear(float near);
+
+		float GetFar();
+		void SetFar(float far);
+
 	private:
 		void UpdateProjection();
 

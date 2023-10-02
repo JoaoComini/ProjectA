@@ -92,6 +92,11 @@ namespace Vulkan
         return properties;
     }
 
+    VkPhysicalDevice PhysicalDevice::GetHandle() const
+    {
+        return handle;
+    }
+
     std::unique_ptr<PhysicalDevice> PhysicalDevicePicker::PickBestSuitable(const Instance &instance, const Surface& surface)
     {
         uint32_t count = 0;

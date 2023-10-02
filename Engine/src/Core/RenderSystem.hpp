@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Rendering/Renderer.hpp"
-#include "Rendering/Camera.hpp"
+#include "Rendering/Gui.hpp"
 
 #include "Core/System.hpp"
 
@@ -10,19 +10,19 @@
 
 #include <glm/glm.hpp>
 
-
 namespace Engine {
 
 	class RenderSystem : public System
 	{
 	public:
-		RenderSystem(Scene& scene, Renderer& renderer);
+		RenderSystem(Scene& scene);
 
 		void Update(float timestep) override;
 
 	private:
-		glm::mat4 GetWorldMatrix(Entity entity, Component::Transform transform);
+		Gui* gui;
+		Renderer* renderer;
 
-		Renderer& renderer;
+		glm::mat4 GetWorldMatrix(Entity entity, Component::Transform transform);
 	};
 }

@@ -3,6 +3,7 @@
 #include <entt/entt.hpp>
 
 #include "Entity.hpp"
+#include "Components.hpp"
 
 #include "Rendering/Renderer.hpp"
 #include "Rendering/Texture.hpp"
@@ -16,17 +17,43 @@ namespace Engine
 	class Scene
 	{
 	public:
-		Scene() = default;
+		Scene();
 
 		Entity CreateEntity();
+		void DestroyEntity(Entity entity);
+
+		void Update();
 		
 		template<typename... Args>
 		void ForEachEntity(std::function<void(Entity)> func)
 		{
-			auto view = registry.view<Args...>();
+			if constexpr (sizeof...(Args) == 0u)
+			{
+				auto view = registry.view<entt::entity>();
 
-			for (auto entity : view) {
-				func({ entity, &registry });
+				for (auto entity : view)
+				{
+					if (!registry.valid(entity))
+					{
+						continue;
+					}
+
+					func({ entity, &registry });
+				}
+			}
+			else
+			{
+				auto view = registry.view<Args...>();
+
+				for (auto entity : view)
+				{
+					if (!registry.valid(entity))
+					{
+						continue;
+					}
+
+					func({ entity, &registry });
+				}
 			}
 		}
 
@@ -47,8 +74,5 @@ namespace Engine
 		
 	private:
 		entt::registry registry;
-
-		std::vector<std::unique_ptr<Engine::Texture>> textures;
-		std::vector<std::unique_ptr<Engine::Mesh>> meshes;
 	};
 };

@@ -15,6 +15,8 @@ CameraSystem::CameraSystem(Engine::Scene& scene): System(scene)
 
     auto camera = Engine::Camera(glm::radians(60.f), (float)16 / 9, 0.1f, 2000.0f);
     entity.AddComponent<Engine::Component::Camera>(camera);
+    
+    entity.GetComponent<Engine::Component::Name>().name = "Main Camera";
 }
 
 void CameraSystem::Update(float timestep)

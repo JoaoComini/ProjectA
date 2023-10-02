@@ -22,6 +22,39 @@ namespace Engine
 		return this->projection;
 	}
 
+	float Camera::GetFov()
+	{
+		return fov;
+	}
+
+	void Camera::SetFov(float fov)
+	{
+		this->fov = fov;
+		UpdateProjection();
+	}
+
+	float Camera::GetNear()
+	{
+		return near;
+	}
+
+	void Camera::SetNear(float near)
+	{
+		this->near = near;
+		UpdateProjection();
+	}
+
+	float Camera::GetFar()
+	{
+		return far;
+	}
+
+	void Camera::SetFar(float far)
+	{
+		this->far = far;
+		UpdateProjection();
+	}
+
 	void Camera::UpdateProjection()
 	{
 		this->projection = glm::perspective(fov, aspectRatio, near, far);

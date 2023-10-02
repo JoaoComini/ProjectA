@@ -8,6 +8,8 @@
 #include "Rendering/Mesh.hpp"
 #include "Rendering/Camera.hpp"
 
+#include "Entity.hpp"
+
 namespace Engine::Component
 {
 	struct Transform
@@ -24,10 +26,21 @@ namespace Engine::Component
 		}
 	};
 
+	struct Name
+	{
+		std::string name = "Empty Entity";
+	};
+
 	struct Relationship
 	{
+		std::size_t children;
+		Engine::Entity first;
+		Engine::Entity prev;
+		Engine::Entity next;
 		Engine::Entity parent;
 	};
+
+	struct Delete{};
 
 	struct MeshRender
 	{
@@ -38,5 +51,6 @@ namespace Engine::Component
 	{
 		Engine::Camera camera;
 	};
+
 };
 

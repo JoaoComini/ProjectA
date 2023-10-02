@@ -1,9 +1,15 @@
 cmake_minimum_required(VERSION 3.20)
 project(Editor VERSION 0.0.1)
 
-set(EDITOR_SRC_FILES "src/System/CameraSystem.cpp")
+set(EDITOR_SRC_FILES
+    "src/Editor.cpp"
+    "src/System/CameraSystem.cpp"
+    "src/Widget/SceneHierarchy.cpp"
+    "src/Widget/EntityInspector.cpp"
+    "src/Widget/Controls.cpp"
+)
     
-add_executable(Editor "src/Editor.cpp" ${EDITOR_SRC_FILES})
+add_executable(Editor ${EDITOR_SRC_FILES})
 
 target_include_directories(Editor
     PUBLIC

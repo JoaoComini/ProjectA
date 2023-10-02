@@ -1,20 +1,19 @@
 #pragma once
 
+#include "Utils/Singleton.hpp"
+
 #include "KeyCode.hpp"
 #include "Window.hpp"
 
 namespace Engine
 {
-    class Input
+    class Input : public Singleton<Input>
     {
     public:
-        virtual ~Input();
-        virtual bool IsKeyDown(KeyCode code) = 0;
-
         static void Setup(Window& window);
-        static Input* GetInstance();
 
+        virtual bool IsKeyDown(KeyCode code) = 0;
     protected:
-        static Input* instance;
+        Input() = default;
     };
 };

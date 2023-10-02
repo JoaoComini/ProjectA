@@ -107,7 +107,6 @@ namespace Engine {
 
     std::unique_ptr<Window> WindowBuilder::Build()
     {
-
         std::unique_ptr<Window> window = std::make_unique<Window>(title, width, height, true);
 
         return window;

@@ -7,6 +7,7 @@
 #include <mutex>
 #include <set>
 #include <stdexcept>
+#include <functional>
 
 #include "Resource.hpp"
 #include "PhysicalDevice.hpp"
@@ -30,6 +31,10 @@ namespace Vulkan
 		void SetImageLayout(const Image& image, VkImageLayout oldLayout, VkImageLayout newLayout) const;
 		void GenerateMipMaps(const Image& image) const;
 		void WaitIdle() const;
+
+		void OneTimeSubmit(std::function<void(CommandBuffer&)> func);
+
+		void ResetCommandPool();
 
 		Queue& GetPresentQueue() const;
 		Queue& GetGraphicsQueue() const;

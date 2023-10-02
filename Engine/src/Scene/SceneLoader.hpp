@@ -23,7 +23,7 @@ namespace Engine
 	private:
 		void LoadTextures(tinygltf::Model& model);
 		void LoadMaterials(tinygltf::Model& model);
-		void LoadMeshes(tinygltf::Model& model);
+		void LoadMeshes(tinygltf::Model& model, std::string path);
 		void LoadNodes(tinygltf::Model& model);
 		void LoadRelationships(tinygltf::Model& model);
 

@@ -8,12 +8,12 @@
 #include "Vulkan/Device.hpp"
 
 #include "Rendering/Renderer.hpp"
+#include "Rendering/Gui.hpp"
 #include "Scene/Scene.hpp"
 
 #include "Window.hpp"
 #include "WindowSurface.hpp"
 #include "System.hpp"
-
 
 namespace Engine {
 
@@ -29,6 +29,10 @@ namespace Engine {
 		~Application();
 
 		void Run();
+		void Exit();
+		virtual void OnGui() {}
+
+		Scene& GetScene();
 
 		template<typename T, typename... Args>
 		void AddSystem(Args&&... args)
@@ -36,11 +40,8 @@ namespace Engine {
 			systems.push_back(std::make_unique<T>(*scene, std::forward<Args>(args)...));
 		}
 
-		FramebufferSize GetFramebufferSize() const;
-
 	private:
-		void CreateRenderer();
-		void CreateCamera();
+		void SetupVulkan();
 
 		std::unique_ptr<Window> window;
 		std::unique_ptr<Vulkan::Instance> instance;
@@ -48,11 +49,12 @@ namespace Engine {
 		std::unique_ptr<Vulkan::PhysicalDevice> physicalDevice;
 		std::unique_ptr<Vulkan::Device> device;
 
-		std::vector<std::unique_ptr<System>> systems;
-
-		std::unique_ptr<Renderer> renderer;
+		Renderer* renderer;
+		Gui* gui;
 
 		std::unique_ptr<Scene> scene;
+
+		std::vector<std::unique_ptr<System>> systems;
 
 		bool running = false;
 	};

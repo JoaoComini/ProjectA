@@ -40,14 +40,14 @@ namespace Engine
 		void Reset();
 		Vulkan::CommandBuffer& RequestCommandBuffer();
 		Vulkan::Semaphore& RequestSemaphore();
-		VkDescriptorSet RequestDescriptorSet(const Vulkan::DescriptorSetLayout& descriptorSetLayout, const BindingMap<VkDescriptorBufferInfo>& bufferInfos, const BindingMap<VkDescriptorImageInfo>& imageInfos);
+		VkDescriptorSet RequestDescriptorSet(std::shared_ptr<Vulkan::DescriptorSetLayout> descriptorSetLayout, const BindingMap<VkDescriptorBufferInfo>& bufferInfos, const BindingMap<VkDescriptorImageInfo>& imageInfos);
 
 		BufferAllocation RequestBufferAllocation(Vulkan::BufferUsageFlags usage, uint32_t size);
 
 		void SetTarget(std::unique_ptr<Target> target);
 		Target& GetTarget() const;
 	private:
-		DescriptorPool& GetDescriptorPool(const Vulkan::DescriptorSetLayout& descriptorSetLayout);
+		DescriptorPool& GetDescriptorPool(std::shared_ptr<Vulkan::DescriptorSetLayout> descriptorSetLayout);
 
 		const Vulkan::Device& device;
 

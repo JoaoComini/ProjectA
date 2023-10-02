@@ -2,25 +2,14 @@
 
 namespace Engine
 {
-	RenderSystem::RenderSystem(Scene& scene, Renderer& renderer) : System(scene), renderer(renderer)
+	RenderSystem::RenderSystem(Scene& scene) : System(scene)
 	{
-
+		renderer = Renderer::GetInstance();
+		gui = Gui::GetInstance();
 	}
 
 	void RenderSystem::Update(float timestep)
 	{
-		auto [camera, found] = scene.FindFirstEntity<Component::Transform, Component::Camera>();
-
-		if (!found)
-		{
-			return;
-		}
-
-		Component::Camera cameraComponent = camera.GetComponent<Component::Camera>();
-		Component::Transform cameraTransform = camera.GetComponent<Component::Transform>();
-
-		renderer.Begin(cameraComponent.camera, cameraTransform.GetLocalMatrix());
-
 		scene.ForEachEntity<Component::Transform, Component::MeshRender>(
 			[&](auto entity) {
 
@@ -29,25 +18,27 @@ namespace Engine
 
 				glm::mat4 matrix = GetWorldMatrix(entity, transform);
 
-				renderer.Draw(*meshRender.mesh, matrix);
+				renderer->Draw(*meshRender.mesh, matrix);
 			}
 		);
-
-		renderer.End();
 	}
 
 	glm::mat4 RenderSystem::GetWorldMatrix(Entity entity, Component::Transform transform)
 	{
-		auto relationship = entity.TryGetComponent<Component::Relationship>();
+		auto parent = entity.GetParent();
 
-		if (relationship == nullptr)
+		if (!parent)
 		{
 			return transform.GetLocalMatrix();
 		}
 
-		auto parentEntity = relationship->parent;
-		auto parentTransform = parentEntity.TryGetComponent<Component::Transform>();
+		auto parentTransform = parent.TryGetComponent<Component::Transform>();
 
-		return GetWorldMatrix(parentEntity, *parentTransform) * transform.GetLocalMatrix();
+		if (!parentTransform)
+		{
+			return transform.GetLocalMatrix();
+		}
+
+		return GetWorldMatrix(parent, *parentTransform) * transform.GetLocalMatrix();
 	}
 };

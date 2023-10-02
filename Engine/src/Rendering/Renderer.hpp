@@ -17,6 +17,8 @@
 #include "Vulkan/RenderPass.hpp"
 #include "Vulkan/DescriptorSetLayout.hpp"
 
+#include "Utils/Singleton.hpp"
+
 #include "Mesh.hpp"
 #include "Texture.hpp"
 #include "Material.hpp"
@@ -37,17 +39,21 @@ namespace Engine
 		glm::vec4 color;
 	};
 
-	class Renderer
+	class Renderer : public Singleton<Renderer>
 	{
 	public:
-		Renderer(Vulkan::Device& device, const Vulkan::Surface& surface, const Window& window);
-		~Renderer() = default;
+		static Renderer* Setup(Vulkan::Device& device, const Vulkan::Surface& surface, const Window& window);
 
 		void Begin(const Camera& camera, const glm::mat4& transform);
 		void Draw(const Mesh& mesh, const glm::mat4& transform);
 		void End();
 
+		Vulkan::RenderPass& GetRenderPass() const;
+		Vulkan::CommandBuffer& GetActiveCommandBuffer() const;
+
 	private:
+		Renderer(Vulkan::Device& device, std::unique_ptr<Vulkan::Swapchain> swapchain);
+
 		void CreateDescriptors();
 		void CreatePipeline();
 		void CreateFrames();
@@ -62,12 +68,10 @@ namespace Engine
 		Frame& GetCurrentFrame() const;
 		std::unique_ptr<Target> CreateTarget(VkImage image, VkFormat format, VkExtent2D extent);
 
-		uint32_t currentImageIndex = 0;
-
 		const Vulkan::Device& device;
-		const Vulkan::Surface& surface;
 
 		GlobalUniform globalUniform;
+		uint32_t currentImageIndex = 0;
 
 		std::unique_ptr<Vulkan::Swapchain> swapchain;
 		Vulkan::Semaphore* acquireSemaphore;

@@ -46,7 +46,7 @@ namespace Engine
 
 		LoadTextures(model);
 		LoadMaterials(model);
-        LoadMeshes(model);
+        LoadMeshes(model, path);
         LoadNodes(model);
         LoadRelationships(model);
 	}
@@ -79,7 +79,7 @@ namespace Engine
 		}
 	}
 
-	void SceneLoader::LoadMeshes(tinygltf::Model& model)
+	void SceneLoader::LoadMeshes(tinygltf::Model& model, std::string path)
 	{
         for (auto& mesh : model.meshes)
         {
@@ -123,7 +123,7 @@ namespace Engine
                     }
                 }
 
-                auto mesh = std::make_shared<Engine::Mesh>(device, materials[primitive.material], vertices);
+                auto mesh = std::make_shared<Engine::Mesh>(device, materials[primitive.material], vertices, path);
 
                 if (primitive.indices >= 0)
                 {
@@ -180,6 +180,13 @@ namespace Engine
                 std::transform(node.rotation.begin(), node.rotation.end(), glm::value_ptr(transform.rotation), [](auto value) { return static_cast<float>(value); });
             }
 
+            auto& name = entity.GetComponent<Component::Name>();
+
+            if (!node.name.empty())
+            {
+                name.name = node.name;
+            }
+
             entities.push_back(entity);
         }
     }
@@ -188,11 +195,17 @@ namespace Engine
     {
         for (size_t i = 0; i < model.nodes.size(); i++)
         {
-            auto& node = model.nodes[i];
+            auto &node = model.nodes[i];
 
-            for (auto child : node.children)
+            auto parent = entities[i];
+
+            for (int j = 0; j < node.children.size(); j++)
             {
-                entities[child].AddComponent<Engine::Component::Relationship>(entities[i]);
+                int index = node.children[j];
+
+                auto curr = entities[index];
+
+                curr.SetParent(parent);
             }
         }
     }

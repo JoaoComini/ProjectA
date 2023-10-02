@@ -18,7 +18,7 @@ namespace Engine
 	{
 
 	public:
-		Mesh(const Vulkan::Device& device, const Material material, std::vector<Vertex> vertices);
+		Mesh(const Vulkan::Device& device, const Material material, std::vector<Vertex> vertices, std::string path);
 
 		void Draw(const VkCommandBuffer commandBuffer) const;
 
@@ -26,6 +26,8 @@ namespace Engine
 		void BuildVertexBuffer(std::vector<Vertex> vertices);
 
 		const Material& GetMaterial() const;
+
+		const std::string& GetPath();
 	private:
 
 		size_t vertexCount;
@@ -37,5 +39,6 @@ namespace Engine
 
 		const Material material;
 		const Vulkan::Device& device;
+		const std::string path;
 	};
 }

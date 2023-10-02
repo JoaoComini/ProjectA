@@ -76,6 +76,24 @@ namespace Vulkan
 		vkDeviceWaitIdle(handle);
 	}
 
+	void Device::OneTimeSubmit(std::function<void(CommandBuffer&)> func)
+	{
+		CommandBuffer& commandBuffer = commandPool->RequestCommandBuffer();
+		commandBuffer.Begin(CommandBuffer::BeginFlags::OneTimeSubmit);
+
+		func(commandBuffer);
+
+		commandBuffer.End();
+
+		graphicsQueue->Submit(commandBuffer);
+		graphicsQueue->WaitIdle();
+	}
+
+	void Device::ResetCommandPool()
+	{
+		commandPool->Reset();
+	}
+
 	void Device::CopyBuffer(const Buffer& src, const Buffer& dst, uint32_t size)
 	{
 		CommandBuffer& commandBuffer = commandPool->RequestCommandBuffer();

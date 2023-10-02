@@ -10,18 +10,28 @@
 namespace Engine
 {
 
-	Renderer::Renderer(Vulkan::Device& device, const Vulkan::Surface& surface, const Window& window)
-		: device(device), surface(surface)
+	Renderer* Renderer::Setup(Vulkan::Device& device, const Vulkan::Surface& surface, const Window& window)
 	{
-		auto size = window.GetFramebufferSize();
+		if (instance == nullptr)
+		{
+			auto size = window.GetFramebufferSize();
 
-		swapchain = Vulkan::SwapchainBuilder()
-			.DesiredWidth(size.width)
-			.DesiredHeight(size.height)
-			.MinImageCount(3)
-			.Build(device, surface);
+			auto swapchain = Vulkan::SwapchainBuilder()
+				.DesiredWidth(size.width)
+				.DesiredHeight(size.height)
+				.MinImageCount(3)
+				.Build(device, surface);
 
-		renderPass = std::make_unique<Vulkan::RenderPass>(device, *swapchain);
+			instance = new Renderer(device, std::move(swapchain));
+		}
+
+		return instance;
+	}
+
+	Renderer::Renderer(Vulkan::Device& device, std::unique_ptr<Vulkan::Swapchain> swapchain)
+		: device(device), swapchain(std::move(swapchain))
+	{
+		renderPass = std::make_unique<Vulkan::RenderPass>(device, *this->swapchain);
 
 		CreateDescriptors();
 		CreatePipeline();
@@ -193,13 +203,13 @@ namespace Engine
 				.minDepth = 0.0f,
 				.maxDepth = 1.0f,
 			}
-			});
+		});
 
 		activeCommandBuffer->SetScissor({
 			{
 				.extent = extent
 			}
-			});
+		});
 
 		activeCommandBuffer->BindPipeline(*pipeline, VK_PIPELINE_BIND_POINT_GRAPHICS);
 	}
@@ -220,7 +230,7 @@ namespace Engine
 		} } } }
 		};
 
-		auto descriptorSet = frame.RequestDescriptorSet(*globalDescriptorSetLayout, bufferInfos, {});
+		auto descriptorSet = frame.RequestDescriptorSet(globalDescriptorSetLayout, bufferInfos, {});
 
 		activeCommandBuffer->BindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, *pipelineLayout, 0, descriptorSet);
 	}
@@ -257,7 +267,7 @@ namespace Engine
 			} } } }
 		};
 
-		auto descriptorSet = frame.RequestDescriptorSet(*modelDescriptorSetLayout, bufferInfos, imageInfos);
+		auto descriptorSet = frame.RequestDescriptorSet(modelDescriptorSetLayout, bufferInfos, imageInfos);
 
 		activeCommandBuffer->BindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, *pipelineLayout, 1, descriptorSet);
 
@@ -275,6 +285,16 @@ namespace Engine
 
 		activeCommandBuffer = nullptr;
 		acquireSemaphore = nullptr;
+	}
+
+	Vulkan::RenderPass& Renderer::GetRenderPass() const
+	{
+		return *renderPass;
+	}
+
+	Vulkan::CommandBuffer& Renderer::GetActiveCommandBuffer() const
+	{
+		return *activeCommandBuffer;
 	}
 
 	Vulkan::Semaphore& Renderer::Submit()
@@ -358,7 +378,7 @@ namespace Engine
 
 		auto colorImage = std::make_unique<Vulkan::Image>(
 			device,
-			VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
 			format,
 			VkExtent3D{ extent.width, extent.height, 1 },
 			device.GetMaxSampleCount()

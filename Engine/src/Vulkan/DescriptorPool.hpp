@@ -6,12 +6,16 @@
 #include "Device.hpp"
 #include "DescriptorSetLayout.hpp"
 
+#include <vector>
+
 namespace Vulkan
 {
-	class DescriptorPool : Resource<VkDescriptorPool>
+	class DescriptorPool : public Resource<VkDescriptorPool>
 	{
 	public:
-		DescriptorPool(const Device& device, const DescriptorSetLayout& descriptorSetLayout, uint32_t size);
+		DescriptorPool(const Device& device, std::shared_ptr<DescriptorSetLayout> descriptorSetLayout, uint32_t size);
+		DescriptorPool(const Device& device, std::vector<VkDescriptorPoolSize> poolSizes, uint32_t size);
+
 		~DescriptorPool();
 
 		VkDescriptorSet Allocate();
@@ -19,6 +23,6 @@ namespace Vulkan
 
 	private:
 		const Device& device;
-		const DescriptorSetLayout& descriptorSetLayout;
+		std::shared_ptr<DescriptorSetLayout> descriptorSetLayout;
 	};
 };

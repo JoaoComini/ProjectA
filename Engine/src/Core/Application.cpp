@@ -5,9 +5,13 @@
 
 #include "GLFW/glfw3.h"
 
+#include "Vulkan/DescriptorPool.hpp"
+
 #include "Scene/SceneLoader.hpp"
 #include "Scene/Scene.hpp"
 #include "Scene/Components.hpp"
+
+#include "Rendering/Gui.hpp" 
 
 #include "RenderSystem.hpp"
 #include "Input.hpp"
@@ -28,67 +32,6 @@ namespace Engine {
 			running = false;
 		});
 
-		Input::Setup(*window);
-
-		scene = std::make_unique<Scene>();
-
-		CreateRenderer();
-		CreateCamera();
-
-		AddSystem<RenderSystem>(*renderer);
-	}
-
-	Application::~Application()
-	{
-		device->WaitIdle();
-	}
-
-	void Application::Run()
-	{
-		running = true;
-
-		{
-			SceneLoader loader(*device, *scene);
-			loader.LoadFromGltf("resources/models/DamagedHelmet.glb");
-		}
-
-		auto lastTime = std::chrono::high_resolution_clock::now();
-
-		while (running)
-		{
-			window->Update();
-
-			auto currentTime = std::chrono::high_resolution_clock::now();
-			auto timestep = std::chrono::duration<float>(currentTime - lastTime);
-			lastTime = currentTime;
-
-			for (auto& system : systems)
-			{
-				system->Update(timestep.count());
-			}
-		}
-	}
-
-	FramebufferSize Application::GetFramebufferSize() const
-	{
-		return window->GetFramebufferSize();
-	}
-
-	void Application::CreateRenderer()
-	{
-		instance = Vulkan::InstanceBuilder().Build();
-
-		surface = window->CreateSurface(*instance);
-
-		physicalDevice = Vulkan::PhysicalDevicePicker::PickBestSuitable(*instance, *surface);
-
-		device = std::make_unique<Vulkan::Device>(*instance, *physicalDevice);
-
-		renderer = std::make_unique<Renderer>(*device, *surface, *window);
-	}
-
-	void Application::CreateCamera()
-	{
 		window->OnResize(
 			[&](int width, int height) {
 				auto [entity, found] = scene->FindFirstEntity<Component::Camera, Component::Transform>();
@@ -103,5 +46,91 @@ namespace Engine {
 				component.camera.SetAspectRatio((float)width / height);
 			}
 		);
+
+		SetupVulkan();
+
+		renderer = Renderer::Setup(*device, *surface, *window);
+		gui = Gui::Setup(*instance, *device, *physicalDevice, *window);
+
+		Input::Setup(*window);
+
+		scene = std::make_unique<Scene>();
+
+		AddSystem<RenderSystem>();
+	}
+
+	void Application::SetupVulkan()
+	{
+		instance = Vulkan::InstanceBuilder().Build();
+
+		surface = window->CreateSurface(*instance);
+
+		physicalDevice = Vulkan::PhysicalDevicePicker::PickBestSuitable(*instance, *surface);
+
+		device = std::make_unique<Vulkan::Device>(*instance, *physicalDevice);
+	}
+
+	Application::~Application()
+	{
+		device->WaitIdle();
+
+		Input::DeleteInstance();
+		Gui::DeleteInstance();
+		Renderer::DeleteInstance();
+	}
+
+	void Application::Run()
+	{
+		running = true;
+
+		{
+			SceneLoader loader(*device, *scene);
+			loader.LoadFromGltf("resources/models/Lantern.glb");
+		}
+
+		auto lastTime = std::chrono::high_resolution_clock::now();
+
+		while (running)
+		{
+			window->Update();
+			scene->Update();
+
+			auto currentTime = std::chrono::high_resolution_clock::now();
+			auto timestep = std::chrono::duration<float>(currentTime - lastTime);
+			lastTime = currentTime;
+
+			auto [camera, found] = scene->FindFirstEntity<Component::Transform, Component::Camera>();
+
+			if (!found)
+			{
+				return;
+			}
+
+			Component::Camera cameraComponent = camera.GetComponent<Component::Camera>();
+			Component::Transform cameraTransform = camera.GetComponent<Component::Transform>();
+
+			renderer->Begin(cameraComponent.camera, cameraTransform.GetLocalMatrix());
+			gui->Begin();
+
+			for (auto& system : systems)
+			{
+				system->Update(timestep.count());
+			}
+
+			OnGui();
+
+			gui->End(renderer->GetActiveCommandBuffer());
+			renderer->End();
+		}
+	}
+
+	void Application::Exit()
+	{
+		running = false;
+	}
+
+	Scene& Application::GetScene()
+	{
+		return *scene;
 	}
 }
