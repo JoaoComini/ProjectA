@@ -4,21 +4,22 @@
 
 #include "Texture.hpp"
 
+#include "Resource/Resource.hpp"
+
 namespace Engine
 {
-	struct Material
+	class Material : public Resource
 	{
 	public:
-		Material(std::shared_ptr<Texture> diffuse);
+		Material(ResourceId diffuse);
 		~Material() = default;
 
-		Texture& GetDiffuse() const;
+		ResourceId GetDiffuse() const;
 
 		glm::vec4 GetColor() const;
 
 	private:
+		ResourceId diffuse;
 		glm::vec4 color = glm::vec4(1.f, 1.f, 1.f, 1.1f);
-
-		std::shared_ptr<Texture> diffuse;
 	};
 };

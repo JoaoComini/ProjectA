@@ -4,31 +4,32 @@
 
 #include <string>
 #include <vector>
-
-#include "Vertex.hpp"
+#include <filesystem>
 
 #include "Vulkan/Device.hpp"
 #include "Vulkan/Buffer.hpp"
 
+#include "Resource/Resource.hpp"
+
 #include "Material.hpp"
+#include "Vertex.hpp"
 
 namespace Engine
 {
-	class Mesh
+	class Mesh: public Resource
 	{
 
 	public:
-		Mesh(const Vulkan::Device& device, const Material material, std::vector<Vertex> vertices, std::string path);
+		Mesh(const Vulkan::Device& device, ResourceId material, std::vector<Vertex> vertices, std::vector<uint8_t> indices, VkIndexType indexType =  VK_INDEX_TYPE_MAX_ENUM);
 
 		void Draw(const VkCommandBuffer commandBuffer) const;
 
-		void BuildIndexBuffer(void* indices, uint32_t size, uint32_t count, VkIndexType type);
-		void BuildVertexBuffer(std::vector<Vertex> vertices);
+		ResourceId GetMaterial() const;
 
-		const Material& GetMaterial() const;
-
-		const std::string& GetPath();
 	private:
+
+		void BuildIndexBuffer(std::vector<uint8_t> indices, VkIndexType type);
+		void BuildVertexBuffer(std::vector<Vertex> vertices);
 
 		size_t vertexCount;
 		size_t indexCount;
@@ -37,8 +38,8 @@ namespace Engine
 		std::unique_ptr<Vulkan::Buffer> vertexBuffer;
 		std::unique_ptr<Vulkan::Buffer> indexBuffer;
 
-		const Material material;
+		ResourceId material;
+
 		const Vulkan::Device& device;
-		const std::string path;
 	};
 }

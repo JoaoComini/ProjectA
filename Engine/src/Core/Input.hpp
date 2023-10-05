@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Utils/Singleton.hpp"
+#include "Common/Singleton.hpp"
 
 #include "KeyCode.hpp"
 #include "Window.hpp"

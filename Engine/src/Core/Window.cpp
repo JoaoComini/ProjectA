@@ -72,7 +72,7 @@ namespace Engine {
         }
     }
 
-    GLFWwindow* Window::GetHandle() const
+    void* Window::GetHandle() const
     {
         return handle;
     }

@@ -7,11 +7,13 @@
 
 #include "Vulkan/DescriptorPool.hpp"
 
-#include "Scene/SceneLoader.hpp"
 #include "Scene/Scene.hpp"
 #include "Scene/Components.hpp"
 
-#include "Rendering/Gui.hpp" 
+#include "Rendering/Gui.hpp"
+
+#include "Resource/ResourceManager.hpp"
+#include "Resource/Model.hpp"
 
 #include "RenderSystem.hpp"
 #include "Input.hpp"
@@ -52,6 +54,8 @@ namespace Engine {
 		renderer = Renderer::Setup(*device, *surface, *window);
 		gui = Gui::Setup(*instance, *device, *physicalDevice, *window);
 
+		ResourceManager::Setup(*device);
+
 		Input::Setup(*window);
 
 		scene = std::make_unique<Scene>();
@@ -74,6 +78,7 @@ namespace Engine {
 	{
 		device->WaitIdle();
 
+		ResourceManager::DeleteInstance();
 		Input::DeleteInstance();
 		Gui::DeleteInstance();
 		Renderer::DeleteInstance();
@@ -82,11 +87,6 @@ namespace Engine {
 	void Application::Run()
 	{
 		running = true;
-
-		{
-			SceneLoader loader(*device, *scene);
-			loader.LoadFromGltf("resources/models/Lantern.glb");
-		}
 
 		auto lastTime = std::chrono::high_resolution_clock::now();
 
@@ -132,5 +132,10 @@ namespace Engine {
 	Scene& Application::GetScene()
 	{
 		return *scene;
+	}
+
+	Window& Application::GetWindow()
+	{
+		return *window;
 	}
 }

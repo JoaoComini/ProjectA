@@ -17,7 +17,7 @@
 #include "Vulkan/RenderPass.hpp"
 #include "Vulkan/DescriptorSetLayout.hpp"
 
-#include "Utils/Singleton.hpp"
+#include "Common/Singleton.hpp"
 
 #include "Mesh.hpp"
 #include "Texture.hpp"

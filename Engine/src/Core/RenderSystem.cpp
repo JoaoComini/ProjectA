@@ -1,5 +1,7 @@
 #include "RenderSystem.hpp"
 
+#include "Resource/ResourceManager.hpp"
+
 namespace Engine
 {
 	RenderSystem::RenderSystem(Scene& scene) : System(scene)
@@ -16,9 +18,16 @@ namespace Engine
 				const auto& transform = entity.GetComponent<Component::Transform>();
 				auto meshRender = entity.GetComponent<Component::MeshRender>();
 
+				if (!meshRender.mesh)
+				{
+					return;
+				}
+
+				auto mesh = ResourceManager::GetInstance()->LoadResource<Mesh>(meshRender.mesh);
+
 				glm::mat4 matrix = GetWorldMatrix(entity, transform);
 
-				renderer->Draw(*meshRender.mesh, matrix);
+				renderer->Draw(*mesh, matrix);
 			}
 		);
 	}

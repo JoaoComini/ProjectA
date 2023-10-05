@@ -33,7 +33,7 @@ namespace Engine
 			std::unique_ptr<Vulkan::DescriptorPool> descriptorPool = std::make_unique<Vulkan::DescriptorPool>(device, poolSizes, 1000);
 
 			ImGui::CreateContext();
-			ImGui_ImplGlfw_InitForVulkan(window.GetHandle(), true);
+			ImGui_ImplGlfw_InitForVulkan(static_cast<GLFWwindow *>(window.GetHandle()), true);
 
 			ImGui_ImplVulkan_InitInfo initInfo = {};
 			initInfo.Instance = instance.GetHandle();
@@ -49,7 +49,7 @@ namespace Engine
 
 			device.OneTimeSubmit([&](Vulkan::CommandBuffer& buffer) {
 				ImGui_ImplVulkan_CreateFontsTexture(buffer.GetHandle());
-				});
+			});
 
 			device.ResetCommandPool();
 

@@ -40,8 +40,9 @@ void EntityInspector::Update()
 
 	if (ImGui::BeginPopup("AddComponent"))
 	{
-		AddComponentMenuItem<Engine::Component::Transform>("Transform");
 		AddComponentMenuItem<Engine::Component::Camera>("Camera");
+		AddComponentMenuItem<Engine::Component::Transform>("Transform");
+		AddComponentMenuItem<Engine::Component::MeshRender>("Mesh");
 		ImGui::EndPopup();
 	}
 

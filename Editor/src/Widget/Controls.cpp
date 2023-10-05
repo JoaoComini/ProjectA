@@ -5,6 +5,8 @@
 
 #include <Scene/Components.hpp>
 
+#include "Resource/ResourceManager.hpp"
+
 namespace Controls
 {
 	void Vec3(const std::string& label, glm::vec3& values, float resetValue)
@@ -117,6 +119,19 @@ namespace Controls
 	template<>
 	void Component(Engine::Component::MeshRender* component)
 	{
-		ImGui::Text("File: %s", component->mesh->GetPath().c_str());
+		auto meshes = Engine::ResourceManager::GetInstance()->FindResourcesOfType(Engine::ResourceType::Mesh);
+
+		if (ImGui::BeginCombo("##MeshRender", component->mesh.ToString().c_str()))
+		{
+			for (auto mesh : meshes)
+			{
+				if (ImGui::Selectable(mesh.ToString().c_str()))
+				{
+					component->mesh = mesh;
+				}
+			}
+
+			ImGui::EndCombo();
+		}
 	}
 };

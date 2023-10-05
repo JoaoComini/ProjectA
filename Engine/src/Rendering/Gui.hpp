@@ -8,7 +8,7 @@
 #include "Vulkan/RenderPass.hpp"
 #include "Vulkan/DescriptorPool.hpp"
 
-#include "Utils/Singleton.hpp"
+#include "Common/Singleton.hpp"
 
 namespace Engine
 {

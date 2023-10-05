@@ -4,7 +4,7 @@
 #include "Mesh.hpp"
 #include "Mesh.hpp"
 
-#include "Utils/Hash.hpp"
+#include "Common/Hash.hpp"
 
 #include <iostream>
 #include <unordered_map>
@@ -13,10 +13,16 @@
 
 namespace Engine
 {
-    Mesh::Mesh(const Vulkan::Device& device, const Material material, std::vector<Vertex> vertices, std::string path)
-        : material(material), device(device), path(path)
+    Mesh::Mesh(
+        const Vulkan::Device& device,
+        const ResourceId material,
+        std::vector<Vertex> vertices,
+        std::vector<uint8_t> indices,
+        VkIndexType indexType
+    ) : Resource(ResourceType::Mesh), material(material), device(device)
     {
         BuildVertexBuffer(vertices);
+        BuildIndexBuffer(indices, indexType);
     }
 
     void Mesh::BuildVertexBuffer(std::vector<Vertex> vertices)
@@ -34,9 +40,25 @@ namespace Engine
         vertexBuffer->SetData(vertices.data(), sizeof(Vertex) * vertexCount);
     }
 
-    void Mesh::BuildIndexBuffer(void* indices, uint32_t size, uint32_t count, VkIndexType type)
+    void Mesh::BuildIndexBuffer(std::vector<uint8_t> indices, VkIndexType type)
     {
-        indexCount = count;
+        uint32_t size = indices.size();
+
+        uint32_t typeSize;
+        switch (type)
+        {
+        case VK_INDEX_TYPE_UINT16:
+            typeSize = sizeof(uint16_t);
+            break;
+        case VK_INDEX_TYPE_UINT32:
+            typeSize = sizeof(uint32_t);
+            break;
+        default:
+            break;
+        }
+
+        indexCount = indices.size() / typeSize;
+
         indexType = type;
 
         indexBuffer = Vulkan::BufferBuilder()
@@ -47,7 +69,7 @@ namespace Engine
             .BufferUsage(Vulkan::BufferUsageFlags::INDEX)
             .Build(device);
 
-        indexBuffer->SetData(indices, size);
+        indexBuffer->SetData(indices.data(), size);
     }
 
     void Mesh::Draw(const VkCommandBuffer commandBuffer) const
@@ -66,14 +88,8 @@ namespace Engine
         vkCmdDraw(commandBuffer, vertexCount, 1, 0, 0);
     }
 
-    const Material& Mesh::GetMaterial() const
+    ResourceId Mesh::GetMaterial() const
     {
         return material;
     }
-
-    const std::string& Mesh::GetPath()
-    {
-        return path;
-    }
-
 }

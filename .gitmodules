@@ -1,9 +1,6 @@
 [submodule "third_party/vma"]
 	path = Engine/third_party/vma
 	url = https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git
-[submodule "third_party/tinyobjloader"]
-	path = Engine/third_party/tinyobjloader
-	url = https://github.com/tinyobjloader/tinyobjloader
 [submodule "third_party/glfw"]
 	path = Engine/third_party/glfw
 	url = https://github.com/glfw/glfw
@@ -16,13 +13,12 @@
 [submodule "third_party/tinygltf"]
 	path = Engine/third_party/tinygltf
 	url = https://github.com/syoyo/tinygltf
-
 [submodule "third_party/catch2"]
 	path = Engine/third_party/catch2
 	url = https://github.com/catchorg/Catch2
 [submodule "third_party/entt"]
 	path = Engine/third_party/entt
 	url = https://github.com/skypjack/entt.git
-[submodule "Engine/third_party/imgui"]
+[submodule "third_party/imgui"]
 	path = Engine/third_party/imgui
 	url = https://github.com/ocornut/imgui.git

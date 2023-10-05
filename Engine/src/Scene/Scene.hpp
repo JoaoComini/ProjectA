@@ -73,6 +73,8 @@ namespace Engine
 		}
 		
 	private:
+		void OnCreateEntity(entt::registry& registry, entt::entity entity);
+
 		entt::registry registry;
 	};
 };

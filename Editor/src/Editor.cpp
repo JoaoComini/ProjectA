@@ -2,6 +2,10 @@
 
 #include <imgui.h>
 
+#include "Resource/ResourceManager.hpp"
+
+#include "Platform/FileDialog.hpp"
+
 namespace Engine
 {
     Editor::Editor(ApplicationSpec& spec) : Application(spec)
@@ -10,65 +14,35 @@ namespace Engine
 
 		sceneHierarchy = std::make_unique<SceneHierarchy>(GetScene());
 		entityInspector = std::make_unique<EntityInspector>();
+		mainMenuBar = std::make_unique<MainMenuBar>();
 
 		sceneHierarchy->OnSelectEntity([&](auto entity) {
 			entityInspector->SetEntity(entity);
+		});
+
+		mainMenuBar->OnExit([&]() {
+			Exit();
+		});
+
+		mainMenuBar->OnImport([&]() {
+			ImportFile();
 		});
     }
 
     void Editor::OnGui()
     {
-		MainMenuBar();
-
+		mainMenuBar->Update();
 		sceneHierarchy->Update();
 		entityInspector->Update();
-
-		if (openMetricsWindow)
-		{
-			ImGuiIO& io = ImGui::GetIO();
-			
-			if (ImGui::Begin("Metrics", &openMetricsWindow))
-			{
-				ImGui::Text("Frametime: %.3f ms/frame", 1000.0f / io.Framerate);
-				ImGui::Text("Framerate: %.1f FPS", io.Framerate);
-				ImGui::End();
-			}
-		}
     }
 
-	void Editor::MainMenuBar()
+	void Editor::ImportFile()
 	{
-		if (ImGui::BeginMainMenuBar())
+		auto file = FileDialog::OpenFile(GetWindow(), "GLB File (*.glb)\0*.glb\0");
+
+		if (!file.empty())
 		{
-			if (ImGui::BeginMenu("File"))
-			{
-				if (ImGui::MenuItem("Save Scene", "Ctrl+S"))
-				{
-
-				}
-
-				ImGui::Separator();
-
-				if (ImGui::MenuItem("Exit"))
-				{
-					Exit();
-				}
-
-				ImGui::EndMenu();
-			}
-
-			if (ImGui::BeginMenu("Tools"))
-			{
-				if (ImGui::MenuItem("Metrics"))
-				{
-					openMetricsWindow = true;
-				}
-
-				ImGui::EndMenu();
-			}
-
-			ImGui::EndMainMenuBar();
+			ResourceManager::GetInstance()->ImportResource(file);
 		}
 	}
 }
-

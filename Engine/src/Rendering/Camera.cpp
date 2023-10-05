@@ -5,7 +5,7 @@
 
 namespace Engine
 {
-	Camera::Camera(float fov, float aspectRatio, float near, float far) : fov(fov), aspectRatio(aspectRatio), near(near), far(far)
+	Camera::Camera(float fov, float aspectRatio, float nearClip, float farClip) : fov(fov), aspectRatio(aspectRatio), nearClip(nearClip), farClip(farClip)
 	{
 		UpdateProjection();
 	}
@@ -35,29 +35,29 @@ namespace Engine
 
 	float Camera::GetNear()
 	{
-		return near;
+		return nearClip;
 	}
 
-	void Camera::SetNear(float near)
+	void Camera::SetNear(float nearClip)
 	{
-		this->near = near;
+		this->nearClip = nearClip;
 		UpdateProjection();
 	}
 
 	float Camera::GetFar()
 	{
-		return far;
+		return farClip;
 	}
 
-	void Camera::SetFar(float far)
+	void Camera::SetFar(float farClip)
 	{
-		this->far = far;
+		this->farClip = farClip;
 		UpdateProjection();
 	}
 
 	void Camera::UpdateProjection()
 	{
-		this->projection = glm::perspective(fov, aspectRatio, near, far);
+		this->projection = glm::perspective(fov, aspectRatio, nearClip, farClip);
 		this->projection[1][1] *= -1;
 	}
 }

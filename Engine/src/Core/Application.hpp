@@ -33,6 +33,7 @@ namespace Engine {
 		virtual void OnGui() {}
 
 		Scene& GetScene();
+		Window& GetWindow();
 
 		template<typename T, typename... Args>
 		void AddSystem(Args&&... args)

@@ -6,6 +6,7 @@
 #include "System/CameraSystem.hpp"
 #include "Widget/SceneHierarchy.hpp"
 #include "Widget/EntityInspector.hpp"
+#include "Widget/MainMenuBar.hpp"
 
 namespace Engine
 {
@@ -16,10 +17,12 @@ namespace Engine
 
         void OnGui() override;
     private:
-        void MainMenuBar();
+        void ImportFile();
 
         std::unique_ptr<SceneHierarchy> sceneHierarchy;
         std::unique_ptr<EntityInspector> entityInspector;
+        std::unique_ptr<MainMenuBar> mainMenuBar;
+
         bool openMetricsWindow = false;
     };
 

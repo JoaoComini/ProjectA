@@ -35,7 +35,7 @@ namespace Engine {
         std::unique_ptr<Vulkan::Surface> CreateSurface(Vulkan::Instance& instance);
 
         FramebufferSize GetFramebufferSize() const;
-        GLFWwindow* GetHandle() const;
+        void* GetHandle() const;
 
     private:
         GLFWwindow* handle;

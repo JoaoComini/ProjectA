@@ -7,7 +7,7 @@ set(EDITOR_SRC_FILES
     "src/Widget/SceneHierarchy.cpp"
     "src/Widget/EntityInspector.cpp"
     "src/Widget/Controls.cpp"
-)
+ "src/Widget/MainMenuBar.cpp")
     
 add_executable(Editor ${EDITOR_SRC_FILES})
 
@@ -17,4 +17,3 @@ target_include_directories(Editor
 )
 
 target_link_libraries(Editor Engine)
-set_target_properties(Editor PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON)

@@ -1,6 +1,6 @@
 #include "Frame.hpp"
 
-#include "Utils/Hash.hpp"
+#include "Common/Hash.hpp"
 
 namespace Engine
 {

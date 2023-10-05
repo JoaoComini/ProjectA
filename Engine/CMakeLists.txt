@@ -68,7 +68,9 @@ set(ENGINE_SRC_FILES
     "src/Rendering/SemaphorePool.cpp"
     "src/Rendering/Target.cpp"
     "src/Rendering/Texture.cpp"
-    "src/Utils/FileSystem.cpp"
+    "src/Rendering/Gui.cpp"
+    "src/Common/FileSystem.cpp"
+    "src/Common/Uuid.cpp"
     "src/Vulkan/Buffer.cpp"
     "src/Vulkan/CommandBuffer.cpp"
     "src/Vulkan/CommandPool.cpp"
@@ -95,8 +97,16 @@ set(ENGINE_SRC_FILES
     "src/Vulkan/Swapchain.cpp"
     "src/Scene/Scene.cpp"
     "src/Scene/Entity.cpp"
-    "src/Scene/SceneLoader.cpp"
- "src/Rendering/Gui.cpp")
+    "src/Resource/ResourceManager.cpp"
+    "src/Resource/Resource.cpp"
+    "src/Resource/Importer/GltfImporter.cpp"
+    "src/Resource/Factory/TextureFactory.cpp"
+    "src/Resource/Factory/MaterialFactory.cpp"
+    "src/Resource/Factory/MeshFactory.cpp"
+    "src/Resource/Model.cpp"
+    "src/Resource/Factory/ModelFactory.cpp"
+    "src/Platform/Windows/FileDialog.cpp"
+)
 
 add_library(Engine STATIC ${ENGINE_SRC_FILES})
 
@@ -123,9 +133,9 @@ target_compile_definitions(Engine PRIVATE
     GLM_FORCE_DEPTH_ZERO_TO_ONE
     GLM_FORCE_RADIANS
     TINYGLTF_USE_CPP14
+    $<$<PLATFORM_ID:Windows>:PLATFORM_WINDOWS>
+    $<$<PLATFORM_ID:Linux>:PLATFORM_Linux>
 )
-
-set_target_properties(Engine VulkanMemoryAllocator PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON)
 
 # -------- TESTS --------
 
@@ -134,7 +144,14 @@ add_subdirectory(third_party/catch2)
 include(CTest)
 include(Catch)
 
-set(ENGINE_TEST_FILES test/Scene/SceneTest.cpp test/Scene/EntityTest.cpp)
+set(ENGINE_TEST_FILES
+    "test/Scene/SceneTest.cpp"
+    "test/Scene/EntityTest.cpp"
+    "test/Resource/ResourceTest.cpp"
+    "test/Resource/Factory/TextureFactoryTest.cpp"
+    "test/Resource/Factory/MeshFactoryTest.cpp"
+    "test/Resource/Factory/ModelFactoryTest.cpp"
+)
 
 add_executable(Engine_Test ${ENGINE_TEST_FILES})
 
@@ -145,8 +162,4 @@ target_include_directories(Engine_Test
 
 target_link_libraries(Engine_Test PRIVATE Catch2::Catch2WithMain Engine)
 
-set_target_properties(Engine_Test PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON)
-
 catch_discover_tests(Engine_Test)
-
-# -----------------------

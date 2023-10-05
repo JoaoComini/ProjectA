@@ -11,25 +11,8 @@
 
 namespace Engine
 {
-
-	Texture::Texture(const Vulkan::Device & device, std::string path)
-	{
-		int width, height, channels;
-		stbi_uc* pixels = stbi_load(path.c_str(), &width, &height, &channels, STBI_rgb_alpha);
-
-		uint32_t size = width * height * 4;
-
-		std::vector<uint8_t> content(pixels, pixels + size);
-
-		Setup(device, width, height, content);
-	}
-
 	Texture::Texture(const Vulkan::Device& device, uint32_t width, uint32_t height, std::vector<uint8_t> content)
-	{
-		Setup(device, width, height, content);
-	}
-
-	void Texture::Setup(const Vulkan::Device& device, uint32_t width, uint32_t height, std::vector<uint8_t> content)
+		: Resource(ResourceType::Texture)
 	{
 		uint32_t size = content.size();
 

@@ -6,6 +6,7 @@
 #include "Vulkan/Shader.hpp"
 
 #include "Vertex.hpp"
+#include "Resource/ResourceManager.hpp"
 
 namespace Engine
 {
@@ -238,11 +239,13 @@ namespace Engine
 
 	void Renderer::Draw(const Mesh& mesh, const glm::mat4& transform)
 	{
-		const Material& material = mesh.GetMaterial();
+		ResourceId materialId = mesh.GetMaterial();
+
+		auto material = ResourceManager::GetInstance()->LoadResource<Material>(materialId);
 
 		ModelUniform uniform{
 			.model = transform,
-			.color = material.GetColor(),
+			.color = material->GetColor(),
 		};
 
 		auto& frame = GetCurrentFrame();
@@ -259,10 +262,12 @@ namespace Engine
 			} } } }
 		};
 
+		auto diffuse = ResourceManager::GetInstance()->LoadResource<Texture>(material->GetDiffuse());
+
 		BindingMap<VkDescriptorImageInfo> imageInfos = {
 			{ 1, { { 0, VkDescriptorImageInfo{
-				.sampler = material.GetDiffuse().GetSampler().GetHandle(),
-				.imageView = material.GetDiffuse().GetImageView().GetHandle(),
+				.sampler = diffuse->GetSampler().GetHandle(),
+				.imageView = diffuse->GetImageView().GetHandle(),
 				.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 			} } } }
 		};

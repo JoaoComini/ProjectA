@@ -11,4 +11,3 @@ target_include_directories(Game
 )
 
 target_link_libraries(Game Engine)
-set_target_properties(Game PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON)

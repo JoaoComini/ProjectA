@@ -3,13 +3,13 @@
 
 namespace Engine
 {
-	Material::Material(std::shared_ptr<Texture> diffuse) : diffuse(diffuse)
-	{
-	}
+	Material::Material(ResourceId diffuse)
+		: diffuse(diffuse), Resource(ResourceType::Material) 
+	{ }
 
-	Texture& Material::GetDiffuse() const
+	ResourceId Material::GetDiffuse() const
 	{
-		return *this->diffuse;
+		return diffuse;
 	}
 
 	glm::vec4 Material::GetColor() const

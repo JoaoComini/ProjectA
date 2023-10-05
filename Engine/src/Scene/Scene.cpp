@@ -6,8 +6,7 @@ namespace Engine
 {
     Scene::Scene()
     {
-        registry.on_construct<entt::entity>().connect<&entt::registry::emplace<Component::Relationship>>();
-        registry.on_construct<entt::entity>().connect<&entt::registry::emplace<Component::Name>>();
+        registry.on_construct<entt::entity>().connect<&Scene::OnCreateEntity>(this);
     }
 
     Entity Scene::CreateEntity()
@@ -31,5 +30,13 @@ namespace Engine
         ForEachEntity<Component::Delete>([&](Entity entity) {
             registry.destroy(entity);
         });
+    }
+
+    void Scene::OnCreateEntity(entt::registry& registry, entt::entity handle)
+    {
+        Entity entity{ handle, &registry };
+
+        entity.AddComponent<Component::Name>();
+        entity.AddComponent<Component::Relationship>();
     }
 }

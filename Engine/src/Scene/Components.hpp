@@ -8,6 +8,8 @@
 #include "Rendering/Mesh.hpp"
 #include "Rendering/Camera.hpp"
 
+#include "Resource/Resource.hpp"
+
 #include "Entity.hpp"
 
 namespace Engine::Component
@@ -44,7 +46,7 @@ namespace Engine::Component
 
 	struct MeshRender
 	{
-		std::shared_ptr<Engine::Mesh> mesh;
+		ResourceId mesh{ 0 };
 	};
 
 	struct Camera
