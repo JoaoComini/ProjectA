@@ -5,7 +5,7 @@
 SceneHierarchy::SceneHierarchy(Engine::Scene& scene)
     : scene(scene) {}
 
-void SceneHierarchy::Update()
+void SceneHierarchy::Draw()
 {
 	ImGui::Begin("Scene");
 

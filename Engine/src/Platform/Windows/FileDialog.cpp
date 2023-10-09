@@ -36,4 +36,4 @@ namespace Engine::FileDialog
     }
 }
 
-#endif // WINDOWS_PLATFORM
+#endif // PLATFORM_WINDOWS

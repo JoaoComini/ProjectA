@@ -5,5 +5,5 @@ class Widget
 public:
 	virtual ~Widget() = default;
 
-	virtual void Update() {}
+	virtual void Draw() {}
 };

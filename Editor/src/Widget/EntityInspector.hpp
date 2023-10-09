@@ -13,7 +13,7 @@ class EntityInspector: public Widget
 public:
 
     void SetEntity(Engine::Entity entity);
-    void Update() override;
+    void Draw() override;
 
 private:
     Engine::Entity entity;

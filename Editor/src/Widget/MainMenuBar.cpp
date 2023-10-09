@@ -4,7 +4,7 @@
 
 
 
-void MainMenuBar::Update()
+void MainMenuBar::Draw()
 {
 	if (ImGui::BeginMainMenuBar())
 	{

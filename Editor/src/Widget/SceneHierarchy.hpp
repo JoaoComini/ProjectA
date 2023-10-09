@@ -10,7 +10,7 @@ public:
 	SceneHierarchy(Engine::Scene& scene);
 	~SceneHierarchy() = default;
 
-	void Update() override;
+	void Draw() override;
 
 	void OnSelectEntity(std::function<void(Engine::Entity)> onSelectEntityFn);
 

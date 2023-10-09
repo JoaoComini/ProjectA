@@ -18,6 +18,6 @@ private:
 
 	Engine::Entity entity;
 
-	float speed = 10.f;
+	float speed = 25.f;
 };
 

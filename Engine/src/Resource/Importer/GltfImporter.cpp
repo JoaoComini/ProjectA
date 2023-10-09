@@ -31,7 +31,6 @@ namespace Engine
         tinygltf::Model model;
         LoadModel(path, model);
 
-
         std::vector<std::shared_ptr<Texture>> textures;
         ImportTextures(path, model, textures);
 
@@ -86,14 +85,7 @@ namespace Engine
                 .image = image.image
             };
 
-            auto fileName = gltfTexture.name;
-
-            if (fileName.empty())
-            {
-                fileName = "texture" + std::to_string(i);
-            }
-
-            auto path = GetFilePath(parent, fileName, ".texture");
+            auto path = GetFilePath(parent, std::to_string(i), ".texture");
 
             auto texture = factory.Create(path, spec);
 
@@ -113,8 +105,9 @@ namespace Engine
     {
         MaterialFactory factory;
 
-        for (auto& material : model.materials)
+        for (size_t i = 0; i < model.materials.size(); i++)
         {
+            auto& material = model.materials[i];
             auto& values = material.values;
 
             std::shared_ptr<Engine::Texture> diffuse = nullptr;
@@ -130,7 +123,7 @@ namespace Engine
                 .diffuse = diffuse->GetId()
             };
 
-            std::filesystem::path path{ material.name + ".material" };
+            auto path = GetFilePath(parent, std::to_string(i), ".material");
 
             auto created = factory.Create(path, spec);
 
@@ -232,7 +225,7 @@ namespace Engine
                     .indexType = indexType
                 };
 
-                std::filesystem::path path{ node.name + ".mesh"};
+                auto path = GetFilePath(parent, std::to_string(i), ".mesh");
 
                 auto created = factory.Create(path, spec);
 
@@ -321,8 +314,7 @@ namespace Engine
 
         model->SetNodes(std::move(nodes));
 
-        std::filesystem::path path{ parent.filename() };
-        path.append(".model");
+        std::filesystem::path path{ parent.stem() / parent.stem().replace_extension(".model") };
 
         factory.Create(path, *model);
 
@@ -335,15 +327,10 @@ namespace Engine
         ResourceManager::GetInstance()->OnResourceImport(model, metadata);
     }
 
-
-    std::filesystem::path GltfImporter::GetFilePath(std::filesystem::path parent, std::filesystem::path path, std::string_view suffix)
+    std::filesystem::path GltfImporter::GetFilePath(std::filesystem::path parent, std::string name, std::string extension)
     {
-        auto filePath = parent.filename().concat("_");
+        std::filesystem::create_directory(parent.stem());
 
-        filePath += path;
-
-        filePath.concat(suffix);
-
-        return filePath;
+        return parent.stem() / parent.stem().concat("_" + name).replace_extension(extension);
     }
 };

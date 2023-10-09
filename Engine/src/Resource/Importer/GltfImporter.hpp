@@ -30,7 +30,7 @@ namespace Engine
 
 		void ImportModel(std::filesystem::path path, tinygltf::Model& gltfModel, std::vector<std::unique_ptr<Node>>& nodes);
 
-		std::filesystem::path GetFilePath(std::filesystem::path parent, std::filesystem::path path, std::string_view suffix);
+		std::filesystem::path GetFilePath(std::filesystem::path parent, std::string name, std::string extension);
 
 		const Vulkan::Device& device;
 

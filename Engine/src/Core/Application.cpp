@@ -103,7 +103,7 @@ namespace Engine {
 
 			if (!found)
 			{
-				return;
+				continue;
 			}
 
 			Component::Camera cameraComponent = camera.GetComponent<Component::Camera>();
@@ -137,5 +137,10 @@ namespace Engine {
 	Window& Application::GetWindow()
 	{
 		return *window;
+	}
+
+	Vulkan::Device& Application::GetDevice()
+	{
+		return *device;
 	}
 }

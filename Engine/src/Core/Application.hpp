@@ -26,7 +26,7 @@ namespace Engine {
 	{
 	public:
 		Application(ApplicationSpec &spec);
-		~Application();
+		virtual ~Application();
 
 		void Run();
 		void Exit();
@@ -34,6 +34,7 @@ namespace Engine {
 
 		Scene& GetScene();
 		Window& GetWindow();
+		Vulkan::Device& GetDevice();
 
 		template<typename T, typename... Args>
 		void AddSystem(Args&&... args)

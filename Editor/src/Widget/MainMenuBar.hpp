@@ -7,7 +7,7 @@
 class MainMenuBar : public Widget
 {
 public:
-	void Update() override;
+	void Draw() override;
 
 	void OnExit(std::function<void()> onExitFn);
 	void OnImport(std::function<void()> onImportFn);

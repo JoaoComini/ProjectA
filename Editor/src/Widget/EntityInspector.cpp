@@ -11,7 +11,7 @@ void EntityInspector::SetEntity(Engine::Entity entity)
 	this->entity = entity;
 }
 
-void EntityInspector::Update()
+void EntityInspector::Draw()
 {
 	ImGuiViewport* viewport = ImGui::GetMainViewport();
 	ImGui::SetNextWindowSizeConstraints({ 350, 0 }, viewport->Size);
