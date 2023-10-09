@@ -143,17 +143,14 @@ namespace Engine
     {
         MeshFactory factory{ device };
 
-        for (auto& node : model.nodes)
+        for (auto& mesh : model.meshes)
         {
-            if (node.mesh < 0)
-            {
-                continue;
-            }
-
-            auto& mesh = model.meshes[node.mesh];
+            MeshSpec spec{};
 
             for (size_t i = 0; i < mesh.primitives.size(); i++)
             {
+                PrimitiveSpec primitiveSpec{};
+
                 std::vector<Engine::Vertex> vertices;
 
                 const auto& primitive = mesh.primitives[i];
@@ -190,6 +187,8 @@ namespace Engine
                     }
                 }
 
+                primitiveSpec.vertices = vertices;
+
                 std::vector<uint8_t> indices;
                 auto indexType = VK_INDEX_TYPE_MAX_ENUM;
 
@@ -215,30 +214,32 @@ namespace Engine
                     }
 
                     indices.insert(indices.end(), static_cast<uint8_t*>(data), static_cast<uint8_t*>(data) + size);
+
+                    primitiveSpec.indices = indices;
+                    primitiveSpec.indexType = indexType;
                 }
 
-                MeshSpec spec
+                if (materials[primitive.material]->GetId())
                 {
-                    .material = materials[primitive.material]->GetId(),
-                    .vertices = vertices,
-                    .indices = indices,
-                    .indexType = indexType
-                };
+                    primitiveSpec.material = materials[primitive.material]->GetId();
+                }
 
-                auto path = GetFilePath(parent, std::to_string(i), ".mesh");
-
-                auto created = factory.Create(path, spec);
-
-                ResourceMetadata metadata
-                {
-                    .path = path,
-                    .type = created->GetType()
-                };
-
-                ResourceManager::GetInstance()->OnResourceImport(created, metadata);
-
-                meshes.push_back(created);
+                spec.primitives.push_back(primitiveSpec);
             }
+
+            auto path = GetFilePath(parent, mesh.name, ".mesh");
+
+            auto created = factory.Create(path, spec);
+
+            ResourceMetadata metadata
+            {
+                .path = path,
+                .type = created->GetType()
+            };
+
+            ResourceManager::GetInstance()->OnResourceImport(created, metadata);
+
+            meshes.push_back(created);
         }
     }
 

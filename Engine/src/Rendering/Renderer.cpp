@@ -239,44 +239,47 @@ namespace Engine
 
 	void Renderer::Draw(const Mesh& mesh, const glm::mat4& transform)
 	{
-		ResourceId materialId = mesh.GetMaterial();
+		for (auto& primitive : mesh.GetPrimitives())
+		{
+			ResourceId materialId = primitive->GetMaterial();
 
-		auto material = ResourceManager::GetInstance()->LoadResource<Material>(materialId);
+			auto material = ResourceManager::GetInstance()->LoadResource<Material>(materialId);
 
-		ModelUniform uniform{
-			.model = transform,
-			.color = material->GetColor(),
-		};
+			ModelUniform uniform{
+				.model = transform,
+				.color = material->GetColor(),
+			};
 
-		auto& frame = GetCurrentFrame();
+			auto& frame = GetCurrentFrame();
 
-		auto allocation = frame.RequestBufferAllocation(Vulkan::BufferUsageFlags::UNIFORM, sizeof(ModelUniform));
+			auto allocation = frame.RequestBufferAllocation(Vulkan::BufferUsageFlags::UNIFORM, sizeof(ModelUniform));
 
-		allocation.SetData(&uniform);
+			allocation.SetData(&uniform);
 
-		BindingMap<VkDescriptorBufferInfo> bufferInfos = {
-			{ 0, { { 0, VkDescriptorBufferInfo{
-				.buffer = allocation.GetBuffer().GetHandle(),
-				.offset = allocation.GetOffset(),
-				.range = allocation.GetSize(),
-			} } } }
-		};
+			BindingMap<VkDescriptorBufferInfo> bufferInfos = {
+				{ 0, { { 0, VkDescriptorBufferInfo{
+					.buffer = allocation.GetBuffer().GetHandle(),
+					.offset = allocation.GetOffset(),
+					.range = allocation.GetSize(),
+				} } } }
+			};
 
-		auto diffuse = ResourceManager::GetInstance()->LoadResource<Texture>(material->GetDiffuse());
+			auto diffuse = ResourceManager::GetInstance()->LoadResource<Texture>(material->GetDiffuse());
 
-		BindingMap<VkDescriptorImageInfo> imageInfos = {
-			{ 1, { { 0, VkDescriptorImageInfo{
-				.sampler = diffuse->GetSampler().GetHandle(),
-				.imageView = diffuse->GetImageView().GetHandle(),
-				.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-			} } } }
-		};
+			BindingMap<VkDescriptorImageInfo> imageInfos = {
+				{ 1, { { 0, VkDescriptorImageInfo{
+					.sampler = diffuse->GetSampler().GetHandle(),
+					.imageView = diffuse->GetImageView().GetHandle(),
+					.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+				} } } }
+			};
 
-		auto descriptorSet = frame.RequestDescriptorSet(modelDescriptorSetLayout, bufferInfos, imageInfos);
+			auto descriptorSet = frame.RequestDescriptorSet(modelDescriptorSetLayout, bufferInfos, imageInfos);
 
-		activeCommandBuffer->BindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, *pipelineLayout, 1, descriptorSet);
+			activeCommandBuffer->BindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, *pipelineLayout, 1, descriptorSet);
 
-		mesh.Draw(activeCommandBuffer->GetHandle());
+			primitive->Draw(*activeCommandBuffer);
+		}
 	}
 
 	void Renderer::End()

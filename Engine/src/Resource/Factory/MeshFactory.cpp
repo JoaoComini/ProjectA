@@ -12,20 +12,27 @@ namespace Engine
     std::shared_ptr<Mesh> MeshFactory::Create(std::filesystem::path destination, MeshSpec& spec)
     {
         std::ofstream file(destination, std::ios::out | std::ios::binary | std::ios::trunc);
-        file.write(reinterpret_cast<char*>(&spec.material), sizeof(spec.material));
 
-        size_t verticesSize = spec.vertices.size() * sizeof(Vertex);
-        file.write(reinterpret_cast<char*>(&verticesSize), sizeof(verticesSize));
-        file.write(reinterpret_cast<char*>(&spec.vertices[0]), verticesSize);
+        size_t size = spec.primitives.size();
+        file.write(reinterpret_cast<char*>(&size), sizeof(size));
 
-        size_t indicesSize = spec.indices.size();
-        file.write(reinterpret_cast<char*>(&indicesSize), sizeof(indicesSize));
-        file.write(reinterpret_cast<char*>(&spec.indices[0]), indicesSize);
+        for (auto& primitive: spec.primitives)
+        {
+            file.write(reinterpret_cast<char*>(&primitive.material), sizeof(primitive.material));
 
-        file.write(reinterpret_cast<char*>(&spec.indexType), sizeof(spec.indexType));
+            size_t verticesSize = primitive.vertices.size() * sizeof(Vertex);
+            file.write(reinterpret_cast<char*>(&verticesSize), sizeof(verticesSize));
+            file.write(reinterpret_cast<char*>(&primitive.vertices[0]), verticesSize);
+
+            size_t indicesSize = primitive.indices.size();
+            file.write(reinterpret_cast<char*>(&indicesSize), sizeof(indicesSize));
+            file.write(reinterpret_cast<char*>(&primitive.indices[0]), indicesSize);
+
+            file.write(reinterpret_cast<char*>(&primitive.indexType), sizeof(primitive.indexType));
+        }
         file.close();
 
-        return std::make_shared<Mesh>(device, spec.material, spec.vertices, spec.indices, spec.indexType);
+        return BuildFromSpec(spec);
     }
 
     std::shared_ptr<Mesh> MeshFactory::Load(std::filesystem::path source)
@@ -33,24 +40,59 @@ namespace Engine
         MeshSpec spec{};
 
         std::ifstream file(source, std::ios::in | std::ios::binary);
-        file.read(reinterpret_cast<char*>(&spec.material), sizeof(spec.material));
 
-        size_t verticesSize{};
-        file.read(reinterpret_cast<char*>(&verticesSize), sizeof(verticesSize));
+        size_t size{ 0 };
+        file.read(reinterpret_cast<char*>(&size), sizeof(size));
 
-        spec.vertices.resize(verticesSize);
-        file.read(reinterpret_cast<char*>(&spec.vertices[0]), verticesSize);
+        for (size_t i = 0; i < size; i++)
+        {
+            PrimitiveSpec primitiveSpec{};
 
-        size_t indicesSize{};
-        file.read(reinterpret_cast<char*>(&indicesSize), sizeof(indicesSize));
+            file.read(reinterpret_cast<char*>(&primitiveSpec.material), sizeof(primitiveSpec.material));
 
-        spec.indices.resize(indicesSize);
-        file.read(reinterpret_cast<char*>(&spec.indices[0]), spec.indices.size());
+            size_t verticesSize{};
+            file.read(reinterpret_cast<char*>(&verticesSize), sizeof(verticesSize));
 
-        file.read(reinterpret_cast<char*>(&spec.indexType), sizeof(spec.indexType));
-        file.close();
+            primitiveSpec.vertices.resize(verticesSize);
+            file.read(reinterpret_cast<char*>(&primitiveSpec.vertices[0]), verticesSize);
 
-        return std::make_shared<Mesh>(device, spec.material, spec.vertices, spec.indices, spec.indexType);
+            size_t indicesSize{};
+            file.read(reinterpret_cast<char*>(&indicesSize), sizeof(indicesSize));
+
+            primitiveSpec.indices.resize(indicesSize);
+            file.read(reinterpret_cast<char*>(&primitiveSpec.indices[0]), primitiveSpec.indices.size());
+
+            file.read(reinterpret_cast<char*>(&primitiveSpec.indexType), sizeof(primitiveSpec.indexType));
+            file.close();
+        }
+
+        return BuildFromSpec(spec);
+    }
+
+    std::shared_ptr<Mesh> MeshFactory::BuildFromSpec(MeshSpec& spec)
+    {
+        auto mesh = std::make_shared<Mesh>();
+
+        for (auto& primitiveSpec : spec.primitives)
+        {
+            auto primitive = std::make_unique<Primitive>(device);
+
+            primitive->AddVertexBuffer(primitiveSpec.vertices);
+
+            if (primitiveSpec.indices.size() > 0)
+            {
+                primitive->AddIndexBuffer(primitiveSpec.indices, primitiveSpec.indexType);
+            }
+
+            if (primitiveSpec.material)
+            {
+                primitive->SetMaterial(primitiveSpec.material);
+            }
+
+            mesh->AddPrimitive(std::move(primitive));
+        }
+
+        return mesh;
     }
 
 };

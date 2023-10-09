@@ -13,19 +13,12 @@
 
 namespace Engine
 {
-    Mesh::Mesh(
-        const Vulkan::Device& device,
-        const ResourceId material,
-        std::vector<Vertex> vertices,
-        std::vector<uint8_t> indices,
-        VkIndexType indexType
-    ) : Resource(ResourceType::Mesh), material(material), device(device)
+    Primitive::Primitive(const Vulkan::Device& device)
+        : device(device)
     {
-        BuildVertexBuffer(vertices);
-        BuildIndexBuffer(indices, indexType);
     }
 
-    void Mesh::BuildVertexBuffer(std::vector<Vertex> vertices)
+    void Primitive::AddVertexBuffer(std::vector<Vertex> vertices)
     {
         vertexCount = vertices.size();
 
@@ -40,7 +33,7 @@ namespace Engine
         vertexBuffer->SetData(vertices.data(), sizeof(Vertex) * vertexCount);
     }
 
-    void Mesh::BuildIndexBuffer(std::vector<uint8_t> indices, VkIndexType type)
+    void Primitive::AddIndexBuffer(std::vector<uint8_t> indices, VkIndexType type)
     {
         uint32_t size = indices.size();
 
@@ -72,24 +65,43 @@ namespace Engine
         indexBuffer->SetData(indices.data(), size);
     }
 
-    void Mesh::Draw(const VkCommandBuffer commandBuffer) const
+    void Primitive::Draw(Vulkan::CommandBuffer& commandBuffer) const
     {
         VkDeviceSize offsets[] = { 0 };
-        vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer->GetHandle(), offsets);
+        vkCmdBindVertexBuffers(commandBuffer.GetHandle(), 0, 1, &vertexBuffer->GetHandle(), offsets);
          
         if (indexBuffer != nullptr)
         {
-            vkCmdBindIndexBuffer(commandBuffer, indexBuffer->GetHandle(), 0, indexType);
-            vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, 0);
+            vkCmdBindIndexBuffer(commandBuffer.GetHandle(), indexBuffer->GetHandle(), 0, indexType);
+            vkCmdDrawIndexed(commandBuffer.GetHandle(), indexCount, 1, 0, 0, 0);
 
             return;
         }
 
-        vkCmdDraw(commandBuffer, vertexCount, 1, 0, 0);
+        vkCmdDraw(commandBuffer.GetHandle(), vertexCount, 1, 0, 0);
     }
 
-    ResourceId Mesh::GetMaterial() const
+    void Primitive::SetMaterial(ResourceId material)
+    {
+        this->material = material;
+    }
+
+    ResourceId Primitive::GetMaterial() const
     {
         return material;
+    }
+
+    Mesh::Mesh() : Resource(ResourceType::Mesh)
+    {
+    }
+
+    void Mesh::AddPrimitive(std::unique_ptr<Primitive> primitive)
+    {
+        primitives.push_back(std::move(primitive));
+    }
+
+    std::vector<std::unique_ptr<Primitive>> const& Mesh::GetPrimitives() const
+    {
+        return primitives;
     }
 }

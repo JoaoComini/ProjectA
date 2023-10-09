@@ -7,13 +7,17 @@
 
 namespace Engine
 {
-
-	struct MeshSpec
+	struct PrimitiveSpec
 	{
 		ResourceId material;
 		std::vector<Vertex> vertices;
 		std::vector<uint8_t> indices;
 		VkIndexType indexType;
+	};
+
+	struct MeshSpec
+	{
+		std::vector<PrimitiveSpec> primitives;
 	};
 
 	class MeshFactory
@@ -26,6 +30,9 @@ namespace Engine
 		std::shared_ptr<Mesh> Load(std::filesystem::path source);
 
 	private:
+
+		std::shared_ptr<Mesh> BuildFromSpec(MeshSpec& spec);
+
 		const Vulkan::Device& device;
 	};
 };

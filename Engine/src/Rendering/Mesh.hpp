@@ -8,6 +8,7 @@
 
 #include "Vulkan/Device.hpp"
 #include "Vulkan/Buffer.hpp"
+#include "Vulkan/CommandBuffer.hpp"
 
 #include "Resource/Resource.hpp"
 
@@ -16,24 +17,23 @@
 
 namespace Engine
 {
-	class Mesh: public Resource
+	class Primitive
 	{
-
 	public:
-		Mesh(const Vulkan::Device& device, ResourceId material, std::vector<Vertex> vertices, std::vector<uint8_t> indices, VkIndexType indexType =  VK_INDEX_TYPE_MAX_ENUM);
+		Primitive(const Vulkan::Device& device);
 
-		void Draw(const VkCommandBuffer commandBuffer) const;
+		void AddIndexBuffer(std::vector<uint8_t> indices, VkIndexType type);
+		void AddVertexBuffer(std::vector<Vertex> vertices);
+
+		void Draw(Vulkan::CommandBuffer& commandBuffer) const;
+
+		void SetMaterial(ResourceId material);
 
 		ResourceId GetMaterial() const;
-
 	private:
-
-		void BuildIndexBuffer(std::vector<uint8_t> indices, VkIndexType type);
-		void BuildVertexBuffer(std::vector<Vertex> vertices);
-
-		size_t vertexCount;
-		size_t indexCount;
-		VkIndexType indexType;
+		size_t vertexCount{ 0 };
+		size_t indexCount{ 0 };
+		VkIndexType indexType{ VK_INDEX_TYPE_MAX_ENUM };
 
 		std::unique_ptr<Vulkan::Buffer> vertexBuffer;
 		std::unique_ptr<Vulkan::Buffer> indexBuffer;
@@ -41,5 +41,18 @@ namespace Engine
 		ResourceId material;
 
 		const Vulkan::Device& device;
+	};
+
+	class Mesh: public Resource
+	{
+
+	public:
+		Mesh();
+
+		void AddPrimitive(std::unique_ptr<Primitive> primitive);
+
+		std::vector<std::unique_ptr<Primitive>> const& GetPrimitives() const;
+	private:
+		std::vector<std::unique_ptr<Primitive>> primitives;
 	};
 }
