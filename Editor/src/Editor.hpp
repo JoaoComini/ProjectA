@@ -8,6 +8,7 @@
 #include "Widget/EntityInspector.hpp"
 #include "Widget/MainMenuBar.hpp"
 #include "Widget/ContentBrowser.hpp"
+#include "Scene/Mixin.hpp"
 
 namespace Engine
 {

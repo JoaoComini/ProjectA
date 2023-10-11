@@ -4,6 +4,8 @@
 
 #include "Common/Uuid.hpp"
 
+#include "Mixin.hpp"
+
 namespace Engine
 {
 	class Entity

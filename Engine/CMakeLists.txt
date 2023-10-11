@@ -152,6 +152,7 @@ include(Catch)
 set(ENGINE_TEST_FILES
     "test/Scene/SceneTest.cpp"
     "test/Scene/EntityTest.cpp"
+    "test/Scene/MixinTest.cpp"
     "test/Resource/ResourceTest.cpp"
     "test/Resource/Factory/TextureFactoryTest.cpp"
     "test/Resource/Factory/MeshFactoryTest.cpp"

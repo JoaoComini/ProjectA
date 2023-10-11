@@ -97,7 +97,7 @@ namespace Engine
 			return;
 		}
 
-		ResetScene();
+		GetScene().Clear();
 
 		SceneSerializer serializer(GetScene());
 

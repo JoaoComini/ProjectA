@@ -16,9 +16,11 @@ void CameraSystem::Update(float timestep)
         return;
     }
 
-    auto [entity, found] = scene.FindFirstEntity<Engine::Component::Camera, Engine::Component::Transform>();
+    auto it = scene.FindFirstEntity<Engine::Component::Camera, Engine::Component::Transform>();
+    
+    Engine::Entity entity = it.first;
 
-    if (!found)
+    if (!it.second)
     {
         entity = scene.CreateEntity();
 

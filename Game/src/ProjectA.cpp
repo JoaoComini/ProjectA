@@ -12,11 +12,12 @@ namespace Engine
         }
     };
 
-    std::unique_ptr<Application> CreateApplication()
+    std::unique_ptr<Application> CreateApplication(ApplicationArgs args)
     {
         ApplicationSpec spec
         {
-            .name = "ProjectA"
+            .name = "ProjectA",
+            .args = args,
         };
 
         return std::make_unique<ProjectA>(spec);

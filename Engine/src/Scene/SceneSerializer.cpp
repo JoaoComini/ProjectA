@@ -252,7 +252,7 @@ namespace Engine
 	template<>
 	void SceneSerializer::Deserialize(YAML::Node& node, Component::MeshRender* comp)
 	{
-
+		comp->mesh = node.as<Uuid>();
 	}
 
 	template<>

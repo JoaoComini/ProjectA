@@ -50,7 +50,6 @@ namespace Engine {
 		virtual void OnGui() {}
 
 		Scene& GetScene();
-		void ResetScene();
 
 		Window& GetWindow();
 
@@ -64,6 +63,8 @@ namespace Engine {
 
 	private:
 		void SetupVulkan();
+
+		void SetCameraAspectRatio(Entity entity);
 
 		std::unique_ptr<Window> window;
 		std::unique_ptr<Vulkan::Instance> instance;

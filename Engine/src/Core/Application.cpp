@@ -36,16 +36,9 @@ namespace Engine {
 
 		window->OnResize(
 			[&](int width, int height) {
-				auto [entity, found] = scene->FindFirstEntity<Component::Camera, Component::Transform>();
-
-				if (!found)
-				{
-					return;
-				}
-
-				auto& component = entity.GetComponent<Component::Camera>();
-
-				component.camera.SetAspectRatio((float)width / height);
+				scene->ForEachEntity<Component::Camera>([&](auto entity) {
+					SetCameraAspectRatio(entity);
+				});
 			}
 		);
 
@@ -59,6 +52,7 @@ namespace Engine {
 		Input::Setup(*window);
 
 		scene = std::make_unique<Scene>();
+		scene->OnComponentAdded<Component::Camera, &Application::SetCameraAspectRatio>(this);
 
 		AddSystem<RenderSystem>();
 
@@ -74,6 +68,15 @@ namespace Engine {
 		physicalDevice = Vulkan::PhysicalDevicePicker::PickBestSuitable(*instance, *surface);
 
 		device = std::make_unique<Vulkan::Device>(*instance, *physicalDevice);
+	}
+
+	void Application::SetCameraAspectRatio(Entity entity)
+	{
+		auto [height, width] = window->GetFramebufferSize();
+
+		auto& comp = entity.GetComponent<Component::Camera>();
+		
+		comp.camera.SetAspectRatio((float)width / height);
 	}
 
 	Application::~Application()
@@ -132,11 +135,6 @@ namespace Engine {
 	Scene& Application::GetScene()
 	{
 		return *scene;
-	}
-
-	void Application::ResetScene()
-	{
-		*scene = Scene{};
 	}
 
 	Window& Application::GetWindow()

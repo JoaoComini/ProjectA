@@ -13,6 +13,8 @@
 #include <unordered_map>
 #include <functional>
 
+#include "Mixin.hpp"
+
 namespace Engine
 {
 	class Scene
@@ -73,9 +75,24 @@ namespace Engine
 			return { {}, false };
 		}
 		
-	private:
-		void OnCreateEntity(entt::registry& registry, entt::entity entity);
+		template<typename T, auto FreeFunc>
+		void OnComponentAdded()
+		{
+			registry.on_construct<T>().connect<FreeFunc>();
+		}
 
+		template<typename T, auto MemberFunc, typename Type>
+		void OnComponentAdded(Type instance)
+		{
+			registry.on_construct<T>().connect<MemberFunc>(instance);
+		}
+
+		void Clear()
+		{
+			registry.clear();
+		}
+
+	private:
 		entt::registry registry;
 
 		std::unordered_map<Uuid, Entity> entityMap;
