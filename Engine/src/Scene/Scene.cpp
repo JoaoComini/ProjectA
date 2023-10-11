@@ -41,8 +41,8 @@ namespace Engine
     void Scene::Update()
     {
         ForEachEntity<Component::Delete>([&](Entity entity) {
-            registry.destroy(entity);
             entityMap.erase(entity.GetId());
+            registry.destroy(entity);
         });
     }
 }
