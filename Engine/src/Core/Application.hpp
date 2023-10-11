@@ -17,9 +17,26 @@
 
 namespace Engine {
 
+	struct ApplicationArgs
+	{
+		int argc = 0;
+		std::vector<std::string> argv;
+
+		const std::string operator[](int index) const
+		{
+			if (index >= argc)
+			{
+				return {};
+			}
+
+			return argv[index];
+		}
+	};
+
 	struct ApplicationSpec
 	{
 		std::string name = "Engine Application";
+		ApplicationArgs args{};
 	};
 
 	class Application
@@ -33,7 +50,10 @@ namespace Engine {
 		virtual void OnGui() {}
 
 		Scene& GetScene();
+		void ResetScene();
+
 		Window& GetWindow();
+
 		Vulkan::Device& GetDevice();
 
 		template<typename T, typename... Args>
@@ -61,5 +81,5 @@ namespace Engine {
 		bool running = false;
 	};
 
-	std::unique_ptr<Application> CreateApplication();
+	std::unique_ptr<Application> CreateApplication(ApplicationArgs args);
 }

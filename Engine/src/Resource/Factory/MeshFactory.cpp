@@ -53,18 +53,21 @@ namespace Engine
             size_t verticesSize{};
             file.read(reinterpret_cast<char*>(&verticesSize), sizeof(verticesSize));
 
-            primitiveSpec.vertices.resize(verticesSize);
+            primitiveSpec.vertices.resize(verticesSize / sizeof(Vertex));
             file.read(reinterpret_cast<char*>(&primitiveSpec.vertices[0]), verticesSize);
 
             size_t indicesSize{};
             file.read(reinterpret_cast<char*>(&indicesSize), sizeof(indicesSize));
 
             primitiveSpec.indices.resize(indicesSize);
-            file.read(reinterpret_cast<char*>(&primitiveSpec.indices[0]), primitiveSpec.indices.size());
+            file.read(reinterpret_cast<char*>(&primitiveSpec.indices[0]), indicesSize);
 
             file.read(reinterpret_cast<char*>(&primitiveSpec.indexType), sizeof(primitiveSpec.indexType));
-            file.close();
+
+            spec.primitives.push_back(primitiveSpec);
         }
+
+        file.close();
 
         return BuildFromSpec(spec);
     }

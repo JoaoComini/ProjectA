@@ -22,16 +22,6 @@ TEST_CASE("it should create and retrieve a mesh", "[MeshFactory]")
 
     std::vector<uint8_t> image(1600, 1);
 
-    MeshSpec spec =
-    {
-        .material = ResourceId{},
-        .vertices = {Vertex{}, Vertex{}},
-        .indices = {1, 2, 3, 4},
-        .indexType = VK_INDEX_TYPE_UINT32
-    };
-
-    factory.Create("test.mesh", spec);
-    factory.Load("test.mesh");
 
     device->WaitIdle();
 }

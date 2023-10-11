@@ -6,6 +6,7 @@ include(FindVulkan)
 add_subdirectory(third_party/glm)
 add_subdirectory(third_party/vma)
 add_subdirectory(third_party/entt)
+add_subdirectory(third_party/yaml-cpp)
 
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
@@ -97,6 +98,8 @@ set(ENGINE_SRC_FILES
     "src/Vulkan/Swapchain.cpp"
     "src/Scene/Scene.cpp"
     "src/Scene/Entity.cpp"
+    "src/Scene/SceneSerializer.cpp"
+    "src/Project/Project.cpp"
     "src/Resource/ResourceManager.cpp"
     "src/Resource/Resource.cpp"
     "src/Resource/Importer/GltfImporter.cpp"
@@ -105,6 +108,7 @@ set(ENGINE_SRC_FILES
     "src/Resource/Factory/MeshFactory.cpp"
     "src/Resource/Model.cpp"
     "src/Resource/Factory/ModelFactory.cpp"
+    "src/Resource/Importer/TextureImporter.cpp"
     "src/Platform/Windows/FileDialog.cpp"
 )
 
@@ -125,6 +129,7 @@ target_link_libraries(Engine
     tinygltf
     EnTT
     ImGui
+    yaml-cpp
 )
 
 target_compile_definitions(Engine PRIVATE

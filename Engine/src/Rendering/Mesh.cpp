@@ -37,7 +37,7 @@ namespace Engine
     {
         uint32_t size = indices.size();
 
-        uint32_t typeSize;
+        uint32_t typeSize{};
         switch (type)
         {
         case VK_INDEX_TYPE_UINT16:

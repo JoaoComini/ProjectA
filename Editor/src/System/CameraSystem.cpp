@@ -7,16 +7,6 @@
 CameraSystem::CameraSystem(Engine::Scene& scene): System(scene)
 {
     input = Engine::Input::GetInstance();
-
-    entity = scene.CreateEntity();
-
-    auto& transform = entity.AddComponent<Engine::Component::Transform>();
-    transform.position = glm::vec3(0, -10, 50);
-
-    auto camera = Engine::Camera(glm::radians(60.f), (float)16 / 9, 0.1f, 2000.0f);
-    entity.AddComponent<Engine::Component::Camera>(camera);
-    
-    entity.GetComponent<Engine::Component::Name>().name = "Main Camera";
 }
 
 void CameraSystem::Update(float timestep)
@@ -24,6 +14,21 @@ void CameraSystem::Update(float timestep)
     if (input == nullptr)
     {
         return;
+    }
+
+    auto [entity, found] = scene.FindFirstEntity<Engine::Component::Camera, Engine::Component::Transform>();
+
+    if (!found)
+    {
+        entity = scene.CreateEntity();
+
+        auto& transform = entity.AddComponent<Engine::Component::Transform>();
+        transform.position = glm::vec3(0, -10, 50);
+
+        auto camera = Engine::Camera(glm::radians(60.f), (float)16 / 9, 0.1f, 2000.0f);
+        entity.AddComponent<Engine::Component::Camera>(camera);
+
+        entity.GetComponent<Engine::Component::Name>().name = "Main Camera";
     }
 
     auto& transform = entity.GetComponent<Engine::Component::Transform>();

@@ -10,6 +10,7 @@
 #include "Rendering/Mesh.hpp"
 
 #include <vector>
+#include <unordered_map>
 #include <functional>
 
 namespace Engine
@@ -17,13 +18,13 @@ namespace Engine
 	class Scene
 	{
 	public:
-		Scene();
-
-		Entity CreateEntity();
+		Entity CreateEntity(Uuid id = {});
 		void DestroyEntity(Entity entity);
 
+		Entity FindEntityById(Uuid id);
+
 		void Update();
-		
+
 		template<typename... Args>
 		void ForEachEntity(std::function<void(Entity)> func)
 		{
@@ -76,5 +77,7 @@ namespace Engine
 		void OnCreateEntity(entt::registry& registry, entt::entity entity);
 
 		entt::registry registry;
+
+		std::unordered_map<Uuid, Entity> entityMap;
 	};
 };

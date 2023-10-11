@@ -5,7 +5,7 @@
 
 int main(int argc, char** argv)
 {
-    auto application = Engine::CreateApplication();
+    auto application = Engine::CreateApplication({ argc, {argv, argv + argc}});
 
     try
     {

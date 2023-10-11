@@ -14,7 +14,6 @@ namespace Engine
     {
 		if (Gui::instance == nullptr)
 		{
-
 			std::vector<VkDescriptorPoolSize> poolSizes =
 			{
 				{ VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
@@ -33,7 +32,15 @@ namespace Engine
 			std::unique_ptr<Vulkan::DescriptorPool> descriptorPool = std::make_unique<Vulkan::DescriptorPool>(device, poolSizes, 1000);
 
 			ImGui::CreateContext();
-			ImGui_ImplGlfw_InitForVulkan(static_cast<GLFWwindow *>(window.GetHandle()), true);
+
+			ImGuiIO& io = ImGui::GetIO();
+			io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+			//io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+			//io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+
+			ImGui::StyleColorsDark();
+
+			ImGui_ImplGlfw_InitForVulkan(static_cast<GLFWwindow*>(window.GetHandle()), true);
 
 			ImGui_ImplVulkan_InitInfo initInfo = {};
 			initInfo.Instance = instance.GetHandle();
@@ -55,7 +62,7 @@ namespace Engine
 
 			ImGui_ImplVulkan_DestroyFontUploadObjects();
 
-			Gui::instance = new Gui(std::move(descriptorPool));
+			Gui::instance = new Gui(std::move(descriptorPool), window);
 		}
 
 		return Gui::instance;
@@ -71,11 +78,21 @@ namespace Engine
 	void Gui::End(Vulkan::CommandBuffer& commandBuffer)
 	{
 		ImGui::Render();
+		ImGuiIO& io = ImGui::GetIO();
+		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+			ImGui::UpdatePlatformWindows();
+			ImGui::RenderPlatformWindowsDefault();
+		}
+
+		auto [height, width] = window.GetFramebufferSize();
+
+		io.DisplaySize = ImVec2((float)width, (float)height);
+
 		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer.GetHandle());
 	}
 
-	Gui::Gui(std::unique_ptr<Vulkan::DescriptorPool> descriptorPool)
-		: descriptorPool(std::move(descriptorPool)) { }
+	Gui::Gui(std::unique_ptr<Vulkan::DescriptorPool> descriptorPool, Window& window)
+		: descriptorPool(std::move(descriptorPool)), window(window) { }
 
 	Gui::~Gui()
 	{

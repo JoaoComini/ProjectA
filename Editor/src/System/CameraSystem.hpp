@@ -16,8 +16,6 @@ public:
 private:
 	Engine::Input* input;
 
-	Engine::Entity entity;
-
 	float speed = 25.f;
 };
 

@@ -2,8 +2,6 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/euler_angles.hpp>
-#include <glm/gtx/matrix_decompose.hpp>
 
 #include "Rendering/Mesh.hpp"
 #include "Rendering/Camera.hpp"
@@ -31,6 +29,11 @@ namespace Engine::Component
 	struct Name
 	{
 		std::string name = "Empty Entity";
+	};
+
+	struct Id
+	{
+		Uuid id;
 	};
 
 	struct Relationship

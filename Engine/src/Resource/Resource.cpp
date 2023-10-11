@@ -4,9 +4,9 @@
 #include <unordered_map>
 namespace Engine
 {
-    std::string_view ResourceTypeToString(ResourceType type)
+    std::string ResourceTypeToString(ResourceType type)
     {
-        static std::unordered_map<ResourceType, std::string_view> map =
+        static std::unordered_map<ResourceType, std::string> map =
         {
             { ResourceType::Mesh, "Mesh" },
             { ResourceType::Texture, "Texture" },

@@ -2,6 +2,8 @@
 
 #include <entt/entt.hpp>
 
+#include "Common/Uuid.hpp"
+
 namespace Engine
 {
 	class Entity
@@ -22,19 +24,19 @@ namespace Engine
 		}
 
 		template<typename T>
-		auto TryGetComponent()
+		auto TryGetComponent() const
 		{
 			return registry->try_get<T>(handle);
 		}
 
 		template<typename T>
-		bool HasComponent()
+		bool HasComponent() const
 		{
 			return registry->any_of<T>(handle);
 		}
 
 		template<typename T>
-		decltype(auto) GetComponent()
+		decltype(auto) GetComponent() const
 		{
 			return registry->get<T>(handle);
 		}
@@ -61,10 +63,11 @@ namespace Engine
 		}
 
 		void SetParent(Entity parent);
-		Entity GetParent();
+		Entity GetParent() const;
 
-		std::vector<Entity> GetChildren();
+		std::vector<Entity> GetChildren() const;
 
+		Uuid GetId() const;
 	private:
 		entt::entity handle{ entt::null };
 		entt::registry* registry = nullptr;

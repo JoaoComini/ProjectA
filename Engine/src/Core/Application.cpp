@@ -61,6 +61,8 @@ namespace Engine {
 		scene = std::make_unique<Scene>();
 
 		AddSystem<RenderSystem>();
+
+		running = true;
 	}
 
 	void Application::SetupVulkan()
@@ -86,8 +88,6 @@ namespace Engine {
 
 	void Application::Run()
 	{
-		running = true;
-
 		auto lastTime = std::chrono::high_resolution_clock::now();
 
 		while (running)
@@ -101,26 +101,26 @@ namespace Engine {
 
 			auto [camera, found] = scene->FindFirstEntity<Component::Transform, Component::Camera>();
 
-			if (!found)
+			if (found)
 			{
-				continue;
+				Component::Camera cameraComponent = camera.GetComponent<Component::Camera>();
+				Component::Transform cameraTransform = camera.GetComponent<Component::Transform>();
+				renderer->Begin(cameraComponent.camera, cameraTransform.GetLocalMatrix());
+				gui->Begin();
 			}
-
-			Component::Camera cameraComponent = camera.GetComponent<Component::Camera>();
-			Component::Transform cameraTransform = camera.GetComponent<Component::Transform>();
-
-			renderer->Begin(cameraComponent.camera, cameraTransform.GetLocalMatrix());
-			gui->Begin();
 
 			for (auto& system : systems)
 			{
 				system->Update(timestep.count());
 			}
 
-			OnGui();
+			if (found)
+			{
+				OnGui();
 
-			gui->End(renderer->GetActiveCommandBuffer());
-			renderer->End();
+				gui->End(renderer->GetActiveCommandBuffer());
+				renderer->End();
+			}
 		}
 	}
 
@@ -132,6 +132,11 @@ namespace Engine {
 	Scene& Application::GetScene()
 	{
 		return *scene;
+	}
+
+	void Application::ResetScene()
+	{
+		*scene = Scene{};
 	}
 
 	Window& Application::GetWindow()

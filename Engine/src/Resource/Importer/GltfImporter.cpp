@@ -16,6 +16,8 @@
 
 #include "Resource/ResourceManager.hpp"
 
+#include "Project/Project.hpp"
+
 #include <iostream>
 #include <queue>
 
@@ -91,7 +93,7 @@ namespace Engine
 
             ResourceMetadata metadata
             {
-                .path = path,
+                .path = std::filesystem::relative(path, Project::GetResourceDirectory()),
                 .type = texture->GetType()
             };
 
@@ -129,7 +131,7 @@ namespace Engine
 
             ResourceMetadata metadata
             {
-                .path = path,
+                .path = std::filesystem::relative(path, Project::GetResourceDirectory()),
                 .type = created->GetType()
             };
 
@@ -227,13 +229,13 @@ namespace Engine
                 spec.primitives.push_back(primitiveSpec);
             }
 
-            auto path = GetFilePath(parent, mesh.name, ".mesh");
+            auto path = GetFilePath(parent, parent.stem().concat(mesh.name).string(), ".mesh");
 
             auto created = factory.Create(path, spec);
 
             ResourceMetadata metadata
             {
-                .path = path,
+                .path = std::filesystem::relative(path, Project::GetResourceDirectory()),
                 .type = created->GetType()
             };
 
@@ -315,13 +317,13 @@ namespace Engine
 
         model->SetNodes(std::move(nodes));
 
-        std::filesystem::path path{ parent.stem() / parent.stem().replace_extension(".model") };
+        std::filesystem::path path = GetFilePath(parent, parent.stem().string(), ".model");
 
         factory.Create(path, *model);
 
         ResourceMetadata metadata
         {
-            .path = path,
+            .path = std::filesystem::relative(path, Project::GetResourceDirectory()),
             .type = model->GetType()
         };
 
@@ -330,8 +332,8 @@ namespace Engine
 
     std::filesystem::path GltfImporter::GetFilePath(std::filesystem::path parent, std::string name, std::string extension)
     {
-        std::filesystem::create_directory(parent.stem());
+        std::filesystem::create_directory(Project::GetResourceDirectory() / parent.stem());
 
-        return parent.stem() / parent.stem().concat("_" + name).replace_extension(extension);
+        return Project::GetResourceDirectory() / parent.stem() / parent.stem().concat("_" + name).replace_extension(extension);
     }
 };

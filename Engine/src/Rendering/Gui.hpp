@@ -25,8 +25,9 @@ namespace Engine
         void End(Vulkan::CommandBuffer& commandBuffer);
 
     private:
-        Gui(std::unique_ptr<Vulkan::DescriptorPool> descriptorPool);
+        Gui(std::unique_ptr<Vulkan::DescriptorPool> descriptorPool, Window& window);
 
         std::unique_ptr<Vulkan::DescriptorPool> descriptorPool;
+        Window& window;
     };
 };

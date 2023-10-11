@@ -10,7 +10,7 @@ namespace Engine
 {
 	struct MaterialSpec
 	{
-		ResourceId diffuse;
+		ResourceId diffuse{0};
 	};
 
 	class MaterialFactory

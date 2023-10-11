@@ -6,6 +6,8 @@
 
 #include "Vulkan/Device.hpp"
 
+#include "Project/Project.hpp"
+
 #include <unordered_map>
 
 namespace Engine
@@ -32,7 +34,11 @@ namespace Engine
 
             const auto& metadata = resourceRegistry.at(id);
 
-            return FactoryLoad<T>(metadata.path);
+            auto resource = FactoryLoad<T>(Project::GetResourceDirectory() / metadata.path);
+
+            loadedResources[id] = resource;
+
+            return resource;
         }
 
         template<typename T>
@@ -56,6 +62,11 @@ namespace Engine
 
             return resources;
         }
+
+        std::unordered_map<ResourceId, ResourceMetadata>& GetResourceRegistry();
+
+        void SerializeRegistry();
+        void DeserializeRegistry();
 
     private:
         ResourceManager(const Vulkan::Device& device);

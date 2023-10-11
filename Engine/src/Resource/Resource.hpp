@@ -19,7 +19,7 @@ namespace Engine
 		Model,
 	};
 
-	std::string_view ResourceTypeToString(ResourceType type);
+	std::string ResourceTypeToString(ResourceType type);
 	ResourceType StringToResourceType(std::string_view type);
 
 	struct ResourceMetadata

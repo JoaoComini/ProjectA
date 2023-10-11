@@ -34,9 +34,6 @@ namespace Engine
 		std::unique_ptr<Target> Build(const Vulkan::Device& device);
 
 	private:
-		VkExtent2D extent;
-		bool enableDepthStencil = false;
-
 		std::vector<std::unique_ptr<Vulkan::Image>> images;
 	};
 }

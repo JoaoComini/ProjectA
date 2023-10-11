@@ -4,14 +4,17 @@
 
 namespace Engine
 {
-    Scene::Scene()
+    Entity Scene::CreateEntity(Uuid id)
     {
-        registry.on_construct<entt::entity>().connect<&Scene::OnCreateEntity>(this);
-    }
+        Entity entity{ registry.create(), &registry };
 
-    Entity Scene::CreateEntity()
-    {
-        return { registry.create(), &registry };
+        entity.AddComponent<Component::Name>();
+        entity.AddComponent<Component::Relationship>();
+
+        entity.AddComponent<Component::Id>().id = id;
+        entityMap[id] = entity;
+
+        return entity;
     }
 
     void Scene::DestroyEntity(Entity entity)
@@ -25,18 +28,21 @@ namespace Engine
         }
     }
 
+    Entity Scene::FindEntityById(Uuid id)
+    {
+        if (entityMap.find(id) != entityMap.end())
+        {
+            return entityMap[id];
+        }
+
+        return {};
+    }
+
     void Scene::Update()
     {
         ForEachEntity<Component::Delete>([&](Entity entity) {
             registry.destroy(entity);
+            entityMap.erase(entity.GetId());
         });
-    }
-
-    void Scene::OnCreateEntity(entt::registry& registry, entt::entity handle)
-    {
-        Entity entity{ handle, &registry };
-
-        entity.AddComponent<Component::Name>();
-        entity.AddComponent<Component::Relationship>();
     }
 }

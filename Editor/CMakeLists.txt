@@ -7,7 +7,9 @@ set(EDITOR_SRC_FILES
     "src/Widget/SceneHierarchy.cpp"
     "src/Widget/EntityInspector.cpp"
     "src/Widget/Controls.cpp"
- "src/Widget/MainMenuBar.cpp")
+    "src/Widget/MainMenuBar.cpp"
+    "src/Widget/ContentBrowser.cpp"
+)
     
 add_executable(Editor ${EDITOR_SRC_FILES})
 

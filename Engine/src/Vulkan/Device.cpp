@@ -65,7 +65,7 @@ namespace Vulkan
 
 	Device::~Device()
 	{
-		commandPool.reset();
+		commandPool.reset(); 
 
 		vmaDestroyAllocator(allocator);
 		vkDestroyDevice(handle, nullptr);

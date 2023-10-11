@@ -10,40 +10,28 @@ void MainMenuBar::Draw()
 	{
 		if (ImGui::BeginMenu("File"))
 		{
-			if (ImGui::MenuItem("Save Scene", "Ctrl+S"))
-			{
-
-			}
+			MainMenuItem("Open Scene", onOpenSceneFn);
 
 			ImGui::Separator();
 
-			if (ImGui::MenuItem("Import"))
-			{
-				if (onImportFn)
-				{
-					onImportFn();
-				}
-			}
+			MainMenuItem("Save Scene", onSaveSceneFn);
 
 			ImGui::Separator();
 
-			if (ImGui::MenuItem("Exit"))
-			{
-				if (onExitFn)
-				{
-					onExitFn();
-				}
-			}
+			MainMenuItem("Import", onImportFn);
+
+			ImGui::Separator();
+
+			MainMenuItem("Exit", onExitFn);
 
 			ImGui::EndMenu();
 		}
 
 		if (ImGui::BeginMenu("Tools"))
 		{
-			if (ImGui::MenuItem("Metrics"))
-			{
+			MainMenuItem("Metrics", [&]() {
 				openMetrics = true;
-			}
+			});
 
 			ImGui::EndMenu();
 		}
@@ -69,7 +57,28 @@ void MainMenuBar::OnExit(std::function<void()> onExitFn)
 	this->onExitFn = onExitFn;
 }
 
+void MainMenuBar::OnSaveScene(std::function<void()> onSaveSceneFn)
+{
+	this->onSaveSceneFn = onSaveSceneFn;
+}
+
+void MainMenuBar::OnOpenScene(std::function<void()> onOpenSceneFn)
+{
+	this->onOpenSceneFn = onOpenSceneFn;
+}
+
 void MainMenuBar::OnImport(std::function<void()> onImportFn)
 {
 	this->onImportFn = onImportFn;
+}
+
+void MainMenuBar::MainMenuItem(std::string label, std::function<void()> callbackFn)
+{
+	if (ImGui::MenuItem(label.c_str()))
+	{
+		if (callbackFn)
+		{
+			callbackFn();
+		}
+	}
 }

@@ -16,7 +16,7 @@ namespace Engine
     {
         MaterialSpec spec{};
 
-        std::ifstream file(source, std::ios::in | std::ios::binary | std::ios::trunc);
+        std::ifstream file(source, std::ios::in | std::ios::binary);
         file.read(reinterpret_cast<char*>(&spec.diffuse), sizeof(spec.diffuse));
         file.close();
 

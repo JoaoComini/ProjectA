@@ -73,12 +73,12 @@ namespace Engine
         thisComp.children -= 1;
     }
 
-    Entity Entity::GetParent()
+    Entity Entity::GetParent() const
     {
         return GetComponent<Component::Relationship>().parent;
     }
 
-    std::vector<Entity> Entity::GetChildren()
+    std::vector<Entity> Entity::GetChildren() const
     {
         std::vector<Entity> children;
 
@@ -94,4 +94,10 @@ namespace Engine
 
         return children;
     }
+
+    Uuid Entity::GetId() const
+    {
+        return GetComponent<Component::Id>().id;
+    }
+
 }
