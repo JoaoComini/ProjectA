@@ -12,7 +12,9 @@ ContentBrowser::ContentBrowser(Vulkan::Device& device, Engine::Scene& scene)
 	: device(device), scene(scene)
 {
 	baseDirectory = Engine::Project::GetResourceDirectory();
-	currentDirectory = baseDirectory;
+	resourceTree.SetRoot(baseDirectory);
+
+	currentDirectory = ".";
 
 	Engine::TextureImporter importer{ device };
 
@@ -22,7 +24,7 @@ ContentBrowser::ContentBrowser(Vulkan::Device& device, Engine::Scene& scene)
 	directoryIconTexture = importer.Import("resources/icons/directory.png");
 	directoryIconDescriptor = ImGui_ImplVulkan_AddTexture(directoryIconTexture->GetSampler().GetHandle(), directoryIconTexture->GetImageView().GetHandle(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-	resourceTree.SetRoot(".");
+	RefreshResourceTree();
 }
 
 ContentBrowser::~ContentBrowser()
@@ -59,29 +61,24 @@ void AddEntity(Engine::Scene& scene, Engine::Node& node, Engine::Entity* parent)
 
 void ContentBrowser::Draw()
 {
-	RefreshResourceTree();
-
 	ImGuiStyle& style = ImGui::GetStyle();
 	ImGuiViewport* viewport = ImGui::GetMainViewport();
 
 	ImGui::SetNextWindowSizeConstraints({ (itemSize + style.ColumnsMinSpacing) * 2.5f, 0 }, viewport->Size);
 
-	if (!ImGui::Begin("Content Browser"))
+	if (ImGui::Begin("Content Browser"))
 	{
+		ContentBrowserBackButton();
+
+		ContentBrowserTable();
+
 		ImGui::End();
-		return;
 	}
-
-	ContentBrowserBackButton();
-
-	ContentBrowserTable();
-
-	ImGui::End();
 }
 
 void ContentBrowser::ContentBrowserBackButton()
 {
-	bool disabled = currentDirectory == baseDirectory;
+	bool disabled = currentDirectory == ".";
 
 	if (disabled)
 	{
@@ -105,15 +102,13 @@ void ContentBrowser::ContentBrowserTable()
 	{
 		ImGui::TableSetupColumn("ContentTableColumn", ImGuiTableColumnFlags_WidthFixed);
 
-		auto currentNode = resourceTree.Search(std::filesystem::relative(currentDirectory, baseDirectory));
+		auto currentNode = resourceTree.Search(currentDirectory);
 
 		for (auto& [path, node] : currentNode->children)
 		{
 			ImGui::TableNextColumn();
 
-			bool isDirectory = std::filesystem::is_directory(baseDirectory / path);
-
-			if (isDirectory)
+			if (node->directory)
 			{
 				ContentBrowserDirectory(path);
 			}
@@ -137,7 +132,14 @@ void ContentBrowser::ContentBrowserDirectory(std::filesystem::path path)
 
 	if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
 	{
-		currentDirectory /= path.filename();
+		if (currentDirectory == ".")
+		{
+			currentDirectory = path;
+		}
+		else
+		{
+			currentDirectory /= path;
+		}
 	}
 
 	ImGui::TextWrapped(filename.c_str());

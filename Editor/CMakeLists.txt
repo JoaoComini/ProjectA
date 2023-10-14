@@ -9,6 +9,7 @@ set(EDITOR_SRC_FILES
     "src/Widget/Controls.cpp"
     "src/Widget/MainMenuBar.cpp"
     "src/Widget/ContentBrowser.cpp"
+    "src/Util/ResourceTree.cpp"
 )
     
 add_executable(Editor ${EDITOR_SRC_FILES})

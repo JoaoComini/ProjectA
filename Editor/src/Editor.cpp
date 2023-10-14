@@ -40,6 +40,8 @@ namespace Engine
 
 		mainMenuBar->OnImport([&]() {
 			ImportFile();
+
+			contentBrowser->RefreshResourceTree();
 		});
 
 		mainMenuBar->OnSaveScene([&]() {
