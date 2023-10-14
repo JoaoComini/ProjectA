@@ -46,7 +46,7 @@ namespace Engine
 
         void ImportResource(const std::filesystem::path& path);
 
-        void OnResourceImport(std::shared_ptr<Resource> resource, const ResourceMetadata& metadata);
+        void OnResourceImport(ResourceId id, const ResourceMetadata& metadata);
 
         std::vector<ResourceId> FindResourcesOfType(ResourceType type)
         {

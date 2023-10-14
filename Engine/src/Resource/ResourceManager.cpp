@@ -46,10 +46,9 @@ namespace Engine
         return resourceRegistry.find(id) != resourceRegistry.end();
     }
 
-    void ResourceManager::OnResourceImport(std::shared_ptr<Resource> resource, const ResourceMetadata& metadata)
+    void ResourceManager::OnResourceImport(ResourceId id, const ResourceMetadata& metadata)
     {
-        resourceRegistry.emplace(resource->GetId(), metadata);
-        loadedResources.emplace(resource->GetId(), resource);
+        resourceRegistry.emplace(id, metadata);
     }
 
     template<>

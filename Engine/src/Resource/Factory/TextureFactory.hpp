@@ -22,7 +22,7 @@ namespace Engine
 	public:
 		TextureFactory(const Vulkan::Device& device);
 
-		std::shared_ptr<Texture> Create(std::filesystem::path destination, TextureSpec& spec);
+		ResourceId Create(std::filesystem::path destination, TextureSpec& spec);
 		std::shared_ptr<Texture> Load(std::filesystem::path source);
 
 	private:

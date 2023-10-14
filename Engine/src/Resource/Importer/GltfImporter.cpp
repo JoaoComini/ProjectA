@@ -30,28 +30,25 @@ namespace Engine
 
     void GltfImporter::Import(std::filesystem::path path)
     {
-        tinygltf::Model model;
-        LoadModel(path, model);
+        tinygltf::Model model = LoadModel(path);
 
-        std::vector<std::shared_ptr<Texture>> textures;
-        ImportTextures(path, model, textures);
+        auto textures = ImportTextures(path, model);
 
-        std::vector<std::shared_ptr<Material>> materials;
-        ImportMaterials(path, model, textures, materials);
+        auto materials = ImportMaterials(path, model, textures);
 
-        std::vector<std::shared_ptr<Mesh>> meshes;
-        ImportMeshes(path, model, materials, meshes);
+        auto meshes = ImportMeshes(path, model, materials);
 
-        std::vector<std::unique_ptr<Node>> nodes;
-        ImportNodes(model, meshes, nodes);
+        auto nodes =  ImportNodes(model, meshes);
         
         ImportModel(path, model, nodes);
     }
 
-    void GltfImporter::LoadModel(std::filesystem::path path, tinygltf::Model& model)
+    tinygltf::Model GltfImporter::LoadModel(std::filesystem::path path)
     {
+
         tinygltf::TinyGLTF loader;
 
+        tinygltf::Model model;
         std::string err;
         std::string warn;
 
@@ -68,10 +65,14 @@ namespace Engine
             ss << "failed to load " << path << ": " << err;
             throw std::runtime_error(ss.str());
         }
+
+        return model;
     }
 
-    void GltfImporter::ImportTextures(std::filesystem::path parent, tinygltf::Model& model, std::vector<std::shared_ptr<Texture>>& textures)
+    std::vector<ResourceId> GltfImporter::ImportTextures(std::filesystem::path parent, tinygltf::Model& model)
     {
+        std::vector<ResourceId> textures;
+
         TextureFactory factory{ device };
 
         for (size_t i = 0; i < model.textures.size(); i++)
@@ -89,22 +90,26 @@ namespace Engine
 
             auto path = GetFilePath(parent, std::to_string(i), ".texture");
 
-            auto texture = factory.Create(path, spec);
+            auto id = factory.Create(path, spec);
 
             ResourceMetadata metadata
             {
                 .path = std::filesystem::relative(path, Project::GetResourceDirectory()),
-                .type = texture->GetType()
+                .type = ResourceType::Texture
             };
 
-            ResourceManager::GetInstance()->OnResourceImport(texture, metadata);
+            ResourceManager::GetInstance()->OnResourceImport(id, metadata);
 
-            textures.push_back(texture);
+            textures.push_back(id);
         }
+
+        return textures;
     }
 
-    void GltfImporter::ImportMaterials(std::filesystem::path parent, tinygltf::Model& model, std::vector<std::shared_ptr<Texture>>& textures, std::vector<std::shared_ptr<Material>>& materials)
+    std::vector<ResourceId> GltfImporter::ImportMaterials(std::filesystem::path parent, tinygltf::Model& model, std::vector<ResourceId>& textures)
     {
+        std::vector<ResourceId> materials;
+
         MaterialFactory factory;
 
         for (size_t i = 0; i < model.materials.size(); i++)
@@ -112,37 +117,41 @@ namespace Engine
             auto& material = model.materials[i];
             auto& values = material.values;
 
-            std::shared_ptr<Engine::Texture> diffuse = nullptr;
+            ResourceId* diffuse = nullptr;
 
             if (values.find("baseColorTexture") != values.end()) {
                 auto index = values["baseColorTexture"].TextureIndex();
 
-                diffuse = textures[index];
+                diffuse = &textures[index];
             }
 
             MaterialSpec spec
             {
-                .diffuse = diffuse->GetId()
+                .diffuse = *diffuse
             };
 
             auto path = GetFilePath(parent, std::to_string(i), ".material");
 
-            auto created = factory.Create(path, spec);
+            auto id = factory.Create(path, spec);
 
             ResourceMetadata metadata
             {
                 .path = std::filesystem::relative(path, Project::GetResourceDirectory()),
-                .type = created->GetType()
+                .type = ResourceType::Material
             };
 
-            ResourceManager::GetInstance()->OnResourceImport(created, metadata);
+            ResourceManager::GetInstance()->OnResourceImport(id, metadata);
 
-            materials.push_back(created);
+            materials.push_back(id);
         }
+
+        return materials;
     }
 
-    void GltfImporter::ImportMeshes(std::filesystem::path parent, tinygltf::Model& model, std::vector<std::shared_ptr<Material>>& materials, std::vector<std::shared_ptr<Mesh>>& meshes)
+    std::vector<ResourceId> GltfImporter::ImportMeshes(std::filesystem::path parent, tinygltf::Model& model, std::vector<ResourceId>& materials)
     {
+        std::vector<ResourceId> meshes;
+
         MeshFactory factory{ device };
 
         for (auto& mesh : model.meshes)
@@ -221,9 +230,9 @@ namespace Engine
                     primitiveSpec.indexType = indexType;
                 }
 
-                if (materials[primitive.material]->GetId())
+                if (materials[primitive.material])
                 {
-                    primitiveSpec.material = materials[primitive.material]->GetId();
+                    primitiveSpec.material = materials[primitive.material];
                 }
 
                 spec.primitives.push_back(primitiveSpec);
@@ -231,29 +240,33 @@ namespace Engine
 
             auto path = GetFilePath(parent, parent.stem().concat(mesh.name).string(), ".mesh");
 
-            auto created = factory.Create(path, spec);
+            auto id = factory.Create(path, spec);
 
             ResourceMetadata metadata
             {
                 .path = std::filesystem::relative(path, Project::GetResourceDirectory()),
-                .type = created->GetType()
+                .type = ResourceType::Mesh
             };
 
-            ResourceManager::GetInstance()->OnResourceImport(created, metadata);
+            ResourceManager::GetInstance()->OnResourceImport(id, metadata);
 
-            meshes.push_back(created);
+            meshes.push_back(id);
         }
+
+        return meshes;
     }
 
-    void GltfImporter::ImportNodes(tinygltf::Model& gltfModel, std::vector<std::shared_ptr<Mesh>>& meshes, std::vector<std::unique_ptr<Node>>& nodes)
+    std::vector<std::unique_ptr<Node>> GltfImporter::ImportNodes(tinygltf::Model& gltfModel, std::vector<ResourceId>& meshes)
     {
+        std::vector<std::unique_ptr<Node>> nodes;
+
         for (auto& gltfNode : gltfModel.nodes)
         {
             auto node = std::make_unique<Node>();
 
             if (gltfNode.mesh >= 0)
             {
-                node->SetMesh(meshes[gltfNode.mesh]->GetId());
+                node->SetMesh(meshes[gltfNode.mesh]);
             }
 
             auto& transform = node->GetTransform();
@@ -275,6 +288,8 @@ namespace Engine
 
             nodes.push_back(std::move(node));
         }
+
+        return nodes;
     }
 
     void GltfImporter::ImportModel(std::filesystem::path parent, tinygltf::Model& gltfModel, std::vector<std::unique_ptr<Node>>& nodes)
@@ -319,7 +334,7 @@ namespace Engine
 
         std::filesystem::path path = GetFilePath(parent, parent.stem().string(), ".model");
 
-        factory.Create(path, *model);
+        auto id = factory.Create(path, *model);
 
         ResourceMetadata metadata
         {
@@ -327,7 +342,7 @@ namespace Engine
             .type = model->GetType()
         };
 
-        ResourceManager::GetInstance()->OnResourceImport(model, metadata);
+        ResourceManager::GetInstance()->OnResourceImport(id, metadata);
     }
 
     std::filesystem::path GltfImporter::GetFilePath(std::filesystem::path parent, std::string name, std::string extension)

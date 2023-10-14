@@ -11,7 +11,7 @@ namespace Engine
 	class ModelFactory
 	{
 	public:
-		void Create(std::filesystem::path destination, Model& model);
+		ResourceId Create(std::filesystem::path destination, Model& model);
 
 		void WriteNode(std::ofstream& file, Node& node);
 

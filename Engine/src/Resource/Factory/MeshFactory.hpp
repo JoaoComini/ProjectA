@@ -25,7 +25,7 @@ namespace Engine
 	public:
 		MeshFactory(const Vulkan::Device& device);
 
-		std::shared_ptr<Mesh> Create(std::filesystem::path destination, MeshSpec& spec);
+		ResourceId Create(std::filesystem::path destination, MeshSpec& spec);
 
 		std::shared_ptr<Mesh> Load(std::filesystem::path source);
 

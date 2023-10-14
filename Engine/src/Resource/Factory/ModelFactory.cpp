@@ -6,8 +6,10 @@
 
 namespace Engine
 {
-    void ModelFactory::Create(std::filesystem::path destination, Model& model)
+    ResourceId ModelFactory::Create(std::filesystem::path destination, Model& model)
     {
+        ResourceId id;
+
         std::ofstream file(destination, std::ios::out | std::ios::binary | std::ios::trunc);
 
         auto& root = model.GetRoot();
@@ -15,6 +17,8 @@ namespace Engine
         WriteNode(file, root);
        
         file.close();
+
+        return id;
     }
 
     void ModelFactory::WriteNode(std::ofstream& file, Node& node)

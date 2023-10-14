@@ -16,7 +16,7 @@ namespace Engine
 	class MaterialFactory
 	{
 	public:
-		std::shared_ptr<Material> Create(std::filesystem::path destination, MaterialSpec& spec);
+		ResourceId Create(std::filesystem::path destination, MaterialSpec& spec);
 		std::shared_ptr<Material> Load(std::filesystem::path source);
 	};
 };

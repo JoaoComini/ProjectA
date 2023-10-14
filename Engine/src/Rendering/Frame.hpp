@@ -24,7 +24,7 @@
 namespace Engine
 {
 	template <class T>
-	using BindingMap = std::map<uint32_t, std::map<uint32_t, T>>;
+	using BindingMap = std::unordered_map<uint32_t, std::map<uint32_t, T>>;
 
 	class Frame
 	{

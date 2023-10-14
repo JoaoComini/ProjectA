@@ -21,12 +21,12 @@ namespace Engine
 		void Import(std::filesystem::path path);
 
 	private:
-		void LoadModel(std::filesystem::path path, tinygltf::Model& model);
+		tinygltf::Model LoadModel(std::filesystem::path path);
 
-		void ImportTextures(std::filesystem::path parent, tinygltf::Model& model, std::vector<std::shared_ptr<Texture>>& textures);
-		void ImportMaterials(std::filesystem::path parent, tinygltf::Model& model, std::vector<std::shared_ptr<Texture>>& textures, std::vector<std::shared_ptr<Material>>& materials);
-		void ImportMeshes(std::filesystem::path parent, tinygltf::Model& model, std::vector<std::shared_ptr<Material>>& materials, std::vector<std::shared_ptr<Mesh>>& meshes);
-		void ImportNodes(tinygltf::Model& model, std::vector<std::shared_ptr<Mesh>>& meshes, std::vector<std::unique_ptr<Node>>& nodes);
+		std::vector<ResourceId> ImportTextures(std::filesystem::path parent, tinygltf::Model& model);
+		std::vector<ResourceId> ImportMaterials(std::filesystem::path parent, tinygltf::Model& model, std::vector<ResourceId>& textures);
+		std::vector<ResourceId> ImportMeshes(std::filesystem::path parent, tinygltf::Model& model, std::vector<ResourceId>& materials);
+		std::vector<std::unique_ptr<Node>> ImportNodes(tinygltf::Model& model, std::vector<ResourceId>& meshes);
 
 		void ImportModel(std::filesystem::path path, tinygltf::Model& gltfModel, std::vector<std::unique_ptr<Node>>& nodes);
 

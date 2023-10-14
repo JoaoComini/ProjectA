@@ -9,8 +9,10 @@ namespace Engine
     TextureFactory::TextureFactory(const Vulkan::Device& device)
         : device(device) { }
 
-    std::shared_ptr<Texture> TextureFactory::Create(std::filesystem::path destination, TextureSpec& spec)
+    ResourceId TextureFactory::Create(std::filesystem::path destination, TextureSpec& spec)
     {
+        ResourceId id;
+
         std::ofstream file(destination, std::ios::out | std::ios::binary | std::ios::trunc);
         file.write(reinterpret_cast<char*>(&spec.width), sizeof(spec.width));
         file.write(reinterpret_cast<char*>(&spec.height), sizeof(spec.height));
@@ -21,7 +23,7 @@ namespace Engine
         file.write(reinterpret_cast<char*>(spec.image.data()), spec.image.size());
         file.close();
 
-        return std::make_shared<Texture>(device, spec.width, spec.height, spec.image);
+        return id;
     }
 
     std::shared_ptr<Texture> TextureFactory::Load(std::filesystem::path source)

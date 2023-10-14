@@ -38,13 +38,7 @@ namespace Engine
 			return type;
 		}
 
-		ResourceId GetId()
-		{
-			return id;
-		}
-
 	private:
-		ResourceId id;
 		ResourceType type;
 	};
 };

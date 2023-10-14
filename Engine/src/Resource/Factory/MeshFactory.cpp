@@ -9,8 +9,10 @@ namespace Engine
     { }
 
 
-    std::shared_ptr<Mesh> MeshFactory::Create(std::filesystem::path destination, MeshSpec& spec)
+    ResourceId MeshFactory::Create(std::filesystem::path destination, MeshSpec& spec)
     {
+        ResourceId id;
+
         std::ofstream file(destination, std::ios::out | std::ios::binary | std::ios::trunc);
 
         size_t size = spec.primitives.size();
@@ -32,7 +34,7 @@ namespace Engine
         }
         file.close();
 
-        return BuildFromSpec(spec);
+        return id;
     }
 
     std::shared_ptr<Mesh> MeshFactory::Load(std::filesystem::path source)
