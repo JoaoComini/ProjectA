@@ -13,7 +13,6 @@
 
 #include "Window.hpp"
 #include "WindowSurface.hpp"
-#include "System.hpp"
 
 namespace Engine {
 
@@ -47,7 +46,10 @@ namespace Engine {
 
 		void Run();
 		void Exit();
+	protected:
+		virtual void OnUpdate(float timestep) {}
 		virtual void OnGui() {}
+		virtual void OnWindowResize(int width, int height);
 
 		Scene& GetScene();
 
@@ -55,14 +57,11 @@ namespace Engine {
 
 		Vulkan::Device& GetDevice();
 
-		template<typename T, typename... Args>
-		void AddSystem(Args&&... args)
-		{
-			systems.push_back(std::make_unique<T>(*scene, std::forward<Args>(args)...));
-		}
-
 	private:
 		void SetupVulkan();
+
+		void RenderScene();
+		glm::mat4 GetEntityWorldMatrix(Entity entity);
 
 		void SetCameraAspectRatio(Entity entity);
 
@@ -73,8 +72,6 @@ namespace Engine {
 		std::unique_ptr<Vulkan::Device> device;
 
 		std::unique_ptr<Scene> scene;
-
-		std::vector<std::unique_ptr<System>> systems;
 
 		bool running = false;
 	};

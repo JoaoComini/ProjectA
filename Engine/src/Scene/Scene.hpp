@@ -17,6 +17,8 @@
 
 namespace Engine
 {
+	static auto Predicate = [] (Entity e) { return true; };
+
 	class Scene
 	{
 	public:
@@ -27,8 +29,8 @@ namespace Engine
 
 		void Update();
 
-		template<typename... Args>
-		void ForEachEntity(std::function<void(Entity)> func)
+		template<typename... Args, typename Func>
+		void ForEachEntity(Func func)
 		{
 			if constexpr (sizeof...(Args) == 0u)
 			{
@@ -41,7 +43,7 @@ namespace Engine
 						continue;
 					}
 
-					func({ entity, &registry });
+					func(Entity{ entity, &registry });
 				}
 			}
 			else
@@ -55,13 +57,14 @@ namespace Engine
 						continue;
 					}
 
-					func({ entity, &registry });
+					func(Entity{ entity, &registry });
 				}
 			}
 		}
 
-		template<typename... Args>
-		std::pair<Entity, bool> FindFirstEntity(std::function<bool(Entity)> predicate = [](auto e) { return true; })
+
+		template<typename... Args, typename P = decltype(Predicate)>
+		std::pair<Entity, bool> FindFirstEntity(P predicate = Predicate)
 		{
 			auto view = registry.view<Args...>();
 

@@ -3,13 +3,13 @@ project(Editor VERSION 0.0.1)
 
 set(EDITOR_SRC_FILES
     "src/Editor.cpp"
-    "src/System/CameraSystem.cpp"
     "src/Widget/SceneHierarchy.cpp"
     "src/Widget/EntityInspector.cpp"
     "src/Widget/Controls.cpp"
     "src/Widget/MainMenuBar.cpp"
     "src/Widget/ContentBrowser.cpp"
     "src/Util/ResourceTree.cpp"
+    "src/EditorCamera.cpp"
 )
     
 add_executable(Editor ${EDITOR_SRC_FILES})

@@ -46,12 +46,14 @@ namespace Engine
 
 		static void Setup(Vulkan::Device& device, const Vulkan::Surface& surface, const Window& window);
 
-		void Begin(const Camera& camera, const glm::mat4& transform);
+		Vulkan::CommandBuffer* Begin();
+
+		void SetCamera(const Camera& camera, const glm::mat4& transform);
+
 		void Draw(const Mesh& mesh, const glm::mat4& transform);
 		void End();
 
 		Vulkan::RenderPass& GetRenderPass() const;
-		Vulkan::CommandBuffer& GetActiveCommandBuffer() const;
 
 	private:
 

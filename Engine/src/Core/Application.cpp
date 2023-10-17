@@ -15,7 +15,6 @@
 #include "Resource/ResourceManager.hpp"
 #include "Resource/ResourceRegistry.hpp"
 
-#include "RenderSystem.hpp"
 #include "WindowInput.hpp"
 
 #include <iostream>
@@ -36,9 +35,7 @@ namespace Engine {
 
 		window->OnResize(
 			[&](int width, int height) {
-				scene->ForEachEntity<Component::Camera>([&](auto entity) {
-					SetCameraAspectRatio(entity);
-				});
+				OnWindowResize(width, height);
 			}
 		);
 
@@ -54,8 +51,6 @@ namespace Engine {
 		scene = std::make_unique<Scene>();
 		scene->OnComponentAdded<Component::Camera, &Application::SetCameraAspectRatio>(this);
 
-		AddSystem<RenderSystem>();
-
 		running = true;
 	}
 
@@ -68,15 +63,6 @@ namespace Engine {
 		physicalDevice = Vulkan::PhysicalDevicePicker::PickBestSuitable(*instance, *surface);
 
 		device = std::make_unique<Vulkan::Device>(*instance, *physicalDevice);
-	}
-
-	void Application::SetCameraAspectRatio(Entity entity)
-	{
-		auto [height, width] = window->GetFramebufferSize();
-
-		auto& comp = entity.GetComponent<Component::Camera>();
-		
-		comp.camera.SetAspectRatio((float)width / height);
 	}
 
 	Application::~Application()
@@ -99,29 +85,76 @@ namespace Engine {
 			auto timestep = std::chrono::duration<float>(currentTime - lastTime);
 			lastTime = currentTime;
 
-			auto [camera, found] = scene->FindFirstEntity<Component::Transform, Component::Camera>();
-
-			if (found)
+			if (auto commandBuffer = Renderer::Get().Begin())
 			{
-				Component::Camera cameraComponent = camera.GetComponent<Component::Camera>();
-				Component::Transform cameraTransform = camera.GetComponent<Component::Transform>();
-				Renderer::Get().Begin(cameraComponent.camera, cameraTransform.GetLocalMatrix());
 				Gui::Get().Begin();
-			}
 
-			for (auto& system : systems)
-			{
-				system->Update(timestep.count());
-			}
+				OnUpdate(timestep.count());
 
-			if (found)
-			{
+				RenderScene();
+
 				OnGui();
 
-				Gui::Get().End(Renderer::Get().GetActiveCommandBuffer());
+				Gui::Get().End(*commandBuffer);
 				Renderer::Get().End();
 			}
 		}
+	}
+
+	void Application::RenderScene()
+	{
+		scene->ForEachEntity<Component::Transform, Component::MeshRender>(
+			[&](Entity entity) {
+				auto& meshRender = entity.GetComponent<Component::MeshRender>();
+
+				if (!meshRender.mesh)
+				{
+					return;
+				}
+
+				auto mesh = ResourceManager::Get().LoadResource<Mesh>(meshRender.mesh);
+
+				glm::mat4 matrix = GetEntityWorldMatrix(entity);
+
+				Renderer::Get().Draw(*mesh, matrix);
+			}
+		);
+	}
+
+	glm::mat4 Application::GetEntityWorldMatrix(Entity entity)
+	{
+		auto parent = entity.GetParent();
+		auto& transform = entity.GetComponent<Component::Transform>();
+
+		if (!parent)
+		{
+			return transform.GetLocalMatrix();
+		}
+
+		auto parentTransform = parent.TryGetComponent<Component::Transform>();
+
+		if (!parentTransform)
+		{
+			return transform.GetLocalMatrix();
+		}
+
+		return GetEntityWorldMatrix(parent) * transform.GetLocalMatrix();
+	}
+
+	void Application::OnWindowResize(int width, int height)
+	{
+		scene->ForEachEntity<Component::Camera>([&](auto entity) {
+			SetCameraAspectRatio(entity);
+		});
+	}
+
+	void Application::SetCameraAspectRatio(Entity entity)
+	{
+		auto [height, width] = window->GetFramebufferSize();
+
+		auto& comp = entity.GetComponent<Component::Camera>();
+
+		comp.camera.SetAspectRatio((float)width / height);
 	}
 
 	void Application::Exit()

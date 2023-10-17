@@ -3,12 +3,13 @@
 #include <Core/Application.hpp>
 #include <Core/Main.hpp>
 
-#include "System/CameraSystem.hpp"
 #include "Widget/SceneHierarchy.hpp"
 #include "Widget/EntityInspector.hpp"
 #include "Widget/MainMenuBar.hpp"
 #include "Widget/ContentBrowser.hpp"
 #include "Scene/Mixin.hpp"
+
+#include "EditorCamera.hpp"
 
 namespace Engine
 {
@@ -17,7 +18,10 @@ namespace Engine
     public:
         Editor(ApplicationSpec& spec);
 
+        void OnUpdate(float timestep) override;
         void OnGui() override;
+        void OnWindowResize(int width, int height) override;
+
     private:
         void SaveScene();
         void OpenScene();
@@ -25,12 +29,12 @@ namespace Engine
 
         std::filesystem::path scenePath;
 
+        std::unique_ptr<EditorCamera> camera;
+
         std::unique_ptr<SceneHierarchy> sceneHierarchy;
         std::unique_ptr<EntityInspector> entityInspector;
         std::unique_ptr<MainMenuBar> mainMenuBar;
         std::unique_ptr<ContentBrowser> contentBrowser;
-
-        bool openMetricsWindow = false;
     };
 
     std::unique_ptr<Application> CreateApplication(ApplicationArgs args)

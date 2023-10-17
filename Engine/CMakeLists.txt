@@ -68,11 +68,9 @@ add_subdirectory(third_party/flatbuffers)
 
 set(ENGINE_SRC_FILES
     "src/Core/Application.cpp"
-    "src/Core/RenderSystem.cpp"
     "src/Core/Window.cpp"
     "src/Core/WindowSurface.cpp"
     "src/Core/WindowInput.cpp"
-    
     "src/Rendering/BufferPool.cpp"
     "src/Rendering/Camera.cpp"
     "src/Rendering/DescriptorPool.cpp"
@@ -115,16 +113,18 @@ set(ENGINE_SRC_FILES
     "src/Scene/SceneSerializer.cpp"
     "src/Project/Project.cpp"
     "src/Resource/ResourceManager.cpp"
+    "src/Resource/ResourceRegistry.cpp"
     "src/Resource/Resource.cpp"
+    "src/Resource/Prefab.cpp"
     "src/Resource/Importer/GltfImporter.cpp"
+    "src/Resource/Importer/TextureImporter.cpp"
     "src/Resource/Factory/TextureFactory.cpp"
     "src/Resource/Factory/MaterialFactory.cpp"
     "src/Resource/Factory/MeshFactory.cpp"
-    "src/Resource/Prefab.cpp"
     "src/Resource/Factory/PrefabFactory.cpp"
-    "src/Resource/Importer/TextureImporter.cpp"
+    "src/Resource/Flatbuffers/NativeVertex.cpp"
     "src/Platform/Windows/FileDialog.cpp"
- "src/Resource/Flatbuffers/NativeVertex.cpp" "src/Resource/ResourceRegistry.cpp")
+)
 
 add_library(Engine STATIC ${ENGINE_SRC_FILES})
 

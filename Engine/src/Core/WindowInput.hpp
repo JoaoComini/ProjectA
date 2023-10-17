@@ -5,6 +5,7 @@
 
 #include "KeyCode.hpp"
 
+
 #include <unordered_map>
 
 namespace Engine
@@ -15,8 +16,13 @@ namespace Engine
         WindowInput(Window& window);
 
         bool IsKeyDown(KeyCode code) override;
+        bool IsMouseButtonDown(MouseCode code) override;
+
+        glm::vec2 GetMousePosition() override;
 
     private:
         std::unordered_map<int, bool> keys;
+
+        Window& window;
     };
 };

@@ -9,7 +9,7 @@ void SceneHierarchy::Draw()
 {
 	ImGui::Begin("Scene");
 
-	scene.ForEachEntity([&](auto entity) {
+	scene.ForEachEntity([&](Engine::Entity entity) {
 		EntityNode(entity, true);
 	});
 

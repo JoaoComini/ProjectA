@@ -98,7 +98,14 @@ void ContentBrowser::ContentBrowserBackButton()
 
 void ContentBrowser::ContentBrowserTable()
 {
-	if (ImGui::BeginTable("ContentTable", GetContentTableColumns(), ImGuiTableFlags_SizingFixedFit))
+	auto columns = GetContentTableColumns();
+
+	if (columns <= 0)
+	{
+		return;
+	}
+
+	if (ImGui::BeginTable("ContentTable", columns, ImGuiTableFlags_SizingFixedFit))
 	{
 		ImGui::TableSetupColumn("ContentTableColumn", ImGuiTableColumnFlags_WidthFixed);
 

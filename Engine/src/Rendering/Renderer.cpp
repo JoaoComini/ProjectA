@@ -136,6 +136,8 @@ namespace Engine
 
 	void Renderer::CreateFramebuffers()
 	{
+		framebuffers.clear();
+
 		VkExtent2D extent = swapchain->GetImageExtent();
 
 		for (auto& frame : frames)
@@ -144,10 +146,8 @@ namespace Engine
 		}
 	}
 
-	void Renderer::Begin(const Camera& camera, const glm::mat4& transform)
+	Vulkan::CommandBuffer* Renderer::Begin()
 	{
-		globalUniform.viewProjection = camera.GetProjection() * glm::inverse(transform);
-
 		auto& previousFrame = GetCurrentFrame();
 
 		acquireSemaphore = &previousFrame.RequestSemaphore();
@@ -158,15 +158,17 @@ namespace Engine
 		{
 			bool recreated = RecreateSwapchain(result == VK_ERROR_OUT_OF_DATE_KHR);
 
-			if (recreated)
+			if (!recreated)
 			{
-				result = swapchain->AcquireNextImageIndex(currentImageIndex, *acquireSemaphore);
+				return nullptr; // FIX: use a fence pool to prevent the renderer from freezing
 			}
+
+			result = swapchain->AcquireNextImageIndex(currentImageIndex, *acquireSemaphore);
 
 			if (result != VK_SUCCESS)
 			{
 				previousFrame.Reset();
-				return;
+				return nullptr;
 			}
 		}
 
@@ -176,7 +178,8 @@ namespace Engine
 		activeCommandBuffer = &frame.RequestCommandBuffer();
 
 		BeginCommandBuffer();
-		UpdateGlobalUniform();
+
+		return activeCommandBuffer;
 	}
 
 	void Renderer::BeginCommandBuffer()
@@ -208,6 +211,12 @@ namespace Engine
 		});
 
 		activeCommandBuffer->BindPipeline(*pipeline, VK_PIPELINE_BIND_POINT_GRAPHICS);
+	}
+
+	void Renderer::SetCamera(const Camera& camera, const glm::mat4& transform)
+	{
+		globalUniform.viewProjection = camera.GetProjection() * glm::inverse(transform);
+		UpdateGlobalUniform();
 	}
 
 	void Renderer::UpdateGlobalUniform()
@@ -295,11 +304,6 @@ namespace Engine
 		return *renderPass;
 	}
 
-	Vulkan::CommandBuffer& Renderer::GetActiveCommandBuffer() const
-	{
-		return *activeCommandBuffer;
-	}
-
 	Vulkan::Semaphore& Renderer::Submit()
 	{
 		auto& frame = GetCurrentFrame();
@@ -332,6 +336,11 @@ namespace Engine
 		VkExtent2D currentExtent = details.capabilities.currentExtent;
 		VkExtent2D swapchainExtent = swapchain->GetImageExtent();
 
+		if (currentExtent.width == 0 || currentExtent.height == 0)
+		{
+			return false;
+		}
+
 		if (currentExtent.width == swapchainExtent.width && currentExtent.height == swapchainExtent.height && !force)
 		{
 			return false;
@@ -354,8 +363,6 @@ namespace Engine
 
 			it++;
 		}
-
-		framebuffers.clear();
 
 		CreateFramebuffers();
 

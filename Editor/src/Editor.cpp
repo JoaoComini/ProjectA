@@ -23,8 +23,6 @@ namespace Engine
 
 		ResourceRegistry::Get().Deserialize();
 
-        AddSystem<CameraSystem>();
-
 		sceneHierarchy = std::make_unique<SceneHierarchy>(GetScene());
 		entityInspector = std::make_unique<EntityInspector>();
 		mainMenuBar = std::make_unique<MainMenuBar>();
@@ -51,7 +49,18 @@ namespace Engine
 		mainMenuBar->OnOpenScene([&]() {
 			OpenScene();
 		});
+
+		auto [width, height] = GetWindow().GetFramebufferSize();
+
+		camera = std::make_unique<EditorCamera>(glm::radians(45.f), (float)width / height, 0.1f, 1000.f);
     }
+
+	void Editor::OnUpdate(float timestep)
+	{
+		camera->Update(timestep);
+
+		Renderer::Get().SetCamera(*camera, camera->GetTransform());
+	}
 
     void Editor::OnGui()
     {
@@ -68,6 +77,13 @@ namespace Engine
 		entityInspector->Draw();
 		contentBrowser->Draw();
     }
+
+	void Editor::OnWindowResize(int width, int height)
+	{
+		Application::OnWindowResize(width, height);
+
+		camera->SetAspectRatio((float)width / height);
+	}
 
 	void Editor::SaveScene()
 	{

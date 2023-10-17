@@ -52,7 +52,7 @@ namespace Engine
 
 		ImGui_ImplVulkan_Init(&initInfo, Renderer::Get().GetRenderPass().GetHandle());
 
-		device.OneTimeSubmit([&](Vulkan::CommandBuffer& buffer) {
+		device.OneTimeSubmit([](Vulkan::CommandBuffer& buffer) {
 			ImGui_ImplVulkan_CreateFontsTexture(buffer.GetHandle());
 		});
 
