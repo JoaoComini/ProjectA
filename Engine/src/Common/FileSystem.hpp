@@ -1,9 +1,10 @@
 #pragma once
 
-#include <iostream>
+#include <filesystem>
 
 class FileSystem
 {
 public:
-	static std::string ReadFile(std::string path);
+	static std::string ReadFile(std::filesystem::path path);
+	static void WriteFile(std::filesystem::path path, std::string content);
 };

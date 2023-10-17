@@ -6,12 +6,21 @@ include(FindVulkan)
 add_subdirectory(third_party/glm)
 add_subdirectory(third_party/vma)
 add_subdirectory(third_party/entt)
+
+# ----- YAML-CPP -----
+
+set(YAML_CPP_INSTALL OFF)
+set(YAML_CPP_BUILD_TOOLS OFF)
 add_subdirectory(third_party/yaml-cpp)
+
+# ------- GLFW --------
 
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 add_subdirectory(third_party/glfw)
+
+# ----- TINYGLTF ------
 
 set(TINYGLTF_HEADER_ONLY ON CACHE INTERNAL "" FORCE)
 set(TINYGLTF_INSTALL OFF CACHE INTERNAL "" FORCE)
@@ -24,7 +33,7 @@ add_library(stb INTERFACE)
 
 target_include_directories(stb INTERFACE third_party/stb)
 
-# -------- IMGUI --------
+# -------- IMGUI -------
 
 set(IMGUI_SRC_FILES
     "third_party/imgui/imgui.cpp"
@@ -50,6 +59,11 @@ target_link_libraries(ImGui
     glfw
 )
 
+# ------ FLATBUFFERS -----
+
+set(FLATBUFFERS_BUILD_TESTS OFF)
+add_subdirectory(third_party/flatbuffers)
+
 # -----------------------
 
 set(ENGINE_SRC_FILES
@@ -58,7 +72,7 @@ set(ENGINE_SRC_FILES
     "src/Core/Window.cpp"
     "src/Core/WindowSurface.cpp"
     "src/Core/WindowInput.cpp"
-    "src/Core/Input.cpp"
+    
     "src/Rendering/BufferPool.cpp"
     "src/Rendering/Camera.cpp"
     "src/Rendering/DescriptorPool.cpp"
@@ -106,11 +120,11 @@ set(ENGINE_SRC_FILES
     "src/Resource/Factory/TextureFactory.cpp"
     "src/Resource/Factory/MaterialFactory.cpp"
     "src/Resource/Factory/MeshFactory.cpp"
-    "src/Resource/Model.cpp"
-    "src/Resource/Factory/ModelFactory.cpp"
+    "src/Resource/Prefab.cpp"
+    "src/Resource/Factory/PrefabFactory.cpp"
     "src/Resource/Importer/TextureImporter.cpp"
     "src/Platform/Windows/FileDialog.cpp"
-)
+ "src/Resource/Flatbuffers/NativeVertex.cpp" "src/Resource/ResourceRegistry.cpp")
 
 add_library(Engine STATIC ${ENGINE_SRC_FILES})
 
@@ -130,6 +144,7 @@ target_link_libraries(Engine
     EnTT
     ImGui
     yaml-cpp
+    flatbuffers
 )
 
 target_compile_definitions(Engine PRIVATE
@@ -138,9 +153,47 @@ target_compile_definitions(Engine PRIVATE
     GLM_FORCE_DEPTH_ZERO_TO_ONE
     GLM_FORCE_RADIANS
     TINYGLTF_USE_CPP14
+    FLATBUFFERS_USE_STD_SPAN
     $<$<PLATFORM_ID:Windows>:PLATFORM_WINDOWS>
-    $<$<PLATFORM_ID:Linux>:PLATFORM_Linux>
+    $<$<PLATFORM_ID:Linux>:PLATFORM_LINUX>
 )
+
+# - COMPILE FLATBUFFERS -
+
+set(
+    FLATBUFFERS_SRC_FILES
+    "src/Resource/Flatbuffers/Material.fbs"
+    "src/Resource/Flatbuffers/Texture.fbs"
+    "src/Resource/Flatbuffers/Mesh.fbs"
+    "src/Resource/Flatbuffers/Prefab.fbs"
+)
+
+if (WIN32)
+    set(FLATBUFFERS_FLATC_EXECUTABLE ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/flatc.exe)
+else ()
+    set(FLATBUFFERS_FLATC_EXECUTABLE ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/flatc)
+endif ()
+
+foreach(FILE IN LISTS FLATBUFFERS_SRC_FILES)
+    get_filename_component(FLATBUFFERS_SRC_DIR ${FILE} PATH)
+    get_filename_component(FILENAME ${FILE} NAME_WE)
+    add_custom_command(
+        COMMAND
+        ${FLATBUFFERS_FLATC_EXECUTABLE}
+        --cpp --gen-object-api
+        -o ${CMAKE_CURRENT_SOURCE_DIR}/${FLATBUFFERS_SRC_DIR}
+        -I ${CMAKE_CURRENT_SOURCE_DIR}/${FLATBUFFERS_SRC_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/${FILE}
+        OUTPUT ${FLATBUFFERS_SRC_DIR}/${FILENAME}_generated.h
+        DEPENDS ${FILE} ${FLATBUFFERS_SRC_DIR} flatc
+        COMMENT "flatc generation: ${FILE}"
+    )
+    list(APPEND FLATBUFFERS_GEN ${FLATBUFFERS_SRC_DIR}/${FILENAME}_generated.h)
+endforeach()
+
+add_custom_target(Engine_Flatbuffers DEPENDS ${FLATBUFFERS_GEN})
+
+add_dependencies(Engine Engine_Flatbuffers)
 
 # -------- TESTS --------
 
@@ -156,7 +209,7 @@ set(ENGINE_TEST_FILES
     "test/Resource/ResourceTest.cpp"
     "test/Resource/Factory/TextureFactoryTest.cpp"
     "test/Resource/Factory/MeshFactoryTest.cpp"
-    "test/Resource/Factory/ModelFactoryTest.cpp"
+    "test/Resource/Factory/PrefabFactoryTest.cpp"
 )
 
 add_executable(Engine_Test ${ENGINE_TEST_FILES})

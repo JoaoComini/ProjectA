@@ -3,6 +3,7 @@
 #include "Common/Singleton.hpp"
 
 #include "Resource/Resource.hpp"
+#include "Resource/ResourceRegistry.hpp"
 
 #include "Vulkan/Device.hpp"
 
@@ -15,68 +16,41 @@ namespace Engine
     class ResourceManager: public Singleton<ResourceManager>
     {
     public:
-        static void Setup(const Vulkan::Device& device);
+        ResourceManager(const Vulkan::Device& device);
 
         template<typename T>
         std::shared_ptr<T> LoadResource(const ResourceId& id)
         {
-            if (!IsResourceValid(id))
+            if (!ResourceRegistry::Get().HasResource(id))
             {
                 return nullptr;
             }
 
             if (IsResourceLoaded(id))
             {
-                auto resource = loadedResources.at(id);
+                auto resource = loadedResources[id];
 
                 return std::static_pointer_cast<T>(resource);
             }
 
-            const auto& metadata = resourceRegistry.at(id);
+            const auto metadata = ResourceRegistry::Get().FindMetadataById(id);
 
-            auto resource = FactoryLoad<T>(Project::GetResourceDirectory() / metadata.path);
+            auto resource = FactoryLoad<T>(Project::GetResourceDirectory() / metadata->path);
 
             loadedResources[id] = resource;
 
             return resource;
         }
 
+        void ImportResource(const std::filesystem::path& path);
+    private:
+
+        bool IsResourceLoaded(const ResourceId& id);
+
         template<typename T>
         std::shared_ptr<T> FactoryLoad(std::filesystem::path path);
 
-        void ImportResource(const std::filesystem::path& path);
-
-        void OnResourceImport(ResourceId id, const ResourceMetadata& metadata);
-
-        std::vector<ResourceId> FindResourcesOfType(ResourceType type)
-        {
-            std::vector<ResourceId> resources;
-
-            for (auto it = resourceRegistry.begin(); it != resourceRegistry.end(); it++)
-            {
-                if (it->second.type == type)
-                {
-                    resources.push_back(it->first);
-                }
-            }
-
-            return resources;
-        }
-
-        std::unordered_map<ResourceId, ResourceMetadata>& GetResourceRegistry();
-
-        void SerializeRegistry();
-        void DeserializeRegistry();
-
-    private:
-        ResourceManager(const Vulkan::Device& device);
-
-        bool IsResourceValid(const ResourceId& id);
-        bool IsResourceLoaded(const ResourceId& id);
-
-        std::unordered_map<ResourceId, ResourceMetadata> resourceRegistry;
         std::unordered_map<ResourceId, std::shared_ptr<Resource>> loadedResources;
-
         const Vulkan::Device& device;
     };
 };

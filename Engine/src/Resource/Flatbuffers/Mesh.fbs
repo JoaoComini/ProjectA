@@ -1,0 +1,25 @@
+native_include "NativeVertex.h";
+
+namespace flatbuffers;
+
+struct Vertex(native_type:"Engine::Vertex")
+{
+    position:[float:3];
+    normal:[float:3];
+    uv:[float:2];
+}
+
+table Primitive
+{
+    material:uint64;
+    vertices:[Vertex];
+    indices:[uint8];
+    index_type:int;
+}
+
+table Mesh
+{
+    primitives:[Primitive];
+}
+
+root_type Mesh;

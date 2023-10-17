@@ -1,13 +1,12 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include "Resource/Factory/ModelFactory.hpp"
+#include "Resource/Factory/PrefabFactory.hpp"
 
 using namespace Engine;
 
-TEST_CASE("it should create and retrieve a model", "[ModelFactory]")
+TEST_CASE("it should create and retrieve a model", "[PrefabFactory]")
 {
-
-    ModelFactory factory;
+    PrefabFactory factory;
 
     auto root = std::make_unique<Node>();
     root->SetName("root");
@@ -16,17 +15,15 @@ TEST_CASE("it should create and retrieve a model", "[ModelFactory]")
     auto first = std::make_unique<Node>();
     first->SetName("first");
     first->SetMesh(2);
-    first->SetParent(*root);
 
     auto second = std::make_unique<Node>();
     second->SetName("second");
     second->SetMesh(3);
-    second->SetParent(*root);
     
     root->AddChild(*first);
     root->AddChild(*second);
 
-    Model model;
+    Prefab model;
     model.SetRoot(*root);
     
     std::vector<std::unique_ptr<Node>> nodes;
@@ -36,9 +33,9 @@ TEST_CASE("it should create and retrieve a model", "[ModelFactory]")
 
     model.SetNodes(std::move(nodes));
 
-    factory.Create("test.model", model);
+    factory.Create("test.prefab", model);
 
-    auto loaded = factory.Load("test.model");
+    auto loaded = factory.Load("test.prefab");
 
     REQUIRE(loaded->GetRoot().GetName() == "root");
     REQUIRE(loaded->GetRoot().GetMesh() == ResourceId{ 1 });

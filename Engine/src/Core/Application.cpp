@@ -13,10 +13,10 @@
 #include "Rendering/Gui.hpp"
 
 #include "Resource/ResourceManager.hpp"
-#include "Resource/Model.hpp"
+#include "Resource/ResourceRegistry.hpp"
 
 #include "RenderSystem.hpp"
-#include "Input.hpp"
+#include "WindowInput.hpp"
 
 #include <iostream>
 
@@ -44,12 +44,12 @@ namespace Engine {
 
 		SetupVulkan();
 
-		renderer = Renderer::Setup(*device, *surface, *window);
-		gui = Gui::Setup(*instance, *device, *physicalDevice, *window);
+		Renderer::Setup(*device, *surface, *window);
+		Gui::Setup(*instance, *device, *physicalDevice, *window);
 
-		ResourceManager::Setup(*device);
-
-		Input::Setup(*window);
+		ResourceManager::Create(*device);
+		ResourceRegistry::Create();
+		Input::Create<WindowInput>(*window);
 
 		scene = std::make_unique<Scene>();
 		scene->OnComponentAdded<Component::Camera, &Application::SetCameraAspectRatio>(this);
@@ -83,10 +83,7 @@ namespace Engine {
 	{
 		device->WaitIdle();
 
-		ResourceManager::DeleteInstance();
-		Input::DeleteInstance();
-		Gui::DeleteInstance();
-		Renderer::DeleteInstance();
+		Container::TearDown();
 	}
 
 	void Application::Run()
@@ -108,8 +105,8 @@ namespace Engine {
 			{
 				Component::Camera cameraComponent = camera.GetComponent<Component::Camera>();
 				Component::Transform cameraTransform = camera.GetComponent<Component::Transform>();
-				renderer->Begin(cameraComponent.camera, cameraTransform.GetLocalMatrix());
-				gui->Begin();
+				Renderer::Get().Begin(cameraComponent.camera, cameraTransform.GetLocalMatrix());
+				Gui::Get().Begin();
 			}
 
 			for (auto& system : systems)
@@ -121,8 +118,8 @@ namespace Engine {
 			{
 				OnGui();
 
-				gui->End(renderer->GetActiveCommandBuffer());
-				renderer->End();
+				Gui::Get().End(Renderer::Get().GetActiveCommandBuffer());
+				Renderer::Get().End();
 			}
 		}
 	}

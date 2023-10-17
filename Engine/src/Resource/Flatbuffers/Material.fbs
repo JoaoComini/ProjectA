@@ -1,0 +1,9 @@
+
+namespace flatbuffers;
+
+table Material
+{
+    diffuse:uint64 = 0;
+}
+
+root_type Material;

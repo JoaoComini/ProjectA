@@ -9,32 +9,13 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF) 
 
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/build/lib)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/build/lib)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/build/bin)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 add_subdirectory(Engine)
 add_subdirectory(Game)
 add_subdirectory(Editor)
-
-# -------- COPY MODELS --------
-
-set(MODELS_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/resources/models)
-set(MODELS_OUT_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources/models)
-
-file(GLOB MODEL_SRC_FILES ${MODELS_SRC_DIR}/*)
-
-add_custom_target(Models)
-
-add_custom_command(
-    TARGET Models
-    COMMAND ${CMAKE_COMMAND} -E echo "Copying ${MODELS_SRC_DIR} to ${MODELS_OUT_DIR}"
-    COMMAND ${CMAKE_COMMAND} -E copy_directory ${MODELS_SRC_DIR} ${MODELS_OUT_DIR}
-    DEPENDS ${MODEL_SRC_FILES} ${MODELS_SRC_DIR}
-)
-
-add_dependencies(Game Models)
-add_dependencies(Editor Models)
 
 # -------- COMPILE SHADERS --------
 find_program(glslc_executable NAMES glslc HINTS Vulkan::glslc)

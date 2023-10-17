@@ -6,7 +6,7 @@
 
 CameraSystem::CameraSystem(Engine::Scene& scene): System(scene)
 {
-    input = Engine::Input::GetInstance();
+    input = &Engine::Input::Get();
 }
 
 void CameraSystem::Update(float timestep)

@@ -10,62 +10,57 @@
 
 namespace Engine
 {
-    Gui* Gui::Setup(Vulkan::Instance& instance, Vulkan::Device& device, Vulkan::PhysicalDevice& physicalDevice, Window& window)
+    void Gui::Setup(Vulkan::Instance& instance, Vulkan::Device& device, Vulkan::PhysicalDevice& physicalDevice, Window& window)
     {
-		if (Gui::instance == nullptr)
+		std::vector<VkDescriptorPoolSize> poolSizes =
 		{
-			std::vector<VkDescriptorPoolSize> poolSizes =
-			{
-				{ VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
-				{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
-				{ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
-				{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
-				{ VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
-				{ VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
-				{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
-				{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
-				{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
-				{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
-				{ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
-			};
+			{ VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
+			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
+			{ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
+			{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
+			{ VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
+			{ VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
+			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
+			{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
+			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
+			{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
+			{ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
+		};
 
-			std::unique_ptr<Vulkan::DescriptorPool> descriptorPool = std::make_unique<Vulkan::DescriptorPool>(device, poolSizes, 1000);
+		std::unique_ptr<Vulkan::DescriptorPool> descriptorPool = std::make_unique<Vulkan::DescriptorPool>(device, poolSizes, 1000);
 
-			ImGui::CreateContext();
+		ImGui::CreateContext();
 
-			ImGuiIO& io = ImGui::GetIO();
-			io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-			//io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-			//io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+		ImGuiIO& io = ImGui::GetIO();
+		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+		//io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+		//io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
-			ImGui::StyleColorsDark();
+		ImGui::StyleColorsDark();
 
-			ImGui_ImplGlfw_InitForVulkan(static_cast<GLFWwindow*>(window.GetHandle()), true);
+		ImGui_ImplGlfw_InitForVulkan(static_cast<GLFWwindow*>(window.GetHandle()), true);
 
-			ImGui_ImplVulkan_InitInfo initInfo = {};
-			initInfo.Instance = instance.GetHandle();
-			initInfo.PhysicalDevice = physicalDevice.GetHandle();
-			initInfo.Device = device.GetHandle();
-			initInfo.Queue = device.GetGraphicsQueue().GetHandle();
-			initInfo.DescriptorPool = descriptorPool->GetHandle();
-			initInfo.MinImageCount = 3;
-			initInfo.ImageCount = 3;
-			initInfo.MSAASamples = device.GetMaxSampleCount();
+		ImGui_ImplVulkan_InitInfo initInfo = {};
+		initInfo.Instance = instance.GetHandle();
+		initInfo.PhysicalDevice = physicalDevice.GetHandle();
+		initInfo.Device = device.GetHandle();
+		initInfo.Queue = device.GetGraphicsQueue().GetHandle();
+		initInfo.DescriptorPool = descriptorPool->GetHandle();
+		initInfo.MinImageCount = 3;
+		initInfo.ImageCount = 3;
+		initInfo.MSAASamples = device.GetMaxSampleCount();
 
-			ImGui_ImplVulkan_Init(&initInfo, Renderer::GetInstance()->GetRenderPass().GetHandle());
+		ImGui_ImplVulkan_Init(&initInfo, Renderer::Get().GetRenderPass().GetHandle());
 
-			device.OneTimeSubmit([&](Vulkan::CommandBuffer& buffer) {
-				ImGui_ImplVulkan_CreateFontsTexture(buffer.GetHandle());
-			});
+		device.OneTimeSubmit([&](Vulkan::CommandBuffer& buffer) {
+			ImGui_ImplVulkan_CreateFontsTexture(buffer.GetHandle());
+		});
 
-			device.ResetCommandPool();
+		device.ResetCommandPool();
 
-			ImGui_ImplVulkan_DestroyFontUploadObjects();
+		ImGui_ImplVulkan_DestroyFontUploadObjects();
 
-			Gui::instance = new Gui(std::move(descriptorPool), window);
-		}
-
-		return Gui::instance;
+		Create(std::move(descriptorPool), window);
     }
 
 	void Gui::Begin()

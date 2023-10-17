@@ -1,6 +1,10 @@
 #include "MeshFactory.hpp"
 
-#include <fstream>
+#include "Common/FileSystem.hpp"
+
+#include "../Flatbuffers/Mesh_generated.h"
+
+#include <glm/gtc/type_ptr.hpp>
 
 namespace Engine
 {
@@ -13,85 +17,57 @@ namespace Engine
     {
         ResourceId id;
 
-        std::ofstream file(destination, std::ios::out | std::ios::binary | std::ios::trunc);
+        flatbuffers::MeshT mesh;
 
-        size_t size = spec.primitives.size();
-        file.write(reinterpret_cast<char*>(&size), sizeof(size));
-
-        for (auto& primitive: spec.primitives)
+        for (auto& primitiveSpec: spec.primitives)
         {
-            file.write(reinterpret_cast<char*>(&primitive.material), sizeof(primitive.material));
+            auto primitive = std::make_unique<flatbuffers::PrimitiveT>();
 
-            size_t verticesSize = primitive.vertices.size() * sizeof(Vertex);
-            file.write(reinterpret_cast<char*>(&verticesSize), sizeof(verticesSize));
-            file.write(reinterpret_cast<char*>(&primitive.vertices[0]), verticesSize);
+            primitive->material = primitiveSpec.material;
+            primitive->vertices = primitiveSpec.vertices;
+            primitive->indices = primitiveSpec.indices;
+            primitive->index_type = primitiveSpec.indexType;
 
-            size_t indicesSize = primitive.indices.size();
-            file.write(reinterpret_cast<char*>(&indicesSize), sizeof(indicesSize));
-            file.write(reinterpret_cast<char*>(&primitive.indices[0]), indicesSize);
-
-            file.write(reinterpret_cast<char*>(&primitive.indexType), sizeof(primitive.indexType));
+            mesh.primitives.push_back(std::move(primitive));
         }
-        file.close();
+
+        flatbuffers::FlatBufferBuilder builder(1024);
+
+        auto offset = flatbuffers::Mesh::Pack(builder, &mesh);
+
+        builder.Finish(offset);
+
+        uint8_t* buffer = builder.GetBufferPointer();
+        size_t size = builder.GetSize();
+
+        FileSystem::WriteFile(destination, { buffer, buffer + size });
 
         return id;
     }
 
     std::shared_ptr<Mesh> MeshFactory::Load(std::filesystem::path source)
     {
-        MeshSpec spec{};
+        auto file = FileSystem::ReadFile(source);
 
-        std::ifstream file(source, std::ios::in | std::ios::binary);
+        flatbuffers::MeshT buffer;
+        flatbuffers::GetMesh(file.c_str())->UnPackTo(&buffer);
 
-        size_t size{ 0 };
-        file.read(reinterpret_cast<char*>(&size), sizeof(size));
-
-        for (size_t i = 0; i < size; i++)
-        {
-            PrimitiveSpec primitiveSpec{};
-
-            file.read(reinterpret_cast<char*>(&primitiveSpec.material), sizeof(primitiveSpec.material));
-
-            size_t verticesSize{};
-            file.read(reinterpret_cast<char*>(&verticesSize), sizeof(verticesSize));
-
-            primitiveSpec.vertices.resize(verticesSize / sizeof(Vertex));
-            file.read(reinterpret_cast<char*>(&primitiveSpec.vertices[0]), verticesSize);
-
-            size_t indicesSize{};
-            file.read(reinterpret_cast<char*>(&indicesSize), sizeof(indicesSize));
-
-            primitiveSpec.indices.resize(indicesSize);
-            file.read(reinterpret_cast<char*>(&primitiveSpec.indices[0]), indicesSize);
-
-            file.read(reinterpret_cast<char*>(&primitiveSpec.indexType), sizeof(primitiveSpec.indexType));
-
-            spec.primitives.push_back(primitiveSpec);
-        }
-
-        file.close();
-
-        return BuildFromSpec(spec);
-    }
-
-    std::shared_ptr<Mesh> MeshFactory::BuildFromSpec(MeshSpec& spec)
-    {
         auto mesh = std::make_shared<Mesh>();
 
-        for (auto& primitiveSpec : spec.primitives)
+        for (auto& p: buffer.primitives)
         {
             auto primitive = std::make_unique<Primitive>(device);
 
-            primitive->AddVertexBuffer(primitiveSpec.vertices);
+            primitive->AddVertexBuffer(p->vertices);
 
-            if (primitiveSpec.indices.size() > 0)
+            if (p->indices.size() > 0)
             {
-                primitive->AddIndexBuffer(primitiveSpec.indices, primitiveSpec.indexType);
+                primitive->AddIndexBuffer(p->indices, static_cast<VkIndexType>(p->index_type));
             }
 
-            if (primitiveSpec.material)
+            if (p->material)
             {
-                primitive->SetMaterial(primitiveSpec.material);
+                primitive->SetMaterial(p->material);
             }
 
             mesh->AddPrimitive(std::move(primitive));

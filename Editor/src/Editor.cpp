@@ -21,7 +21,7 @@ namespace Engine
 			return;
 		}
 
-		ResourceManager::GetInstance()->DeserializeRegistry();
+		ResourceRegistry::Get().Deserialize();
 
         AddSystem<CameraSystem>();
 
@@ -113,7 +113,7 @@ namespace Engine
 
 		if (!file.empty())
 		{
-			ResourceManager::GetInstance()->ImportResource(file);
+			ResourceManager::Get().ImportResource(file);
 		}
 	}
 }

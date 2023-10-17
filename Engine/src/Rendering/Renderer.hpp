@@ -42,7 +42,9 @@ namespace Engine
 	class Renderer : public Singleton<Renderer>
 	{
 	public:
-		static Renderer* Setup(Vulkan::Device& device, const Vulkan::Surface& surface, const Window& window);
+		Renderer(Vulkan::Device& device, std::unique_ptr<Vulkan::Swapchain> swapchain);
+
+		static void Setup(Vulkan::Device& device, const Vulkan::Surface& surface, const Window& window);
 
 		void Begin(const Camera& camera, const glm::mat4& transform);
 		void Draw(const Mesh& mesh, const glm::mat4& transform);
@@ -52,7 +54,6 @@ namespace Engine
 		Vulkan::CommandBuffer& GetActiveCommandBuffer() const;
 
 	private:
-		Renderer(Vulkan::Device& device, std::unique_ptr<Vulkan::Swapchain> swapchain);
 
 		void CreateDescriptors();
 		void CreatePipeline();

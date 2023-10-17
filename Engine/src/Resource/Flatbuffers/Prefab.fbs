@@ -1,0 +1,24 @@
+namespace flatbuffers;
+
+struct Transform
+{
+    position:[float:3];
+    rotation:[float:4];
+    scale:[float:3];
+}
+
+table Node
+{
+    name:string;
+    mesh:uint64 = 0;
+    transform:Transform;
+
+    children:[Node];
+}
+
+table Prefab
+{
+    root:Node;
+}
+
+root_type Prefab;

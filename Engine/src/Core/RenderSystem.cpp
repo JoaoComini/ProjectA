@@ -6,8 +6,8 @@ namespace Engine
 {
 	RenderSystem::RenderSystem(Scene& scene) : System(scene)
 	{
-		renderer = Renderer::GetInstance();
-		gui = Gui::GetInstance();
+		renderer = &Renderer::Get();
+		gui = &Gui::Get();
 	}
 
 	void RenderSystem::Update(float timestep)
@@ -23,7 +23,7 @@ namespace Engine
 					return;
 				}
 
-				auto mesh = ResourceManager::GetInstance()->LoadResource<Mesh>(meshRender.mesh);
+				auto mesh = ResourceManager::Get().LoadResource<Mesh>(meshRender.mesh);
 
 				glm::mat4 matrix = GetWorldMatrix(entity, transform);
 

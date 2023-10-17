@@ -16,7 +16,7 @@ namespace Engine
 		Texture,
 		Material,
 		Mesh,
-		Model,
+		Prefab,
 	};
 
 	std::string ResourceTypeToString(ResourceType type);

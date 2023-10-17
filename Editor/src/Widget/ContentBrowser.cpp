@@ -1,7 +1,7 @@
 #include "ContentBrowser.hpp"
 
 #include "Resource/ResourceManager.hpp"
-#include "Resource/Model.hpp"
+#include "Resource/Prefab.hpp"
 #include "Resource/Importer/TextureImporter.hpp"
 #include "Project/Project.hpp"
 
@@ -149,7 +149,7 @@ void ContentBrowser::ContentBrowserDirectory(std::filesystem::path path)
 
 void ContentBrowser::ContentBrowserFile(std::filesystem::path path, ResourceTree::Node* node)
 {
-	std::string filename = path.filename().generic_string();
+	std::string filename = path.stem().generic_string();
 
 	ImGui::PushID(filename.c_str());
 
@@ -157,9 +157,9 @@ void ContentBrowser::ContentBrowserFile(std::filesystem::path path, ResourceTree
 
 	if (ImGui::BeginPopupContextItem())
 	{
-		if (node->metadata.type == Engine::ResourceType::Model && ImGui::MenuItem("Add to Scene"))
+		if (node->metadata.type == Engine::ResourceType::Prefab && ImGui::MenuItem("Add to Scene"))
 		{
-			auto model = Engine::ResourceManager::GetInstance()->LoadResource<Engine::Model>(node->id);
+			auto model = Engine::ResourceManager::Get().LoadResource<Engine::Prefab>(node->id);
 
 			for (auto child : model->GetRoot().GetChildren())
 			{
@@ -192,7 +192,7 @@ int ContentBrowser::GetContentTableColumns()
 
 void ContentBrowser::RefreshResourceTree()
 {
-	auto& registry = Engine::ResourceManager::GetInstance()->GetResourceRegistry();
+	auto& registry = Engine::ResourceRegistry::Get().GetResources();
 
 	for (auto& [id, metadata] : registry)
 	{

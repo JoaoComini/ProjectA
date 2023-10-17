@@ -12,7 +12,7 @@
 #include "Resource/Factory/TextureFactory.hpp"
 #include "Resource/Factory/MaterialFactory.hpp"
 #include "Resource/Factory/MeshFactory.hpp"
-#include "Resource/Factory/ModelFactory.hpp"
+#include "Resource/Factory/PrefabFactory.hpp"
 
 #include "Resource/ResourceManager.hpp"
 
@@ -29,18 +29,25 @@ namespace Engine
     }
 
     void GltfImporter::Import(std::filesystem::path path)
-    {
+    {   
         tinygltf::Model model = LoadModel(path);
 
-        auto textures = ImportTextures(path, model);
+        auto directory = GetPrefabDirectory(path);
 
-        auto materials = ImportMaterials(path, model, textures);
+        if (!std::filesystem::create_directory(directory))
+        {
+            return;
+        }
+    
+        auto textures = ImportTextures(directory, model);
 
-        auto meshes = ImportMeshes(path, model, materials);
+        auto materials = ImportMaterials(directory, model, textures);
+
+        auto meshes = ImportMeshes(directory, model, materials);
 
         auto nodes =  ImportNodes(model, meshes);
         
-        ImportModel(path, model, nodes);
+        ImportPrefab(directory, model, nodes);
     }
 
     tinygltf::Model GltfImporter::LoadModel(std::filesystem::path path)
@@ -88,7 +95,7 @@ namespace Engine
                 .image = image.image
             };
 
-            auto path = GetFilePath(parent, std::to_string(i), ".texture");
+            auto path = GetResourcePath(parent, "texture");
 
             auto id = factory.Create(path, spec);
 
@@ -98,7 +105,7 @@ namespace Engine
                 .type = ResourceType::Texture
             };
 
-            ResourceManager::GetInstance()->OnResourceImport(id, metadata);
+            ResourceRegistry::Get().ResourceCreated(id, metadata);
 
             textures.push_back(id);
         }
@@ -117,20 +124,20 @@ namespace Engine
             auto& material = model.materials[i];
             auto& values = material.values;
 
-            ResourceId* diffuse = nullptr;
+            ResourceId diffuse{ 0 };
 
             if (values.find("baseColorTexture") != values.end()) {
                 auto index = values["baseColorTexture"].TextureIndex();
 
-                diffuse = &textures[index];
+                diffuse = textures[index];
             }
 
             MaterialSpec spec
             {
-                .diffuse = *diffuse
+                .diffuse = diffuse
             };
 
-            auto path = GetFilePath(parent, std::to_string(i), ".material");
+            auto path = GetResourcePath(parent, "material");
 
             auto id = factory.Create(path, spec);
 
@@ -140,7 +147,7 @@ namespace Engine
                 .type = ResourceType::Material
             };
 
-            ResourceManager::GetInstance()->OnResourceImport(id, metadata);
+            ResourceRegistry::Get().ResourceCreated(id, metadata);
 
             materials.push_back(id);
         }
@@ -238,7 +245,7 @@ namespace Engine
                 spec.primitives.push_back(primitiveSpec);
             }
 
-            auto path = GetFilePath(parent, parent.stem().concat(mesh.name).string(), ".mesh");
+            auto path = GetResourcePath(parent, mesh.name);
 
             auto id = factory.Create(path, spec);
 
@@ -248,7 +255,7 @@ namespace Engine
                 .type = ResourceType::Mesh
             };
 
-            ResourceManager::GetInstance()->OnResourceImport(id, metadata);
+            ResourceRegistry::Get().ResourceCreated(id, metadata);
 
             meshes.push_back(id);
         }
@@ -292,16 +299,16 @@ namespace Engine
         return nodes;
     }
 
-    void GltfImporter::ImportModel(std::filesystem::path parent, tinygltf::Model& gltfModel, std::vector<std::unique_ptr<Node>>& nodes)
+    void GltfImporter::ImportPrefab(std::filesystem::path parent, tinygltf::Model& gltfModel, std::vector<std::unique_ptr<Node>>& nodes)
     {
-        ModelFactory factory;
+        PrefabFactory factory;
             
         tinygltf::Scene scene = gltfModel.scenes[gltfModel.defaultScene];
 
         auto root = std::make_unique<Node>();
         root->SetName(scene.name);
 
-        auto model = std::make_shared<Model>();
+        auto model = std::make_shared<Prefab>();
         model->SetRoot(*root);
 
         std::queue<std::pair<Node&, int>> traverseNodes;
@@ -319,7 +326,6 @@ namespace Engine
             auto& current = *nodes[nodeIt.second];
             auto& parent = nodeIt.first;
 
-            current.SetParent(parent);
             parent.AddChild(current);
 
             for (auto childIndex : gltfModel.nodes[nodeIt.second].children)
@@ -332,7 +338,7 @@ namespace Engine
 
         model->SetNodes(std::move(nodes));
 
-        std::filesystem::path path = GetFilePath(parent, parent.stem().string(), ".model");
+        std::filesystem::path path = GetResourcePath(parent, parent.stem().string());
 
         auto id = factory.Create(path, *model);
 
@@ -342,13 +348,54 @@ namespace Engine
             .type = model->GetType()
         };
 
-        ResourceManager::GetInstance()->OnResourceImport(id, metadata);
+        ResourceRegistry::Get().ResourceCreated(id, metadata);
     }
 
-    std::filesystem::path GltfImporter::GetFilePath(std::filesystem::path parent, std::string name, std::string extension)
+    std::filesystem::path GltfImporter::GetResourcePath(std::filesystem::path parent, std::string name)
     {
-        std::filesystem::create_directory(Project::GetResourceDirectory() / parent.stem());
+        auto base = Project::GetResourceDirectory() / parent.stem();
 
-        return Project::GetResourceDirectory() / parent.stem() / parent.stem().concat("_" + name).replace_extension(extension);
+        std::filesystem::path path;
+        ResourceId existing;
+        auto current = 0;
+        do
+        {
+            path = base / name;
+
+            if (current > 0)
+            {
+                path += "_" + std::to_string(current);
+            }
+
+            path.replace_extension(".pares");
+            current += 1;
+
+
+            auto relative = std::filesystem::relative(path, Project::GetResourceDirectory());
+            existing = ResourceRegistry::Get().FindResourceByPath(relative);
+        } while (existing);
+
+        return path;
+    }
+
+    std::filesystem::path GltfImporter::GetPrefabDirectory(std::filesystem::path path)
+    {
+        auto base = Project::GetResourceDirectory() / path.stem();
+
+        std::filesystem::path directory;
+        auto current = 0;
+        do
+        {
+            directory = base;
+
+            if (current > 0)
+            {
+                directory += "_" + std::to_string(current);
+            }
+
+            current += 1;
+        } while (std::filesystem::exists(directory));
+
+        return directory;
     }
 };

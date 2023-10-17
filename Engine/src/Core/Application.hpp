@@ -72,9 +72,6 @@ namespace Engine {
 		std::unique_ptr<Vulkan::PhysicalDevice> physicalDevice;
 		std::unique_ptr<Vulkan::Device> device;
 
-		Renderer* renderer;
-		Gui* gui;
-
 		std::unique_ptr<Scene> scene;
 
 		std::vector<std::unique_ptr<System>> systems;

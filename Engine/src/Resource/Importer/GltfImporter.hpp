@@ -9,7 +9,7 @@
 #include "Rendering/Texture.hpp"
 #include "Rendering/Mesh.hpp"
 
-#include "Resource/Model.hpp"
+#include "Resource/Prefab.hpp"
 
 namespace Engine
 {
@@ -28,9 +28,10 @@ namespace Engine
 		std::vector<ResourceId> ImportMeshes(std::filesystem::path parent, tinygltf::Model& model, std::vector<ResourceId>& materials);
 		std::vector<std::unique_ptr<Node>> ImportNodes(tinygltf::Model& model, std::vector<ResourceId>& meshes);
 
-		void ImportModel(std::filesystem::path path, tinygltf::Model& gltfModel, std::vector<std::unique_ptr<Node>>& nodes);
+		void ImportPrefab(std::filesystem::path path, tinygltf::Model& gltfModel, std::vector<std::unique_ptr<Node>>& nodes);
 
-		std::filesystem::path GetFilePath(std::filesystem::path parent, std::string name, std::string extension);
+		std::filesystem::path GetResourcePath(std::filesystem::path parent, std::string name);
+		std::filesystem::path GetPrefabDirectory(std::filesystem::path path);
 
 		const Vulkan::Device& device;
 

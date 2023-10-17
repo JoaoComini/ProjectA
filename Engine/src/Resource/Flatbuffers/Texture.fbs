@@ -1,0 +1,12 @@
+
+namespace flatbuffers;
+
+table Texture
+{
+    width:int;
+    height:int;
+    component:int;
+    image:[uint8];
+}
+
+root_type Texture;

@@ -2,7 +2,10 @@
 
 #include "Resource/ResourceManager.hpp"
 
-#include <fstream>
+#include "Common/FileSystem.hpp"
+
+#include "../Flatbuffers/Texture_generated.h"
+
 
 namespace Engine
 {
@@ -13,35 +16,35 @@ namespace Engine
     {
         ResourceId id;
 
-        std::ofstream file(destination, std::ios::out | std::ios::binary | std::ios::trunc);
-        file.write(reinterpret_cast<char*>(&spec.width), sizeof(spec.width));
-        file.write(reinterpret_cast<char*>(&spec.height), sizeof(spec.height));
-        file.write(reinterpret_cast<char*>(&spec.component), sizeof(spec.component));
+        flatbuffers::TextureT texture;
 
-        size_t size = spec.image.size();
-        file.write(reinterpret_cast<char*>(&size), sizeof(size_t));
-        file.write(reinterpret_cast<char*>(spec.image.data()), spec.image.size());
-        file.close();
+        texture.width = spec.width;
+        texture.height = spec.height;
+        texture.component = spec.component;
+        texture.image = spec.image;
+
+        flatbuffers::FlatBufferBuilder builder(1024);
+
+        auto offset = flatbuffers::Texture::Pack(builder, &texture);
+
+        builder.Finish(offset);
+
+        uint8_t* buffer = builder.GetBufferPointer();
+        size_t size = builder.GetSize();
+
+        FileSystem::WriteFile(destination, { buffer, buffer + size });
 
         return id;
     }
 
     std::shared_ptr<Texture> TextureFactory::Load(std::filesystem::path source)
     {
-        TextureSpec spec{};
+        auto file = FileSystem::ReadFile(source);
 
-        std::ifstream file(source, std::ios::in | std::ios::binary);
-        file.read(reinterpret_cast<char*>(&spec.width), sizeof(spec.width));
-        file.read(reinterpret_cast<char*>(&spec.height), sizeof(spec.height));
-        file.read(reinterpret_cast<char*>(&spec.component), sizeof(spec.component));
+        auto texture = flatbuffers::GetTexture(file.c_str());
 
-        size_t size{};
-        file.read(reinterpret_cast<char*>(&size), sizeof(size_t));
+        auto image = texture->image();
 
-        spec.image.resize(size);
-        file.read(reinterpret_cast<char*>(spec.image.data()), size);
-        file.close();
-
-        return std::make_shared<Texture>(device, spec.width, spec.height, spec.image);
+        return std::make_shared<Texture>(device, texture->width(), texture->height(), std::vector<uint8_t>{ image->data(), image->data() + image->size() });
     }
 }

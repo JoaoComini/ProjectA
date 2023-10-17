@@ -11,22 +11,17 @@
 namespace Engine
 {
 
-	Renderer* Renderer::Setup(Vulkan::Device& device, const Vulkan::Surface& surface, const Window& window)
+	void Renderer::Setup(Vulkan::Device& device, const Vulkan::Surface& surface, const Window& window)
 	{
-		if (instance == nullptr)
-		{
-			auto size = window.GetFramebufferSize();
+		auto size = window.GetFramebufferSize();
 
-			auto swapchain = Vulkan::SwapchainBuilder()
-				.DesiredWidth(size.width)
-				.DesiredHeight(size.height)
-				.MinImageCount(3)
-				.Build(device, surface);
+		auto swapchain = Vulkan::SwapchainBuilder()
+			.DesiredWidth(size.width)
+			.DesiredHeight(size.height)
+			.MinImageCount(3)
+			.Build(device, surface);
 
-			instance = new Renderer(device, std::move(swapchain));
-		}
-
-		return instance;
+		Create(device, std::move(swapchain));
 	}
 
 	Renderer::Renderer(Vulkan::Device& device, std::unique_ptr<Vulkan::Swapchain> swapchain)
@@ -243,7 +238,7 @@ namespace Engine
 		{
 			ResourceId materialId = primitive->GetMaterial();
 
-			auto material = ResourceManager::GetInstance()->LoadResource<Material>(materialId);
+			auto material = ResourceManager::Get().LoadResource<Material>(materialId);
 
 			ModelUniform uniform{
 				.model = transform,
@@ -264,7 +259,7 @@ namespace Engine
 				} } } }
 			};
 
-			auto diffuse = ResourceManager::GetInstance()->LoadResource<Texture>(material->GetDiffuse());
+			auto diffuse = ResourceManager::Get().LoadResource<Texture>(material->GetDiffuse());
 
 			BindingMap<VkDescriptorImageInfo> imageInfos = {
 				{ 1, { { 0, VkDescriptorImageInfo{

@@ -17,15 +17,15 @@ namespace Engine
     {
 
     public:
+        Gui(std::unique_ptr<Vulkan::DescriptorPool> descriptorPool, Window& window);
         ~Gui();
 
-        static Gui* Setup(Vulkan::Instance& instance, Vulkan::Device& device, Vulkan::PhysicalDevice& physicalDevice, Window& window);
+        static void Setup(Vulkan::Instance& instance, Vulkan::Device& device, Vulkan::PhysicalDevice& physicalDevice, Window& window);
 
         void Begin();
         void End(Vulkan::CommandBuffer& commandBuffer);
 
     private:
-        Gui(std::unique_ptr<Vulkan::DescriptorPool> descriptorPool, Window& window);
 
         std::unique_ptr<Vulkan::DescriptorPool> descriptorPool;
         Window& window;

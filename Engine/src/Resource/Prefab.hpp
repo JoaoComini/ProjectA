@@ -39,11 +39,6 @@ namespace Engine
 			return transform;
 		}
 
-		void SetParent(Node& parent)
-		{
-			this->parent = &parent;
-		}
-
 		void AddChild(Node& child)
 		{
 			children.push_back(&child);
@@ -59,14 +54,13 @@ namespace Engine
 		Component::Transform transform;
 		Component::MeshRender meshRender;
 
-		Node* parent;
 		std::vector<Node *> children;
 	};
 
-	class Model : public Resource
+	class Prefab : public Resource
 	{
 	public:
-		Model();
+		Prefab();
 
 		void SetNodes(std::vector<std::unique_ptr<Node>>&& nodes)
 		{
