@@ -91,10 +91,6 @@ namespace Engine
         return material;
     }
 
-    Mesh::Mesh() : Resource(ResourceType::Mesh)
-    {
-    }
-
     void Mesh::AddPrimitive(std::unique_ptr<Primitive> primitive)
     {
         primitives.push_back(std::move(primitive));

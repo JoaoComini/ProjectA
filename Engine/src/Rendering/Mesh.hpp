@@ -47,11 +47,20 @@ namespace Engine
 	{
 
 	public:
-		Mesh();
-
 		void AddPrimitive(std::unique_ptr<Primitive> primitive);
 
 		std::vector<std::unique_ptr<Primitive>> const& GetPrimitives() const;
+
+		static ResourceType GetStaticType()
+		{
+			return ResourceType::Mesh;
+		}
+
+		virtual ResourceType GetType() const override
+		{
+			return GetStaticType();
+		}
+
 	private:
 		std::vector<std::unique_ptr<Primitive>> primitives;
 	};

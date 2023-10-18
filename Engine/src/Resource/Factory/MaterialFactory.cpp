@@ -9,10 +9,8 @@
 
 namespace Engine
 {
-    ResourceId MaterialFactory::Create(std::filesystem::path destination, MaterialSpec& spec)
+    void MaterialFactory::Create(std::filesystem::path destination, MaterialSpec& spec)
     {
-        ResourceId id;
-
         flatbuffers::MaterialT material;
         material.diffuse = spec.diffuse;
 
@@ -24,9 +22,8 @@ namespace Engine
         size_t size = builder.GetSize();
 
         FileSystem::WriteFile(destination, { buffer, buffer + size });
-
-        return id;
     }
+
     std::shared_ptr<Material> MaterialFactory::Load(std::filesystem::path source)
     {
         auto file = FileSystem::ReadFile(source);

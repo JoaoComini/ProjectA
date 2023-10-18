@@ -115,13 +115,13 @@ set(ENGINE_SRC_FILES
     "src/Resource/ResourceManager.cpp"
     "src/Resource/ResourceRegistry.cpp"
     "src/Resource/Resource.cpp"
-    "src/Resource/Prefab.cpp"
     "src/Resource/Importer/GltfImporter.cpp"
     "src/Resource/Importer/TextureImporter.cpp"
     "src/Resource/Factory/TextureFactory.cpp"
     "src/Resource/Factory/MaterialFactory.cpp"
     "src/Resource/Factory/MeshFactory.cpp"
     "src/Resource/Factory/PrefabFactory.cpp"
+    "src/Resource/Factory/SceneFactory.cpp"
     "src/Resource/Flatbuffers/NativeVertex.cpp"
     "src/Platform/Windows/FileDialog.cpp"
 )
@@ -161,7 +161,7 @@ target_compile_definitions(Engine PRIVATE
 # - COMPILE FLATBUFFERS -
 
 set(
-    FLATBUFFERS_SRC_FILES
+    FLATBUFFERS_SCHEMAS
     "src/Resource/Flatbuffers/Material.fbs"
     "src/Resource/Flatbuffers/Texture.fbs"
     "src/Resource/Flatbuffers/Mesh.fbs"
@@ -174,24 +174,23 @@ else ()
     set(FLATBUFFERS_FLATC_EXECUTABLE ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/flatc)
 endif ()
 
-foreach(FILE IN LISTS FLATBUFFERS_SRC_FILES)
-    get_filename_component(FLATBUFFERS_SRC_DIR ${FILE} PATH)
-    get_filename_component(FILENAME ${FILE} NAME_WE)
+add_custom_target(Engine_Flatbuffers)
+
+foreach(SCHEMA_SRC IN LISTS FLATBUFFERS_SCHEMAS)
+    get_filename_component(SCHEMA_DIR ${SCHEMA_SRC} PATH)
+    string(REGEX REPLACE "\\.fbs$" "_generated.h" GEN_HEADER ${SCHEMA_SRC})
     add_custom_command(
         COMMAND
         ${FLATBUFFERS_FLATC_EXECUTABLE}
         --cpp --gen-object-api
-        -o ${CMAKE_CURRENT_SOURCE_DIR}/${FLATBUFFERS_SRC_DIR}
-        -I ${CMAKE_CURRENT_SOURCE_DIR}/${FLATBUFFERS_SRC_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}/${FILE}
-        OUTPUT ${FLATBUFFERS_SRC_DIR}/${FILENAME}_generated.h
-        DEPENDS ${FILE} ${FLATBUFFERS_SRC_DIR} flatc
-        COMMENT "flatc generation: ${FILE}"
+        -o ${SCHEMA_DIR}
+        -I ${SCHEMA_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/${SCHEMA_SRC}
+        OUTPUT ${GEN_HEADER}
+        COMMENT "flatc generation: ${SCHEMA_SRC}"
     )
-    list(APPEND FLATBUFFERS_GEN ${FLATBUFFERS_SRC_DIR}/${FILENAME}_generated.h)
+    target_sources(Engine_Flatbuffers PRIVATE ${GEN_HEADER})
 endforeach()
-
-add_custom_target(Engine_Flatbuffers DEPENDS ${FLATBUFFERS_GEN})
 
 add_dependencies(Engine Engine_Flatbuffers)
 
@@ -210,7 +209,7 @@ set(ENGINE_TEST_FILES
     "test/Resource/Factory/TextureFactoryTest.cpp"
     "test/Resource/Factory/MeshFactoryTest.cpp"
     "test/Resource/Factory/PrefabFactoryTest.cpp"
-)
+ )
 
 add_executable(Engine_Test ${ENGINE_TEST_FILES})
 

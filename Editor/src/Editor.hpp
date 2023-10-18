@@ -7,7 +7,7 @@
 #include "Widget/EntityInspector.hpp"
 #include "Widget/MainMenuBar.hpp"
 #include "Widget/ContentBrowser.hpp"
-#include "Scene/Mixin.hpp"
+#include "Widget/ViewportDragDrop.hpp"
 
 #include "EditorCamera.hpp"
 
@@ -23,11 +23,14 @@ namespace Engine
         void OnWindowResize(int width, int height) override;
 
     private:
-        void SaveScene();
-        void OpenScene();
-        void ImportFile();
+        void DrawViewportDragDrop(ImGuiID dockId);
 
-        std::filesystem::path scenePath;
+        void NewScene();
+        void SaveScene();
+        void OpenScene(ResourceId id);
+
+        void AddPrefabToScene(ResourceId id);
+        void ImportFile();
 
         std::unique_ptr<EditorCamera> camera;
 
@@ -35,6 +38,7 @@ namespace Engine
         std::unique_ptr<EntityInspector> entityInspector;
         std::unique_ptr<MainMenuBar> mainMenuBar;
         std::unique_ptr<ContentBrowser> contentBrowser;
+        std::unique_ptr<ViewportDragDrop> viewportDragDrop;
     };
 
     std::unique_ptr<Application> CreateApplication(ApplicationArgs args)

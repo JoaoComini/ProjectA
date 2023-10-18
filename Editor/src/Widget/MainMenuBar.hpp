@@ -12,14 +12,14 @@ public:
 
 	void OnExit(std::function<void()> onExitFn);
 	void OnSaveScene(std::function<void()> onSaveSceneFn);
-	void OnOpenScene(std::function<void()> onOpenSceneFn);
+	void OnNewScene(std::function<void()> onNewSceneFn);
 	void OnImport(std::function<void()> onImportFn);
 
 private:
 	std::function<void()> onExitFn;
 	std::function<void()> onImportFn;
 	std::function<void()> onSaveSceneFn;
-	std::function<void()> onOpenSceneFn;
+	std::function<void()> onNewSceneFn;
 
 	void MainMenuItem(std::string label, std::function<void()> callbackFn);
 

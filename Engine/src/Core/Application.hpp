@@ -52,6 +52,7 @@ namespace Engine {
 		virtual void OnWindowResize(int width, int height);
 
 		Scene& GetScene();
+		void SetScene(Scene& scene);
 
 		Window& GetWindow();
 

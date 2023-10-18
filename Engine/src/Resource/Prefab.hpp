@@ -60,8 +60,6 @@ namespace Engine
 	class Prefab : public Resource
 	{
 	public:
-		Prefab();
-
 		void SetNodes(std::vector<std::unique_ptr<Node>>&& nodes)
 		{
 			this->nodes = std::move(nodes);
@@ -75,6 +73,16 @@ namespace Engine
 		void SetRoot(Node& node)
 		{
 			root = &node;
+		}
+
+		static ResourceType GetStaticType()
+		{
+			return ResourceType::Prefab;
+		}
+
+		virtual ResourceType GetType() const override
+		{
+			return GetStaticType();
 		}
 
 	private:

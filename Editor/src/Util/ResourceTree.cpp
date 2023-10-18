@@ -13,7 +13,7 @@ void ResourceTree::SetRoot(std::filesystem::path path)
 
 ResourceTree::Node* ResourceTree::Search(std::filesystem::path path)
 {
-	if (path == ".")
+	if (path.empty())
 	{
 		return root;
 	}
@@ -67,4 +67,14 @@ void ResourceTree::AddNode(Node* parent, Node* node)
 {
 	node->parent = parent;
 	parent->children[node->path] = node;
+}
+
+void ResourceTree::DeleteNode(Node* node)
+{
+	node->parent->children.erase(node->path);
+
+	for (auto& [_, child] : node->children)
+	{
+		DeleteNode(child);
+	}
 }

@@ -24,11 +24,6 @@ namespace Engine
 		activeProject = std::make_shared<Project>(path.parent_path(), config);
 	}
 
-	std::shared_ptr<Project> Project::GetActive()
-	{
-		return activeProject;
-	}
-
 	std::filesystem::path Project::GetProjectDirectory()
 	{
 		return activeProject->directory;

@@ -12,10 +12,8 @@ namespace Engine
     TextureFactory::TextureFactory(const Vulkan::Device& device)
         : device(device) { }
 
-    ResourceId TextureFactory::Create(std::filesystem::path destination, TextureSpec& spec)
+    void TextureFactory::Create(std::filesystem::path destination, TextureSpec& spec)
     {
-        ResourceId id;
-
         flatbuffers::TextureT texture;
 
         texture.width = spec.width;
@@ -33,8 +31,6 @@ namespace Engine
         size_t size = builder.GetSize();
 
         FileSystem::WriteFile(destination, { buffer, buffer + size });
-
-        return id;
     }
 
     std::shared_ptr<Texture> TextureFactory::Load(std::filesystem::path source)

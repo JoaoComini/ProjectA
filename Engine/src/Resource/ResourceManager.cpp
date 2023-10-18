@@ -7,6 +7,7 @@
 #include "Resource/Factory/MeshFactory.hpp"
 #include "Resource/Factory/MaterialFactory.hpp"
 #include "Resource/Factory/PrefabFactory.hpp"
+#include "Resource/Factory/SceneFactory.hpp"
 
 #include "yaml-cpp/yaml.h"
 
@@ -61,5 +62,53 @@ namespace Engine
         PrefabFactory factory;
 
         return factory.Load(path);
+    }
+
+    template<>
+    std::shared_ptr<Scene> ResourceManager::FactoryLoad(std::filesystem::path path)
+    {
+        SceneFactory factory;
+
+        return factory.Load(path);
+    }
+
+    template<>
+    void ResourceManager::FactoryCreate<Texture>(std::filesystem::path path, TextureSpec& payload)
+    {
+        TextureFactory factory{ device };
+
+        factory.Create(path, payload);
+    }
+
+    template<>
+    void ResourceManager::FactoryCreate<Mesh>(std::filesystem::path path, MeshSpec& payload)
+    {
+        MeshFactory factory{ device };
+
+        factory.Create(path, payload);
+    }
+
+    template<>
+    void ResourceManager::FactoryCreate<Material>(std::filesystem::path path, MaterialSpec& payload)
+    {
+        MaterialFactory factory;
+
+        factory.Create(path, payload);
+    }
+
+    template<>
+    void ResourceManager::FactoryCreate<Prefab>(std::filesystem::path path, Prefab& payload)
+    {
+        PrefabFactory factory;
+
+        factory.Create(path, payload);
+    }
+
+    template<>
+    void ResourceManager::FactoryCreate<Scene>(std::filesystem::path path, Scene& payload)
+    {
+        SceneFactory factory;
+
+        factory.Create(path, payload);
     }
 };

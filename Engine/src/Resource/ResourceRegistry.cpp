@@ -44,6 +44,15 @@ namespace Engine
         Serialize();
     }
 
+    void ResourceRegistry::ResourceDeleted(ResourceId id)
+    {
+        auto& metadata = registry[id];
+
+        resourcesByPath.erase(metadata.path);
+        registry.erase(id);
+        Serialize();
+    }
+
     void ResourceRegistry::Serialize()
     {
         auto path = Project::GetResourceRegistryPath();

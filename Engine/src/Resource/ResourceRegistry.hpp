@@ -20,6 +20,7 @@ namespace Engine
 		ResourceId FindResourceByPath(std::filesystem::path path);
 
 		void ResourceCreated(ResourceId id, ResourceMetadata metadata);
+		void ResourceDeleted(ResourceId id);
 
 		void Serialize();
 		void Deserialize();

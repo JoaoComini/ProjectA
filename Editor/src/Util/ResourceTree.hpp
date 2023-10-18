@@ -26,6 +26,8 @@ public:
 
 	Node* Search(std::filesystem::path path);
 
+	void DeleteNode(Node* node);
+
 	void Refresh(std::filesystem::path path, Engine::ResourceId id, Engine::ResourceMetadata metadata);
 
 private:

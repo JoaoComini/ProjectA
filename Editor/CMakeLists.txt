@@ -8,6 +8,7 @@ set(EDITOR_SRC_FILES
     "src/Widget/Controls.cpp"
     "src/Widget/MainMenuBar.cpp"
     "src/Widget/ContentBrowser.cpp"
+    "src/Widget/ViewportDragDrop.cpp"
     "src/Util/ResourceTree.cpp"
     "src/EditorCamera.cpp"
 )

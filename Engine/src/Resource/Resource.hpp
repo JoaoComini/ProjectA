@@ -17,6 +17,7 @@ namespace Engine
 		Material,
 		Mesh,
 		Prefab,
+		Scene,
 	};
 
 	std::string ResourceTypeToString(ResourceType type);
@@ -31,14 +32,7 @@ namespace Engine
 	class Resource
 	{
 	public:
-		Resource(ResourceType type) : type(type) {}
-
-		ResourceType GetType()
-		{
-			return type;
-		}
-
-	private:
-		ResourceType type;
+		ResourceId id{ 0 };
+		virtual ResourceType GetType() const = 0;
 	};
 };

@@ -9,7 +9,6 @@
 namespace Engine
 {
 	Texture::Texture(const Vulkan::Device& device, uint32_t width, uint32_t height, std::vector<uint8_t> content)
-		: Resource(ResourceType::Texture)
 	{
 		uint32_t size = content.size();
 

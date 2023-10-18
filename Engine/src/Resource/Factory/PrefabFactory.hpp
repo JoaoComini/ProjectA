@@ -4,18 +4,19 @@
 
 #include "Resource/Prefab.hpp"
 
+#include "Factory.hpp"
+
 #include "../Flatbuffers/Prefab_generated.h"
 
-#include <filesystem>
 
 namespace Engine
 {
-	class PrefabFactory
+	class PrefabFactory : Factory<Prefab, Prefab>
 	{
 	public:
-		ResourceId Create(std::filesystem::path destination, Prefab& model);
+		void Create(std::filesystem::path destination, Prefab& model) override;
 
-		std::shared_ptr<Prefab> Load(std::filesystem::path source);
+		std::shared_ptr<Prefab> Load(std::filesystem::path source) override;
 
 	private:
 		flatbuffers::Offset<flatbuffers::Node> WriteNode(flatbuffers::FlatBufferBuilder& builder, Node& node);

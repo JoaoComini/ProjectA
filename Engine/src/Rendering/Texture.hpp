@@ -19,6 +19,16 @@ namespace Engine
 		Vulkan::ImageView& GetImageView() const;
 		Vulkan::Sampler& GetSampler() const;
 
+		static ResourceType GetStaticType()
+		{
+			return ResourceType::Texture;
+		}
+
+		virtual ResourceType GetType() const override
+		{
+			return GetStaticType();
+		}
+
 	private:
 		std::unique_ptr<Vulkan::Image> image;
 		std::unique_ptr<Vulkan::ImageView> imageView;

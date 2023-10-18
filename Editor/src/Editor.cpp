@@ -1,8 +1,11 @@
 #include "Editor.hpp"
 
 #include <imgui.h>
+#include <imgui_internal.h>
 
 #include "Resource/ResourceManager.hpp"
+#include "Resource/Prefab.hpp"
+
 #include "Platform/FileDialog.hpp"
 #include "Project/Project.hpp"
 #include "Scene/SceneSerializer.hpp"
@@ -27,6 +30,7 @@ namespace Engine
 		entityInspector = std::make_unique<EntityInspector>();
 		mainMenuBar = std::make_unique<MainMenuBar>();
 		contentBrowser = std::make_unique<ContentBrowser>(GetDevice(), GetScene());
+		viewportDragDrop = std::make_unique<ViewportDragDrop>();
 
 		sceneHierarchy->OnSelectEntity([&](auto entity) {
 			entityInspector->SetEntity(entity);
@@ -38,21 +42,34 @@ namespace Engine
 
 		mainMenuBar->OnImport([&]() {
 			ImportFile();
-
-			contentBrowser->RefreshResourceTree();
 		});
 
 		mainMenuBar->OnSaveScene([&]() {
 			SaveScene();
 		});
 
-		mainMenuBar->OnOpenScene([&]() {
-			OpenScene();
+		mainMenuBar->OnNewScene([&]() {
+			NewScene();
+		});
+
+		viewportDragDrop->OnDropResource([&](auto id, auto metadata)
+		{
+			switch (metadata.type)
+			{
+			case ResourceType::Scene:
+				OpenScene(id);
+				break;
+			case ResourceType::Prefab:
+				AddPrefabToScene(id);
+				break;
+			default:
+				break;
+			}
 		});
 
 		auto [width, height] = GetWindow().GetFramebufferSize();
 
-		camera = std::make_unique<EditorCamera>(glm::radians(45.f), (float)width / height, 0.1f, 1000.f);
+		camera = std::make_unique<EditorCamera>(glm::radians(45.f), (float)width / height, 0.1f, 2000.f);
     }
 
 	void Editor::OnUpdate(float timestep)
@@ -66,17 +83,31 @@ namespace Engine
     {
 		ImGuiIO& io = ImGui::GetIO();
 		
-		if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
-		{
-			ImGuiViewport* viewport = ImGui::GetMainViewport();
-			ImGui::DockSpaceOverViewport(viewport);
-		}
+		ImGuiViewport* viewport = ImGui::GetMainViewport();
+		auto id = ImGui::DockSpaceOverViewport(viewport, ImGuiDockNodeFlags_PassthruCentralNode | ImGuiDockNodeFlags_NoDockingInCentralNode);
+
+		DrawViewportDragDrop(id);
 
 		mainMenuBar->Draw();
 		sceneHierarchy->Draw();
 		entityInspector->Draw();
 		contentBrowser->Draw();
     }
+
+	void Editor::DrawViewportDragDrop(ImGuiID dockId)
+	{
+		if (ImGui::GetDragDropPayload() == nullptr)
+		{
+			return;
+		}
+
+		auto node = ImGui::DockBuilderGetCentralNode(dockId);
+
+		ImGui::SetNextWindowSize(node->Size);
+		ImGui::SetNextWindowPos(node->Pos);
+
+		viewportDragDrop->Draw();
+	}
 
 	void Editor::OnWindowResize(int width, int height)
 	{
@@ -85,51 +116,81 @@ namespace Engine
 		camera->SetAspectRatio((float)width / height);
 	}
 
-	void Editor::SaveScene()
+
+	void Editor::NewScene()
 	{
-		SceneSerializer serializer(GetScene());
-
-		if (!scenePath.empty())
-		{
-			serializer.Serialize(scenePath);
-			return;
-		}
-
-		std::string path = FileDialog::SaveFile(GetWindow(), "ProjectA Scene (*.pascn)\0*.pascn\0");
-
-		if (path.empty())
-		{
-			return;
-		}
-
-		serializer.Serialize(path);
-		scenePath = path;
+		Scene scene;
+		SetScene(scene);
 	}
 
-	void Editor::OpenScene()
+	void Editor::SaveScene()
 	{
-		std::string path = FileDialog::OpenFile(GetWindow(), "ProjectA Scene (*.pascn)\0*.pascn\0");
+		auto id = GetScene().id;
 
-		if (path.empty())
+		if (id)
 		{
-			return;
+			ResourceManager::Get().SaveResource<Scene>(id, GetScene());
+		}
+		else
+		{
+			id = ResourceManager::Get().CreateResource<Scene>("untitled", GetScene());
+		}
+		
+		OpenScene(id);
+		contentBrowser->RefreshResourceTree();
+	}
+
+	void Editor::OpenScene(ResourceId id)
+	{
+		auto scene = ResourceManager::Get().LoadResource<Scene>(id);
+
+		SetScene(*scene);
+	}
+
+	void AddEntity(Scene& scene, Node& node, Entity* parent)
+	{
+		auto entity = scene.CreateEntity();
+
+		auto& transform = entity.AddComponent<Engine::Component::Transform>(node.GetTransform());
+
+		if (node.GetMesh())
+		{
+			entity.AddComponent<Engine::Component::MeshRender>(node.GetMesh());
 		}
 
-		GetScene().Clear();
+		entity.GetComponent<Engine::Component::Name>().name = node.GetName();
 
-		SceneSerializer serializer(GetScene());
+		if (parent)
+		{
+			entity.SetParent(*parent);
+		}
 
-		serializer.Deserialize(path);
-		scenePath = path;
+		for (auto& child : node.GetChildren())
+		{
+			AddEntity(scene, *child, &entity);
+		}
+	}
+
+	void Editor::AddPrefabToScene(ResourceId id)
+	{
+		auto prefab = ResourceManager::Get().LoadResource<Prefab>(id);
+
+		for (auto child : prefab->GetRoot().GetChildren())
+		{
+			AddEntity(GetScene(), *child, nullptr);
+		}
 	}
 
 	void Editor::ImportFile()
 	{
 		auto file = FileDialog::OpenFile(GetWindow(), "GLB File (*.glb)\0*.glb\0");
 
-		if (!file.empty())
+		if (file.empty())
 		{
-			ResourceManager::Get().ImportResource(file);
+			return;
 		}
+
+		ResourceManager::Get().ImportResource(file);
+		contentBrowser->RefreshResourceTree();
 	}
 }

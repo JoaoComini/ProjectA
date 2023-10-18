@@ -13,10 +13,8 @@ namespace Engine
     { }
 
 
-    ResourceId MeshFactory::Create(std::filesystem::path destination, MeshSpec& spec)
+    void MeshFactory::Create(std::filesystem::path destination, MeshSpec& spec)
     {
-        ResourceId id;
-
         flatbuffers::MeshT mesh;
 
         for (auto& primitiveSpec: spec.primitives)
@@ -41,8 +39,6 @@ namespace Engine
         size_t size = builder.GetSize();
 
         FileSystem::WriteFile(destination, { buffer, buffer + size });
-
-        return id;
     }
 
     std::shared_ptr<Mesh> MeshFactory::Load(std::filesystem::path source)

@@ -30,7 +30,6 @@ namespace Engine
 
 		void ImportPrefab(std::filesystem::path path, tinygltf::Model& gltfModel, std::vector<std::unique_ptr<Node>>& nodes);
 
-		std::filesystem::path GetResourcePath(std::filesystem::path parent, std::string name);
 		std::filesystem::path GetPrefabDirectory(std::filesystem::path path);
 
 		const Vulkan::Device& device;

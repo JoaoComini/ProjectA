@@ -35,6 +35,11 @@ namespace Engine {
 
 		window->OnResize(
 			[&](int width, int height) {
+				if (width == 0 || height == 0)
+				{
+					return;
+				}
+
 				OnWindowResize(width, height);
 			}
 		);
@@ -160,6 +165,11 @@ namespace Engine {
 	void Application::Exit()
 	{
 		running = false;
+	}
+
+	void Application::SetScene(Scene& scene)
+	{
+		*this->scene = scene;
 	}
 
 	Scene& Application::GetScene()

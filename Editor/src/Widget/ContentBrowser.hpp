@@ -25,7 +25,7 @@ private:
 
 	void ContentBrowserTable();
 	void ContentBrowserDirectory(std::filesystem::path path);
-	void ContentBrowserFile(std::filesystem::path path, ResourceTree::Node* node);
+	bool ContentBrowserFile(std::filesystem::path path, ResourceTree::Node* node);
 	void ContentBrowserItemIcon(std::string label, VkDescriptorSet iconDescriptor);
 
 	int GetContentTableColumns();

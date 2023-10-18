@@ -4,7 +4,7 @@
 
 #include "Common/Uuid.hpp"
 
-#include "Mixin.hpp"
+#include "SceneMixin.hpp"
 
 namespace Engine
 {

@@ -1,6 +1,6 @@
 #pragma once
 
-struct Component
+struct FakeComponent
 {
     int x;
     int y;

@@ -19,8 +19,6 @@ namespace Engine
 
         uint32_t size = width * height * channels;
 
-        std::vector<uint8_t> content(pixels, pixels + size);
-
-        return std::make_shared<Texture>(device, width, height, content);
+        return std::make_shared<Texture>(device, width, height, std::vector<uint8_t>{ pixels, pixels + size });
     }
 };

@@ -16,8 +16,7 @@ namespace Engine
 	public:
 		Project(std::filesystem::path directory, ProjectConfig& config);
 
-		static void Load(const std::filesystem::path& path);
-		static std::shared_ptr<Project> GetActive();
+		static void Load(const std::filesystem::path& path = "");
 		static std::filesystem::path GetProjectDirectory();
 		static std::filesystem::path GetResourceDirectory();
 		static std::filesystem::path GetResourceRegistryPath();

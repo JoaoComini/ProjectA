@@ -3,7 +3,7 @@
 #include "Vulkan/Device.hpp"
 #include "Rendering/Mesh.hpp"
 
-#include <filesystem>
+#include "Factory.hpp"
 
 namespace Engine
 {
@@ -20,17 +20,16 @@ namespace Engine
 		std::vector<PrimitiveSpec> primitives;
 	};
 
-	class MeshFactory
+	class MeshFactory : Factory<Mesh, MeshSpec>
 	{
 	public:
 		MeshFactory(const Vulkan::Device& device);
 
-		ResourceId Create(std::filesystem::path destination, MeshSpec& spec);
+		void Create(std::filesystem::path destination, MeshSpec& spec) override;
 
-		std::shared_ptr<Mesh> Load(std::filesystem::path source);
+		std::shared_ptr<Mesh> Load(std::filesystem::path source) override;
 
 	private:
-
 		std::shared_ptr<Mesh> BuildFromSpec(MeshSpec& spec);
 
 		const Vulkan::Device& device;

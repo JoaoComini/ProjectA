@@ -6,10 +6,8 @@
 
 namespace Engine
 {
-    ResourceId PrefabFactory::Create(std::filesystem::path destination, Prefab& model)
+    void PrefabFactory::Create(std::filesystem::path destination, Prefab& model)
     {
-        ResourceId id;
-
         flatbuffers::FlatBufferBuilder builder(128);
 
         auto root = WriteNode(builder, model.GetRoot());
@@ -24,8 +22,6 @@ namespace Engine
         size_t size = builder.GetSize();
 
         FileSystem::WriteFile(destination, { buffer, buffer + size });
-      
-        return id;
     }
 
     flatbuffers::Offset<flatbuffers::Node> PrefabFactory::WriteNode(flatbuffers::FlatBufferBuilder& builder, Node& node)

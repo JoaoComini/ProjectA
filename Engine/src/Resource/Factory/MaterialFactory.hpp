@@ -6,6 +6,8 @@
 
 #include "Resource/Resource.hpp"
 
+#include "Factory.hpp"
+
 namespace Engine
 {
 	struct MaterialSpec
@@ -13,10 +15,10 @@ namespace Engine
 		ResourceId diffuse{0};
 	};
 
-	class MaterialFactory
+	class MaterialFactory : Factory<Material, MaterialSpec>
 	{
 	public:
-		ResourceId Create(std::filesystem::path destination, MaterialSpec& spec);
-		std::shared_ptr<Material> Load(std::filesystem::path source);
+		void Create(std::filesystem::path destination, MaterialSpec& spec) override;
+		std::shared_ptr<Material> Load(std::filesystem::path source) override;
 	};
 };

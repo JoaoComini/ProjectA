@@ -95,17 +95,7 @@ namespace Engine
                 .image = image.image
             };
 
-            auto path = GetResourcePath(parent, "texture");
-
-            auto id = factory.Create(path, spec);
-
-            ResourceMetadata metadata
-            {
-                .path = std::filesystem::relative(path, Project::GetResourceDirectory()),
-                .type = ResourceType::Texture
-            };
-
-            ResourceRegistry::Get().ResourceCreated(id, metadata);
+            auto id = ResourceManager::Get().CreateResource<Texture>(parent.stem() / "texture", spec);
 
             textures.push_back(id);
         }
@@ -137,17 +127,7 @@ namespace Engine
                 .diffuse = diffuse
             };
 
-            auto path = GetResourcePath(parent, "material");
-
-            auto id = factory.Create(path, spec);
-
-            ResourceMetadata metadata
-            {
-                .path = std::filesystem::relative(path, Project::GetResourceDirectory()),
-                .type = ResourceType::Material
-            };
-
-            ResourceRegistry::Get().ResourceCreated(id, metadata);
+            auto id = ResourceManager::Get().CreateResource<Material>(parent.stem() / "material", spec);
 
             materials.push_back(id);
         }
@@ -245,17 +225,7 @@ namespace Engine
                 spec.primitives.push_back(primitiveSpec);
             }
 
-            auto path = GetResourcePath(parent, mesh.name);
-
-            auto id = factory.Create(path, spec);
-
-            ResourceMetadata metadata
-            {
-                .path = std::filesystem::relative(path, Project::GetResourceDirectory()),
-                .type = ResourceType::Mesh
-            };
-
-            ResourceRegistry::Get().ResourceCreated(id, metadata);
+            auto id = ResourceManager::Get().CreateResource<Mesh>(parent.stem() / mesh.name, spec);
 
             meshes.push_back(id);
         }
@@ -338,44 +308,7 @@ namespace Engine
 
         model->SetNodes(std::move(nodes));
 
-        std::filesystem::path path = GetResourcePath(parent, parent.stem().string());
-
-        auto id = factory.Create(path, *model);
-
-        ResourceMetadata metadata
-        {
-            .path = std::filesystem::relative(path, Project::GetResourceDirectory()),
-            .type = model->GetType()
-        };
-
-        ResourceRegistry::Get().ResourceCreated(id, metadata);
-    }
-
-    std::filesystem::path GltfImporter::GetResourcePath(std::filesystem::path parent, std::string name)
-    {
-        auto base = Project::GetResourceDirectory() / parent.stem();
-
-        std::filesystem::path path;
-        ResourceId existing;
-        auto current = 0;
-        do
-        {
-            path = base / name;
-
-            if (current > 0)
-            {
-                path += "_" + std::to_string(current);
-            }
-
-            path.replace_extension(".pares");
-            current += 1;
-
-
-            auto relative = std::filesystem::relative(path, Project::GetResourceDirectory());
-            existing = ResourceRegistry::Get().FindResourceByPath(relative);
-        } while (existing);
-
-        return path;
+        ResourceManager::Get().CreateResource<Prefab>(parent.stem() / parent.stem().string(), *model);
     }
 
     std::filesystem::path GltfImporter::GetPrefabDirectory(std::filesystem::path path)

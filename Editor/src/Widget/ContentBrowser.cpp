@@ -14,7 +14,7 @@ ContentBrowser::ContentBrowser(Vulkan::Device& device, Engine::Scene& scene)
 	baseDirectory = Engine::Project::GetResourceDirectory();
 	resourceTree.SetRoot(baseDirectory);
 
-	currentDirectory = ".";
+	currentDirectory = "";
 
 	Engine::TextureImporter importer{ device };
 
@@ -32,33 +32,6 @@ ContentBrowser::~ContentBrowser()
 	device.WaitIdle();
 }
 
-void AddEntity(Engine::Scene& scene, Engine::Node& node, Engine::Entity* parent)
-{
-	auto entity = scene.CreateEntity();
-
-	auto& transform = entity.AddComponent<Engine::Component::Transform>();
-	transform.position = node.GetTransform().position;
-	transform.rotation = node.GetTransform().rotation;
-	transform.scale = node.GetTransform().scale;
-
-	if (node.GetMesh())
-	{
-		entity.AddComponent<Engine::Component::MeshRender>().mesh = node.GetMesh();
-	}
-
-	entity.GetComponent<Engine::Component::Name>().name = node.GetName();
-
-	if (parent)
-	{
-		entity.SetParent(*parent);
-	}
-
-	for (auto& child : node.GetChildren())
-	{
-		AddEntity(scene, *child, &entity);
-	}
-}
-
 void ContentBrowser::Draw()
 {
 	ImGuiStyle& style = ImGui::GetStyle();
@@ -68,6 +41,24 @@ void ContentBrowser::Draw()
 
 	if (ImGui::Begin("Content Browser"))
 	{
+		if (ImGui::BeginPopupContextWindow("ContentBrowserMenu", ImGuiPopupFlags_NoOpenOverItems | ImGuiPopupFlags_MouseButtonRight))
+		{
+			if (ImGui::BeginMenu("Create"))
+			{
+				if (ImGui::MenuItem("Scene"))
+				{
+					Engine::Scene scene;
+					Engine::ResourceManager::Get().CreateResource<Engine::Scene>(currentDirectory / "untitled", scene);
+
+					RefreshResourceTree();
+				}
+
+				ImGui::EndMenu();
+			}
+
+			ImGui::EndPopup();
+		}
+
 		ContentBrowserBackButton();
 
 		ContentBrowserTable();
@@ -78,7 +69,7 @@ void ContentBrowser::Draw()
 
 void ContentBrowser::ContentBrowserBackButton()
 {
-	bool disabled = currentDirectory == ".";
+	bool disabled = currentDirectory.empty();
 
 	if (disabled)
 	{
@@ -111,8 +102,15 @@ void ContentBrowser::ContentBrowserTable()
 
 		auto currentNode = resourceTree.Search(currentDirectory);
 
-		for (auto& [path, node] : currentNode->children)
+		auto& children = currentNode->children;
+
+		for (auto it = children.cbegin(), next = it; it != children.cend(); it = next)
 		{
+			next++;
+
+			auto& [path, node] = *it;
+			bool deleted = false;
+
 			ImGui::TableNextColumn();
 
 			if (node->directory)
@@ -121,7 +119,12 @@ void ContentBrowser::ContentBrowserTable()
 			}
 			else
 			{
-				ContentBrowserFile(path, node);
+				deleted = ContentBrowserFile(path, node);
+			}
+
+			if (deleted)
+			{
+				resourceTree.DeleteNode(node);
 			}
 		}
 
@@ -139,14 +142,7 @@ void ContentBrowser::ContentBrowserDirectory(std::filesystem::path path)
 
 	if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
 	{
-		if (currentDirectory == ".")
-		{
-			currentDirectory = path;
-		}
-		else
-		{
-			currentDirectory /= path;
-		}
+		currentDirectory /= path;
 	}
 
 	ImGui::TextWrapped(filename.c_str());
@@ -154,24 +150,29 @@ void ContentBrowser::ContentBrowserDirectory(std::filesystem::path path)
 	ImGui::PopID();
 }
 
-void ContentBrowser::ContentBrowserFile(std::filesystem::path path, ResourceTree::Node* node)
+bool ContentBrowser::ContentBrowserFile(std::filesystem::path path, ResourceTree::Node* node)
 {
+	bool deleted = false;
+
 	std::string filename = path.stem().generic_string();
 
 	ImGui::PushID(filename.c_str());
 
 	ContentBrowserItemIcon(filename, fileIconDescriptor);
 
+	if (ImGui::BeginDragDropSource())
+	{
+		ImGui::SetDragDropPayload("CONTENT_BROWSER_ITEM", &node->id, sizeof(node->id));
+		ImGui::EndDragDropSource();
+	}
+
 	if (ImGui::BeginPopupContextItem())
 	{
-		if (node->metadata.type == Engine::ResourceType::Prefab && ImGui::MenuItem("Add to Scene"))
+		if (ImGui::MenuItem("Delete"))
 		{
-			auto model = Engine::ResourceManager::Get().LoadResource<Engine::Prefab>(node->id);
-
-			for (auto child : model->GetRoot().GetChildren())
-			{
-				AddEntity(scene, *child, nullptr);
-			}
+			Engine::ResourceManager::Get().DeleteResource(node->id);
+			
+			deleted = true;
 		}
 
 		ImGui::EndPopup();
@@ -180,6 +181,8 @@ void ContentBrowser::ContentBrowserFile(std::filesystem::path path, ResourceTree
 	ImGui::TextWrapped(filename.c_str());
 
 	ImGui::PopID();
+
+	return deleted;
 }
 
 void ContentBrowser::ContentBrowserItemIcon(std::string label, VkDescriptorSet iconDescriptor)

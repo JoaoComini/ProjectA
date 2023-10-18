@@ -13,7 +13,7 @@ TEST_CASE("it should add components to itself", "[Entity]")
 
     Engine::Entity entity(handle, &registry);
 
-    auto& component = entity.AddComponent<Component>(10, -10);
+    auto& component = entity.AddComponent<FakeComponent>(10, -10);
 
     REQUIRE(component.x == 10);
     REQUIRE(component.y == -10);
@@ -27,9 +27,9 @@ TEST_CASE("it should get components", "[Entity]")
 
     Engine::Entity entity(handle, &registry);
 
-    entity.AddComponent<Component>(10, -10);
+    entity.AddComponent<FakeComponent>(10, -10);
 
-    auto component = entity.GetComponent<Component>();
+    auto component = entity.GetComponent<FakeComponent>();
 
     REQUIRE(component.x == 10);
     REQUIRE(component.y == -10);
@@ -43,11 +43,11 @@ TEST_CASE("it should try to get components", "[Entity]")
 
     Engine::Entity entity(handle, &registry);
 
-    entity.AddComponent<Component>(10, -10);
+    entity.AddComponent<FakeComponent>(10, -10);
 
     SECTION("and return it if it exists")
     {
-        auto component = entity.TryGetComponent<Component>();
+        auto component = entity.TryGetComponent<FakeComponent>();
 
         REQUIRE(component->x == 10);
         REQUIRE(component->y == -10);

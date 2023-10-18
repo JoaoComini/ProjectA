@@ -10,7 +10,7 @@ void MainMenuBar::Draw()
 	{
 		if (ImGui::BeginMenu("File"))
 		{
-			MainMenuItem("Open Scene", onOpenSceneFn);
+			MainMenuItem("New Scene", onNewSceneFn);
 
 			ImGui::Separator();
 
@@ -62,9 +62,9 @@ void MainMenuBar::OnSaveScene(std::function<void()> onSaveSceneFn)
 	this->onSaveSceneFn = onSaveSceneFn;
 }
 
-void MainMenuBar::OnOpenScene(std::function<void()> onOpenSceneFn)
+void MainMenuBar::OnNewScene(std::function<void()> onNewSceneFn)
 {
-	this->onOpenSceneFn = onOpenSceneFn;
+	this->onNewSceneFn = onNewSceneFn;
 }
 
 void MainMenuBar::OnImport(std::function<void()> onImportFn)

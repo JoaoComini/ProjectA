@@ -3,8 +3,7 @@
 
 namespace Engine
 {
-	Material::Material(ResourceId diffuse)
-		: diffuse(diffuse), Resource(ResourceType::Material) 
+	Material::Material(ResourceId diffuse) : diffuse(diffuse)
 	{ }
 
 	ResourceId Material::GetDiffuse() const
