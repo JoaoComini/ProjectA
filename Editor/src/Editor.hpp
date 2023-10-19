@@ -8,6 +8,7 @@
 #include "Widget/MainMenuBar.hpp"
 #include "Widget/ContentBrowser.hpp"
 #include "Widget/ViewportDragDrop.hpp"
+#include "Widget/EntityGizmo.hpp"
 
 #include "EditorCamera.hpp"
 
@@ -39,6 +40,7 @@ namespace Engine
         std::unique_ptr<MainMenuBar> mainMenuBar;
         std::unique_ptr<ContentBrowser> contentBrowser;
         std::unique_ptr<ViewportDragDrop> viewportDragDrop;
+        std::unique_ptr<EntityGizmo> entityGizmo;
     };
 
     std::unique_ptr<Application> CreateApplication(ApplicationArgs args)

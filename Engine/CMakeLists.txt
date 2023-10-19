@@ -59,6 +59,17 @@ target_link_libraries(ImGui
     glfw
 )
 
+# ------ IMGUIZMO -------
+
+add_library(ImGuizmo STATIC "third_party/imguizmo/ImGuizmo.cpp")
+
+target_include_directories(ImGuizmo
+    PUBLIC
+    third_party/imguizmo
+)
+
+target_link_libraries(ImGuizmo ImGui)
+
 # ------ FLATBUFFERS -----
 
 set(FLATBUFFERS_BUILD_TESTS OFF)
@@ -143,6 +154,7 @@ target_link_libraries(Engine
     tinygltf
     EnTT
     ImGui
+    ImGuizmo
     yaml-cpp
     flatbuffers
 )

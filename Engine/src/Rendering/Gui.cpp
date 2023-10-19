@@ -3,6 +3,8 @@
 #include "Rendering/Renderer.hpp"
 
 #include <imgui.h>
+#include <ImGuizmo.h>
+
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_vulkan.h>
 
@@ -68,6 +70,8 @@ namespace Engine
 		ImGui_ImplVulkan_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
+		ImGuizmo::BeginFrame();
+		ImGuizmo::SetDrawlist(ImGui::GetBackgroundDrawList());
 	}
 
 	void Gui::End(Vulkan::CommandBuffer& commandBuffer)

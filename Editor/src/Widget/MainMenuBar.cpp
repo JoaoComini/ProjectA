@@ -6,38 +6,37 @@
 
 void MainMenuBar::Draw()
 {
-	if (ImGui::BeginMainMenuBar())
+	ImGui::BeginMainMenuBar();
+
+	if (ImGui::BeginMenu("File"))
 	{
-		if (ImGui::BeginMenu("File"))
-		{
-			MainMenuItem("New Scene", onNewSceneFn);
+		MainMenuItem("New Scene", onNewSceneFn);
 
-			ImGui::Separator();
+		ImGui::Separator();
 
-			MainMenuItem("Save Scene", onSaveSceneFn);
+		MainMenuItem("Save Scene", onSaveSceneFn);
 
-			ImGui::Separator();
+		ImGui::Separator();
 
-			MainMenuItem("Import", onImportFn);
+		MainMenuItem("Import", onImportFn);
 
-			ImGui::Separator();
+		ImGui::Separator();
 
-			MainMenuItem("Exit", onExitFn);
+		MainMenuItem("Exit", onExitFn);
 
-			ImGui::EndMenu();
-		}
-
-		if (ImGui::BeginMenu("Tools"))
-		{
-			MainMenuItem("Metrics", [&]() {
-				openMetrics = true;
-			});
-
-			ImGui::EndMenu();
-		}
-
-		ImGui::EndMainMenuBar();
+		ImGui::EndMenu();
 	}
+
+	if (ImGui::BeginMenu("Tools"))
+	{
+		MainMenuItem("Metrics", [&]() {
+			openMetrics = true;
+		});
+
+		ImGui::EndMenu();
+	}
+
+	ImGui::EndMainMenuBar();
 
 	if (openMetrics)
 	{

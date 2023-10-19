@@ -2,6 +2,9 @@
 
 #include <imgui.h>
 #include <imgui_internal.h>
+#include <ImGuizmo.h>
+
+#include <glm/gtc/type_ptr.hpp>
 
 #include "Resource/ResourceManager.hpp"
 #include "Resource/Prefab.hpp"
@@ -26,14 +29,20 @@ namespace Engine
 
 		ResourceRegistry::Get().Deserialize();
 
+
+		auto [width, height] = GetWindow().GetFramebufferSize();
+		camera = std::make_unique<EditorCamera>(glm::radians(60.f), (float)width / height, 0.1f, 2000.f);
+
 		sceneHierarchy = std::make_unique<SceneHierarchy>(GetScene());
 		entityInspector = std::make_unique<EntityInspector>();
 		mainMenuBar = std::make_unique<MainMenuBar>();
 		contentBrowser = std::make_unique<ContentBrowser>(GetDevice(), GetScene());
 		viewportDragDrop = std::make_unique<ViewportDragDrop>();
+		entityGizmo = std::make_unique<EntityGizmo>(*camera);
 
 		sceneHierarchy->OnSelectEntity([&](auto entity) {
 			entityInspector->SetEntity(entity);
+			entityGizmo->SetEntity(entity);
 		});
 
 		mainMenuBar->OnExit([&]() {
@@ -66,10 +75,6 @@ namespace Engine
 				break;
 			}
 		});
-
-		auto [width, height] = GetWindow().GetFramebufferSize();
-
-		camera = std::make_unique<EditorCamera>(glm::radians(45.f), (float)width / height, 0.1f, 2000.f);
     }
 
 	void Editor::OnUpdate(float timestep)
@@ -92,6 +97,7 @@ namespace Engine
 		sceneHierarchy->Draw();
 		entityInspector->Draw();
 		contentBrowser->Draw();
+		entityGizmo->Draw();
     }
 
 	void Editor::DrawViewportDragDrop(ImGuiID dockId)
@@ -121,12 +127,15 @@ namespace Engine
 	{
 		Scene scene;
 		SetScene(scene);
+
+		entityInspector->SetEntity({});
+		entityGizmo->SetEntity({});
 	}
 
 	void Editor::SaveScene()
 	{
 		auto id = GetScene().id;
-
+		
 		if (id)
 		{
 			ResourceManager::Get().SaveResource<Scene>(id, GetScene());
@@ -145,6 +154,9 @@ namespace Engine
 		auto scene = ResourceManager::Get().LoadResource<Scene>(id);
 
 		SetScene(*scene);
+
+		entityInspector->SetEntity({});
+		entityGizmo->SetEntity({});
 	}
 
 	void AddEntity(Scene& scene, Node& node, Entity* parent)
