@@ -30,7 +30,7 @@ namespace Engine
 		ResourceRegistry::Get().Deserialize();
 
 
-		auto [width, height] = GetWindow().GetFramebufferSize();
+		auto [height, width] = GetWindow().GetFramebufferSize();
 		camera = std::make_unique<EditorCamera>(glm::radians(60.f), (float)width / height, 0.1f, 2000.f);
 
 		sceneHierarchy = std::make_unique<SceneHierarchy>(GetScene());

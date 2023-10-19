@@ -13,4 +13,8 @@ layout(location = 0) out vec4 outColor;
 
 void main() {
     outColor = model.color * texture(inSampler, inUV);
+
+    if (outColor.w < 1) {
+        discard;
+    }
 }
