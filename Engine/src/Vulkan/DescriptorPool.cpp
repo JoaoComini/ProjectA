@@ -4,10 +4,10 @@
 
 namespace Vulkan
 {
-	DescriptorPool::DescriptorPool(const Device& device, std::shared_ptr<DescriptorSetLayout> descriptorSetLayout, uint32_t size)
-		: device(device), descriptorSetLayout(descriptorSetLayout)
+	DescriptorPool::DescriptorPool(const Device& device, DescriptorSetLayout& descriptorSetLayout, uint32_t size)
+		: device(device), descriptorSetLayout(&descriptorSetLayout)
 	{
-		std::vector<VkDescriptorSetLayoutBinding> bindings = descriptorSetLayout->GetBindings();
+		std::vector<VkDescriptorSetLayoutBinding> bindings = descriptorSetLayout.GetBindings();
 
 		std::vector<VkDescriptorPoolSize> poolSizes(bindings.size());
 		std::transform(bindings.begin(), bindings.end(), poolSizes.begin(), [size](auto& binding)

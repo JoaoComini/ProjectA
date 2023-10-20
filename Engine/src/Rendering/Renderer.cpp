@@ -3,7 +3,7 @@
 #include <array>
 
 #include "Vulkan/CommandBuffer.hpp"
-#include "Vulkan/Shader.hpp"
+#include "Vulkan/ShaderModule.hpp"
 
 #include "Vertex.hpp"
 #include "Resource/ResourceManager.hpp"
@@ -29,94 +29,8 @@ namespace Engine
 	{
 		renderPass = std::make_unique<Vulkan::RenderPass>(device, *this->swapchain);
 
-		CreateDescriptors();
-		CreatePipeline();
 		CreateFrames();
 		CreateFramebuffers();
-	}
-
-	void Renderer::CreateDescriptors()
-	{
-		{
-			VkDescriptorSetLayoutBinding uniformBufferBinding = {
-				.binding = 0,
-				.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-				.descriptorCount = 1,
-				.stageFlags = VK_SHADER_STAGE_VERTEX_BIT
-			};
-
-			globalDescriptorSetLayout = std::make_shared<Vulkan::DescriptorSetLayout>(
-				device,
-				std::vector<VkDescriptorSetLayoutBinding>{ uniformBufferBinding }
-			);
-		}
-
-		{
-			VkDescriptorSetLayoutBinding uniformBufferBinding = {
-				.binding = 0,
-				.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-				.descriptorCount = 1,
-				.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT
-			};
-
-			VkDescriptorSetLayoutBinding samplerBinding = {
-				.binding = 1,
-				.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-				.descriptorCount = 1,
-				.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
-				.pImmutableSamplers = nullptr,
-			};
-
-			modelDescriptorSetLayout = std::make_shared<Vulkan::DescriptorSetLayout>(
-				device,
-				std::vector<VkDescriptorSetLayoutBinding>{ uniformBufferBinding, samplerBinding }
-			);
-		}
-
-	}
-
-	void Renderer::CreatePipeline()
-	{
-		pipelineLayout = std::make_unique<Vulkan::PipelineLayout>(
-			device,
-			std::vector<std::shared_ptr<Vulkan::DescriptorSetLayout>>{ globalDescriptorSetLayout, modelDescriptorSetLayout }
-		);
-
-		auto spec = Vulkan::PipelineSpec
-		{
-			.vertexInputSpec
-			{
-				.attributes = {
-					VkVertexInputAttributeDescription{
-						.location = 0,
-						.binding = 0,
-						.format = VK_FORMAT_R32G32B32_SFLOAT,
-						.offset = offsetof(Vertex, position),
-					},
-					VkVertexInputAttributeDescription{
-						.location = 1,
-						.binding = 0,
-						.format = VK_FORMAT_R32G32B32_SFLOAT,
-						.offset = offsetof(Vertex, normal),
-					},
-					VkVertexInputAttributeDescription{
-						.location = 2,
-						.binding = 0,
-						.format = VK_FORMAT_R32G32_SFLOAT,
-						.offset = offsetof(Vertex, uv),
-					},
-				},
-				.bindings = {
-					VkVertexInputBindingDescription{
-						.binding = 0,
-						.stride = sizeof(Vertex),
-						.inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
-					}
-				}
-			}
-		};
-
-		pipeline = std::make_unique<Vulkan::Pipeline>(device, *pipelineLayout, *renderPass, spec);
 	}
 
 	void Renderer::CreateFrames()
@@ -175,27 +89,21 @@ namespace Engine
 		auto& frame = GetCurrentFrame();
 		frame.Reset();
 
-		activeCommandBuffer = &frame.RequestCommandBuffer();
+		auto& commandBuffer = frame.RequestCommandBuffer();
 
-		BeginCommandBuffer();
+		BeginRenderPass(commandBuffer);
 
-		return activeCommandBuffer;
+		return &commandBuffer;
 	}
 
-	void Renderer::BeginCommandBuffer()
+	void Renderer::BeginRenderPass(Vulkan::CommandBuffer& commandBuffer)
 	{
-		activeCommandBuffer->Begin();
+		commandBuffer.Begin();
 
 		VkExtent2D extent = swapchain->GetImageExtent();
 
-		std::vector<VkClearValue> clearValues = {
-			{ { 0.f, 0.f, 0.f, 1.f } },
-			{ 1.f, 0.f }
-		};
 
-		activeCommandBuffer->BeginRenderPass(*renderPass, *framebuffers[currentImageIndex], clearValues, extent);
-
-		activeCommandBuffer->SetViewport({
+		commandBuffer.SetViewport({
 			{
 				.width = static_cast<float>(extent.width),
 				.height = static_cast<float>(extent.height),
@@ -204,98 +112,29 @@ namespace Engine
 			}
 		});
 
-		activeCommandBuffer->SetScissor({
+		commandBuffer.SetScissor({
 			{
 				.extent = extent
 			}
 		});
 
-		activeCommandBuffer->BindPipeline(*pipeline, VK_PIPELINE_BIND_POINT_GRAPHICS);
-	}
-
-	void Renderer::SetCamera(const Camera& camera, const glm::mat4& transform)
-	{
-		globalUniform.viewProjection = camera.GetProjection() * glm::inverse(transform);
-		UpdateGlobalUniform();
-	}
-
-	void Renderer::UpdateGlobalUniform()
-	{
-		auto& frame = GetCurrentFrame();
-
-		auto allocation = frame.RequestBufferAllocation(Vulkan::BufferUsageFlags::UNIFORM, sizeof(GlobalUniform));
-
-		allocation.SetData(&globalUniform);
-
-		BindingMap<VkDescriptorBufferInfo> bufferInfos = {
-			{ 0,{ { 0, VkDescriptorBufferInfo{
-				.buffer = allocation.GetBuffer().GetHandle(),
-				.offset = allocation.GetOffset(),
-				.range = allocation.GetSize(),
-		} } } }
+		std::vector<VkClearValue> clearValues = {
+			{ { 0.f, 0.f, 0.f, 1.f } },
+			{ 1.f, 0.f }
 		};
 
-		auto descriptorSet = frame.RequestDescriptorSet(globalDescriptorSetLayout, bufferInfos, {});
-
-		activeCommandBuffer->BindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, *pipelineLayout, 0, descriptorSet);
+		commandBuffer.BeginRenderPass(*renderPass, *framebuffers[currentImageIndex], clearValues, extent);
 	}
 
-
-	void Renderer::Draw(const Mesh& mesh, const glm::mat4& transform)
+	void Renderer::End(Vulkan::CommandBuffer& commandBuffer)
 	{
-		for (auto& primitive : mesh.GetPrimitives())
-		{
-			ResourceId materialId = primitive->GetMaterial();
+		commandBuffer.EndRenderPass();
+		commandBuffer.End();
 
-			auto material = ResourceManager::Get().LoadResource<Material>(materialId);
-
-			ModelUniform uniform{
-				.model = transform,
-				.color = material->GetColor(),
-			};
-
-			auto& frame = GetCurrentFrame();
-
-			auto allocation = frame.RequestBufferAllocation(Vulkan::BufferUsageFlags::UNIFORM, sizeof(ModelUniform));
-
-			allocation.SetData(&uniform);
-
-			BindingMap<VkDescriptorBufferInfo> bufferInfos = {
-				{ 0, { { 0, VkDescriptorBufferInfo{
-					.buffer = allocation.GetBuffer().GetHandle(),
-					.offset = allocation.GetOffset(),
-					.range = allocation.GetSize(),
-				} } } }
-			};
-
-			auto diffuse = ResourceManager::Get().LoadResource<Texture>(material->GetDiffuse());
-
-			BindingMap<VkDescriptorImageInfo> imageInfos = {
-				{ 1, { { 0, VkDescriptorImageInfo{
-					.sampler = diffuse->GetSampler().GetHandle(),
-					.imageView = diffuse->GetImageView().GetHandle(),
-					.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-				} } } }
-			};
-
-			auto descriptorSet = frame.RequestDescriptorSet(modelDescriptorSetLayout, bufferInfos, imageInfos);
-
-			activeCommandBuffer->BindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, *pipelineLayout, 1, descriptorSet);
-
-			primitive->Draw(*activeCommandBuffer);
-		}
-	}
-
-	void Renderer::End()
-	{
-		activeCommandBuffer->EndRenderPass();
-		activeCommandBuffer->End();
-
-		Vulkan::Semaphore& waitSemaphore = Submit();
+		Vulkan::Semaphore& waitSemaphore = Submit(commandBuffer);
 
 		Present(waitSemaphore);
 
-		activeCommandBuffer = nullptr;
 		acquireSemaphore = nullptr;
 	}
 
@@ -304,13 +143,13 @@ namespace Engine
 		return *renderPass;
 	}
 
-	Vulkan::Semaphore& Renderer::Submit()
+	Vulkan::Semaphore& Renderer::Submit(Vulkan::CommandBuffer& commandBuffer)
 	{
 		auto& frame = GetCurrentFrame();
 		Vulkan::Semaphore& renderFinishedSemaphore = frame.RequestSemaphore();
 		Vulkan::Fence& renderFence = frame.GetRenderFence();
 
-		device.GetGraphicsQueue().Submit(*activeCommandBuffer, *acquireSemaphore, renderFinishedSemaphore, renderFence);
+		device.GetGraphicsQueue().Submit(commandBuffer, *acquireSemaphore, renderFinishedSemaphore, renderFence);
 
 		return renderFinishedSemaphore;
 	}

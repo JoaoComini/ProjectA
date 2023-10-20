@@ -48,6 +48,7 @@ namespace Engine {
 		void Exit();
 	protected:
 		virtual void OnUpdate(float timestep) {}
+		virtual void OnRender(Vulkan::CommandBuffer& commandBuffer) {}
 		virtual void OnGui() {}
 		virtual void OnWindowResize(int width, int height);
 
@@ -60,9 +61,6 @@ namespace Engine {
 
 	private:
 		void SetupVulkan();
-
-		void RenderScene();
-		glm::mat4 GetEntityWorldMatrix(Entity entity);
 
 		void SetCameraAspectRatio(Entity entity);
 

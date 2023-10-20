@@ -4,9 +4,33 @@
 
 #include <Scene/Components.hpp>
 
-
 EntityGizmo::EntityGizmo(EditorCamera& camera) : camera(camera)
 {
+}
+
+glm::mat4 GetEntityWorldMatrix(Engine::Entity entity)
+{
+	if (!entity)
+	{
+		return glm::mat4{ 1.0f };
+	}
+
+	auto parent = entity.GetParent();
+	auto& transform = entity.GetComponent<Engine::Component::Transform>();
+
+	if (!parent)
+	{
+		return transform.GetLocalMatrix();
+	}
+
+	auto parentTransform = parent.TryGetComponent<Engine::Component::Transform>();
+
+	if (!parentTransform)
+	{
+		return transform.GetLocalMatrix();
+	}
+
+	return GetEntityWorldMatrix(parent) * transform.GetLocalMatrix();
 }
 
 void EntityGizmo::Draw()
@@ -41,22 +65,25 @@ void EntityGizmo::Draw()
 	auto view = glm::inverse(camera.GetTransform());
 	auto projection = camera.GetProjection();
 	projection[1][1] *= -1;
-	auto matrix = transform->GetLocalMatrix();
+
+	auto matrix = GetEntityWorldMatrix(entity);
 
 	ImGuiIO& io = ImGui::GetIO();
 	ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
-	ImGuizmo::Manipulate(glm::value_ptr(view), glm::value_ptr(projection), operation, ImGuizmo::MODE::LOCAL, glm::value_ptr(matrix), nullptr, nullptr);
+	ImGuizmo::Manipulate(glm::value_ptr(view), glm::value_ptr(projection), operation, ImGuizmo::MODE::LOCAL, glm::value_ptr(matrix));
 
 	if (!ImGuizmo::IsUsing())
 	{
 		return;
 	}
 
+	auto local = glm::inverse(GetEntityWorldMatrix(entity.GetParent())) * matrix;
+
 	glm::vec3 position{};
 	glm::vec3 rotation{};
 	glm::vec3 scale{};
 
-	ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(matrix), glm::value_ptr(position), glm::value_ptr(rotation), glm::value_ptr(scale));
+	ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(local), glm::value_ptr(position), glm::value_ptr(rotation), glm::value_ptr(scale));
 
 	transform->position = position;
 	transform->scale = scale;

@@ -27,18 +27,6 @@
 
 namespace Engine
 {
-
-	struct GlobalUniform
-	{
-		glm::mat4 viewProjection;
-	};
-
-	struct ModelUniform
-	{
-		glm::mat4 model;
-		glm::vec4 color;
-	};
-
 	class Renderer : public Singleton<Renderer>
 	{
 	public:
@@ -47,47 +35,32 @@ namespace Engine
 		static void Setup(Vulkan::Device& device, const Vulkan::Surface& surface, const Window& window);
 
 		Vulkan::CommandBuffer* Begin();
-
-		void SetCamera(const Camera& camera, const glm::mat4& transform);
-
-		void Draw(const Mesh& mesh, const glm::mat4& transform);
-		void End();
+		void End(Vulkan::CommandBuffer& commandBuffer);
 
 		Vulkan::RenderPass& GetRenderPass() const;
-
+		Frame& GetCurrentFrame() const;
 	private:
-
-		void CreateDescriptors();
-		void CreatePipeline();
 		void CreateFrames();
 		void CreateFramebuffers();
 
-		void BeginCommandBuffer();
-		void UpdateGlobalUniform();
-		Vulkan::Semaphore& Submit();
+		void BeginRenderPass(Vulkan::CommandBuffer& commandBuffer);
+		Vulkan::Semaphore& Submit(Vulkan::CommandBuffer& commandBuffer);
 		void Present(Vulkan::Semaphore& waitSemaphore);
+
 		bool RecreateSwapchain(bool force = false);
 
-		Frame& GetCurrentFrame() const;
 		std::unique_ptr<Target> CreateTarget(VkImage image, VkFormat format, VkExtent2D extent);
 
 		const Vulkan::Device& device;
 
-		GlobalUniform globalUniform;
 		uint32_t currentImageIndex = 0;
 
 		std::unique_ptr<Vulkan::Swapchain> swapchain;
 		Vulkan::Semaphore* acquireSemaphore;
-		Vulkan::CommandBuffer* activeCommandBuffer;
 
 		std::vector<std::unique_ptr<Frame>> frames;
 		std::vector<std::unique_ptr<Vulkan::Framebuffer>> framebuffers;
 
-		std::unique_ptr<Vulkan::Pipeline> pipeline;
-		std::unique_ptr<Vulkan::PipelineLayout> pipelineLayout;
-
 		std::unique_ptr<Vulkan::RenderPass> renderPass;
-		std::shared_ptr<Vulkan::DescriptorSetLayout> globalDescriptorSetLayout;
-		std::shared_ptr<Vulkan::DescriptorSetLayout> modelDescriptorSetLayout;
 	};
 }

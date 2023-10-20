@@ -23,8 +23,12 @@
 
 namespace Engine
 {
-	template <class T>
-	using BindingMap = std::unordered_map<uint32_t, std::map<uint32_t, T>>;
+	template <typename T>
+	struct SetBinding
+	{
+		uint32_t binding;
+		std::vector<T> infos;
+	};
 
 	class Frame
 	{
@@ -40,14 +44,14 @@ namespace Engine
 		void Reset();
 		Vulkan::CommandBuffer& RequestCommandBuffer();
 		Vulkan::Semaphore& RequestSemaphore();
-		VkDescriptorSet RequestDescriptorSet(std::shared_ptr<Vulkan::DescriptorSetLayout> descriptorSetLayout, const BindingMap<VkDescriptorBufferInfo>& bufferInfos, const BindingMap<VkDescriptorImageInfo>& imageInfos);
+		VkDescriptorSet RequestDescriptorSet(Vulkan::DescriptorSetLayout& descriptorSetLayout, const std::vector<SetBinding<VkDescriptorBufferInfo>>& bufferInfos, const std::vector<SetBinding<VkDescriptorImageInfo>>& imageInfos);
 
 		BufferAllocation RequestBufferAllocation(Vulkan::BufferUsageFlags usage, uint32_t size);
 
 		void SetTarget(std::unique_ptr<Target> target);
 		Target& GetTarget() const;
 	private:
-		DescriptorPool& GetDescriptorPool(std::shared_ptr<Vulkan::DescriptorSetLayout> descriptorSetLayout);
+		DescriptorPool& GetDescriptorPool(Vulkan::DescriptorSetLayout& descriptorSetLayout);
 
 		const Vulkan::Device& device;
 

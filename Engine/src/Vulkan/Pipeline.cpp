@@ -1,27 +1,24 @@
 #include "Pipeline.hpp"
 
-#include "Shader.hpp"
+#include "ShaderModule.hpp"
+
+#include <array>
 
 namespace Vulkan
 {
 	Pipeline::Pipeline(const Device& device, const PipelineLayout& layout, const RenderPass& renderPass, PipelineSpec spec) : device(device)
 	{
-		auto vertexShader = Shader(device, "resources/shaders/shader.vert.spv");
-		auto fragmentShader = Shader(device, "resources/shaders/shader.frag.spv");
+		std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
+		for (auto& shaderModule : spec.shaderModules)
+		{
+			VkPipelineShaderStageCreateInfo info{};
+			info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+			info.stage = static_cast<VkShaderStageFlagBits>(shaderModule->GetStage());
+			info.module = shaderModule->GetHandle();
+			info.pName = "main";
 
-		VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
-		vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-		vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
-		vertShaderStageInfo.module = vertexShader.GetHandle();
-		vertShaderStageInfo.pName = "main";
-
-		VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
-		fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-		fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-		fragShaderStageInfo.module = fragmentShader.GetHandle();
-		fragShaderStageInfo.pName = "main";
-
-		VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
+			shaderStages.push_back(info);
+		}
 
 		std::vector<VkDynamicState> dynamicStates = {
 			VK_DYNAMIC_STATE_VIEWPORT,
@@ -96,8 +93,8 @@ namespace Vulkan
 
 		VkGraphicsPipelineCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-		createInfo.stageCount = 2;
-		createInfo.pStages = shaderStages;
+		createInfo.stageCount = shaderStages.size();
+		createInfo.pStages = shaderStages.data();
 		createInfo.pVertexInputState = &vertexInputInfo;
 		createInfo.pInputAssemblyState = &inputAssembly;
 		createInfo.pViewportState = &viewportState;

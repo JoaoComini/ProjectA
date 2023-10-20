@@ -11,7 +11,7 @@ namespace Engine
 	class DescriptorPoolEntry
 	{
 	public:
-		DescriptorPoolEntry(const Vulkan::Device& device, std::shared_ptr<Vulkan::DescriptorSetLayout> descriptorSetLayout, uint32_t size);
+		DescriptorPoolEntry(const Vulkan::Device& device, Vulkan::DescriptorSetLayout& descriptorSetLayout, uint32_t size);
 		~DescriptorPoolEntry() = default;
 
 		bool CanAllocate();
@@ -27,7 +27,7 @@ namespace Engine
 	class DescriptorPool
 	{
 	public:
-		DescriptorPool(const Vulkan::Device& device, std::shared_ptr<Vulkan::DescriptorSetLayout> descriptorSetLayout, uint32_t size);
+		DescriptorPool(const Vulkan::Device& device, Vulkan::DescriptorSetLayout& descriptorSetLayout, uint32_t size);
 		~DescriptorPool() = default;
 
 		VkDescriptorSet Allocate();
@@ -35,7 +35,7 @@ namespace Engine
 
 	private:
 		const Vulkan::Device& device;
-		std::shared_ptr<Vulkan::DescriptorSetLayout> descriptorSetLayout;
+		Vulkan::DescriptorSetLayout& descriptorSetLayout;
 		uint32_t size;
 
 		std::vector<std::unique_ptr<DescriptorPoolEntry>> entries;

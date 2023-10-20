@@ -12,14 +12,18 @@
 
 #include "EditorCamera.hpp"
 
+#include "Rendering/Subpass/GeometrySubpass.hpp"
+
 namespace Engine
 {
     class Editor : public Application
     {
     public:
         Editor(ApplicationSpec& spec);
+        ~Editor();
 
         void OnUpdate(float timestep) override;
+        void OnRender(Vulkan::CommandBuffer& commandBuffer) override;
         void OnGui() override;
         void OnWindowResize(int width, int height) override;
 
@@ -41,6 +45,8 @@ namespace Engine
         std::unique_ptr<ContentBrowser> contentBrowser;
         std::unique_ptr<ViewportDragDrop> viewportDragDrop;
         std::unique_ptr<EntityGizmo> entityGizmo;
+
+        std::unique_ptr<GeometrySubpass> geometrySubpass;
     };
 
     std::unique_ptr<Application> CreateApplication(ApplicationArgs args)

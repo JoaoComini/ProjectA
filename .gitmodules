@@ -31,3 +31,6 @@
 [submodule "Engine/third_party/imguizmo"]
 	path = Engine/third_party/imguizmo
 	url = https://github.com/CedricGuillemet/ImGuizmo.git
+[submodule "Engine/third_party/spirv-cross"]
+	path = Engine/third_party/spirv-cross
+	url = https://github.com/KhronosGroup/SPIRV-Cross.git

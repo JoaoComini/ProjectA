@@ -75,6 +75,13 @@ target_link_libraries(ImGuizmo ImGui)
 set(FLATBUFFERS_BUILD_TESTS OFF)
 add_subdirectory(third_party/flatbuffers)
 
+# ------ SPIRV-CROSS -----
+
+set(SPIRV_CROSS_CLI OFF CACHE BOOL "" FORCE)
+set(SPIRV_CROSS_ENABLE_TESTS OFF CACHE BOOL "" FORCE)
+set(SPIRV_CROSS_ENABLE_C_API OFF CACHE BOOL "" FORCE)
+add_subdirectory(third_party/spirv-cross)
+
 # -----------------------
 
 set(ENGINE_SRC_FILES
@@ -93,6 +100,8 @@ set(ENGINE_SRC_FILES
     "src/Rendering/Target.cpp"
     "src/Rendering/Texture.cpp"
     "src/Rendering/Gui.cpp"
+    "src/Rendering/Subpass/GeometrySubpass.cpp"
+    "src/Rendering/Subpass/Subpass.cpp"
     "src/Common/FileSystem.cpp"
     "src/Common/Uuid.cpp"
     "src/Vulkan/Buffer.cpp"
@@ -115,8 +124,8 @@ set(ENGINE_SRC_FILES
     "src/Vulkan/RenderPass.cpp"
     "src/Vulkan/Sampler.cpp"
     "src/Vulkan/Semaphore.cpp"
-    "src/Vulkan/Shader.cpp"
     "src/Vulkan/ShaderModule.cpp"
+    "src/Vulkan/SpirvReflection.cpp"
     "src/Vulkan/Surface.cpp"
     "src/Vulkan/Swapchain.cpp"
     "src/Scene/Scene.cpp"
@@ -157,6 +166,7 @@ target_link_libraries(Engine
     ImGuizmo
     yaml-cpp
     flatbuffers
+    spirv-cross-cpp
 )
 
 target_compile_definitions(Engine PRIVATE

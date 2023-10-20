@@ -19,6 +19,7 @@ namespace Vulkan
 	struct PipelineSpec
 	{
 		VertexInputSpec vertexInputSpec;
+		std::vector<std::shared_ptr<ShaderModule>> shaderModules;
 	};
 
 	class Pipeline : public Resource<VkPipeline>

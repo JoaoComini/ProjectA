@@ -6,21 +6,26 @@
 
 #include "Resource.hpp"
 #include "Device.hpp"
+#include "ShaderModule.hpp"
 
 namespace Vulkan
 {
 	class DescriptorSetLayout : public Resource<VkDescriptorSetLayout>
 	{
 	public:
-		DescriptorSetLayout(const Device& device, std::vector<VkDescriptorSetLayoutBinding> bindings);
+		DescriptorSetLayout(const Device& device, uint32_t set, const std::vector<ShaderResource>& setResources);
 		~DescriptorSetLayout();
 
 		const std::vector<VkDescriptorSetLayoutBinding>& GetBindings() const;
 
 		const VkDescriptorSetLayoutBinding* GetBinding(uint32_t binding) const;
 
+		uint32_t GetSet() const;
+
 	private:
 		const Device& device;
+
+		uint32_t set;
 		std::vector<VkDescriptorSetLayoutBinding> bindings;
 	};
 };

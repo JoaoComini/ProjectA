@@ -96,54 +96,14 @@ namespace Engine {
 
 				OnUpdate(timestep.count());
 
-				RenderScene();
+				OnRender(*commandBuffer);
 
 				OnGui();
 
 				Gui::Get().End(*commandBuffer);
-				Renderer::Get().End();
+				Renderer::Get().End(*commandBuffer);
 			}
 		}
-	}
-
-	void Application::RenderScene()
-	{
-		scene->ForEachEntity<Component::Transform, Component::MeshRender>(
-			[&](Entity entity) {
-				auto& meshRender = entity.GetComponent<Component::MeshRender>();
-
-				if (!meshRender.mesh)
-				{
-					return;
-				}
-
-				auto mesh = ResourceManager::Get().LoadResource<Mesh>(meshRender.mesh);
-
-				glm::mat4 matrix = GetEntityWorldMatrix(entity);
-
-				Renderer::Get().Draw(*mesh, matrix);
-			}
-		);
-	}
-
-	glm::mat4 Application::GetEntityWorldMatrix(Entity entity)
-	{
-		auto parent = entity.GetParent();
-		auto& transform = entity.GetComponent<Component::Transform>();
-
-		if (!parent)
-		{
-			return transform.GetLocalMatrix();
-		}
-
-		auto parentTransform = parent.TryGetComponent<Component::Transform>();
-
-		if (!parentTransform)
-		{
-			return transform.GetLocalMatrix();
-		}
-
-		return GetEntityWorldMatrix(parent) * transform.GetLocalMatrix();
 	}
 
 	void Application::OnWindowResize(int width, int height)

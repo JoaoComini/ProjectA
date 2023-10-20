@@ -19,21 +19,3 @@ namespace Engine
         }
     };
 };
-
-namespace std
-{
-	template <>
-	struct hash<Engine::Vertex>
-	{
-		size_t operator()(const Engine::Vertex& vertex) const
-		{
-			std::size_t result = 0U;
-
-			HashCombine(result, vertex.position);
-			HashCombine(result, vertex.uv);
-			HashCombine(result, vertex.normal);
-
-			return result;
-		}
-	};
-}

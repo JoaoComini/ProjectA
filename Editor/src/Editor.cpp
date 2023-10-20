@@ -75,13 +75,27 @@ namespace Engine
 				break;
 			}
 		});
+
+		auto vertexSource = Vulkan::ShaderSource{ "resources/shaders/shader.vert.spv" };
+		auto fragmentSource = Vulkan::ShaderSource{ "resources/shaders/shader.frag.spv" };
+
+		geometrySubpass = std::make_unique<GeometrySubpass>(GetDevice(), std::move(vertexSource), std::move(fragmentSource), GetScene());
     }
+
+	Editor::~Editor()
+	{
+		GetDevice().WaitIdle();
+	}
 
 	void Editor::OnUpdate(float timestep)
 	{
 		camera->Update(timestep);
+	}
 
-		Renderer::Get().SetCamera(*camera, camera->GetTransform());
+	void Editor::OnRender(Vulkan::CommandBuffer& commandBuffer)
+	{
+		geometrySubpass->SetCamera(*camera, camera->GetTransform());
+		geometrySubpass->Draw(commandBuffer);
 	}
 
     void Editor::OnGui()

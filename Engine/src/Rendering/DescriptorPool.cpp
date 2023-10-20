@@ -3,7 +3,7 @@
 
 namespace Engine
 {
-	DescriptorPool::DescriptorPool(const Vulkan::Device& device, std::shared_ptr<Vulkan::DescriptorSetLayout> descriptorSetLayout, uint32_t size)
+	DescriptorPool::DescriptorPool(const Vulkan::Device& device, Vulkan::DescriptorSetLayout& descriptorSetLayout, uint32_t size)
 		: device(device), descriptorSetLayout(descriptorSetLayout), size(size)
 	{
 		entries.emplace_back(std::make_unique<DescriptorPoolEntry>(device, descriptorSetLayout, size));
@@ -38,7 +38,7 @@ namespace Engine
 		activeEntryIndex = 0;
 	}
 
-	DescriptorPoolEntry::DescriptorPoolEntry(const Vulkan::Device& device, std::shared_ptr<Vulkan::DescriptorSetLayout> descriptorSetLayout, uint32_t size)
+	DescriptorPoolEntry::DescriptorPoolEntry(const Vulkan::Device& device, Vulkan::DescriptorSetLayout& descriptorSetLayout, uint32_t size)
 		: size(size)
 	{
 		pool = std::make_unique<Vulkan::DescriptorPool>(device, descriptorSetLayout, size);

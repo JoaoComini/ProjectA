@@ -46,7 +46,7 @@ namespace Engine
 		return semaphorePool->RequestSemaphore();
 	}
 
-	VkDescriptorSet Frame::RequestDescriptorSet(std::shared_ptr<Vulkan::DescriptorSetLayout> descriptorSetLayout, const BindingMap<VkDescriptorBufferInfo>& bufferInfos, const BindingMap<VkDescriptorImageInfo>& imageInfos)
+	VkDescriptorSet Frame::RequestDescriptorSet(Vulkan::DescriptorSetLayout& descriptorSetLayout, const std::vector<SetBinding<VkDescriptorBufferInfo>>& bufferInfos, const std::vector<SetBinding<VkDescriptorImageInfo>>& imageInfos)
 	{
 		auto handle = GetDescriptorPool(descriptorSetLayout).Allocate();
 
@@ -54,48 +54,44 @@ namespace Engine
 
 		for (auto& info : bufferInfos)
 		{
-			uint32_t index = info.first;
-			auto& infos = info.second;
-
-			if (auto binding = descriptorSetLayout->GetBinding(index))
+			uint32_t index = info.binding;
+			if (auto binding = descriptorSetLayout.GetBinding(index))
 			{
-				for (auto& it : infos)
+				for (uint32_t i = 0; i < info.infos.size(); i++)
 				{
-					auto& bufferInfo = it.second;
 					writes.push_back(
 						{
 							.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
 							.dstSet = handle,
 							.dstBinding = index,
+							.dstArrayElement = i,
 							.descriptorCount = 1,
 							.descriptorType = binding->descriptorType,
-							.pBufferInfo = &bufferInfo,
+							.pBufferInfo = &info.infos[i],
 						}
 					);
 				}
 			}
+		}
 
-			for (auto& info : imageInfos)
+		for (auto& info : imageInfos)
+		{
+			uint32_t index = info.binding;
+			if (auto binding = descriptorSetLayout.GetBinding(index))
 			{
-				uint32_t index = info.first;
-				auto& infos = info.second;
-
-				if (auto binding = descriptorSetLayout->GetBinding(index))
+				for (uint32_t i = 0; i < info.infos.size(); i++)
 				{
-					for (auto& it : infos)
-					{
-						auto& imageInfo = it.second;
-						writes.push_back(
-							{
-								.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-								.dstSet = handle,
-								.dstBinding = index,
-								.descriptorCount = 1,
-								.descriptorType = binding->descriptorType,
-								.pImageInfo = &imageInfo,
-							}
-						);
-					}
+					writes.push_back(
+						{
+							.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+							.dstSet = handle,
+							.dstBinding = index,
+							.dstArrayElement = i,
+							.descriptorCount = 1,
+							.descriptorType = binding->descriptorType,
+							.pImageInfo = &info.infos[i],
+						}
+					);
 				}
 			}
 		}
@@ -120,7 +116,7 @@ namespace Engine
 		return *target;
 	}
 
-	DescriptorPool& Frame::GetDescriptorPool(std::shared_ptr<Vulkan::DescriptorSetLayout> descriptorSetLayout)
+	DescriptorPool& Frame::GetDescriptorPool(Vulkan::DescriptorSetLayout& descriptorSetLayout)
 	{
 		std::size_t hash = Hash(descriptorSetLayout);
 
