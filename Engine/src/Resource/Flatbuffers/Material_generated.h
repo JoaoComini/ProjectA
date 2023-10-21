@@ -15,27 +15,56 @@ static_assert(FLATBUFFERS_VERSION_MAJOR == 23 &&
 
 namespace flatbuffers {
 
+struct Color;
+
 struct Material;
 struct MaterialBuilder;
 struct MaterialT;
 
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Color FLATBUFFERS_FINAL_CLASS {
+ private:
+  float value_[4];
+
+ public:
+  Color()
+      : value_() {
+  }
+  Color(::flatbuffers::span<const float, 4> _value) {
+    ::flatbuffers::CastToArray(value_).CopyFromSpan(_value);
+  }
+  const ::flatbuffers::Array<float, 4> *value() const {
+    return &::flatbuffers::CastToArray(value_);
+  }
+};
+FLATBUFFERS_STRUCT_END(Color, 16);
+
 struct MaterialT : public ::flatbuffers::NativeTable {
   typedef Material TableType;
   uint64_t diffuse = 0;
+  std::unique_ptr<flatbuffers::Color> color{};
+  MaterialT() = default;
+  MaterialT(const MaterialT &o);
+  MaterialT(MaterialT&&) FLATBUFFERS_NOEXCEPT = default;
+  MaterialT &operator=(MaterialT o) FLATBUFFERS_NOEXCEPT;
 };
 
 struct Material FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef MaterialT NativeTableType;
   typedef MaterialBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_DIFFUSE = 4
+    VT_DIFFUSE = 4,
+    VT_COLOR = 6
   };
   uint64_t diffuse() const {
     return GetField<uint64_t>(VT_DIFFUSE, 0);
   }
+  const flatbuffers::Color *color() const {
+    return GetStruct<const flatbuffers::Color *>(VT_COLOR);
+  }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint64_t>(verifier, VT_DIFFUSE, 8) &&
+           VerifyField<flatbuffers::Color>(verifier, VT_COLOR, 4) &&
            verifier.EndTable();
   }
   MaterialT *UnPack(const ::flatbuffers::resolver_function_t *_resolver = nullptr) const;
@@ -50,6 +79,9 @@ struct MaterialBuilder {
   void add_diffuse(uint64_t diffuse) {
     fbb_.AddElement<uint64_t>(Material::VT_DIFFUSE, diffuse, 0);
   }
+  void add_color(const flatbuffers::Color *color) {
+    fbb_.AddStruct(Material::VT_COLOR, color);
+  }
   explicit MaterialBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
@@ -63,13 +95,26 @@ struct MaterialBuilder {
 
 inline ::flatbuffers::Offset<Material> CreateMaterial(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    uint64_t diffuse = 0) {
+    uint64_t diffuse = 0,
+    const flatbuffers::Color *color = nullptr) {
   MaterialBuilder builder_(_fbb);
   builder_.add_diffuse(diffuse);
+  builder_.add_color(color);
   return builder_.Finish();
 }
 
 ::flatbuffers::Offset<Material> CreateMaterial(::flatbuffers::FlatBufferBuilder &_fbb, const MaterialT *_o, const ::flatbuffers::rehasher_function_t *_rehasher = nullptr);
+
+inline MaterialT::MaterialT(const MaterialT &o)
+      : diffuse(o.diffuse),
+        color((o.color) ? new flatbuffers::Color(*o.color) : nullptr) {
+}
+
+inline MaterialT &MaterialT::operator=(MaterialT o) FLATBUFFERS_NOEXCEPT {
+  std::swap(diffuse, o.diffuse);
+  std::swap(color, o.color);
+  return *this;
+}
 
 inline MaterialT *Material::UnPack(const ::flatbuffers::resolver_function_t *_resolver) const {
   auto _o = std::unique_ptr<MaterialT>(new MaterialT());
@@ -81,6 +126,7 @@ inline void Material::UnPackTo(MaterialT *_o, const ::flatbuffers::resolver_func
   (void)_o;
   (void)_resolver;
   { auto _e = diffuse(); _o->diffuse = _e; }
+  { auto _e = color(); if (_e) _o->color = std::unique_ptr<flatbuffers::Color>(new flatbuffers::Color(*_e)); }
 }
 
 inline ::flatbuffers::Offset<Material> Material::Pack(::flatbuffers::FlatBufferBuilder &_fbb, const MaterialT* _o, const ::flatbuffers::rehasher_function_t *_rehasher) {
@@ -92,9 +138,11 @@ inline ::flatbuffers::Offset<Material> CreateMaterial(::flatbuffers::FlatBufferB
   (void)_o;
   struct _VectorArgs { ::flatbuffers::FlatBufferBuilder *__fbb; const MaterialT* __o; const ::flatbuffers::rehasher_function_t *__rehasher; } _va = { &_fbb, _o, _rehasher}; (void)_va;
   auto _diffuse = _o->diffuse;
+  auto _color = _o->color ? _o->color.get() : nullptr;
   return flatbuffers::CreateMaterial(
       _fbb,
-      _diffuse);
+      _diffuse,
+      _color);
 }
 
 inline const flatbuffers::Material *GetMaterial(const void *buf) {

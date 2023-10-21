@@ -205,10 +205,11 @@ foreach(SCHEMA_SRC IN LISTS FLATBUFFERS_SCHEMAS)
         COMMAND
         ${FLATBUFFERS_FLATC_EXECUTABLE}
         --cpp --gen-object-api
-        -o ${SCHEMA_DIR}
-        -I ${SCHEMA_DIR}
+        -o ${CMAKE_CURRENT_SOURCE_DIR}/${SCHEMA_DIR}
+        -I ${CMAKE_CURRENT_SOURCE_DIR}/${SCHEMA_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/${SCHEMA_SRC}
         OUTPUT ${GEN_HEADER}
+        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${SCHEMA_SRC}
         COMMENT "flatc generation: ${SCHEMA_SRC}"
     )
     target_sources(Engine_Flatbuffers PRIVATE ${GEN_HEADER})

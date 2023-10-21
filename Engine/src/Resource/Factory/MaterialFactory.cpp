@@ -5,14 +5,19 @@
 #include "../Flatbuffers/Material_generated.h"
 #include "flatbuffers/flatbuffers.h"
 
+#include <glm/gtc/type_ptr.hpp>
+
 #include <fstream>
 
 namespace Engine
 {
     void MaterialFactory::Create(std::filesystem::path destination, MaterialSpec& spec)
     {
+        std::span<const float, 4> color{ glm::value_ptr(spec.color), 4 };
+
         flatbuffers::MaterialT material;
         material.diffuse = spec.diffuse;
+        material.color = std::make_unique<flatbuffers::Color>(color);
 
         flatbuffers::FlatBufferBuilder builder(128);
         auto offset = flatbuffers::Material::Pack(builder, &material);
@@ -30,6 +35,12 @@ namespace Engine
 
         auto material = flatbuffers::GetMaterial(file.c_str());
 
-        return std::make_shared<Material>(material->diffuse());
+        glm::vec4 color{ 1.f };
+        if (material->color())
+        {
+            color = glm::make_vec4(material->color()->value()->data());
+        }
+
+        return std::make_shared<Material>(material->diffuse(), color);
     }
 };

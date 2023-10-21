@@ -1,9 +1,16 @@
 
 namespace flatbuffers;
 
+
+struct Color
+{
+    value:[float:4];
+}
+
 table Material
 {
     diffuse:uint64 = 0;
+    color:Color;
 }
 
 root_type Material;

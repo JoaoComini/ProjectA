@@ -114,18 +114,18 @@ namespace Engine
             auto& material = model.materials[i];
             auto& values = material.values;
 
-            ResourceId diffuse{ 0 };
+            MaterialSpec spec{};
 
             if (values.find("baseColorTexture") != values.end()) {
                 auto index = values["baseColorTexture"].TextureIndex();
-
-                diffuse = textures[index];
+                spec.diffuse = textures[index];
             }
 
-            MaterialSpec spec
+            if (values.find("baseColorFactor") != values.end())
             {
-                .diffuse = diffuse
-            };
+                const auto& color_factor = values["baseColorFactor"].ColorFactor();
+                spec.color = glm::vec4(color_factor[0], color_factor[1], color_factor[2], color_factor[3]);
+            }
 
             auto id = ResourceManager::Get().CreateResource<Material>(parent.stem() / "material", spec);
 

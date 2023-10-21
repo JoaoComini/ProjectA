@@ -11,7 +11,7 @@ namespace Engine
 	class Material : public Resource
 	{
 	public:
-		Material(ResourceId diffuse);
+		Material(ResourceId diffuse, glm::vec4 color = glm::vec4{1.f});
 		~Material() = default;
 
 		ResourceId GetDiffuse() const;
@@ -30,6 +30,6 @@ namespace Engine
 
 	private:
 		ResourceId diffuse;
-		glm::vec4 color{ 1.f, 1.f, 1.f, 1.f };
+		glm::vec4 color{ 1.f };
 	};
 };

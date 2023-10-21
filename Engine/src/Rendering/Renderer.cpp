@@ -119,7 +119,7 @@ namespace Engine
 		});
 
 		std::vector<VkClearValue> clearValues = {
-			{ { 0.f, 0.f, 0.f, 1.f } },
+			{ { 1.f, 0.f, 0.f, 1.f } },
 			{ 1.f, 0.f }
 		};
 

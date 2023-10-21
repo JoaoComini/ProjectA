@@ -3,7 +3,7 @@
 
 namespace Engine
 {
-	Material::Material(ResourceId diffuse) : diffuse(diffuse)
+	Material::Material(ResourceId diffuse, glm::vec4 color) : diffuse(diffuse), color(color)
 	{ }
 
 	ResourceId Material::GetDiffuse() const
