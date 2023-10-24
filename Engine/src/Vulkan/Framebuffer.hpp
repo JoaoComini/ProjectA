@@ -15,7 +15,7 @@ namespace Vulkan
 	class Framebuffer: public Resource<VkFramebuffer>
 	{
 	public:
-		Framebuffer(const Device& device, const RenderPass& renderPass, std::vector<std::unique_ptr<ImageView>>& attachments, VkExtent2D extent);
+		Framebuffer(const Device& device, const RenderPass& renderPass, const std::vector<std::unique_ptr<ImageView>>& attachments, VkExtent2D extent);
 		~Framebuffer();
 
 	private:

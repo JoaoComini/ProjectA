@@ -41,7 +41,8 @@ namespace Vulkan
         return mipLevels;
     }
 
-    Image::Image(const Device& device, VkImage handle, VkFormat format) : device(device), Resource(handle), format(format)
+    Image::Image(const Device& device, VkImage handle, VkFormat format, VkExtent3D extent)
+        : device(device), Resource(handle), format(format), extent(extent)
     {
     }
 

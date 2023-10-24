@@ -30,7 +30,6 @@ namespace Engine
 		renderPass = std::make_unique<Vulkan::RenderPass>(device, *this->swapchain);
 
 		CreateFrames();
-		CreateFramebuffers();
 	}
 
 	void Renderer::CreateFrames()
@@ -48,17 +47,6 @@ namespace Engine
 		}
 	}
 
-	void Renderer::CreateFramebuffers()
-	{
-		framebuffers.clear();
-
-		VkExtent2D extent = swapchain->GetImageExtent();
-
-		for (auto& frame : frames)
-		{
-			framebuffers.push_back(std::make_unique<Vulkan::Framebuffer>(device, *renderPass, frame->GetTarget().GetViews(), extent));
-		}
-	}
 
 	Vulkan::CommandBuffer* Renderer::Begin()
 	{
@@ -118,12 +106,13 @@ namespace Engine
 			}
 		});
 
-		std::vector<VkClearValue> clearValues = {
-			{ { 1.f, 0.f, 0.f, 1.f } },
-			{ 1.f, 0.f }
-		};
+		std::vector<VkClearValue> clearValues{ 2 };
+		clearValues[0].color = { 0.f, 0.f, 0.f, 1.f };
+		clearValues[1].depthStencil = { 1.f, 0 };
 
-		commandBuffer.BeginRenderPass(*renderPass, *framebuffers[currentImageIndex], clearValues, extent);
+		auto& framebuffer = GetCurrentFrame().RequestFramebuffer(*renderPass);
+
+		commandBuffer.BeginRenderPass(*renderPass, framebuffer, clearValues, extent);
 	}
 
 	void Renderer::End(Vulkan::CommandBuffer& commandBuffer)
@@ -203,8 +192,6 @@ namespace Engine
 			it++;
 		}
 
-		CreateFramebuffers();
-
 		return true;
 	}
 
@@ -215,7 +202,12 @@ namespace Engine
 
 	std::unique_ptr<Target> Renderer::CreateTarget(VkImage image, VkFormat format, VkExtent2D extent)
 	{
-		auto swapchainImage = std::make_unique<Vulkan::Image>(device, image, format);
+		auto swapchainImage = std::make_unique<Vulkan::Image>(
+			device,
+			image,
+			format,
+			VkExtent3D{ extent.width, extent.height, 1 }
+		);
 
 		auto depthImage = std::make_unique<Vulkan::Image>(
 			device,
@@ -233,10 +225,12 @@ namespace Engine
 			device.GetMaxSampleCount()
 		);
 
-		return TargetBuilder()
-			.AddImage(std::move(colorImage))
-			.AddImage(std::move(depthImage))
-			.AddImage(std::move(swapchainImage))
-			.Build(device);
+		std::vector<std::unique_ptr<Vulkan::Image>> images;
+
+		images.push_back(std::move(colorImage));
+		images.push_back(std::move(depthImage));
+		images.push_back(std::move(swapchainImage));
+
+		return std::make_unique<Target>(device, std::move(images));
 	}
 }

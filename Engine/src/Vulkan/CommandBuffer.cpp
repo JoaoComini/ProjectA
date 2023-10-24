@@ -145,8 +145,8 @@ namespace Vulkan
 		barrier.subresourceRange.baseArrayLayer = 0;
 		barrier.subresourceRange.layerCount = 1;
 
-		VkPipelineStageFlags sourceStage;
-		VkPipelineStageFlags destinationStage;
+		VkPipelineStageFlags sourceStage{};
+		VkPipelineStageFlags destinationStage{};
 
 		switch (oldLayout)
 		{

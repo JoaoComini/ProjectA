@@ -39,10 +39,9 @@ namespace Engine
 
 		Vulkan::RenderPass& GetRenderPass() const;
 		Frame& GetCurrentFrame() const;
+
 	private:
 		void CreateFrames();
-		void CreateFramebuffers();
-
 		void BeginRenderPass(Vulkan::CommandBuffer& commandBuffer);
 		Vulkan::Semaphore& Submit(Vulkan::CommandBuffer& commandBuffer);
 		void Present(Vulkan::Semaphore& waitSemaphore);
@@ -59,7 +58,6 @@ namespace Engine
 		Vulkan::Semaphore* acquireSemaphore;
 
 		std::vector<std::unique_ptr<Frame>> frames;
-		std::vector<std::unique_ptr<Vulkan::Framebuffer>> framebuffers;
 
 		std::unique_ptr<Vulkan::RenderPass> renderPass;
 	};

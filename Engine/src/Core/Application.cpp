@@ -92,11 +92,11 @@ namespace Engine {
 
 			if (auto commandBuffer = Renderer::Get().Begin())
 			{
-				Gui::Get().Begin();
-
 				OnUpdate(timestep.count());
 
 				OnRender(*commandBuffer);
+
+				Gui::Get().Begin();
 
 				OnGui();
 

@@ -17,9 +17,10 @@
 #include "Vulkan/Buffer.hpp"
 
 #include "Target.hpp"
-#include "BufferPool.hpp"
-#include "DescriptorPool.hpp"
-#include "SemaphorePool.hpp"
+#include "Pool/BufferPool.hpp"
+#include "Pool/DescriptorPool.hpp"
+#include "Pool/SemaphorePool.hpp"
+#include "Caching/FramebufferCache.hpp"
 
 namespace Engine
 {
@@ -44,8 +45,9 @@ namespace Engine
 		void Reset();
 		Vulkan::CommandBuffer& RequestCommandBuffer();
 		Vulkan::Semaphore& RequestSemaphore();
-		VkDescriptorSet RequestDescriptorSet(Vulkan::DescriptorSetLayout& descriptorSetLayout, const std::vector<SetBinding<VkDescriptorBufferInfo>>& bufferInfos, const std::vector<SetBinding<VkDescriptorImageInfo>>& imageInfos);
+		Vulkan::Framebuffer& RequestFramebuffer(const Vulkan::RenderPass& renderPass);
 
+		VkDescriptorSet RequestDescriptorSet(Vulkan::DescriptorSetLayout& descriptorSetLayout, const std::vector<SetBinding<VkDescriptorBufferInfo>>& bufferInfos, const std::vector<SetBinding<VkDescriptorImageInfo>>& imageInfos);
 		BufferAllocation RequestBufferAllocation(Vulkan::BufferUsageFlags usage, uint32_t size);
 
 		void SetTarget(std::unique_ptr<Target> target);
@@ -57,6 +59,7 @@ namespace Engine
 
 		std::unique_ptr<Vulkan::CommandPool> commandPool;
 		std::unique_ptr<SemaphorePool> semaphorePool;
+		std::unique_ptr<FramebufferCache> framebufferCache;
 
 		std::unordered_map<std::size_t, std::unique_ptr<DescriptorPool>> descriptorPools;
 

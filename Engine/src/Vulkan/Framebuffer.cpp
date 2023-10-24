@@ -4,7 +4,7 @@
 
 namespace Vulkan
 {
-	Framebuffer::Framebuffer(const Device& device, const RenderPass& renderPass, std::vector<std::unique_ptr<ImageView>>& attachments, VkExtent2D extent): device(device)
+	Framebuffer::Framebuffer(const Device& device, const RenderPass& renderPass, const std::vector<std::unique_ptr<ImageView>>& attachments, VkExtent2D extent): device(device)
 	{
 		std::vector<VkImageView> views;
 		

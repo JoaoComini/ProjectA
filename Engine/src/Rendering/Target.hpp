@@ -2,38 +2,49 @@
 
 #include <vulkan/vulkan.h>
 
-#include <vector>
+#include "Common/Hash.hpp"
 
 #include "Vulkan/Device.hpp"
 #include "Vulkan/Image.hpp"
 #include "Vulkan/ImageView.hpp"
+
+#include <vector>
 
 namespace Engine
 {
 	class Target
 	{
 	public:
-		Target(const Vulkan::Device& device, std::vector<std::unique_ptr<Vulkan::Image>>& images);
+		Target(const Vulkan::Device& device, std::vector<std::unique_ptr<Vulkan::Image>>&& images);
 		~Target() = default;
 
-		std::vector<std::unique_ptr<Vulkan::ImageView>>& GetViews();
+		const std::vector<std::unique_ptr<Vulkan::ImageView>>& GetViews() const;
+
+		VkExtent2D GetExtent() const;
 
 	private:
 		std::vector<std::unique_ptr<Vulkan::Image>> images;
 		std::vector<std::unique_ptr<Vulkan::ImageView>> views;
 
-	};
-
-	class TargetBuilder
-	{
-	public:
-		TargetBuilder() = default;
-
-		TargetBuilder& AddImage(std::unique_ptr<Vulkan::Image> image);
-
-		std::unique_ptr<Target> Build(const Vulkan::Device& device);
-
-	private:
-		std::vector<std::unique_ptr<Vulkan::Image>> images;
+		VkExtent2D extent{};
 	};
 }
+
+namespace std
+{
+	template <>
+	struct hash<Engine::Target>
+	{
+		size_t operator()(const Engine::Target& target) const
+		{
+			std::size_t result{ 0 };
+
+			for (auto& view : target.GetViews())
+			{
+				HashCombine(result, view->GetHandle());
+			}
+
+			return result;
+		}
+	};
+};

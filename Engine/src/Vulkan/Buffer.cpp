@@ -84,7 +84,10 @@ namespace Vulkan
 
         vmaGetAllocationMemoryProperties(device.GetAllocator(), buffer->allocation, &buffer->propertyFlags);
 
-        buffer->mappedData = static_cast<uint8_t*>(allocationInfo.pMappedData);
+        if (buffer->IsHostVisible())
+        {
+            buffer->mappedData = static_cast<uint8_t*>(allocationInfo.pMappedData);
+        }
 
         return buffer;
     }

@@ -95,6 +95,7 @@ namespace Engine
 	void Editor::OnRender(Vulkan::CommandBuffer& commandBuffer)
 	{
 		geometrySubpass->SetCamera(*camera, camera->GetTransform());
+
 		geometrySubpass->Draw(commandBuffer);
 	}
 
@@ -132,7 +133,6 @@ namespace Engine
 	void Editor::OnWindowResize(int width, int height)
 	{
 		Application::OnWindowResize(width, height);
-
 		camera->SetAspectRatio((float)width / height);
 	}
 

@@ -10,6 +10,8 @@ namespace Engine
 	{
 		commandPool = std::make_unique<Vulkan::CommandPool>(device);
 		semaphorePool = std::make_unique<SemaphorePool>(device);
+		framebufferCache = std::make_unique<FramebufferCache>(device);
+
 		renderFence = std::make_unique<Vulkan::Fence>(device);
 
 		bufferPool = std::make_unique<BufferPool>(device, Vulkan::BufferUsageFlags::UNIFORM, BUFFER_POOL_BLOCK_SIZE);
@@ -44,6 +46,11 @@ namespace Engine
 	Vulkan::Semaphore& Frame::RequestSemaphore()
 	{
 		return semaphorePool->RequestSemaphore();
+	}
+
+	Vulkan::Framebuffer& Frame::RequestFramebuffer(const Vulkan::RenderPass& renderPass)
+	{
+		return framebufferCache->RequestFramebuffer(renderPass, *target);
 	}
 
 	VkDescriptorSet Frame::RequestDescriptorSet(Vulkan::DescriptorSetLayout& descriptorSetLayout, const std::vector<SetBinding<VkDescriptorBufferInfo>>& bufferInfos, const std::vector<SetBinding<VkDescriptorImageInfo>>& imageInfos)
