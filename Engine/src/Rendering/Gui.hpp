@@ -20,13 +20,12 @@ namespace Engine
         Gui(std::unique_ptr<Vulkan::DescriptorPool> descriptorPool, Window& window);
         ~Gui();
 
-        static void Setup(Vulkan::Instance& instance, Vulkan::Device& device, Vulkan::PhysicalDevice& physicalDevice, Window& window);
+        static void Setup(Vulkan::Instance& instance, Vulkan::Device& device, Vulkan::PhysicalDevice& physicalDevice, Window& window, Vulkan::RenderPass& renderPass);
 
         void Begin();
         void End(Vulkan::CommandBuffer& commandBuffer);
 
     private:
-
         std::unique_ptr<Vulkan::DescriptorPool> descriptorPool;
         Window& window;
     };

@@ -23,7 +23,7 @@
 #include "Texture.hpp"
 #include "Material.hpp"
 #include "Camera.hpp"
-#include "Frame.hpp"
+#include "RenderFrame.hpp"
 
 namespace Engine
 {
@@ -37,28 +37,34 @@ namespace Engine
 		Vulkan::CommandBuffer* Begin();
 		void End(Vulkan::CommandBuffer& commandBuffer);
 
-		Vulkan::RenderPass& GetRenderPass() const;
-		Frame& GetCurrentFrame() const;
+		void SetMainCamera(Camera& camera, glm::mat4& transform);
 
+		std::pair<Camera&, glm::mat4&> GetMainCamera();
+
+		RenderFrame& GetCurrentFrame() const;
 	private:
 		void CreateFrames();
+
 		void BeginRenderPass(Vulkan::CommandBuffer& commandBuffer);
+
 		Vulkan::Semaphore& Submit(Vulkan::CommandBuffer& commandBuffer);
+
 		void Present(Vulkan::Semaphore& waitSemaphore);
 
 		bool RecreateSwapchain(bool force = false);
 
-		std::unique_ptr<Target> CreateTarget(VkImage image, VkFormat format, VkExtent2D extent);
+		std::unique_ptr<RenderTarget> CreateTarget(std::unique_ptr<Vulkan::Image> swapchainImage);
 
-		const Vulkan::Device& device;
-
-		uint32_t currentImageIndex = 0;
+		uint32_t currentFrameIndex = 0;
 
 		std::unique_ptr<Vulkan::Swapchain> swapchain;
 		Vulkan::Semaphore* acquireSemaphore;
 
-		std::vector<std::unique_ptr<Frame>> frames;
+		std::vector<std::unique_ptr<RenderFrame>> frames;
 
-		std::unique_ptr<Vulkan::RenderPass> renderPass;
+		Camera mainCamera;
+		glm::mat4 mainCameraTransform;
+
+		const Vulkan::Device& device;
 	};
 }

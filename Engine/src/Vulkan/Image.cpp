@@ -5,7 +5,7 @@
 namespace Vulkan
 {
     Image::Image(const Device &device, VkImageUsageFlags usage, VkFormat format, VkExtent3D extent, VkSampleCountFlagBits samples, uint32_t mipLevels)
-        : device(device), format(format), extent(extent), mipLevels(mipLevels)
+        : device(device), usage(usage), format(format), extent(extent), sampleCount(samples), mipLevels(mipLevels)
     {
 
         VkImageCreateInfo createInfo{
@@ -31,9 +31,19 @@ namespace Vulkan
         vmaCreateImage(device.GetAllocator(), &createInfo, &allocationCreateInfo, &handle, &allocation, nullptr);
     }
 
+    VkImageUsageFlags Image::GetUsage() const
+    {
+        return usage;
+    }
+
     VkExtent3D Image::GetExtent() const
     {
         return extent;
+    }
+
+    VkSampleCountFlagBits Image::GetSampleCount() const
+    {
+        return sampleCount;
     }
 
     uint32_t Image::GetMipLevels() const
@@ -41,8 +51,8 @@ namespace Vulkan
         return mipLevels;
     }
 
-    Image::Image(const Device& device, VkImage handle, VkFormat format, VkExtent3D extent)
-        : device(device), Resource(handle), format(format), extent(extent)
+    Image::Image(const Device& device, VkImage handle, VkImageUsageFlags usage, VkFormat format, VkExtent3D extent)
+        : device(device), Resource(handle), usage(usage), format(format), extent(extent), sampleCount(VK_SAMPLE_COUNT_1_BIT), mipLevels(1)
     {
     }
 

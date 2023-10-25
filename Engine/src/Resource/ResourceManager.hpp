@@ -19,7 +19,7 @@ namespace Engine
     class ResourceManager: public Singleton<ResourceManager>
     {
     public:
-        ResourceManager(const Vulkan::Device& device);
+        ResourceManager(Vulkan::Device& device);
 
         template<typename T>
         std::shared_ptr<T> LoadResource(const ResourceId& id)
@@ -117,6 +117,6 @@ namespace Engine
         void FactoryCreate(std::filesystem::path path, P& payload);
 
         std::unordered_map<ResourceId, std::shared_ptr<Resource>> loadedResources;
-        const Vulkan::Device& device;
+        Vulkan::Device& device;
     };
 };

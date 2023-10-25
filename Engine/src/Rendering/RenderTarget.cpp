@@ -1,4 +1,4 @@
-#include "Target.hpp"
+#include "RenderTarget.hpp"
 
 
 #include <set>
@@ -15,13 +15,8 @@ namespace Engine
 		}
 	};
 
-	Target::Target(const Vulkan::Device& device, std::vector<std::unique_ptr<Vulkan::Image>>&& images) : images(std::move(images))
+	RenderTarget::RenderTarget(const Vulkan::Device& device, std::vector<std::unique_ptr<Vulkan::Image>>&& images) : images(std::move(images))
 	{
-		for (auto& image : this->images)
-		{
-			views.push_back(std::make_unique<Vulkan::ImageView>(device, *image));
-		}
-
 		std::set<VkExtent2D, CompareExtent2D> unique;
 		std::transform(this->images.begin(), this->images.end(), std::inserter(unique, unique.end()), [](const std::unique_ptr<Vulkan::Image>& image) {
 			return VkExtent2D{ image->GetExtent().width, image->GetExtent().height }; }
@@ -34,14 +29,26 @@ namespace Engine
 		}
 
 		extent = *unique.begin();
+
+		for (auto& image : this->images)
+		{
+			views.push_back(std::make_unique<Vulkan::ImageView>(device, *image));
+
+			attachments.push_back({image->GetFormat(), image->GetSampleCount(), image->GetUsage()});
+		}
 	}
 
-	const std::vector<std::unique_ptr<Vulkan::ImageView>>& Target::GetViews() const
+	const std::vector<std::unique_ptr<Vulkan::ImageView>>& RenderTarget::GetViews() const
 	{
 		return views;
 	}
 
-	VkExtent2D Target::GetExtent() const
+	const std::vector<Vulkan::AttachmentInfo>& RenderTarget::GetAttachments() const
+	{
+		return attachments;
+	}
+
+	VkExtent2D RenderTarget::GetExtent() const
 	{
 		return extent;
 	}

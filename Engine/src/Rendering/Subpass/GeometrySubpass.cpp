@@ -9,7 +9,11 @@ namespace Engine
 		Vulkan::ShaderSource&& vertexSource,
 		Vulkan::ShaderSource&& fragmentSource,
 		Scene& scene
-	) : Subpass{std::move(vertexSource), std::move(fragmentSource)}, scene(scene)
+	) : device(device), Subpass{std::move(vertexSource), std::move(fragmentSource)}, scene(scene)
+	{
+	}
+
+	void GeometrySubpass::Prepare(Vulkan::RenderPass& renderPass)
 	{
 		std::vector<std::shared_ptr<Vulkan::ShaderModule>> shaderModules
 		{
@@ -57,10 +61,9 @@ namespace Engine
 			.shaderModules = shaderModules
 		};
 
-		auto& renderPass = Renderer::Get().GetRenderPass();
 		pipeline = std::make_unique<Vulkan::Pipeline>(device, *pipelineLayout, renderPass, spec);
 	}
-
+	
 	glm::mat4 GetEntityWorldMatrix(Entity entity)
 	{
 		auto parent = entity.GetParent();
@@ -79,11 +82,6 @@ namespace Engine
 		}
 
 		return GetEntityWorldMatrix(parent) * transform.GetLocalMatrix();
-	}
-
-	void GeometrySubpass::SetCamera(const Camera& camera, const glm::mat4 transform)
-	{
-		globalUniform.viewProjection = camera.GetProjection() * glm::inverse(transform);
 	}
 
 	void GeometrySubpass::Draw(Vulkan::CommandBuffer& commandBuffer)
@@ -123,6 +121,10 @@ namespace Engine
 
 	void GeometrySubpass::UpdateGlobalUniform(Vulkan::CommandBuffer& commandBuffer)
 	{
+		auto [camera, transform] = Renderer::Get().GetMainCamera();
+
+		globalUniform.viewProjection = camera.GetProjection() * glm::inverse(transform);
+
 		auto& frame = Renderer::Get().GetCurrentFrame();
 
 		auto allocation = frame.RequestBufferAllocation(Vulkan::BufferUsageFlags::UNIFORM, sizeof(GlobalUniform));

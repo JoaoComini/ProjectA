@@ -1,11 +1,11 @@
-#include "Frame.hpp"
+#include "RenderFrame.hpp"
 
 #include "Common/Hash.hpp"
 
 namespace Engine
 {
 
-	Frame::Frame(const Vulkan::Device& device, std::unique_ptr<Target> target)
+	RenderFrame::RenderFrame(const Vulkan::Device& device, std::unique_ptr<RenderTarget> target)
 		: device(device), target(std::move(target))
 	{
 		commandPool = std::make_unique<Vulkan::CommandPool>(device);
@@ -17,12 +17,7 @@ namespace Engine
 		bufferPool = std::make_unique<BufferPool>(device, Vulkan::BufferUsageFlags::UNIFORM, BUFFER_POOL_BLOCK_SIZE);
 	}
 
-	Vulkan::Fence& Frame::GetRenderFence() const
-	{
-		return *renderFence;
-	}
-
-	void Frame::Reset()
+	void RenderFrame::Reset()
 	{
 		renderFence->Wait();
 		renderFence->Reset();
@@ -38,22 +33,32 @@ namespace Engine
 		}
 	}
 
-	Vulkan::CommandBuffer& Frame::RequestCommandBuffer()
+	Vulkan::CommandBuffer& RenderFrame::RequestCommandBuffer()
 	{
 		return commandPool->RequestCommandBuffer();
 	}
 
-	Vulkan::Semaphore& Frame::RequestSemaphore()
+	Vulkan::Semaphore& RenderFrame::RequestSemaphore()
 	{
 		return semaphorePool->RequestSemaphore();
 	}
 
-	Vulkan::Framebuffer& Frame::RequestFramebuffer(const Vulkan::RenderPass& renderPass)
+	Vulkan::Fence& RenderFrame::GetRenderFence() const
+	{
+		return *renderFence;
+	}
+
+	Vulkan::Framebuffer& RenderFrame::RequestFramebuffer(const Vulkan::RenderPass& renderPass)
 	{
 		return framebufferCache->RequestFramebuffer(renderPass, *target);
 	}
 
-	VkDescriptorSet Frame::RequestDescriptorSet(Vulkan::DescriptorSetLayout& descriptorSetLayout, const std::vector<SetBinding<VkDescriptorBufferInfo>>& bufferInfos, const std::vector<SetBinding<VkDescriptorImageInfo>>& imageInfos)
+	void RenderFrame::ClearFramebuffers()
+	{
+		framebufferCache->Clear();
+	}
+
+	VkDescriptorSet RenderFrame::RequestDescriptorSet(Vulkan::DescriptorSetLayout& descriptorSetLayout, const std::vector<SetBinding<VkDescriptorBufferInfo>>& bufferInfos, const std::vector<SetBinding<VkDescriptorImageInfo>>& imageInfos)
 	{
 		auto handle = GetDescriptorPool(descriptorSetLayout).Allocate();
 
@@ -108,22 +113,22 @@ namespace Engine
 		return handle;
 	}
 
-	BufferAllocation Frame::RequestBufferAllocation(Vulkan::BufferUsageFlags usage, uint32_t size)
+	BufferAllocation RenderFrame::RequestBufferAllocation(Vulkan::BufferUsageFlags usage, uint32_t size)
 	{
 		return bufferPool->Allocate(size);
 	}
 
-	void Frame::SetTarget(std::unique_ptr<Target> target)
+	void RenderFrame::SetTarget(std::unique_ptr<RenderTarget> target)
 	{
 		this->target = std::move(target);
 	}
 
-	Target& Frame::GetTarget() const
+	RenderTarget& RenderFrame::GetTarget() const
 	{
 		return *target;
 	}
 
-	DescriptorPool& Frame::GetDescriptorPool(Vulkan::DescriptorSetLayout& descriptorSetLayout)
+	DescriptorPool& RenderFrame::GetDescriptorPool(Vulkan::DescriptorSetLayout& descriptorSetLayout)
 	{
 		std::size_t hash = Hash(descriptorSetLayout);
 

@@ -27,8 +27,6 @@ namespace Engine
 	Renderer::Renderer(Vulkan::Device& device, std::unique_ptr<Vulkan::Swapchain> swapchain)
 		: device(device), swapchain(std::move(swapchain))
 	{
-		renderPass = std::make_unique<Vulkan::RenderPass>(device, *this->swapchain);
-
 		CreateFrames();
 	}
 
@@ -37,11 +35,19 @@ namespace Engine
 		VkExtent2D extent = swapchain->GetImageExtent();
 		VkFormat format = swapchain->GetImageFormat();
 
-		for (auto image : swapchain->GetImages())
+		for (auto handle : swapchain->GetImages())
 		{
-			auto target = CreateTarget(image, format, extent);
+			auto swapchainImage = std::make_unique<Vulkan::Image>(
+				device,
+				handle,
+				swapchain->GetImageUsage(),
+				format,
+				VkExtent3D{ extent.width, extent.height, 1 }
+			);
 
-			auto frame = std::make_unique<Frame>(device, std::move(target));
+			auto target = CreateTarget(std::move(swapchainImage));
+
+			auto frame = std::make_unique<RenderFrame>(device, std::move(target));
 
 			frames.emplace_back(std::move(frame));
 		}
@@ -54,7 +60,7 @@ namespace Engine
 
 		acquireSemaphore = &previousFrame.RequestSemaphore();
 
-		auto result = swapchain->AcquireNextImageIndex(currentImageIndex, *acquireSemaphore);
+		auto result = swapchain->AcquireNextImageIndex(currentFrameIndex, *acquireSemaphore);
 
 		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
 		{
@@ -65,7 +71,7 @@ namespace Engine
 				return nullptr; // FIX: use a fence pool to prevent the renderer from freezing
 			}
 
-			result = swapchain->AcquireNextImageIndex(currentImageIndex, *acquireSemaphore);
+			result = swapchain->AcquireNextImageIndex(currentFrameIndex, *acquireSemaphore);
 
 			if (result != VK_SUCCESS)
 			{
@@ -90,7 +96,6 @@ namespace Engine
 
 		VkExtent2D extent = swapchain->GetImageExtent();
 
-
 		commandBuffer.SetViewport({
 			{
 				.width = static_cast<float>(extent.width),
@@ -106,18 +111,59 @@ namespace Engine
 			}
 		});
 
-		std::vector<VkClearValue> clearValues{ 2 };
-		clearValues[0].color = { 0.f, 0.f, 0.f, 1.f };
-		clearValues[1].depthStencil = { 1.f, 0 };
+		auto& frame = GetCurrentFrame();
+		auto& views = frame.GetTarget().GetViews();
 
-		auto& framebuffer = GetCurrentFrame().RequestFramebuffer(*renderPass);
+		{
+			Vulkan::ImageMemoryBarrierInfo barrier{};
 
-		commandBuffer.BeginRenderPass(*renderPass, framebuffer, clearValues, extent);
+			barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+			barrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			barrier.srcAccessMask = 0;
+			barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+			barrier.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+			barrier.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+
+			commandBuffer.ImageMemoryBarrier(*views[0], barrier);
+
+			for (size_t i = 2; i < views.size(); i++)
+			{
+				commandBuffer.ImageMemoryBarrier(*views[i], barrier);
+			}
+		}
+
+		{
+			Vulkan::ImageMemoryBarrierInfo barrier{};
+			barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+			barrier.newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+			barrier.srcAccessMask = 0;
+			barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+			barrier.srcStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+			barrier.dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+
+			commandBuffer.ImageMemoryBarrier(*views[1], barrier);
+		}
 	}
 
 	void Renderer::End(Vulkan::CommandBuffer& commandBuffer)
 	{
 		commandBuffer.EndRenderPass();
+
+		auto& frame = GetCurrentFrame();
+		auto& views = frame.GetTarget().GetViews();
+
+		{
+			Vulkan::ImageMemoryBarrierInfo barrier{};
+
+			barrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+			barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+			barrier.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+			barrier.dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+
+			commandBuffer.ImageMemoryBarrier(*views[0], barrier);
+		}
+
 		commandBuffer.End();
 
 		Vulkan::Semaphore& waitSemaphore = Submit(commandBuffer);
@@ -127,9 +173,15 @@ namespace Engine
 		acquireSemaphore = nullptr;
 	}
 
-	Vulkan::RenderPass& Renderer::GetRenderPass() const
+	void Renderer::SetMainCamera(Camera& camera, glm::mat4& transform)
 	{
-		return *renderPass;
+		mainCamera = camera;
+		mainCameraTransform = transform;
+	}
+
+	std::pair<Camera&, glm::mat4&> Renderer::GetMainCamera()
+	{
+		return { mainCamera, mainCameraTransform };
 	}
 
 	Vulkan::Semaphore& Renderer::Submit(Vulkan::CommandBuffer& commandBuffer)
@@ -145,7 +197,7 @@ namespace Engine
 
 	void Renderer::Present(Vulkan::Semaphore& waitSemaphore)
 	{
-		auto result = device.GetPresentQueue().Present(*swapchain, waitSemaphore, currentImageIndex);
+		auto result = device.GetPresentQueue().Present(*swapchain, waitSemaphore, currentFrameIndex);
 
 		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
 		{
@@ -183,11 +235,20 @@ namespace Engine
 
 		auto it = frames.begin();
 
-		for (auto& image : swapchain->GetImages())
+		for (auto& handle : swapchain->GetImages())
 		{
-			auto target = CreateTarget(image, format, extent);
+			auto swapchainImage = std::make_unique<Vulkan::Image>(
+				device,
+				handle,
+				swapchain->GetImageUsage(),
+				format,
+				VkExtent3D{ extent.width, extent.height, 1 }
+			);
+
+			auto target = CreateTarget(std::move(swapchainImage));
 
 			(*it)->SetTarget(std::move(target));
+			(*it)->ClearFramebuffers();
 
 			it++;
 		}
@@ -195,19 +256,14 @@ namespace Engine
 		return true;
 	}
 
-	Frame& Renderer::GetCurrentFrame() const
+	RenderFrame& Renderer::GetCurrentFrame() const
 	{
-		return *frames[currentImageIndex];
+		return *frames[currentFrameIndex];
 	}
 
-	std::unique_ptr<Target> Renderer::CreateTarget(VkImage image, VkFormat format, VkExtent2D extent)
+	std::unique_ptr<RenderTarget> Renderer::CreateTarget(std::unique_ptr<Vulkan::Image> swapchainImage)
 	{
-		auto swapchainImage = std::make_unique<Vulkan::Image>(
-			device,
-			image,
-			format,
-			VkExtent3D{ extent.width, extent.height, 1 }
-		);
+		auto extent = swapchainImage->GetExtent();
 
 		auto depthImage = std::make_unique<Vulkan::Image>(
 			device,
@@ -216,6 +272,8 @@ namespace Engine
 			VkExtent3D{ extent.width, extent.height, 1 },
 			device.GetMaxSampleCount()
 		);
+
+		auto format = swapchainImage->GetFormat();
 
 		auto colorImage = std::make_unique<Vulkan::Image>(
 			device,
@@ -227,10 +285,10 @@ namespace Engine
 
 		std::vector<std::unique_ptr<Vulkan::Image>> images;
 
-		images.push_back(std::move(colorImage));
-		images.push_back(std::move(depthImage));
 		images.push_back(std::move(swapchainImage));
+		images.push_back(std::move(depthImage));
+		images.push_back(std::move(colorImage));
 
-		return std::make_unique<Target>(device, std::move(images));
+		return std::make_unique<RenderTarget>(device, std::move(images));
 	}
 }

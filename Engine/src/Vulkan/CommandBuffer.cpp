@@ -5,7 +5,7 @@
 #include "RenderPass.hpp"
 #include "Framebuffer.hpp"
 #include "Pipeline.hpp"
-#include "Image.hpp"
+#include "ImageView.hpp"
 
 namespace Vulkan
 {
@@ -65,6 +65,11 @@ namespace Vulkan
 		};
 
 		vkCmdBeginRenderPass(handle, &info, VK_SUBPASS_CONTENTS_INLINE);
+	}
+
+	void CommandBuffer::NextSubpass()
+	{
+		vkCmdNextSubpass(handle, VK_SUBPASS_CONTENTS_INLINE);
 	}
 
 	void CommandBuffer::SetViewport(const std::vector<VkViewport>& viewports)
@@ -256,5 +261,30 @@ namespace Vulkan
 		}
 
 		SetImageLayout(image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, image.GetMipLevels() - 1, 1);
+	}
+
+	void CommandBuffer::ImageMemoryBarrier(const ImageView& imageView, const ImageMemoryBarrierInfo& barrierInfo)
+	{
+		auto& image = imageView.GetImage();
+
+		auto subresourceRange = imageView.GetSubresourceRange();
+		auto format = image.GetFormat();
+
+		subresourceRange.aspectMask = format == VK_FORMAT_D32_SFLOAT
+			? VK_IMAGE_ASPECT_DEPTH_BIT
+			: VK_IMAGE_ASPECT_COLOR_BIT;
+
+		VkImageMemoryBarrier barrier{};
+		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		barrier.srcAccessMask = barrierInfo.srcAccessMask;
+		barrier.dstAccessMask = barrierInfo.dstAccessMask;
+		barrier.oldLayout = barrierInfo.oldLayout;
+		barrier.newLayout = barrierInfo.newLayout;
+		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		barrier.image = image.GetHandle();
+		barrier.subresourceRange = subresourceRange;
+
+		vkCmdPipelineBarrier(handle, barrierInfo.srcStageMask, barrierInfo.dstStageMask, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 	}
 }

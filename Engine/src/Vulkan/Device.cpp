@@ -76,6 +76,34 @@ namespace Vulkan
 		vkDeviceWaitIdle(handle);
 	}
 
+	void Device::CopyBuffer(const Buffer& src, const Buffer& dst, uint32_t size)
+	{
+		OneTimeSubmit([&](auto& commandBuffer) {
+			commandBuffer.CopyBuffer(src.GetHandle(), dst.GetHandle(), size);
+		});
+	}
+
+	void Device::CopyBufferToImage(const Buffer& src, const Image& dest, uint32_t width, uint32_t height)
+	{
+		OneTimeSubmit([&](auto& commandBuffer) {
+			commandBuffer.CopyBufferToImage(src.GetHandle(), dest.GetHandle(), width, height);
+		});
+	}
+
+	void Device::SetImageLayout(const Image& image, VkImageLayout oldLayout, VkImageLayout newLayout)
+	{
+		OneTimeSubmit([&](auto& commandBuffer) {
+			commandBuffer.SetImageLayout(image, oldLayout, newLayout, 0, image.GetMipLevels());
+		});
+	}
+
+	void Device::GenerateMipMaps(const Image& image)
+	{
+		OneTimeSubmit([&](auto& commandBuffer) {
+			commandBuffer.GenerateMipMaps(image);
+		});
+	}
+
 	void Device::OneTimeSubmit(std::function<void(CommandBuffer&)> func)
 	{
 		CommandBuffer& commandBuffer = commandPool->RequestCommandBuffer();
@@ -89,57 +117,10 @@ namespace Vulkan
 		graphicsQueue->WaitIdle();
 	}
 
+
 	void Device::ResetCommandPool()
 	{
 		commandPool->Reset();
-	}
-
-	void Device::CopyBuffer(const Buffer& src, const Buffer& dst, uint32_t size)
-	{
-		CommandBuffer& commandBuffer = commandPool->RequestCommandBuffer();
-
-		commandBuffer.Begin(CommandBuffer::BeginFlags::OneTimeSubmit);
-		commandBuffer.CopyBuffer(src.GetHandle(), dst.GetHandle(), size);
-		commandBuffer.End();
-
-		graphicsQueue->Submit(commandBuffer);
-		graphicsQueue->WaitIdle();
-	}
-
-	void Device::CopyBufferToImage(const Buffer& src, const Image& dest, uint32_t width, uint32_t height) const
-	{
-		CommandBuffer& commandBuffer = commandPool->RequestCommandBuffer();
-
-		commandBuffer.Begin(CommandBuffer::BeginFlags::OneTimeSubmit);
-		commandBuffer.CopyBufferToImage(src.GetHandle(), dest.GetHandle(), width, height);
-		commandBuffer.End();
-
-		graphicsQueue->Submit(commandBuffer);
-		graphicsQueue->WaitIdle();
-	}
-
-	void Device::SetImageLayout(const Image& image, VkImageLayout oldLayout, VkImageLayout newLayout) const
-	{
-		CommandBuffer& commandBuffer = commandPool->RequestCommandBuffer();
-
-		commandBuffer.Begin(CommandBuffer::BeginFlags::OneTimeSubmit);
-		commandBuffer.SetImageLayout(image, oldLayout, newLayout, 0, image.GetMipLevels());
-		commandBuffer.End();
-
-		graphicsQueue->Submit(commandBuffer);
-		graphicsQueue->WaitIdle();
-	}
-
-	void Device::GenerateMipMaps(const Image& image) const
-	{
-		CommandBuffer& commandBuffer = commandPool->RequestCommandBuffer();
-
-		commandBuffer.Begin(CommandBuffer::BeginFlags::OneTimeSubmit);
-		commandBuffer.GenerateMipMaps(image);
-		commandBuffer.End();
-
-		graphicsQueue->Submit(commandBuffer);
-		graphicsQueue->WaitIdle();
 	}
 
 	Queue& Device::GetGraphicsQueue() const

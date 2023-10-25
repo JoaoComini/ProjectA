@@ -16,7 +16,7 @@ namespace Engine
 	class GltfImporter
 	{
 	public:
-		GltfImporter(const Vulkan::Device& device);
+		GltfImporter(Vulkan::Device& device);
 
 		void Import(std::filesystem::path path);
 
@@ -32,7 +32,7 @@ namespace Engine
 
 		std::filesystem::path GetPrefabDirectory(std::filesystem::path path);
 
-		const Vulkan::Device& device;
+		Vulkan::Device& device;
 
 	};
 };

@@ -23,7 +23,7 @@
 
 namespace Engine
 {
-    GltfImporter::GltfImporter(const Vulkan::Device& device)
+    GltfImporter::GltfImporter(Vulkan::Device& device)
         : device(device) 
     {
     }

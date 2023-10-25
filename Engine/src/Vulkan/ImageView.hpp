@@ -15,9 +15,14 @@ namespace Vulkan
 		ImageView(const Device& device, Image& image, uint32_t mipLevels = 1);
 		~ImageView();
 
+		const Image& GetImage() const;
+
+		VkImageSubresourceRange GetSubresourceRange() const;
+
 	private:
 		const Device& device;
 		Image& image;
 
+		VkImageSubresourceRange subresourceRange;
 	};
 }

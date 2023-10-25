@@ -29,6 +29,7 @@ namespace Vulkan
 
 		void Recreate(int width, int height);
 
+		VkImageUsageFlags GetImageUsage() const;
 		VkFormat GetImageFormat() const;
 		VkExtent2D GetImageExtent() const;
 		std::vector<VkImage> GetImages() const;

@@ -15,6 +15,6 @@ namespace Engine
 
 		std::shared_ptr<Texture> Import(std::filesystem::path path);
 	private:
-		const Vulkan::Device& device;
+		Vulkan::Device& device;
 	};
 };

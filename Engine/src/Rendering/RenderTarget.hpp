@@ -7,18 +7,20 @@
 #include "Vulkan/Device.hpp"
 #include "Vulkan/Image.hpp"
 #include "Vulkan/ImageView.hpp"
+#include "Vulkan/RenderPass.hpp"
 
 #include <vector>
 
 namespace Engine
 {
-	class Target
+	class RenderTarget
 	{
 	public:
-		Target(const Vulkan::Device& device, std::vector<std::unique_ptr<Vulkan::Image>>&& images);
-		~Target() = default;
+		RenderTarget(const Vulkan::Device& device, std::vector<std::unique_ptr<Vulkan::Image>>&& images);
+		~RenderTarget() = default;
 
 		const std::vector<std::unique_ptr<Vulkan::ImageView>>& GetViews() const;
+		const std::vector<Vulkan::AttachmentInfo>& GetAttachments() const;
 
 		VkExtent2D GetExtent() const;
 
@@ -26,25 +28,8 @@ namespace Engine
 		std::vector<std::unique_ptr<Vulkan::Image>> images;
 		std::vector<std::unique_ptr<Vulkan::ImageView>> views;
 
+		std::vector<Vulkan::AttachmentInfo> attachments;
+
 		VkExtent2D extent{};
 	};
 }
-
-namespace std
-{
-	template <>
-	struct hash<Engine::Target>
-	{
-		size_t operator()(const Engine::Target& target) const
-		{
-			std::size_t result{ 0 };
-
-			for (auto& view : target.GetViews())
-			{
-				HashCombine(result, view->GetHandle());
-			}
-
-			return result;
-		}
-	};
-};

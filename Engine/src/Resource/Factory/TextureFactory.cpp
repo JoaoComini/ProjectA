@@ -9,7 +9,7 @@
 
 namespace Engine
 {
-    TextureFactory::TextureFactory(const Vulkan::Device& device)
+    TextureFactory::TextureFactory(Vulkan::Device& device)
         : device(device) { }
 
     void TextureFactory::Create(std::filesystem::path destination, TextureSpec& spec)

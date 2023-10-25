@@ -15,7 +15,7 @@
 
 namespace Engine
 {
-    ResourceManager::ResourceManager(const Vulkan::Device& device)
+    ResourceManager::ResourceManager(Vulkan::Device& device)
         : device(device)
     {
     }

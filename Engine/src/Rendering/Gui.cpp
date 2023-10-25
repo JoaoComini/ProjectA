@@ -12,7 +12,7 @@
 
 namespace Engine
 {
-    void Gui::Setup(Vulkan::Instance& instance, Vulkan::Device& device, Vulkan::PhysicalDevice& physicalDevice, Window& window)
+    void Gui::Setup(Vulkan::Instance& instance, Vulkan::Device& device, Vulkan::PhysicalDevice& physicalDevice, Window& window, Vulkan::RenderPass& renderPass)
     {
 		std::vector<VkDescriptorPoolSize> poolSizes =
 		{
@@ -52,7 +52,7 @@ namespace Engine
 		initInfo.ImageCount = 3;
 		initInfo.MSAASamples = device.GetMaxSampleCount();
 
-		ImGui_ImplVulkan_Init(&initInfo, Renderer::Get().GetRenderPass().GetHandle());
+		ImGui_ImplVulkan_Init(&initInfo, renderPass.GetHandle());
 
 		device.OneTimeSubmit([](Vulkan::CommandBuffer& buffer) {
 			ImGui_ImplVulkan_CreateFontsTexture(buffer.GetHandle());

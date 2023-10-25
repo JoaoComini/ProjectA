@@ -27,7 +27,7 @@ namespace Engine
 			Scene& scene
 		);
 
-		void SetCamera(const Camera& camera, const glm::mat4 transform);
+		void Prepare(Vulkan::RenderPass& renderPass) override;
 		void Draw(Vulkan::CommandBuffer& commandBuffer) override;
 
 	private:
@@ -38,10 +38,12 @@ namespace Engine
 
 		Scene& scene;
 
-		GlobalUniform globalUniform;
+		GlobalUniform globalUniform{};
 
 		std::unique_ptr<Vulkan::Pipeline> pipeline;
 		std::unique_ptr<Vulkan::PipelineLayout> pipelineLayout;
+
+		Vulkan::Device& device;
 	};
 
 }

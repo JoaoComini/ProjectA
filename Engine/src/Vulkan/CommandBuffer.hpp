@@ -15,6 +15,22 @@ namespace Vulkan
 	class Pipeline;
 	class PipelineLayout;
 	class Image;
+	class ImageView;
+
+	struct ImageMemoryBarrierInfo
+	{
+		VkPipelineStageFlags srcStageMask{ VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT };
+		VkPipelineStageFlags dstStageMask{ VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT };
+
+		VkAccessFlags srcAccessMask{ 0 };
+		VkAccessFlags dstAccessMask{ 0 };
+
+		VkImageLayout oldLayout{ VK_IMAGE_LAYOUT_UNDEFINED };
+		VkImageLayout newLayout{ VK_IMAGE_LAYOUT_UNDEFINED };
+
+		uint32_t oldQueueFamily{ VK_QUEUE_FAMILY_IGNORED };
+		uint32_t newQueueFamily{ VK_QUEUE_FAMILY_IGNORED };
+	};
 
 	class CommandBuffer : public Resource<VkCommandBuffer>
 	{
@@ -38,6 +54,7 @@ namespace Vulkan
 		void End();
 
 		void BeginRenderPass(const RenderPass& renderPass, const Framebuffer& framebuffer, const std::vector<VkClearValue>& clearValues, VkExtent2D extent);
+		void NextSubpass();
 		void SetViewport(const std::vector<VkViewport>& viewports);
 		void SetScissor(const std::vector<VkRect2D>& scissors);
 		void BindPipeline(const Pipeline& pipeline, VkPipelineBindPoint bindPoint);
@@ -49,6 +66,8 @@ namespace Vulkan
 		void CopyBufferToImage(VkBuffer src, VkImage dst, uint32_t width, uint32_t height);
 		void SetImageLayout(const Image& image, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t baseMipLevel, uint32_t mipLevels);
 		void GenerateMipMaps(const Image& image);
+
+		void ImageMemoryBarrier(const ImageView& imageView, const ImageMemoryBarrierInfo& barrier);
 
 	private:
 		const Device& device;

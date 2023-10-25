@@ -27,9 +27,9 @@ namespace Vulkan
 		~Device();
 
 		void CopyBuffer(const Buffer& src, const Buffer& dest, uint32_t size);
-		void CopyBufferToImage(const Buffer& src, const Image& dest, uint32_t width, uint32_t height) const;
-		void SetImageLayout(const Image& image, VkImageLayout oldLayout, VkImageLayout newLayout) const;
-		void GenerateMipMaps(const Image& image) const;
+		void CopyBufferToImage(const Buffer& src, const Image& dest, uint32_t width, uint32_t height);
+		void SetImageLayout(const Image& image, VkImageLayout oldLayout, VkImageLayout newLayout);
+		void GenerateMipMaps(const Image& image);
 		void WaitIdle() const;
 
 		void OneTimeSubmit(std::function<void(CommandBuffer&)> func);

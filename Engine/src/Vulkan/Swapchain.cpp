@@ -139,6 +139,11 @@ namespace Vulkan
 		Setup(width, height, handle);
 	}
 
+	VkImageUsageFlags Swapchain::GetImageUsage() const
+	{
+		return VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+	}
+
 	VkFormat Swapchain::GetImageFormat() const
 	{
 		return imageFormat;

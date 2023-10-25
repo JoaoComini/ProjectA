@@ -47,7 +47,6 @@ namespace Engine {
 		SetupVulkan();
 
 		Renderer::Setup(*device, *surface, *window);
-		Gui::Setup(*instance, *device, *physicalDevice, *window);
 
 		ResourceManager::Create(*device);
 		ResourceRegistry::Create();
@@ -55,6 +54,10 @@ namespace Engine {
 
 		scene = std::make_unique<Scene>();
 		scene->OnComponentAdded<Component::Camera, &Application::SetCameraAspectRatio>(this);
+
+		renderPipeline = std::make_unique<RenderPipeline>(*device, *scene);
+
+		Gui::Setup(*instance, *device, *physicalDevice, *window, renderPipeline->GetMainRenderPass());
 
 		running = true;
 	}
@@ -94,13 +97,14 @@ namespace Engine {
 			{
 				OnUpdate(timestep.count());
 
-				OnRender(*commandBuffer);
+				renderPipeline->Draw(*commandBuffer);
 
 				Gui::Get().Begin();
 
 				OnGui();
 
 				Gui::Get().End(*commandBuffer);
+
 				Renderer::Get().End(*commandBuffer);
 			}
 		}

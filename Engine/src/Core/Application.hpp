@@ -8,6 +8,7 @@
 #include "Vulkan/Device.hpp"
 
 #include "Rendering/Renderer.hpp"
+#include "Rendering/RenderPipeline.hpp"
 #include "Rendering/Gui.hpp"
 #include "Scene/Scene.hpp"
 
@@ -48,7 +49,6 @@ namespace Engine {
 		void Exit();
 	protected:
 		virtual void OnUpdate(float timestep) {}
-		virtual void OnRender(Vulkan::CommandBuffer& commandBuffer) {}
 		virtual void OnGui() {}
 		virtual void OnWindowResize(int width, int height);
 
@@ -59,7 +59,6 @@ namespace Engine {
 
 		Vulkan::Device& GetDevice();
 
-	private:
 		void SetupVulkan();
 
 		void SetCameraAspectRatio(Entity entity);
@@ -71,6 +70,8 @@ namespace Engine {
 		std::unique_ptr<Vulkan::Device> device;
 
 		std::unique_ptr<Scene> scene;
+
+		std::unique_ptr<RenderPipeline> renderPipeline;
 
 		bool running = false;
 	};

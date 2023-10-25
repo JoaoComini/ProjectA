@@ -22,12 +22,12 @@ namespace Engine
 	class TextureFactory : Factory<Texture, TextureSpec>
 	{
 	public:
-		TextureFactory(const Vulkan::Device& device);
+		TextureFactory(Vulkan::Device& device);
 
 		void Create(std::filesystem::path destination, TextureSpec& spec) override;
 		std::shared_ptr<Texture> Load(std::filesystem::path source) override;
 
 	private:
-		const Vulkan::Device& device;
+		Vulkan::Device& device;
 	};
 };
