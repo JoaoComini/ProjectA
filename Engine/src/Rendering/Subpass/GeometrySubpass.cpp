@@ -131,25 +131,7 @@ namespace Engine
 
 		allocation.SetData(&globalUniform);
 
-		std::vector<SetBinding<VkDescriptorBufferInfo>> bufferInfos
-		{
-			{
-				.binding = 0,
-				.infos = {
-					VkDescriptorBufferInfo{
-						.buffer = allocation.GetBuffer().GetHandle(),
-						.offset = allocation.GetOffset(),
-						.range = allocation.GetSize(),
-					}
-				}
-			}
-		};
-
-		auto& descritorSetLayout = pipelineLayout->GetDescriptorSetLayout(0);
-
-		auto descriptorSet = frame.RequestDescriptorSet(descritorSetLayout, bufferInfos, {});
-
-		commandBuffer.BindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, *pipelineLayout, 0, descriptorSet);
+		BindBuffer(allocation.GetBuffer(), allocation.GetOffset(), allocation.GetSize(), 0, 0, 0);
 	}
 
 	std::shared_ptr<Mesh> GeometrySubpass::GetMeshFromEntity(Entity entity)
@@ -179,41 +161,12 @@ namespace Engine
 
 		allocation.SetData(&uniform);
 
-		std::vector<SetBinding<VkDescriptorBufferInfo>> bufferInfos
-		{
-			{
-				.binding = 0,
-				.infos = {
-					VkDescriptorBufferInfo{
-						.buffer = allocation.GetBuffer().GetHandle(),
-						.offset = allocation.GetOffset(),
-						.range = allocation.GetSize(),
-					}
-				}
-			}
-		};
+		BindBuffer(allocation.GetBuffer(), allocation.GetOffset(), allocation.GetSize(), 0, 1, 0);
 
 		auto diffuse = ResourceManager::Get().LoadResource<Texture>(material.GetDiffuse());
 
+		BindImage(diffuse->GetImageView(), diffuse->GetSampler(), 0, 2, 0);
 
-		std::vector<SetBinding<VkDescriptorImageInfo>> imageInfos
-		{
-			{
-				.binding = 1,
-				.infos = {
-					VkDescriptorImageInfo{
-						.sampler = diffuse->GetSampler().GetHandle(),
-						.imageView = diffuse->GetImageView().GetHandle(),
-						.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-					}
-				}
-			}
-		};
-
-		auto& descritorSetLayout = pipelineLayout->GetDescriptorSetLayout(1);
-
-		auto descriptorSet = frame.RequestDescriptorSet(descritorSetLayout, bufferInfos, imageInfos);
-
-		commandBuffer.BindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, *pipelineLayout, 1, descriptorSet);
+		FlushDescriptorSet(commandBuffer, 0);
 	}
 }

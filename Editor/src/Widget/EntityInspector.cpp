@@ -42,7 +42,8 @@ void EntityInspector::Draw()
 	{
 		AddComponentMenuItem<Engine::Component::Camera>("Camera");
 		AddComponentMenuItem<Engine::Component::Transform>("Transform");
-		AddComponentMenuItem<Engine::Component::MeshRender>("Mesh");
+		AddComponentMenuItem<Engine::Component::MeshRender>("Mesh Render");
+		AddComponentMenuItem<Engine::Component::DirectionalLight>("Directional Light");
 		ImGui::EndPopup();
 	}
 
@@ -65,6 +66,13 @@ void EntityInspector::Draw()
 	if (meshRender)
 	{
 		ComponentControlNode<Engine::Component::MeshRender>("Mesh Render", meshRender);
+	}
+
+	auto directionalLight = entity.TryGetComponent<Engine::Component::DirectionalLight>();
+
+	if (directionalLight)
+	{
+		ComponentControlNode<Engine::Component::DirectionalLight>("Directional Light", directionalLight);
 	}
 
 	ImGui::End();

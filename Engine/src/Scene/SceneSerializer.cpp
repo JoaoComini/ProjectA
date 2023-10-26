@@ -106,6 +106,7 @@ namespace Engine
 			Serialize<Component::Transform>(emitter, entity);
 			Serialize<Component::MeshRender>(emitter, entity);
 			Serialize<Component::Camera>(emitter, entity);
+			Serialize<Component::DirectionalLight>(emitter, entity);
 
 			emitter << YAML::EndMap;
 		});
@@ -194,6 +195,19 @@ namespace Engine
 		emitter << YAML::EndMap;
 	}
 
+	template<>
+	void SceneSerializer::Serialize(YAML::Emitter& emitter, Component::DirectionalLight* comp)
+	{
+		emitter << YAML::Key << "DirectionalLight";
+
+		emitter << YAML::BeginMap;
+
+		emitter << YAML::Key << "Color" << YAML::Value << comp->color;
+		emitter << YAML::Key << "Intensity" << YAML::Value << comp->intensity;
+
+		emitter << YAML::EndMap;
+	}
+
 	void SceneSerializer::Deserialize(std::filesystem::path path)
 	{
 		YAML::Node scene = YAML::LoadFile(path.string());
@@ -219,6 +233,7 @@ namespace Engine
 			Deserialize<Component::Transform>(entity, "Transform", deserialized);
 			Deserialize<Component::MeshRender>(entity, "Mesh", deserialized);
 			Deserialize<Component::Camera>(entity, "Camera", deserialized);
+			Deserialize<Component::DirectionalLight>(entity, "DirectionalLight", deserialized);
 		}
 
 		for (auto entity : entities)
@@ -261,6 +276,13 @@ namespace Engine
 		comp->camera.SetFar(node["Far"].as<float>());
 		comp->camera.SetNear(node["Near"].as<float>());
 		comp->camera.SetFov(node["FOV"].as<float>());
+	}
+
+	template<>
+	void SceneSerializer::Deserialize(YAML::Node& node, Component::DirectionalLight* comp)
+	{
+		comp->color = node["Color"].as<glm::vec3>();
+		comp->intensity = node["Intensity"].as<float>();
 	}
 
 	template<>

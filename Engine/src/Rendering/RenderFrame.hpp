@@ -25,11 +25,7 @@
 namespace Engine
 {
 	template <typename T>
-	struct SetBinding
-	{
-		uint32_t binding;
-		std::vector<T> infos;
-	};
+	using BindingMap = std::map<uint32_t, std::map<uint32_t, T>>;
 
 	class RenderFrame
 	{
@@ -48,7 +44,7 @@ namespace Engine
 		Vulkan::Framebuffer& RequestFramebuffer(const Vulkan::RenderPass& renderPass);
 		void ClearFramebuffers();
 
-		VkDescriptorSet RequestDescriptorSet(Vulkan::DescriptorSetLayout& descriptorSetLayout, const std::vector<SetBinding<VkDescriptorBufferInfo>>& bufferInfos, const std::vector<SetBinding<VkDescriptorImageInfo>>& imageInfos);
+		VkDescriptorSet RequestDescriptorSet(Vulkan::DescriptorSetLayout& descriptorSetLayout, const BindingMap<VkDescriptorBufferInfo>& bufferInfos, const BindingMap<VkDescriptorImageInfo>& imageInfos);
 		BufferAllocation RequestBufferAllocation(Vulkan::BufferUsageFlags usage, uint32_t size);
 
 		void SetTarget(std::unique_ptr<RenderTarget> target);

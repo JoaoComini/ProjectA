@@ -57,5 +57,11 @@ namespace Engine::Component
 		Engine::Camera camera;
 	};
 
+	struct DirectionalLight
+	{
+		glm::vec3 color{ 1.f };
+		float intensity = 1.f;
+	};
+
 };
 

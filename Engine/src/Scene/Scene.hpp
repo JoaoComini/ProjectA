@@ -39,6 +39,7 @@ namespace Engine
 			CopyComponent<Component::Name>(other.registry);
 			CopyComponent<Component::MeshRender>(other.registry);
 			CopyComponent<Component::Camera>(other.registry);
+			CopyComponent<Component::DirectionalLight>(other.registry);
 
 			CopyRelationships(other.registry);
 

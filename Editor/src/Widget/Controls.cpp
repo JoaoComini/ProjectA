@@ -121,4 +121,11 @@ namespace Controls
 	{
 		ImGui::TextDisabled(component->mesh.ToString().c_str());
 	}
+
+	template<>
+	void Component(Engine::Component::DirectionalLight* component)
+	{
+		ImGui::ColorEdit4("Color", &component->color.r, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoAlpha);
+		ImGui::SliderFloat("Intensity", &component->intensity, 0.1f, 5.f);
+	}
 };

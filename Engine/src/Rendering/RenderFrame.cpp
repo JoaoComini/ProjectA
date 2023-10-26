@@ -58,50 +58,49 @@ namespace Engine
 		framebufferCache->Clear();
 	}
 
-	VkDescriptorSet RenderFrame::RequestDescriptorSet(Vulkan::DescriptorSetLayout& descriptorSetLayout, const std::vector<SetBinding<VkDescriptorBufferInfo>>& bufferInfos, const std::vector<SetBinding<VkDescriptorImageInfo>>& imageInfos)
+	VkDescriptorSet RenderFrame::RequestDescriptorSet(Vulkan::DescriptorSetLayout& descriptorSetLayout, const BindingMap<VkDescriptorBufferInfo>& bufferInfos, const BindingMap<VkDescriptorImageInfo>& imageInfos)
 	{
 		auto handle = GetDescriptorPool(descriptorSetLayout).Allocate();
 
-		std::vector<VkWriteDescriptorSet> writes;
+		thread_local std::vector<VkWriteDescriptorSet> writes;
+		writes.clear();
 
-		for (auto& info : bufferInfos)
+		for (auto& [index, infos] : bufferInfos)
 		{
-			uint32_t index = info.binding;
-			if (auto binding = descriptorSetLayout.GetBinding(index))
+			if (auto layoutBinding = descriptorSetLayout.GetBinding(index))
 			{
-				for (uint32_t i = 0; i < info.infos.size(); i++)
+				for (auto& [element, info] : infos)
 				{
 					writes.push_back(
 						{
 							.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
 							.dstSet = handle,
 							.dstBinding = index,
-							.dstArrayElement = i,
+							.dstArrayElement = element,
 							.descriptorCount = 1,
-							.descriptorType = binding->descriptorType,
-							.pBufferInfo = &info.infos[i],
+							.descriptorType = layoutBinding->descriptorType,
+							.pBufferInfo = &info,
 						}
 					);
 				}
 			}
 		}
 
-		for (auto& info : imageInfos)
+		for (auto& [index, infos] : imageInfos)
 		{
-			uint32_t index = info.binding;
-			if (auto binding = descriptorSetLayout.GetBinding(index))
+			if (auto layoutBinding = descriptorSetLayout.GetBinding(index))
 			{
-				for (uint32_t i = 0; i < info.infos.size(); i++)
+				for (auto& [element, info] : infos)
 				{
 					writes.push_back(
 						{
 							.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
 							.dstSet = handle,
 							.dstBinding = index,
-							.dstArrayElement = i,
+							.dstArrayElement = element,
 							.descriptorCount = 1,
-							.descriptorType = binding->descriptorType,
-							.pImageInfo = &info.infos[i],
+							.descriptorType = layoutBinding->descriptorType,
+							.pImageInfo = &info,
 						}
 					);
 				}

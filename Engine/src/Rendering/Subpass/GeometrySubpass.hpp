@@ -28,7 +28,10 @@ namespace Engine
 		);
 
 		void Prepare(Vulkan::RenderPass& renderPass) override;
-		void Draw(Vulkan::CommandBuffer& commandBuffer) override;
+		virtual void Draw(Vulkan::CommandBuffer& commandBuffer) override;
+
+	protected:
+		Scene& scene;
 
 	private:
 		void UpdateGlobalUniform(Vulkan::CommandBuffer& commandBuffer);
@@ -36,12 +39,7 @@ namespace Engine
 		std::shared_ptr<Material> GetMaterialFromPrimitive(const Primitive& primitive);
 		void UpdateModelUniform(Vulkan::CommandBuffer& commandBuffer, const Material& material, const glm::mat4& transform);
 
-		Scene& scene;
-
 		GlobalUniform globalUniform{};
-
-		std::unique_ptr<Vulkan::Pipeline> pipeline;
-		std::unique_ptr<Vulkan::PipelineLayout> pipelineLayout;
 
 		Vulkan::Device& device;
 	};

@@ -8,14 +8,17 @@ layout(set = 0, binding = 0) uniform GlobalUniform {
     mat4 viewProjection;
 } global;
 
-layout(set = 1, binding = 0) uniform ModelUniform {
+layout(set = 0, binding = 1) uniform ModelUniform {
     mat4 model;
     vec4 color;
 } model;
 
 layout(location = 0) out vec2 outUV;
+layout(location = 1) out vec3 outNormal;
 
 void main() {
     gl_Position = global.viewProjection * model.model * vec4(inPosition, 1.0);
+
     outUV = inUV;
+    outNormal = inNormal;
 }

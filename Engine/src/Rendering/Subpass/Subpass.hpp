@@ -1,9 +1,13 @@
 #pragma once
 
 #include "Rendering/Camera.hpp"
+#include "Rendering/RenderFrame.hpp"
 
 #include "Vulkan/CommandBuffer.hpp"
 #include "Vulkan/ShaderModule.hpp"
+#include "Vulkan/Sampler.hpp"
+
+#include <unordered_map>
 
 namespace Engine
 {
@@ -14,7 +18,6 @@ namespace Engine
 		virtual ~Subpass() = default;
 
 		virtual void Prepare(Vulkan::RenderPass& renderPass) {}
-		virtual void SetCamera(const Camera& camera, const glm::mat4& transform) {}
 		virtual void Draw(Vulkan::CommandBuffer& commandBuffer) = 0;
 
 		const Vulkan::ShaderSource& GetVertexShader() const;
@@ -32,6 +35,14 @@ namespace Engine
 		bool IsDepthStencilDisabled() const;
 		void EnableDepthStencil();
 
+	protected:
+		void BindBuffer(const Vulkan::Buffer& buffer, uint32_t offset, uint32_t size, uint32_t set, uint32_t binding, uint32_t arrayElement);
+		void BindImage(const Vulkan::ImageView& imageView, const Vulkan::Sampler& sampler, uint32_t set, uint32_t binding, uint32_t array_element);
+
+		void FlushDescriptorSet(Vulkan::CommandBuffer& commandBuffer, uint32_t set);
+
+		std::unique_ptr<Vulkan::Pipeline> pipeline;
+		std::unique_ptr<Vulkan::PipelineLayout> pipelineLayout;
 	private:
 		Vulkan::ShaderSource vertexShader;
 		Vulkan::ShaderSource fragmentShader;
@@ -39,6 +50,9 @@ namespace Engine
 		std::vector<uint32_t> inputAttachments{};
 		std::vector<uint32_t> outputAttachments{ 0 };
 		std::vector<uint32_t> colorResolveAttachments{};
+
+		std::map<uint32_t, BindingMap<VkDescriptorBufferInfo>> bufferBindings;
+		std::map<uint32_t, BindingMap<VkDescriptorImageInfo>> imageBindings;
 
 		bool disableDepthStencil = false;
 	};

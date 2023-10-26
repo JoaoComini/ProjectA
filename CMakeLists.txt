@@ -23,7 +23,13 @@ find_program(glslc_executable NAMES glslc HINTS Vulkan::glslc)
 set(SHADER_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/resources/shaders)
 set(SHADER_BINARY_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources/shaders)
 
-file(GLOB SHADERS_SRC_FILES ${SHADER_SOURCE_DIR}/*)
+set(
+    SHADER_SRC_FILES
+    "${SHADER_SOURCE_DIR}/forward.vert"
+    "${SHADER_SOURCE_DIR}/forward.frag"
+    "${SHADER_SOURCE_DIR}/geometry.vert"
+    "${SHADER_SOURCE_DIR}/geometry.frag"
+)
 
 add_custom_command(
     COMMAND
@@ -32,7 +38,7 @@ add_custom_command(
     COMMENT "Creating ${SHADER_BINARY_DIR}"
 )
 
-foreach(FILE IN LISTS SHADERS_SRC_FILES)
+foreach(FILE IN LISTS SHADER_SRC_FILES)
     get_filename_component(FILENAME ${FILE} NAME)
     add_custom_command(
         COMMAND
