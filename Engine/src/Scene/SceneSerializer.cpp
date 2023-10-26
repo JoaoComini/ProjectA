@@ -184,13 +184,15 @@ namespace Engine
 	template<>
 	void SceneSerializer::Serialize(YAML::Emitter& emitter, Component::Camera* comp)
 	{
+		auto camera = dynamic_cast<PerspectiveCamera *>(comp->camera);
+
 		emitter << YAML::Key << "Camera";
 
 		emitter << YAML::BeginMap;
 
-		emitter << YAML::Key << "Far" << YAML::Value << comp->camera.GetFar();
-		emitter << YAML::Key << "Near" << YAML::Value << comp->camera.GetNear();
-		emitter << YAML::Key << "FOV" << YAML::Value << comp->camera.GetFov();
+		emitter << YAML::Key << "Far" << YAML::Value << camera->GetFar();
+		emitter << YAML::Key << "Near" << YAML::Value << camera->GetNear();
+		emitter << YAML::Key << "FOV" << YAML::Value << camera->GetFov();
 
 		emitter << YAML::EndMap;
 	}
@@ -273,9 +275,11 @@ namespace Engine
 	template<>
 	void SceneSerializer::Deserialize(YAML::Node& node, Component::Camera* comp)
 	{
-		comp->camera.SetFar(node["Far"].as<float>());
-		comp->camera.SetNear(node["Near"].as<float>());
-		comp->camera.SetFov(node["FOV"].as<float>());
+		auto camera = dynamic_cast<PerspectiveCamera*>(comp->camera);
+
+		camera->SetFar(node["Far"].as<float>());
+		camera->SetNear(node["Near"].as<float>());
+		camera->SetFov(node["FOV"].as<float>());
 	}
 
 	template<>

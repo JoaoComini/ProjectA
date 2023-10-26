@@ -1,5 +1,6 @@
 #include "FramebufferCache.hpp"
 
+#include "../RenderTarget.hpp"
 
 namespace std
 {

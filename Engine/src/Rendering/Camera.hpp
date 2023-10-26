@@ -4,16 +4,22 @@
 
 namespace Engine
 {
+
 	class Camera
 	{
 	public:
-		Camera() = default;
-		Camera(float fov, float aspectRatio, float nearClip, float farClip);
-		~Camera() = default;
+		virtual ~Camera() = default;
+		virtual glm::mat4 GetProjection() const = 0;
+	};
+
+	class PerspectiveCamera : public Camera
+	{
+	public:
+		PerspectiveCamera(float fov, float aspectRatio, float nearClip, float farClip);
 
 		void SetAspectRatio(float aspectRatio);
 
-		glm::mat4 GetProjection() const;
+		glm::mat4 GetProjection() const override;
 
 		float GetFov();
 		void SetFov(float fov);
@@ -27,11 +33,28 @@ namespace Engine
 	private:
 		void UpdateProjection();
 
-		float fov;
-		float aspectRatio;
-		float nearClip;
-		float farClip;
+		float fov{};
+		float aspectRatio{};
+		float nearClip{};
+		float farClip{};
 
-		glm::mat4 projection;
+		glm::mat4 projection{};
+	};
+
+	class OrthographicCamera : public Camera
+	{
+	public:
+		OrthographicCamera(float left, float right, float bottom, float top, float nearClip, float farClip);
+
+		glm::mat4 GetProjection() const override;
+
+		float left{};
+		float right{};
+		float bottom{};
+		float top{};
+		float nearClip{};
+		float farClip{};
+
+		glm::mat4 projection{};
 	};
 }

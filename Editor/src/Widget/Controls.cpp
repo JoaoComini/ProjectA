@@ -5,7 +5,9 @@
 
 #include <Scene/Components.hpp>
 
-#include "Resource/ResourceManager.hpp"
+#include <Rendering/Camera.hpp>
+
+#include <Resource/ResourceManager.hpp>
 
 namespace Controls
 {
@@ -94,25 +96,25 @@ namespace Controls
 	template<>
 	void Component(Engine::Component::Camera* component)
 	{
-		auto& camera = component->camera;
+		auto camera = dynamic_cast<Engine::PerspectiveCamera *>(component->camera);
 
-		float fov = glm::degrees(camera.GetFov());
-		float near = camera.GetNear();
-		float far = camera.GetFar();
+		float fov = glm::degrees(camera->GetFov());
+		float near = camera->GetNear();
+		float far = camera->GetFar();
 
 		if (Controls::Float("FOV", &fov))
 		{
-			camera.SetFov(glm::radians(fov));
+			camera->SetFov(glm::radians(fov));
 		}
 
 		if (Controls::Float("Near", &near, 0.1f))
 		{
-			camera.SetNear(near);
+			camera->SetNear(near);
 		}
 
 		if (Controls::Float("Far", &far, 0.1f))
 		{
-			camera.SetFar(far);
+			camera->SetFar(far);
 		}
 	}
 

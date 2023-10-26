@@ -19,7 +19,7 @@ namespace Vulkan::Details
     {
         for (const auto &availablePresentMode : availablePresentModes)
         {
-            if (availablePresentMode == VK_PRESENT_MODE_IMMEDIATE_KHR)
+            if (availablePresentMode == VK_PRESENT_MODE_FIFO_KHR)
             {
                 return availablePresentMode;
             }
@@ -44,4 +44,4 @@ namespace Vulkan::Details
             return extent;
         }
     }
-} // namespace Vulkan::Details
+}

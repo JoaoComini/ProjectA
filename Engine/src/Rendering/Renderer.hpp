@@ -37,15 +37,15 @@ namespace Engine
 		Vulkan::CommandBuffer* Begin();
 		void End(Vulkan::CommandBuffer& commandBuffer);
 
-		void SetMainCamera(Camera& camera, glm::mat4& transform);
+		void SetMainCamera(Camera& camera, glm::mat4 transform);
 
 		std::pair<Camera&, glm::mat4&> GetMainCamera();
 
 		RenderFrame& GetCurrentFrame() const;
+		uint32_t GetCurrentFrameIndex() const;
+		uint32_t GetFrameCount() const;
 	private:
 		void CreateFrames();
-
-		void BeginRenderPass(Vulkan::CommandBuffer& commandBuffer);
 
 		Vulkan::Semaphore& Submit(Vulkan::CommandBuffer& commandBuffer);
 
@@ -62,7 +62,7 @@ namespace Engine
 
 		std::vector<std::unique_ptr<RenderFrame>> frames;
 
-		Camera mainCamera;
+		Camera* mainCamera;
 		glm::mat4 mainCameraTransform;
 
 		const Vulkan::Device& device;

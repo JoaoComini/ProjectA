@@ -85,34 +85,11 @@ namespace Engine
 
 		auto& commandBuffer = frame.RequestCommandBuffer();
 
-		BeginRenderPass(commandBuffer);
-
-		return &commandBuffer;
-	}
-
-	void Renderer::BeginRenderPass(Vulkan::CommandBuffer& commandBuffer)
-	{
 		commandBuffer.Begin();
 
-		VkExtent2D extent = swapchain->GetImageExtent();
+		auto& target = Renderer::Get().GetCurrentFrame().GetTarget();
 
-		commandBuffer.SetViewport({
-			{
-				.width = static_cast<float>(extent.width),
-				.height = static_cast<float>(extent.height),
-				.minDepth = 0.0f,
-				.maxDepth = 1.0f,
-			}
-		});
-
-		commandBuffer.SetScissor({
-			{
-				.extent = extent
-			}
-		});
-
-		auto& frame = GetCurrentFrame();
-		auto& views = frame.GetTarget().GetViews();
+		auto& views = target.GetViews();
 
 		{
 			Vulkan::ImageMemoryBarrierInfo barrier{};
@@ -143,6 +120,8 @@ namespace Engine
 
 			commandBuffer.ImageMemoryBarrier(*views[1], barrier);
 		}
+
+		return &commandBuffer;
 	}
 
 	void Renderer::End(Vulkan::CommandBuffer& commandBuffer)
@@ -173,15 +152,15 @@ namespace Engine
 		acquireSemaphore = nullptr;
 	}
 
-	void Renderer::SetMainCamera(Camera& camera, glm::mat4& transform)
+	void Renderer::SetMainCamera(Camera& camera, glm::mat4 transform)
 	{
-		mainCamera = camera;
-		mainCameraTransform = transform;
+		mainCamera = &camera;
+		mainCameraTransform = std::move(transform);
 	}
 
 	std::pair<Camera&, glm::mat4&> Renderer::GetMainCamera()
 	{
-		return { mainCamera, mainCameraTransform };
+		return { *mainCamera, mainCameraTransform };
 	}
 
 	Vulkan::Semaphore& Renderer::Submit(Vulkan::CommandBuffer& commandBuffer)
@@ -248,7 +227,6 @@ namespace Engine
 			auto target = CreateTarget(std::move(swapchainImage));
 
 			(*it)->SetTarget(std::move(target));
-			(*it)->ClearFramebuffers();
 
 			it++;
 		}
@@ -259,6 +237,16 @@ namespace Engine
 	RenderFrame& Renderer::GetCurrentFrame() const
 	{
 		return *frames[currentFrameIndex];
+	}
+
+	uint32_t Renderer::GetCurrentFrameIndex() const
+	{
+		return currentFrameIndex;
+	}
+
+	uint32_t Renderer::GetFrameCount() const
+	{
+		return frames.size();
 	}
 
 	std::unique_ptr<RenderTarget> Renderer::CreateTarget(std::unique_ptr<Vulkan::Image> swapchainImage)

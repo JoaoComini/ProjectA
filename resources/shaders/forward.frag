@@ -1,39 +1,75 @@
 #version 450
 
-layout(location = 0) in vec2 inUV;
+layout(location = 0) in vec4 inPosition;
 layout(location = 1) in vec3 inNormal;
+layout(location = 2) in vec2 inUV;
 
 layout(set = 0, binding = 1) uniform ModelUniform {
     mat4 model;
     vec4 color;
 } model;
 
-layout(set = 0, binding = 2) uniform sampler2D inSampler;
+layout(set = 0, binding = 2) uniform sampler2D diffuse;
 
 layout(set = 0, binding = 3) uniform LightUniform {
     vec4 vector;
     vec4 color;
 } light;
 
+layout(set = 0, binding = 4) uniform sampler2DShadow shadowMap;
+
+layout(set = 0, binding = 5) uniform ShadowUniform {
+    mat4 viewProjection;
+} shadow;
+
 layout(location = 0) out vec4 outColor;
 
-vec3 ApplyDirectionalLight(vec3 normal)
-{
-    normal = mat3(transpose(inverse(model.model))) * normal;
 
-	vec3 worldToLight   = normalize(-light.vector.xyz);
-	float ndotl         = clamp(dot(normal, worldToLight), 0.0, 1.0);
-	return ndotl * light.color.w * light.color.rgb;
+float CalculateShadow(vec2 offset)
+{
+    vec4 projected = shadow.viewProjection * vec4(inPosition.xyz, 1.0);
+
+    projected /= projected.w;
+
+    projected.xy = 0.5 * projected.xy + 0.5;
+
+    return texture(shadowMap, vec3(projected.xy + offset, projected.z));
+}
+
+float PCFShadow()
+{
+	vec2 size = 1.0 / textureSize(shadowMap, 0);
+
+	float shadow = 0.0;
+	
+	for (int x = -1; x <= 1; x++)
+	{
+		for (int y = -1; y <= 1; y++)
+		{
+			shadow += CalculateShadow(vec2(x, y) * size);
+		}
+	}
+
+	return shadow / 9.0;
+}
+
+vec3 ApplyDirectionalLight()
+{
+    vec3 N      = normalize(inNormal);
+	vec3 L      = normalize(-light.vector.xyz);
+	float NDotL = clamp(dot(N, L), 0.0, 1.0);
+
+	return NDotL * light.color.rgb * light.color.w;
 }
 
 void main() {
-    vec3 lightContribution = ApplyDirectionalLight(inNormal);
+    vec3 lightContribution = ApplyDirectionalLight() * PCFShadow();
 
-    vec4 baseColor = model.color * texture(inSampler, inUV);
+    vec4 baseColor = model.color * texture(diffuse, inUV);
 
     vec3 ambientColor = vec3(0.1) * baseColor.rgb;
 
-    outColor = vec4(ambientColor + lightContribution * baseColor.rgb, baseColor.a);
+    outColor = vec4(ambientColor + baseColor.rgb * lightContribution, baseColor.a);
 
     if (outColor.a < 0.5) {
         discard;

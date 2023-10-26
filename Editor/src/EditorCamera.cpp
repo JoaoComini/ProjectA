@@ -4,7 +4,7 @@
 #include <glm/gtx/quaternion.hpp>
 
 EditorCamera::EditorCamera(float fov, float aspectRatio, float nearClip, float farClip)
-    : Engine::Camera(fov, aspectRatio, nearClip, farClip)
+    : Engine::PerspectiveCamera(fov, aspectRatio, nearClip, farClip)
 {
 }
 

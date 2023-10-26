@@ -9,6 +9,8 @@
 #include "Vulkan/ImageView.hpp"
 #include "Vulkan/RenderPass.hpp"
 
+#include "Caching/FramebufferCache.hpp"
+
 #include <vector>
 
 namespace Engine
@@ -22,6 +24,8 @@ namespace Engine
 		const std::vector<std::unique_ptr<Vulkan::ImageView>>& GetViews() const;
 		const std::vector<Vulkan::AttachmentInfo>& GetAttachments() const;
 
+		Vulkan::Framebuffer& RequestFramebuffer(const Vulkan::RenderPass& renderPass);
+
 		VkExtent2D GetExtent() const;
 
 	private:
@@ -31,5 +35,7 @@ namespace Engine
 		std::vector<Vulkan::AttachmentInfo> attachments;
 
 		VkExtent2D extent{};
+
+		std::unique_ptr<FramebufferCache> framebufferCache;
 	};
 }

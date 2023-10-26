@@ -39,10 +39,10 @@ namespace Engine::Component
 	struct Relationship
 	{
 		std::size_t children;
-		Engine::Entity first;
-		Engine::Entity prev;
-		Engine::Entity next;
-		Engine::Entity parent;
+		Entity first;
+		Entity prev;
+		Entity next;
+		Entity parent;
 	};
 
 	struct Delete{};
@@ -54,7 +54,7 @@ namespace Engine::Component
 
 	struct Camera
 	{
-		Engine::Camera camera;
+		Engine::Camera* camera;
 	};
 
 	struct DirectionalLight

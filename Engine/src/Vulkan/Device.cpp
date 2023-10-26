@@ -164,7 +164,7 @@ namespace Vulkan
 
 		auto counts = properties.limits.framebufferColorSampleCounts & properties.limits.framebufferDepthSampleCounts;
 
-		std::vector<VkSampleCountFlagBits> priorities = {
+		static std::vector<VkSampleCountFlagBits> priorities = {
 			VK_SAMPLE_COUNT_64_BIT,
 			VK_SAMPLE_COUNT_32_BIT,
 			VK_SAMPLE_COUNT_16_BIT,

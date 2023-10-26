@@ -9,26 +9,32 @@ namespace Engine
 		Vulkan::ShaderSource&& vertexSource,
 		Vulkan::ShaderSource&& fragmentSource,
 		Scene& scene
-	) : device(device), Subpass{std::move(vertexSource), std::move(fragmentSource)}, scene(scene)
+	) : device(device), Subpass{ std::move(vertexSource), std::move(fragmentSource) }, scene(scene)
 	{
 	}
 
 	void GeometrySubpass::Prepare(Vulkan::RenderPass& renderPass)
 	{
-		std::vector<std::shared_ptr<Vulkan::ShaderModule>> shaderModules
+		PreparePipelineLayout();
+		PreparePipeline(renderPass);
+	}
+
+	void GeometrySubpass::PreparePipelineLayout()
+	{
+		std::vector<Vulkan::ShaderModule> shaderModules
 		{
-			std::make_shared<Vulkan::ShaderModule>(device, Vulkan::ShaderStage::Vertex, GetVertexShader()),
-			std::make_shared<Vulkan::ShaderModule>(device, Vulkan::ShaderStage::Fragment, GetFragmentShader())
+			Vulkan::ShaderModule{ Vulkan::ShaderStage::Vertex, GetVertexShader()},
+			Vulkan::ShaderModule{ Vulkan::ShaderStage::Fragment, GetFragmentShader() }
 		};
 
-		pipelineLayout = std::make_unique<Vulkan::PipelineLayout>(
-			device,
-			shaderModules
-		);
+		pipelineLayout = std::make_unique<Vulkan::PipelineLayout>(device, std::move(shaderModules));
+	}
 
+	void GeometrySubpass::PreparePipeline(Vulkan::RenderPass& renderPass)
+	{
 		auto spec = Vulkan::PipelineSpec
 		{
-			.vertexInputSpec
+			.vertexInput
 			{
 				.attributes = {
 					VkVertexInputAttributeDescription{
@@ -58,7 +64,10 @@ namespace Engine
 					}
 				}
 			},
-			.shaderModules = shaderModules
+			.multisample
+			{
+				.rasterizationSamples = sampleCount
+			}
 		};
 
 		pipeline = std::make_unique<Vulkan::Pipeline>(device, *pipelineLayout, renderPass, spec);
@@ -121,9 +130,7 @@ namespace Engine
 
 	void GeometrySubpass::UpdateGlobalUniform(Vulkan::CommandBuffer& commandBuffer)
 	{
-		auto [camera, transform] = Renderer::Get().GetMainCamera();
-
-		globalUniform.viewProjection = camera.GetProjection() * glm::inverse(transform);
+		globalUniform.viewProjection = GetViewProjection();
 
 		auto& frame = Renderer::Get().GetCurrentFrame();
 
@@ -132,6 +139,13 @@ namespace Engine
 		allocation.SetData(&globalUniform);
 
 		BindBuffer(allocation.GetBuffer(), allocation.GetOffset(), allocation.GetSize(), 0, 0, 0);
+	}
+
+	glm::mat4 GeometrySubpass::GetViewProjection() const
+	{
+		auto [camera, transform] = Renderer::Get().GetMainCamera();
+
+		return camera.GetProjection() * glm::inverse(transform);
 	}
 
 	std::shared_ptr<Mesh> GeometrySubpass::GetMeshFromEntity(Entity entity)

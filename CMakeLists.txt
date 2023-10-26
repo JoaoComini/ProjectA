@@ -29,6 +29,8 @@ set(
     "${SHADER_SOURCE_DIR}/forward.frag"
     "${SHADER_SOURCE_DIR}/geometry.vert"
     "${SHADER_SOURCE_DIR}/geometry.frag"
+    "${SHADER_SOURCE_DIR}/shadowmap.vert"
+    "${SHADER_SOURCE_DIR}/shadowmap.frag"
 )
 
 add_custom_command(

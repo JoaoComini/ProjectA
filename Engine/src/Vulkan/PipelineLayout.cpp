@@ -5,10 +5,10 @@
 namespace Vulkan
 {
 
-	PipelineLayout::PipelineLayout(const Device& device, const std::vector<std::shared_ptr<ShaderModule>>& shaderModules)
-		: device(device)
+	PipelineLayout::PipelineLayout(const Device& device, std::vector<ShaderModule>&& shaderModules)
+		: device(device), shaderModules(std::move(shaderModules))
 	{
-		PrepareSetResources(shaderModules);
+		PrepareSetResources();
 		PrepareShaderSets();
 		CreateDescriptorSetLayouts();
 
@@ -28,11 +28,11 @@ namespace Vulkan
 		}
 	}
 
-	void PipelineLayout::PrepareSetResources(const std::vector<std::shared_ptr<ShaderModule>>& shaderModules)
+	void PipelineLayout::PrepareSetResources()
 	{
 		for (auto& shaderModule : shaderModules)
 		{
-			for (auto& shaderResource : shaderModule->GetResources())
+			for (auto& shaderResource : shaderModule.GetResources())
 			{
 				// Ignore inputs and outputs since they don't belong to a descriptor set
 				if (shaderResource.type == ShaderResourceType::Input || shaderResource.type == ShaderResourceType::Output)
@@ -106,6 +106,11 @@ namespace Vulkan
 		}
 
 		throw std::runtime_error("couldn't find descriptor set layout at set " + std::to_string(set));
+	}
+
+	const std::vector<ShaderModule>& PipelineLayout::GetShaderModules() const
+	{
+		return shaderModules;
 	}
 
 	PipelineLayout::~PipelineLayout()

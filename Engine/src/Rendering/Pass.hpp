@@ -17,9 +17,11 @@ namespace Engine
 
 		void Prepare(const RenderTarget& target);
 
-		void Draw(Vulkan::CommandBuffer& commandBuffer);
+		void Draw(Vulkan::CommandBuffer& commandBuffer, RenderTarget& renderTarget);
 
 		void SetLoadStoreInfos(std::vector<Vulkan::LoadStoreInfo> loadStoreInfos);
+
+		void SetClearValues(std::vector<VkClearValue> clearValues);
 
 		Vulkan::RenderPass& GetRenderPass() const;
 	private:
@@ -28,8 +30,6 @@ namespace Engine
 
 		std::vector<Vulkan::LoadStoreInfo> loadStoreInfos{ 2 };
 		std::vector<VkClearValue> clearValues{ 2 };
-
-		VkExtent2D extent{0, 0};
 
 		Vulkan::Device& device;
 	};

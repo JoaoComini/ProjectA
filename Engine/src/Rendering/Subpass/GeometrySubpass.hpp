@@ -31,8 +31,13 @@ namespace Engine
 		virtual void Draw(Vulkan::CommandBuffer& commandBuffer) override;
 
 	protected:
-		Scene& scene;
+		virtual void PreparePipelineLayout();
+		virtual void PreparePipeline(Vulkan::RenderPass& renderPass);
 
+		virtual glm::mat4 GetViewProjection() const;
+
+		Scene& scene;
+		Vulkan::Device& device;
 	private:
 		void UpdateGlobalUniform(Vulkan::CommandBuffer& commandBuffer);
 		std::shared_ptr<Mesh> GetMeshFromEntity(Entity entity);
@@ -41,7 +46,6 @@ namespace Engine
 
 		GlobalUniform globalUniform{};
 
-		Vulkan::Device& device;
 	};
 
 }

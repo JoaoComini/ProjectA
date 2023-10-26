@@ -35,14 +35,19 @@ namespace Engine
 		bool IsDepthStencilDisabled() const;
 		void EnableDepthStencil();
 
-	protected:
-		void BindBuffer(const Vulkan::Buffer& buffer, uint32_t offset, uint32_t size, uint32_t set, uint32_t binding, uint32_t arrayElement);
+		void SetSampleCount(VkSampleCountFlagBits sampleCount);
+		VkSampleCountFlagBits GetSampleCount() const;
+
 		void BindImage(const Vulkan::ImageView& imageView, const Vulkan::Sampler& sampler, uint32_t set, uint32_t binding, uint32_t array_element);
+		void BindBuffer(const Vulkan::Buffer& buffer, uint32_t offset, uint32_t size, uint32_t set, uint32_t binding, uint32_t arrayElement);
+	protected:
 
 		void FlushDescriptorSet(Vulkan::CommandBuffer& commandBuffer, uint32_t set);
 
 		std::unique_ptr<Vulkan::Pipeline> pipeline;
 		std::unique_ptr<Vulkan::PipelineLayout> pipelineLayout;
+
+		VkSampleCountFlagBits sampleCount{ VK_SAMPLE_COUNT_1_BIT };
 	private:
 		Vulkan::ShaderSource vertexShader;
 		Vulkan::ShaderSource fragmentShader;
@@ -53,6 +58,7 @@ namespace Engine
 
 		std::map<uint32_t, BindingMap<VkDescriptorBufferInfo>> bufferBindings;
 		std::map<uint32_t, BindingMap<VkDescriptorImageInfo>> imageBindings;
+
 
 		bool disableDepthStencil = false;
 	};

@@ -79,4 +79,14 @@ namespace Engine
     {
         disableDepthStencil = false;
     }
+
+    void Subpass::SetSampleCount(VkSampleCountFlagBits sampleCount)
+    {
+        this->sampleCount = sampleCount;
+    }
+
+    VkSampleCountFlagBits Subpass::GetSampleCount() const
+    {
+        return sampleCount;
+    }
 };

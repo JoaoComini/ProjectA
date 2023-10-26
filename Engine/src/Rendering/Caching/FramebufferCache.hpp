@@ -1,12 +1,13 @@
 #pragma once
 
 #include "Vulkan/Framebuffer.hpp"
-#include "../RenderTarget.hpp"
 
 #include <unordered_map>
 
 namespace Engine
 {
+	class RenderTarget;
+
 	class FramebufferCache
 	{
 	public:

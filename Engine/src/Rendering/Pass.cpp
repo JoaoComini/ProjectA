@@ -34,7 +34,6 @@ namespace Engine
         }
 
         renderPass = std::make_unique<Vulkan::RenderPass>(device, attachments, loadStoreInfos, subpassInfos);
-        extent = target.GetExtent();
 
         for (auto& subpass : subpasses)
         {
@@ -42,13 +41,11 @@ namespace Engine
         }
     }
 
-    void Pass::Draw(Vulkan::CommandBuffer& commandBuffer)
+    void Pass::Draw(Vulkan::CommandBuffer& commandBuffer, RenderTarget& renderTarget)
     {
-        auto& frame = Renderer::Get().GetCurrentFrame();
+        auto& framebuffer = renderTarget.RequestFramebuffer(*renderPass);
 
-        auto& framebuffer = frame.RequestFramebuffer(*renderPass);
-
-        commandBuffer.BeginRenderPass(*renderPass, framebuffer, clearValues, frame.GetTarget().GetExtent());
+        commandBuffer.BeginRenderPass(*renderPass, framebuffer, clearValues, renderTarget.GetExtent());
 
         for (size_t i = 0; i < subpasses.size(); i++)
         {
@@ -60,9 +57,15 @@ namespace Engine
             }
         }
     }
+
     void Pass::SetLoadStoreInfos(std::vector<Vulkan::LoadStoreInfo> loadStoreInfos)
     {
         this->loadStoreInfos = loadStoreInfos;
+    }
+
+    void Pass::SetClearValues(std::vector<VkClearValue> clearValues)
+    {
+        this->clearValues = clearValues;
     }
 
     Vulkan::RenderPass& Pass::GetRenderPass() const

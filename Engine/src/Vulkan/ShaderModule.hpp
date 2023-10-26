@@ -54,22 +54,22 @@ namespace Vulkan
         uint32_t size;
     };
 
-    class ShaderModule : public Resource<VkShaderModule>
+    class ShaderModule
     {
     public:
-        ShaderModule(const Device& device, ShaderStage stage, const ShaderSource& source);
+        ShaderModule(ShaderStage stage, const ShaderSource& source);
 
-        ~ShaderModule();
+        ShaderStage GetStage() const;
 
-        ShaderStage GetStage();
+        const std::vector<ShaderResource>& GetResources() const;
 
-        const std::vector<ShaderResource>& GetResources();
+        const std::vector<uint32_t>& GetSpirv() const;
 
     private:
         ShaderStage stage{};
-        std::vector<ShaderResource> shaderResources;
 
-        const Device &device;
+        std::vector<ShaderResource> shaderResources;
+        std::vector<uint32_t> spirv;
     };
 
 }

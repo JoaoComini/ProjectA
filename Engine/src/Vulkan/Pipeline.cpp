@@ -8,16 +8,29 @@ namespace Vulkan
 {
 	Pipeline::Pipeline(const Device& device, const PipelineLayout& layout, const RenderPass& renderPass, PipelineSpec spec) : device(device)
 	{
+		std::vector<VkShaderModule> shaderModules;
 		std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
-		for (auto& shaderModule : spec.shaderModules)
+		for (auto& shaderModule : layout.GetShaderModules())
 		{
-			VkPipelineShaderStageCreateInfo info{};
-			info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-			info.stage = static_cast<VkShaderStageFlagBits>(shaderModule->GetStage());
-			info.module = shaderModule->GetHandle();
-			info.pName = "main";
+			VkPipelineShaderStageCreateInfo stageCreateinfo{};
+			stageCreateinfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+			stageCreateinfo.stage = static_cast<VkShaderStageFlagBits>(shaderModule.GetStage());
+			stageCreateinfo.pName = "main";
 
-			shaderStages.push_back(info);
+			auto& spirv = shaderModule.GetSpirv();
+
+			VkShaderModuleCreateInfo createInfo{};
+			createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+			createInfo.codeSize = spirv.size() * sizeof(uint32_t);
+			createInfo.pCode = spirv.data();
+
+			if (vkCreateShaderModule(device.GetHandle(), &createInfo, nullptr, &stageCreateinfo.module) != VK_SUCCESS)
+			{
+				throw std::runtime_error("failed to create shader module!");
+			}
+
+			shaderStages.push_back(stageCreateinfo);
+			shaderModules.push_back(stageCreateinfo.module);
 		}
 
 		std::vector<VkDynamicState> dynamicStates = {
@@ -32,10 +45,10 @@ namespace Vulkan
 
 		VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
 		vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-		vertexInputInfo.vertexBindingDescriptionCount = spec.vertexInputSpec.bindings.size();
-		vertexInputInfo.pVertexBindingDescriptions = spec.vertexInputSpec.bindings.data(); // Optional
-		vertexInputInfo.vertexAttributeDescriptionCount = spec.vertexInputSpec.attributes.size();
-		vertexInputInfo.pVertexAttributeDescriptions = spec.vertexInputSpec.attributes.data(); // Optional
+		vertexInputInfo.vertexBindingDescriptionCount = spec.vertexInput.bindings.size();
+		vertexInputInfo.pVertexBindingDescriptions = spec.vertexInput.bindings.data(); // Optional
+		vertexInputInfo.vertexAttributeDescriptionCount = spec.vertexInput.attributes.size();
+		vertexInputInfo.pVertexAttributeDescriptions = spec.vertexInput.attributes.data(); // Optional
 
 		VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
 		inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -54,20 +67,20 @@ namespace Vulkan
 		rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
 		rasterizer.lineWidth = 1.0f;
 		rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-		rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-		rasterizer.depthBiasEnable = VK_FALSE;
-		rasterizer.depthBiasConstantFactor = 0.0f; // Optional
-		rasterizer.depthBiasClamp = 0.0f;          // Optional
-		rasterizer.depthBiasSlopeFactor = 0.0f;    // Optional
+		rasterizer.frontFace = spec.rasterization.frontFace;
+		rasterizer.depthBiasEnable = spec.rasterization.depthBiasEnable;
+		rasterizer.depthBiasConstantFactor = spec.rasterization.depthBiasConstantFactor;
+		rasterizer.depthBiasClamp = spec.rasterization.depthBiasClamp;
+		rasterizer.depthBiasSlopeFactor = spec.rasterization.depthBiasSlopeFactor;
 
 		VkPipelineMultisampleStateCreateInfo multisampling{};
 		multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
 		multisampling.sampleShadingEnable = VK_FALSE;
-		multisampling.rasterizationSamples = device.GetMaxSampleCount();
+		multisampling.rasterizationSamples = spec.multisample.rasterizationSamples;
 
 		VkPipelineColorBlendAttachmentState colorBlendAttachment{};
 		colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-		colorBlendAttachment.blendEnable = VK_TRUE;
+		colorBlendAttachment.blendEnable = VK_FALSE;
 		colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
 		colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
 		colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
@@ -116,6 +129,11 @@ namespace Vulkan
 		if (vkCreateGraphicsPipelines(device.GetHandle(), VK_NULL_HANDLE, 1, &createInfo, nullptr, &handle) != VK_SUCCESS)
 		{
 			throw std::runtime_error("failed to create graphics pipeline!");
+		}
+
+		for (auto shaderModule : shaderModules)
+		{
+			vkDestroyShaderModule(device.GetHandle(), shaderModule, nullptr);
 		}
 	}
 

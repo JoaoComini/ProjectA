@@ -16,10 +16,25 @@ namespace Vulkan
 		std::vector<VkVertexInputBindingDescription> bindings;
 	};
 
+	struct MultisampleSpec
+	{
+		VkSampleCountFlagBits rasterizationSamples{ VK_SAMPLE_COUNT_1_BIT };
+	};
+
+	struct RasterizationSpec
+	{
+		VkFrontFace frontFace{ VK_FRONT_FACE_COUNTER_CLOCKWISE };
+		VkBool32 depthBiasEnable{ VK_FALSE };
+		float depthBiasConstantFactor = 0.0f; 
+		float depthBiasClamp = 0.0f;
+		float depthBiasSlopeFactor = 0.0f;
+	};
+
 	struct PipelineSpec
 	{
-		VertexInputSpec vertexInputSpec;
-		std::vector<std::shared_ptr<ShaderModule>> shaderModules;
+		VertexInputSpec vertexInput;
+		MultisampleSpec multisample;
+		RasterizationSpec rasterization;
 	};
 
 	class Pipeline : public Resource<VkPipeline>

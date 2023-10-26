@@ -13,12 +13,14 @@ layout(set = 0, binding = 1) uniform ModelUniform {
     vec4 color;
 } model;
 
-layout(location = 0) out vec2 outUV;
+layout(location = 0) out vec4 outPosition;
 layout(location = 1) out vec3 outNormal;
+layout(location = 2) out vec2 outUV;
 
 void main() {
-    gl_Position = global.viewProjection * model.model * vec4(inPosition, 1.0);
-
+    outPosition = model.model * vec4(inPosition, 1.0);
     outUV = inUV;
-    outNormal = inNormal;
+    outNormal = mat3(model.model) * inNormal;
+
+    gl_Position = global.viewProjection * outPosition;
 }

@@ -10,7 +10,6 @@ namespace Engine
 	{
 		commandPool = std::make_unique<Vulkan::CommandPool>(device);
 		semaphorePool = std::make_unique<SemaphorePool>(device);
-		framebufferCache = std::make_unique<FramebufferCache>(device);
 
 		renderFence = std::make_unique<Vulkan::Fence>(device);
 
@@ -46,16 +45,6 @@ namespace Engine
 	Vulkan::Fence& RenderFrame::GetRenderFence() const
 	{
 		return *renderFence;
-	}
-
-	Vulkan::Framebuffer& RenderFrame::RequestFramebuffer(const Vulkan::RenderPass& renderPass)
-	{
-		return framebufferCache->RequestFramebuffer(renderPass, *target);
-	}
-
-	void RenderFrame::ClearFramebuffers()
-	{
-		framebufferCache->Clear();
 	}
 
 	VkDescriptorSet RenderFrame::RequestDescriptorSet(Vulkan::DescriptorSetLayout& descriptorSetLayout, const BindingMap<VkDescriptorBufferInfo>& bufferInfos, const BindingMap<VkDescriptorImageInfo>& imageInfos)

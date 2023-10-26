@@ -106,6 +106,7 @@ set(ENGINE_SRC_FILES
     "src/Rendering/Subpass/Subpass.cpp"
     "src/Rendering/Subpass/GeometrySubpass.cpp"
     "src/Rendering/Subpass/ForwardSubpass.cpp"
+    "src/Rendering/Subpass/ShadowSubpass.cpp"
     "src/Common/FileSystem.cpp"
     "src/Common/Uuid.cpp"
     "src/Vulkan/Buffer.cpp"

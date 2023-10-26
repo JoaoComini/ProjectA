@@ -1,8 +1,9 @@
 #include "RenderTarget.hpp"
 
-
 #include <set>
 #include <iterator>
+
+#include "Caching/FramebufferCache.hpp"
 
 namespace Engine
 {
@@ -36,6 +37,8 @@ namespace Engine
 
 			attachments.push_back({image->GetFormat(), image->GetSampleCount(), image->GetUsage()});
 		}
+
+		framebufferCache = std::make_unique<FramebufferCache>(device);
 	}
 
 	const std::vector<std::unique_ptr<Vulkan::ImageView>>& RenderTarget::GetViews() const
@@ -46,6 +49,11 @@ namespace Engine
 	const std::vector<Vulkan::AttachmentInfo>& RenderTarget::GetAttachments() const
 	{
 		return attachments;
+	}
+
+	Vulkan::Framebuffer& RenderTarget::RequestFramebuffer(const Vulkan::RenderPass& renderPass)
+	{
+		return framebufferCache->RequestFramebuffer(renderPass, *this);
 	}
 
 	VkExtent2D RenderTarget::GetExtent() const
