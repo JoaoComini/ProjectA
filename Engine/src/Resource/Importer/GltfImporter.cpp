@@ -113,6 +113,7 @@ namespace Engine
         {
             auto& material = model.materials[i];
             auto& values = material.values;
+            auto& additionalValues = material.additionalValues;
 
             MaterialSpec spec{};
 
@@ -123,8 +124,14 @@ namespace Engine
 
             if (values.find("baseColorFactor") != values.end())
             {
-                const auto& color_factor = values["baseColorFactor"].ColorFactor();
-                spec.color = glm::vec4(color_factor[0], color_factor[1], color_factor[2], color_factor[3]);
+                const auto& factor = values["baseColorFactor"].ColorFactor();
+                spec.color = glm::vec4(factor[0], factor[1], factor[2], factor[3]);
+            }
+
+            if (additionalValues.find("normalTexture") != additionalValues.end())
+            {
+                auto index = additionalValues["normalTexture"].TextureIndex();
+                spec.normal = textures[index];
             }
 
             auto id = ResourceManager::Get().CreateResource<Material>(parent.stem() / "material", spec);

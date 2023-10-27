@@ -41,6 +41,7 @@ FLATBUFFERS_STRUCT_END(Color, 16);
 struct MaterialT : public ::flatbuffers::NativeTable {
   typedef Material TableType;
   uint64_t diffuse = 0;
+  uint64_t normal = 0;
   std::unique_ptr<flatbuffers::Color> color{};
   MaterialT() = default;
   MaterialT(const MaterialT &o);
@@ -53,10 +54,14 @@ struct Material FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef MaterialBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_DIFFUSE = 4,
-    VT_COLOR = 6
+    VT_NORMAL = 6,
+    VT_COLOR = 8
   };
   uint64_t diffuse() const {
     return GetField<uint64_t>(VT_DIFFUSE, 0);
+  }
+  uint64_t normal() const {
+    return GetField<uint64_t>(VT_NORMAL, 0);
   }
   const flatbuffers::Color *color() const {
     return GetStruct<const flatbuffers::Color *>(VT_COLOR);
@@ -64,6 +69,7 @@ struct Material FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint64_t>(verifier, VT_DIFFUSE, 8) &&
+           VerifyField<uint64_t>(verifier, VT_NORMAL, 8) &&
            VerifyField<flatbuffers::Color>(verifier, VT_COLOR, 4) &&
            verifier.EndTable();
   }
@@ -78,6 +84,9 @@ struct MaterialBuilder {
   ::flatbuffers::uoffset_t start_;
   void add_diffuse(uint64_t diffuse) {
     fbb_.AddElement<uint64_t>(Material::VT_DIFFUSE, diffuse, 0);
+  }
+  void add_normal(uint64_t normal) {
+    fbb_.AddElement<uint64_t>(Material::VT_NORMAL, normal, 0);
   }
   void add_color(const flatbuffers::Color *color) {
     fbb_.AddStruct(Material::VT_COLOR, color);
@@ -96,8 +105,10 @@ struct MaterialBuilder {
 inline ::flatbuffers::Offset<Material> CreateMaterial(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint64_t diffuse = 0,
+    uint64_t normal = 0,
     const flatbuffers::Color *color = nullptr) {
   MaterialBuilder builder_(_fbb);
+  builder_.add_normal(normal);
   builder_.add_diffuse(diffuse);
   builder_.add_color(color);
   return builder_.Finish();
@@ -107,11 +118,13 @@ inline ::flatbuffers::Offset<Material> CreateMaterial(
 
 inline MaterialT::MaterialT(const MaterialT &o)
       : diffuse(o.diffuse),
+        normal(o.normal),
         color((o.color) ? new flatbuffers::Color(*o.color) : nullptr) {
 }
 
 inline MaterialT &MaterialT::operator=(MaterialT o) FLATBUFFERS_NOEXCEPT {
   std::swap(diffuse, o.diffuse);
+  std::swap(normal, o.normal);
   std::swap(color, o.color);
   return *this;
 }
@@ -126,6 +139,7 @@ inline void Material::UnPackTo(MaterialT *_o, const ::flatbuffers::resolver_func
   (void)_o;
   (void)_resolver;
   { auto _e = diffuse(); _o->diffuse = _e; }
+  { auto _e = normal(); _o->normal = _e; }
   { auto _e = color(); if (_e) _o->color = std::unique_ptr<flatbuffers::Color>(new flatbuffers::Color(*_e)); }
 }
 
@@ -138,10 +152,12 @@ inline ::flatbuffers::Offset<Material> CreateMaterial(::flatbuffers::FlatBufferB
   (void)_o;
   struct _VectorArgs { ::flatbuffers::FlatBufferBuilder *__fbb; const MaterialT* __o; const ::flatbuffers::rehasher_function_t *__rehasher; } _va = { &_fbb, _o, _rehasher}; (void)_va;
   auto _diffuse = _o->diffuse;
+  auto _normal = _o->normal;
   auto _color = _o->color ? _o->color.get() : nullptr;
   return flatbuffers::CreateMaterial(
       _fbb,
       _diffuse,
+      _normal,
       _color);
 }
 

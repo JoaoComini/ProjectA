@@ -89,7 +89,7 @@ namespace Engine
 			device,
 			VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
 			VK_FORMAT_D32_SFLOAT,
-			VkExtent3D{ 2048, 2048, 1 }
+			VkExtent3D{ 4096, 4096, 1 }
 		);
 
 		std::vector<std::unique_ptr<Vulkan::Image>> images;

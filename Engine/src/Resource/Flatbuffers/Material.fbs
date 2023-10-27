@@ -10,6 +10,7 @@ struct Color
 table Material
 {
     diffuse:uint64 = 0;
+    normal:uint64 = 0;
     color:Color;
 }
 

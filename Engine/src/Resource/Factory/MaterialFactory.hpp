@@ -12,8 +12,9 @@ namespace Engine
 {
 	struct MaterialSpec
 	{
-		ResourceId diffuse{0};
-		glm::vec4 color{1.f};
+		ResourceId diffuse{ 0 };
+		ResourceId normal{ 0 };
+		glm::vec4 color{ 1.f };
 	};
 
 	class MaterialFactory : Factory<Material, MaterialSpec>

@@ -11,10 +11,12 @@ namespace Engine
 	class Material : public Resource
 	{
 	public:
-		Material(ResourceId diffuse, glm::vec4 color = glm::vec4{1.f});
+		Material(ResourceId diffuse, ResourceId normal, glm::vec4 color = glm::vec4{1.f});
 		~Material() = default;
 
 		ResourceId GetDiffuse() const;
+
+		ResourceId GetNormal() const;
 
 		glm::vec4 GetColor() const;
 
@@ -30,6 +32,7 @@ namespace Engine
 
 	private:
 		ResourceId diffuse;
+		ResourceId normal;
 		glm::vec4 color{ 1.f };
 	};
 };

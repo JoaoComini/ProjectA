@@ -35,12 +35,8 @@ namespace Engine
 
         auto material = flatbuffers::GetMaterial(file.c_str());
 
-        glm::vec4 color{ 1.f };
-        if (material->color())
-        {
-            color = glm::make_vec4(material->color()->value()->data());
-        }
-
-        return std::make_shared<Material>(material->diffuse(), color);
+        auto color = glm::make_vec4(material->color()->value()->data());
+        
+        return std::make_shared<Material>(material->diffuse(), material->normal(), color);
     }
 };
