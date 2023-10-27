@@ -58,14 +58,14 @@ namespace Engine
 
 	void PerspectiveCamera::UpdateProjection()
 	{
-		this->projection = glm::perspective(fov, aspectRatio, nearClip, farClip);
+		this->projection = glm::perspective(fov, aspectRatio, farClip, nearClip);
 		this->projection[1][1] *= -1;
 	}
 
 	OrthographicCamera::OrthographicCamera(float left, float right, float bottom, float top, float nearClip, float farClip)
 		: left(left), right(right), bottom(bottom), top(top), nearClip(nearClip), farClip(farClip)
 	{
-		projection = glm::ortho(left, right, bottom, top, nearClip, farClip);
+		projection = glm::ortho(left, right, bottom, top, farClip, nearClip);
 		projection[1][1] *= -1;
 	}
 

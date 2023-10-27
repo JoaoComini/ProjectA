@@ -77,16 +77,9 @@ namespace Engine
 		std::vector<std::unique_ptr<Subpass>> subpasses;
 		subpasses.push_back(std::move(subpass));
 
-		std::vector<VkClearValue> clearValues
-		{
-			{
-				.depthStencil = { 1.f, 0 }
-			}
-		};
 
 		shadowPass = std::make_unique<Pass>(device, std::move(subpasses));
 
-		shadowPass->SetClearValues(clearValues);
 		shadowPass->Prepare(*shadowPassTargets[0]);
 	}
 

@@ -48,13 +48,6 @@ namespace Engine
 			.multisample
 			{
 				.rasterizationSamples = sampleCount
-			},
-			.rasterization
-			{
-				.depthBiasEnable = VK_TRUE,
-				.depthBiasConstantFactor = -1.4f,
-				.depthBiasClamp = 0.0f,
-				.depthBiasSlopeFactor = -1.7f
 			}
 		};
 

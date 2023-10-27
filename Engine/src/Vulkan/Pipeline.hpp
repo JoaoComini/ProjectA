@@ -23,6 +23,7 @@ namespace Vulkan
 
 	struct RasterizationSpec
 	{
+		VkCullModeFlags cullMode{ VK_CULL_MODE_BACK_BIT };
 		VkFrontFace frontFace{ VK_FRONT_FACE_COUNTER_CLOCKWISE };
 		VkBool32 depthBiasEnable{ VK_FALSE };
 		float depthBiasConstantFactor = 0.0f; 

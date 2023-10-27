@@ -27,7 +27,7 @@ namespace Engine
         samplerCreateInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
         samplerCreateInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
         samplerCreateInfo.compareEnable = VK_TRUE;
-        samplerCreateInfo.compareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
+        samplerCreateInfo.compareOp = VK_COMPARE_OP_GREATER_OR_EQUAL;
 
         shadowMapSampler = std::make_unique<Vulkan::Sampler>(device, samplerCreateInfo);
     }

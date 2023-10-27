@@ -9,7 +9,7 @@ namespace Engine
         : device(device), subpasses(std::move(subpasses))
     {
         clearValues[0].color = { 0.f, 0.f, 0.f, 1.f };
-        clearValues[1].depthStencil = { 1.f, 0 };
+        clearValues[1].depthStencil = { 0.f, 0 };
     }
 
     void Pass::Prepare(const RenderTarget& target)

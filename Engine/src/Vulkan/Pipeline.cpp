@@ -46,9 +46,9 @@ namespace Vulkan
 		VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
 		vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 		vertexInputInfo.vertexBindingDescriptionCount = spec.vertexInput.bindings.size();
-		vertexInputInfo.pVertexBindingDescriptions = spec.vertexInput.bindings.data(); // Optional
+		vertexInputInfo.pVertexBindingDescriptions = spec.vertexInput.bindings.data();
 		vertexInputInfo.vertexAttributeDescriptionCount = spec.vertexInput.attributes.size();
-		vertexInputInfo.pVertexAttributeDescriptions = spec.vertexInput.attributes.data(); // Optional
+		vertexInputInfo.pVertexAttributeDescriptions = spec.vertexInput.attributes.data();
 
 		VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
 		inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -102,7 +102,7 @@ namespace Vulkan
 		depthStencil.pNext = nullptr;
 		depthStencil.depthTestEnable = VK_TRUE;
 		depthStencil.depthWriteEnable = VK_TRUE;
-		depthStencil.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
+		depthStencil.depthCompareOp = VK_COMPARE_OP_GREATER_OR_EQUAL;
 		depthStencil.depthBoundsTestEnable = VK_FALSE;
 		depthStencil.minDepthBounds = 0.0f; // Optional
 		depthStencil.maxDepthBounds = 1.0f; // Optional
