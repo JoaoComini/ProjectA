@@ -15,8 +15,8 @@ namespace Engine
 
 	void RenderPipeline::SetupMainPass()
 	{
-		auto vertexSource = Vulkan::ShaderSource{ "resources/shaders/forward.vert.spv" };
-		auto fragmentSource = Vulkan::ShaderSource{ "resources/shaders/forward.frag.spv" };
+		auto vertexSource = Vulkan::ShaderSource{ "resources/shaders/forward.vert" };
+		auto fragmentSource = Vulkan::ShaderSource{ "resources/shaders/forward.frag" };
 
 		auto forwardSubpass = std::make_unique<ForwardSubpass>(
 			device,
@@ -63,8 +63,8 @@ namespace Engine
 			shadowPassTargets.push_back(CreateShadowPassTarget());
 		}
 
-		auto vertexSource = Vulkan::ShaderSource{ "resources/shaders/shadowmap.vert.spv" };
-		auto fragmentSource = Vulkan::ShaderSource{ "resources/shaders/shadowmap.frag.spv" };
+		auto vertexSource = Vulkan::ShaderSource{ "resources/shaders/shadowmap.vert" };
+		auto fragmentSource = Vulkan::ShaderSource{ "resources/shaders/shadowmap.frag" };
 
 		auto subpass = std::make_unique<ShadowSubpass>(
 			device,

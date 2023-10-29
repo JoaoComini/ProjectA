@@ -18,8 +18,8 @@ namespace Engine
 		);
 
 	protected:
-		virtual void PreparePipelineLayout() override;
-		virtual void PreparePipeline(Vulkan::RenderPass& renderPass) override;
+		virtual Vulkan::PipelineLayout& GetPipelineLayout(const std::vector<Vulkan::ShaderModule>& shaders) override;
+		virtual Vulkan::Pipeline& GetPipeline(Vulkan::PipelineLayout& pipelineLayout) override;
 
 		virtual glm::mat4 GetViewProjection() const override;
 

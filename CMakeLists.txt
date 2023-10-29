@@ -17,7 +17,7 @@ add_subdirectory(Engine)
 add_subdirectory(Game)
 add_subdirectory(Editor)
 
-# -------- COMPILE SHADERS --------
+# ---------- COPY SHADERS ----------
 find_program(glslc_executable NAMES glslc HINTS Vulkan::glslc)
 
 set(SHADER_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/resources/shaders)
@@ -40,20 +40,20 @@ add_custom_command(
     COMMENT "Creating ${SHADER_BINARY_DIR}"
 )
 
+add_custom_target(Shaders)
+
 foreach(FILE IN LISTS SHADER_SRC_FILES)
     get_filename_component(FILENAME ${FILE} NAME)
     add_custom_command(
         COMMAND
-        ${glslc_executable}
-        -o ${SHADER_BINARY_DIR}/${FILENAME}.spv
+        ${CMAKE_COMMAND} -E copy
         ${FILE}
-        OUTPUT ${SHADER_BINARY_DIR}/${FILENAME}.spv
-        DEPENDS ${FILE} ${SHADER_BINARY_DIR}
+        ${SHADER_BINARY_DIR}/${FILENAME}
+        OUTPUT ${SHADER_BINARY_DIR}/${FILENAME}
+        DEPENDS ${FILE}
         COMMENT "Compiling ${FILENAME}"
     )
-    list(APPEND SPV_SHADERS ${SHADER_BINARY_DIR}/${FILENAME}.spv)
+    target_sources(Shaders PRIVATE ${SHADER_BINARY_DIR}/${FILENAME})
 endforeach()
-
-add_custom_target(Shaders ALL DEPENDS ${SPV_SHADERS})
 
 add_dependencies(Engine Shaders)

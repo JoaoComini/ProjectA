@@ -17,6 +17,7 @@ namespace Engine
 
         flatbuffers::MaterialT material;
         material.diffuse = spec.diffuse;
+        material.normal = spec.normal;
         material.color = std::make_unique<flatbuffers::Color>(color);
 
         flatbuffers::FlatBufferBuilder builder(128);

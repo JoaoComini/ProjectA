@@ -29,7 +29,6 @@ namespace Engine
 			std::vector<std::unique_ptr<RenderTarget>>& shadowRenderTargets
 		);
 
-
 		void Draw(Vulkan::CommandBuffer& commandBuffer) override;
 	private:
 		void CreateShadowMapSampler();
@@ -39,7 +38,6 @@ namespace Engine
 		void BindShadowMap();
 
 		void UpdateShadowUniform(Vulkan::CommandBuffer& commandBuffer, ShadowUniform uniform);
-
 	private:
 		Camera& shadowCamera;
 		std::vector<std::unique_ptr<RenderTarget>>& shadowRenderTargets;

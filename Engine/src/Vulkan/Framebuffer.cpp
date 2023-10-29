@@ -2,22 +2,28 @@
 
 #include <algorithm>
 
+#include "Rendering/RenderTarget.hpp"
+
+#include "Device.hpp"
+
 namespace Vulkan
 {
-	Framebuffer::Framebuffer(const Device& device, const RenderPass& renderPass, const std::vector<std::unique_ptr<ImageView>>& attachments, VkExtent2D extent): device(device)
+	Framebuffer::Framebuffer(const Device& device, const RenderPass& renderPass, const Engine::RenderTarget& target): device(device)
 	{
-		std::vector<VkImageView> views;
+		std::vector<VkImageView> handles;
 		
-		for (auto& attachment : attachments)
+		for (auto& view : target.GetViews())
 		{
-			views.emplace_back(attachment->GetHandle());
+			handles.emplace_back(view->GetHandle());
 		}
+
+		auto extent = target.GetExtent();
 
 		VkFramebufferCreateInfo framebufferInfo{};
 		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		framebufferInfo.renderPass = renderPass.GetHandle();
-		framebufferInfo.attachmentCount = views.size();
-		framebufferInfo.pAttachments = views.data();
+		framebufferInfo.attachmentCount = handles.size();
+		framebufferInfo.pAttachments = handles.data();
 		framebufferInfo.width = extent.width;
 		framebufferInfo.height = extent.height;
 		framebufferInfo.layers = 1;

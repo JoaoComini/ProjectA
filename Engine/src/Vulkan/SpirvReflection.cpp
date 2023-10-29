@@ -4,8 +4,8 @@
 namespace Vulkan
 {
 
-    SpirvReflection::SpirvReflection(std::vector<uint32_t>& spirv, ShaderStage stage)
-        : compiler(spirv), stage(stage)
+    SpirvReflection::SpirvReflection(VkShaderStageFlagBits stage, std::vector<uint32_t>& spirv)
+        : stage(stage), compiler(spirv)
     {
     }
 

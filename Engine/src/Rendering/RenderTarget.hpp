@@ -2,14 +2,11 @@
 
 #include <vulkan/vulkan.h>
 
-#include "Common/Hash.hpp"
-
 #include "Vulkan/Device.hpp"
 #include "Vulkan/Image.hpp"
 #include "Vulkan/ImageView.hpp"
 #include "Vulkan/RenderPass.hpp"
-
-#include "Caching/FramebufferCache.hpp"
+#include "Vulkan/Framebuffer.hpp"
 
 #include <vector>
 
@@ -18,13 +15,11 @@ namespace Engine
 	class RenderTarget
 	{
 	public:
-		RenderTarget(const Vulkan::Device& device, std::vector<std::unique_ptr<Vulkan::Image>>&& images);
+		RenderTarget(Vulkan::Device& device, std::vector<std::unique_ptr<Vulkan::Image>>&& images);
 		~RenderTarget() = default;
 
 		const std::vector<std::unique_ptr<Vulkan::ImageView>>& GetViews() const;
 		const std::vector<Vulkan::AttachmentInfo>& GetAttachments() const;
-
-		Vulkan::Framebuffer& RequestFramebuffer(const Vulkan::RenderPass& renderPass);
 
 		VkExtent2D GetExtent() const;
 
@@ -36,6 +31,25 @@ namespace Engine
 
 		VkExtent2D extent{};
 
-		std::unique_ptr<FramebufferCache> framebufferCache;
+		Vulkan::Device& device;
 	};
 }
+
+namespace std
+{
+	template <>
+	struct hash<Engine::RenderTarget>
+	{
+		size_t operator()(const Engine::RenderTarget& target) const
+		{
+			std::size_t result{ 0 };
+
+			for (auto& view : target.GetViews())
+			{
+				HashCombine(result, view->GetHandle());
+			}
+
+			return result;
+		}
+	};
+};

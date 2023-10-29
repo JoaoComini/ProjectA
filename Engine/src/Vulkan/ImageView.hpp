@@ -2,12 +2,12 @@
 
 #include <vulkan/vulkan.h>
 
-#include "Device.hpp"
 #include "Image.hpp"
 #include "Resource.hpp"
 
 namespace Vulkan
 {
+	class Device;
 
 	class ImageView : public Resource<VkImageView>
 	{

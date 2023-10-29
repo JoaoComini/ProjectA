@@ -118,7 +118,8 @@ namespace Engine
 
 	DescriptorPool& RenderFrame::GetDescriptorPool(Vulkan::DescriptorSetLayout& descriptorSetLayout)
 	{
-		std::size_t hash = Hash(descriptorSetLayout);
+		std::size_t hash{ 0 };
+		Hash(hash, descriptorSetLayout);
 
 		auto it = descriptorPools.find(hash);
 

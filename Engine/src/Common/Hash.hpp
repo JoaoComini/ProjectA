@@ -1,6 +1,6 @@
 #pragma once
 
-#include <glm/gtx/hash.hpp>
+#include <functional>
 
 inline void HashCombine(std::size_t& seed, std::size_t hash)
 {
@@ -17,11 +17,14 @@ inline void HashCombine(std::size_t& seed, const T& t)
 }
 
 template<class T>
-inline std::size_t Hash(const T& t)
+inline void Hash(std::size_t& seed, const T& t)
 {
-	std::size_t result = 0U;
+	HashCombine(seed, t);
+}
 
-	HashCombine(result, t);
-
-	return result;
+template <typename T, typename... Args>
+inline void Hash(std::size_t& seed, const T& first, const Args &... args)
+{
+	Hash(seed, first);
+	Hash(seed, args...);
 }

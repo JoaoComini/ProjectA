@@ -1,5 +1,7 @@
 #include "DescriptorSetLayout.hpp"
 
+#include "Device.hpp"
+
 namespace Vulkan
 {
 	VkDescriptorType DescriptorTypeFromShaderResourceType(ShaderResourceType type)
@@ -27,7 +29,7 @@ namespace Vulkan
 				.binding = shaderResource.binding,
 				.descriptorType = DescriptorTypeFromShaderResourceType(shaderResource.type),
 				.descriptorCount = shaderResource.arraySize,
-				.stageFlags = static_cast<VkShaderStageFlags>(shaderResource.stage)
+				.stageFlags = shaderResource.stages
 			};
 
 			bindings.push_back(binding);

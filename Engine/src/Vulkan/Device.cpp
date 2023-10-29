@@ -2,6 +2,8 @@
 
 #include "CommandBuffer.hpp"
 
+#include "Caching/ResourceCache.hpp"
+
 namespace Vulkan
 {
 	Device::Device(const Instance& instance, const PhysicalDevice& physicalDevice) : physicalDevice(physicalDevice)
@@ -61,11 +63,13 @@ namespace Vulkan
 		}
 
 		commandPool = std::make_unique<CommandPool>(*this);
+		resourceCache = std::make_unique<ResourceCache>(*this);
 	}
 
 	Device::~Device()
 	{
 		commandPool.reset(); 
+		resourceCache.reset();
 
 		vmaDestroyAllocator(allocator);
 		vkDestroyDevice(handle, nullptr);
@@ -175,5 +179,10 @@ namespace Vulkan
 		};
 
 		return *std::find_if(priorities.begin(), priorities.end(), [counts](auto& count) { return count & counts; });
+	}
+
+	ResourceCache& Device::GetResourceCache() const
+	{
+		return *resourceCache;
 	}
 }

@@ -34,3 +34,6 @@
 [submodule "Engine/third_party/spirv-cross"]
 	path = Engine/third_party/spirv-cross
 	url = https://github.com/KhronosGroup/SPIRV-Cross.git
+[submodule "Engine/third_party/glslang"]
+	path = Engine/third_party/glslang
+	url = https://github.com/KhronosGroup/glslang.git

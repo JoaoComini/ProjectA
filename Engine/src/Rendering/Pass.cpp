@@ -2,6 +2,8 @@
 
 #include "Renderer.hpp"
 
+#include "Vulkan/Caching/ResourceCache.hpp"
+
 namespace Engine
 {
 
@@ -43,7 +45,7 @@ namespace Engine
 
     void Pass::Draw(Vulkan::CommandBuffer& commandBuffer, RenderTarget& renderTarget)
     {
-        auto& framebuffer = renderTarget.RequestFramebuffer(*renderPass);
+        auto& framebuffer = device.GetResourceCache().RequestFramebuffer(*renderPass, renderTarget);
 
         commandBuffer.BeginRenderPass(*renderPass, framebuffer, clearValues, renderTarget.GetExtent());
 

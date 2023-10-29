@@ -5,8 +5,8 @@
 namespace Vulkan
 {
 
-	PipelineLayout::PipelineLayout(const Device& device, std::vector<ShaderModule>&& shaderModules)
-		: device(device), shaderModules(std::move(shaderModules))
+	PipelineLayout::PipelineLayout(const Device& device, const std::vector<ShaderModule>& shaderModules)
+		: device(device), shaderModules(shaderModules)
 	{
 		PrepareSetResources();
 		PrepareShaderSets();
@@ -45,13 +45,11 @@ namespace Vulkan
 
 				auto it = setResources.find(key);
 				
-				// If the resource exists on both shader modules, so it must be on 
-				// both shader stages, hence merge then.
+				// If the resource exists on other shader modules, it must be on 
+				// multiple shader stages, hence merge then.
 				if (it != setResources.end())
 				{
-					// We may need to change this when adding support for 
-					// shader stages other than Vextex and Fragment
-					it->second.stage = ShaderStage::Both;
+					it->second.stages |= shaderModule.GetStage();
 				}
 				else
 				{

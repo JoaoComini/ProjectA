@@ -3,8 +3,6 @@
 #include <set>
 #include <iterator>
 
-#include "Caching/FramebufferCache.hpp"
-
 namespace Engine
 {
 
@@ -16,7 +14,8 @@ namespace Engine
 		}
 	};
 
-	RenderTarget::RenderTarget(const Vulkan::Device& device, std::vector<std::unique_ptr<Vulkan::Image>>&& images) : images(std::move(images))
+	RenderTarget::RenderTarget(Vulkan::Device& device, std::vector<std::unique_ptr<Vulkan::Image>>&& images)
+		: device(device), images(std::move(images))
 	{
 		std::set<VkExtent2D, CompareExtent2D> unique;
 		std::transform(this->images.begin(), this->images.end(), std::inserter(unique, unique.end()), [](const std::unique_ptr<Vulkan::Image>& image) {
@@ -37,8 +36,6 @@ namespace Engine
 
 			attachments.push_back({image->GetFormat(), image->GetSampleCount(), image->GetUsage()});
 		}
-
-		framebufferCache = std::make_unique<FramebufferCache>(device);
 	}
 
 	const std::vector<std::unique_ptr<Vulkan::ImageView>>& RenderTarget::GetViews() const
@@ -49,11 +46,6 @@ namespace Engine
 	const std::vector<Vulkan::AttachmentInfo>& RenderTarget::GetAttachments() const
 	{
 		return attachments;
-	}
-
-	Vulkan::Framebuffer& RenderTarget::RequestFramebuffer(const Vulkan::RenderPass& renderPass)
-	{
-		return framebufferCache->RequestFramebuffer(renderPass, *this);
 	}
 
 	VkExtent2D RenderTarget::GetExtent() const

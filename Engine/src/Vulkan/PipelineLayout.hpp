@@ -18,7 +18,7 @@ namespace Vulkan
 	class PipelineLayout : public Resource<VkPipelineLayout>
 	{
 	public:
-		PipelineLayout(const Device& device, std::vector<ShaderModule>&& shaderModules);
+		PipelineLayout(const Device& device, const std::vector<ShaderModule>& shaderModules);
 		~PipelineLayout();
 
 		DescriptorSetLayout& GetDescriptorSetLayout(uint32_t set);
@@ -40,3 +40,19 @@ namespace Vulkan
 		const Device& device;
 	};
 }
+
+namespace std
+{
+	template <>
+	struct hash<Vulkan::PipelineLayout>
+	{
+		size_t operator()(const Vulkan::PipelineLayout& layout) const
+		{
+			std::size_t hash{ 0 };
+
+			Hash(hash, layout.GetHandle());
+
+			return hash;
+		}
+	};
+};

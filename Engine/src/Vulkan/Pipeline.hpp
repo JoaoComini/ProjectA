@@ -48,3 +48,15 @@ namespace Vulkan
 		const Device& device;
 	};
 };
+
+namespace std
+{
+	template <>
+	struct hash<Vulkan::PipelineSpec>
+	{
+		size_t operator()(const Vulkan::PipelineSpec& spec) const
+		{
+			return 0;
+		}
+	};
+};

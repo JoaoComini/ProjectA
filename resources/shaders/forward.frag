@@ -9,7 +9,13 @@ layout(set = 0, binding = 1) uniform ModelUniform {
     vec4 color;
 } model;
 
+#ifdef HAS_DIFFUSE_TEXTURE
 layout(set = 0, binding = 2) uniform sampler2D diffuseTexture;
+#endif
+
+#ifdef HAS_NORMAL_TEXTURE
+layout(set = 0, binding = 6) uniform sampler2D normalTexture;
+#endif
 
 layout(set = 0, binding = 3) uniform LightUniform {
     vec4 vector;
@@ -65,17 +71,26 @@ vec3 Normal()
 	vec3 B      = normalize(cross(N, T));
 	mat3 TBN    = mat3(T, B, N);
 
-#ifdef HAS_NORMAL_TEXTURE
+	#ifdef HAS_NORMAL_TEXTURE
 	vec3 n = texture(normalTexture, inUV).rgb;
 	return normalize(TBN * (2.0 * n - 1.0));
-#else
+	#else
 	return normalize(TBN[2].xyz);
-#endif
+	#endif
+}
+
+vec4 BaseColor()
+{
+	#ifdef HAS_DIFFUSE_TEXTURE
+    return texture(diffuseTexture, inUV);
+	#else
+	return model.color;
+	#endif
 }
 
 vec3 ApplyDirectionalLight()
 {
-    vec3 N      = normalize(inNormal);
+    vec3 N      = Normal();
 	vec3 L      = normalize(-light.vector.xyz);
 	float NDotL = clamp(dot(N, L), 0.0, 1.0);
 
@@ -85,7 +100,7 @@ vec3 ApplyDirectionalLight()
 void main() {
     vec3 lightContribution = ApplyDirectionalLight() * PCFShadow();
 
-    vec4 baseColor = texture(diffuseTexture, inUV);
+	vec4 baseColor = BaseColor();
 
     vec3 ambientColor = vec3(0.1) * baseColor.rgb;
 

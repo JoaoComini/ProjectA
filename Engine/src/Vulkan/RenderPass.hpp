@@ -45,3 +45,19 @@ namespace Vulkan
 		const Device& device;
 	};
 };
+
+namespace std
+{
+	template <>
+	struct hash<Vulkan::RenderPass>
+	{
+		size_t operator()(const Vulkan::RenderPass& renderPass) const
+		{
+			std::size_t hash{ 0 };
+
+			Hash(hash, renderPass.GetHandle());
+
+			return hash;
+		}
+	};
+};

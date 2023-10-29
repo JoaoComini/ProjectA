@@ -84,6 +84,18 @@ add_subdirectory(third_party/spirv-cross)
 
 # -----------------------
 
+# ------- GLSLANG -------
+
+set(BUILD_EXTERNAL OFF CACHE BOOL "" FORCE)
+set(ENABLE_GLSLANG_BINARIES OFF CACHE BOOL "" FORCE)
+set(ENABLE_HLSL OFF CACHE BOOL "" FORCE)
+set(ENABLE_CTEST OFF CACHE BOOL "" FORCE)
+set(ENABLE_OPT OFF CACHE BOOL "" FORCE)
+set(SKIP_GLSLANG_INSTALL ON CACHE BOOL "" FORCE)
+add_subdirectory(third_party/glslang)
+
+# -----------------------
+
 set(ENGINE_SRC_FILES
     "src/Core/Application.cpp"
     "src/Core/Window.cpp"
@@ -93,7 +105,6 @@ set(ENGINE_SRC_FILES
     "src/Rendering/Pool/DescriptorPool.cpp"
     "src/Rendering/Pool/SemaphorePool.cpp"
     "src/Rendering/Pool/BufferPool.cpp"
-    "src/Rendering/Caching/FramebufferCache.cpp"
     "src/Rendering/RenderFrame.cpp"
     "src/Rendering/Material.cpp"
     "src/Rendering/Mesh.cpp"
@@ -131,8 +142,10 @@ set(ENGINE_SRC_FILES
     "src/Vulkan/Semaphore.cpp"
     "src/Vulkan/ShaderModule.cpp"
     "src/Vulkan/SpirvReflection.cpp"
+    "src/Vulkan/GlslCompiler.cpp"
     "src/Vulkan/Surface.cpp"
     "src/Vulkan/Swapchain.cpp"
+    "src/Vulkan/Caching/ResourceCache.cpp"
     "src/Scene/Scene.cpp"
     "src/Scene/Entity.cpp"
     "src/Scene/SceneSerializer.cpp"
@@ -149,7 +162,7 @@ set(ENGINE_SRC_FILES
     "src/Resource/Factory/SceneFactory.cpp"
     "src/Resource/Flatbuffers/NativeVertex.cpp"
     "src/Platform/Windows/FileDialog.cpp"
-)
+  )
 
 add_library(Engine STATIC ${ENGINE_SRC_FILES})
 
@@ -172,6 +185,10 @@ target_link_libraries(Engine
     yaml-cpp
     flatbuffers
     spirv-cross-cpp
+    spirv-cross-glsl
+    glslang
+    glslang-default-resource-limits
+    SPIRV
 )
 
 target_compile_definitions(Engine PRIVATE

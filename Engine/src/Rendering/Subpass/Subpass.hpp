@@ -14,10 +14,11 @@ namespace Engine
 	class Subpass
 	{
 	public:
-		Subpass(Vulkan::ShaderSource&& vertexSource, Vulkan::ShaderSource&& fragmentSource);
+		Subpass(Vulkan::Device& device, Vulkan::ShaderSource&& vertexSource, Vulkan::ShaderSource&& fragmentSource);
 		virtual ~Subpass() = default;
 
-		virtual void Prepare(Vulkan::RenderPass& renderPass) {}
+		virtual void Prepare(Vulkan::RenderPass& renderPass);
+
 		virtual void Draw(Vulkan::CommandBuffer& commandBuffer) = 0;
 
 		const Vulkan::ShaderSource& GetVertexShader() const;
@@ -37,17 +38,18 @@ namespace Engine
 
 		void SetSampleCount(VkSampleCountFlagBits sampleCount);
 		VkSampleCountFlagBits GetSampleCount() const;
-
+	protected:
 		void BindImage(const Vulkan::ImageView& imageView, const Vulkan::Sampler& sampler, uint32_t set, uint32_t binding, uint32_t array_element);
 		void BindBuffer(const Vulkan::Buffer& buffer, uint32_t offset, uint32_t size, uint32_t set, uint32_t binding, uint32_t arrayElement);
-	protected:
 
-		void FlushDescriptorSet(Vulkan::CommandBuffer& commandBuffer, uint32_t set);
+		void FlushDescriptorSet(Vulkan::CommandBuffer& commandBuffer, Vulkan::PipelineLayout& pipelineLayout, uint32_t set);
 
-		std::unique_ptr<Vulkan::Pipeline> pipeline;
-		std::unique_ptr<Vulkan::PipelineLayout> pipelineLayout;
+		virtual Vulkan::PipelineLayout& GetPipelineLayout(const std::vector<Vulkan::ShaderModule>& shaders);
 
 		VkSampleCountFlagBits sampleCount{ VK_SAMPLE_COUNT_1_BIT };
+
+		Vulkan::RenderPass* renderPass = nullptr;
+		Vulkan::Device& device;
 	private:
 		Vulkan::ShaderSource vertexShader;
 		Vulkan::ShaderSource fragmentShader;
@@ -58,7 +60,6 @@ namespace Engine
 
 		std::map<uint32_t, BindingMap<VkDescriptorBufferInfo>> bufferBindings;
 		std::map<uint32_t, BindingMap<VkDescriptorImageInfo>> imageBindings;
-
 
 		bool disableDepthStencil = false;
 	};

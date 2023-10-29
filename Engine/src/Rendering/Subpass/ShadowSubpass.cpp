@@ -1,5 +1,6 @@
 #include "ShadowSubpass.hpp"
 
+#include "Vulkan/Caching/ResourceCache.hpp"
 
 namespace Engine
 {
@@ -13,17 +14,12 @@ namespace Engine
     {
     }
 
-    void ShadowSubpass::PreparePipelineLayout()
-    {
-        std::vector<Vulkan::ShaderModule> shaderModules
-        {
-            Vulkan::ShaderModule{ Vulkan::ShaderStage::Vertex, GetVertexShader()},
-        };
+	Vulkan::PipelineLayout& ShadowSubpass::GetPipelineLayout(const std::vector<Vulkan::ShaderModule>& shaders)
+	{
+		return device.GetResourceCache().RequestPipelineLayout({ shaders[0] });
+	}
 
-        pipelineLayout = std::make_unique<Vulkan::PipelineLayout>(device, std::move(shaderModules));
-    }
-
-    void ShadowSubpass::PreparePipeline(Vulkan::RenderPass& renderPass)
+	Vulkan::Pipeline& ShadowSubpass::GetPipeline(Vulkan::PipelineLayout& pipelineLayout)
     {
 		auto spec = Vulkan::PipelineSpec
 		{
@@ -51,7 +47,7 @@ namespace Engine
 			}
 		};
 
-		pipeline = std::make_unique<Vulkan::Pipeline>(device, *pipelineLayout, renderPass, spec);
+		return device.GetResourceCache().RequestPipeline(pipelineLayout, *renderPass, spec);
     }
 
     glm::mat4 ShadowSubpass::GetViewProjection() const

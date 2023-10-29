@@ -65,6 +65,6 @@ namespace Engine
 		Camera* mainCamera;
 		glm::mat4 mainCameraTransform;
 
-		const Vulkan::Device& device;
+		Vulkan::Device& device;
 	};
 }

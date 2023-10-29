@@ -2,6 +2,8 @@
 
 #include "Resource/ResourceManager.hpp"
 
+#include "Vulkan/Caching/ResourceCache.hpp"
+
 namespace Engine
 {
 	GeometrySubpass::GeometrySubpass(
@@ -9,28 +11,11 @@ namespace Engine
 		Vulkan::ShaderSource&& vertexSource,
 		Vulkan::ShaderSource&& fragmentSource,
 		Scene& scene
-	) : device(device), Subpass{ std::move(vertexSource), std::move(fragmentSource) }, scene(scene)
+	) : Subpass{ device, std::move(vertexSource), std::move(fragmentSource) }, scene(scene)
 	{
 	}
 
-	void GeometrySubpass::Prepare(Vulkan::RenderPass& renderPass)
-	{
-		PreparePipelineLayout();
-		PreparePipeline(renderPass);
-	}
-
-	void GeometrySubpass::PreparePipelineLayout()
-	{
-		std::vector<Vulkan::ShaderModule> shaderModules
-		{
-			Vulkan::ShaderModule{ Vulkan::ShaderStage::Vertex, GetVertexShader()},
-			Vulkan::ShaderModule{ Vulkan::ShaderStage::Fragment, GetFragmentShader() }
-		};
-
-		pipelineLayout = std::make_unique<Vulkan::PipelineLayout>(device, std::move(shaderModules));
-	}
-
-	void GeometrySubpass::PreparePipeline(Vulkan::RenderPass& renderPass)
+	Vulkan::Pipeline& GeometrySubpass::GetPipeline(Vulkan::PipelineLayout& pipelineLayout)
 	{
 		auto spec = Vulkan::PipelineSpec
 		{
@@ -70,7 +55,7 @@ namespace Engine
 			}
 		};
 
-		pipeline = std::make_unique<Vulkan::Pipeline>(device, *pipelineLayout, renderPass, spec);
+		return device.GetResourceCache().RequestPipeline(pipelineLayout, *renderPass, spec);
 	}
 	
 	glm::mat4 GetEntityWorldMatrix(Entity entity)
@@ -95,13 +80,10 @@ namespace Engine
 
 	void GeometrySubpass::Draw(Vulkan::CommandBuffer& commandBuffer)
 	{
-		commandBuffer.BindPipeline(*pipeline, VK_PIPELINE_BIND_POINT_GRAPHICS);
-
 		UpdateGlobalUniform(commandBuffer);
 
 		scene.ForEachEntity<Component::Transform, Component::MeshRender>(
 			[&](Entity entity) {
-
 				auto mesh = GetMeshFromEntity(entity);
 
 				if (!mesh)
@@ -179,8 +161,29 @@ namespace Engine
 
 		auto diffuse = ResourceManager::Get().LoadResource<Texture>(material.GetDiffuse());
 
-		BindImage(diffuse->GetImageView(), diffuse->GetSampler(), 0, 2, 0);
+		if (diffuse)
+		{
+			BindImage(diffuse->GetImageView(), diffuse->GetSampler(), 0, 2, 0);
+		}
 
-		FlushDescriptorSet(commandBuffer, 0);
+		auto normal = ResourceManager::Get().LoadResource<Texture>(material.GetNormal());
+
+		if (normal)
+		{
+			BindImage(normal->GetImageView(), normal->GetSampler(), 0, 6, 0);
+		}
+
+		auto& resourceCache = device.GetResourceCache();
+
+		auto& variant = material.GetShaderVariant();
+
+		auto& vertexShader = resourceCache.RequestShaderModule(VK_SHADER_STAGE_VERTEX_BIT, GetVertexShader(), variant);
+		auto& fragmentShader = resourceCache.RequestShaderModule(VK_SHADER_STAGE_FRAGMENT_BIT, GetFragmentShader(), variant);
+
+		auto& pipelineLayout = GetPipelineLayout({ vertexShader, fragmentShader });
+
+		FlushDescriptorSet(commandBuffer, pipelineLayout, 0);
+
+		commandBuffer.BindPipeline(GetPipeline(pipelineLayout), VK_PIPELINE_BIND_POINT_GRAPHICS);
 	}
 }

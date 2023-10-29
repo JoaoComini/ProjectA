@@ -6,6 +6,8 @@
 
 #include "Resource/Resource.hpp"
 
+#include "Vulkan/ShaderModule.hpp"
+
 namespace Engine
 {
 	class Material : public Resource
@@ -30,9 +32,15 @@ namespace Engine
 			return GetStaticType();
 		}
 
+		const Vulkan::ShaderVariant& GetShaderVariant() const;
+
 	private:
+		void PrepareShaderVariant();
+
 		ResourceId diffuse;
 		ResourceId normal;
 		glm::vec4 color{ 1.f };
+
+		Vulkan::ShaderVariant shaderVariant;
 	};
 };

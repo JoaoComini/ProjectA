@@ -19,6 +19,8 @@
 
 namespace Vulkan
 {
+	class ResourceCache;
+
 	class Device : public Resource<VkDevice>
 	{
 	public:
@@ -48,6 +50,8 @@ namespace Vulkan
 		VkPhysicalDeviceProperties GetPhysicalDeviceProperties() const;
 
 		VkSampleCountFlagBits GetMaxSampleCount() const;
+
+		ResourceCache& GetResourceCache() const;
  
 	private:
 		std::unique_ptr<CommandPool> commandPool;
@@ -58,6 +62,8 @@ namespace Vulkan
 		std::unique_ptr<Queue> graphicsQueue;
 
 		const PhysicalDevice& physicalDevice;
+
+		std::unique_ptr<ResourceCache> resourceCache;
 
 		friend class SwapchainBuilder;
 	};

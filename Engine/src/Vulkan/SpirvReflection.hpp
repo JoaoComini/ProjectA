@@ -10,13 +10,13 @@ namespace Vulkan
 	class SpirvReflection
 	{
 	public:
-		SpirvReflection(std::vector<uint32_t>& spirv, ShaderStage stage);
+		SpirvReflection(VkShaderStageFlagBits stage, std::vector<uint32_t>& spirv);
 
 		void ReflectShaderResources(std::vector<ShaderResource>& shaderResources);
 
 	private:
 		spirv_cross::CompilerGLSL compiler;
-		ShaderStage stage;
+		VkShaderStageFlagBits stage;
 
 		template<ShaderResourceType>
 		void ParseShaderResource(std::vector<ShaderResource>& shaderResources);
@@ -57,7 +57,7 @@ namespace Vulkan
 		{
 			return {
 				.type = T,
-				.stage = stage,
+				.stages = static_cast<VkShaderStageFlags>(stage),
 				.name = resource.name
 			};
 		}

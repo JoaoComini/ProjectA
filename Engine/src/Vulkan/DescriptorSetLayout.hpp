@@ -5,11 +5,12 @@
 #include "Common/Hash.hpp"
 
 #include "Resource.hpp"
-#include "Device.hpp"
 #include "ShaderModule.hpp"
 
 namespace Vulkan
 {
+	class Device;
+
 	class DescriptorSetLayout : public Resource<VkDescriptorSetLayout>
 	{
 	public:
@@ -37,7 +38,11 @@ namespace std
 	{
 		size_t operator()(const Vulkan::DescriptorSetLayout& layout) const
 		{
-			return Hash(layout.GetHandle());
+			std::size_t hash{ 0 };
+
+			HashCombine(hash, layout.GetHandle());
+
+			return hash;
 		}
 	};
 };
