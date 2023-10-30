@@ -21,19 +21,6 @@ namespace Vulkan
 		template<ShaderResourceType>
 		void ParseShaderResource(std::vector<ShaderResource>& shaderResources);
 
-		template<>
-		void ParseShaderResource<ShaderResourceType::Input>(std::vector<ShaderResource>& shaderResources);
-
-		template<>
-		void ParseShaderResource<ShaderResourceType::Output>(std::vector<ShaderResource>& shaderResources);
-
-		template<>
-		void ParseShaderResource<ShaderResourceType::BufferUniform>(std::vector<ShaderResource>& shaderResources);
-
-		template<>
-		void ParseShaderResource<ShaderResourceType::ImageSampler>(std::vector<ShaderResource>& shaderResources);
-
-
 		void ParseResourceVecSize(const spirv_cross::Resource& resource, ShaderResource& shaderResource);
 
 		void ParseResourceArraySize(const spirv_cross::Resource& resource, ShaderResource& shaderResource);
@@ -42,15 +29,6 @@ namespace Vulkan
 
 		template<spv::Decoration>
 		void ParseResourceDecoration(const spirv_cross::Resource& resource, ShaderResource& shaderResource);
-
-		template<>
-		void ParseResourceDecoration<spv::DecorationLocation>(const spirv_cross::Resource& resource, ShaderResource& shaderResource);
-
-		template<>
-		void ParseResourceDecoration<spv::DecorationDescriptorSet>(const spirv_cross::Resource& resource, ShaderResource& shaderResource);
-
-		template<>
-		void ParseResourceDecoration<spv::DecorationBinding>(const spirv_cross::Resource& resource, ShaderResource& shaderResource);
 
 		template<ShaderResourceType T>
 		ShaderResource CreateShaderResource(const spirv_cross::Resource& resource)

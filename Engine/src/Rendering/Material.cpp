@@ -2,38 +2,65 @@
 
 namespace Engine
 {
-	Material::Material(ResourceId diffuse, ResourceId normal, glm::vec4 color)
-		: diffuse(diffuse), normal(normal), color(color)
+	Material::Material(
+		ResourceId albedoTexture,
+		ResourceId normalTexture,
+		ResourceId metallicRoughnessTexture,
+		glm::vec4 albedoColor,
+		float metallicFactor,
+		float roughnessFactor
+	) : albedoTexture(albedoTexture), normalTexture(normalTexture), metallicRoughnessTexture(metallicRoughnessTexture),
+		albedoColor(albedoColor), metallicFactor(metallicFactor), roughnessFactor(roughnessFactor)
 	{
 		PrepareShaderVariant();
 	}
 
 	void Material::PrepareShaderVariant()
 	{
-		if (diffuse)
+		if (albedoTexture)
 		{
-			shaderVariant.AddDefine("HAS_DIFFUSE_TEXTURE");
+			shaderVariant.AddDefine("HAS_ALBEDO_TEXTURE");
 		}
 
-		if (normal)
+		if (normalTexture)
 		{
 			shaderVariant.AddDefine("HAS_NORMAL_TEXTURE");
 		}
+
+		if (metallicRoughnessTexture)
+		{
+			shaderVariant.AddDefine("HAS_METALLIC_ROUGHNESS_TEXTURE");
+		}
 	}
 
-	ResourceId Material::GetDiffuse() const
+	ResourceId Material::GetAlbedoTexture() const
 	{
-		return diffuse;
+		return albedoTexture;
 	}
 
-	ResourceId Material::GetNormal() const
+	ResourceId Material::GetNormalTexture() const
 	{
-		return normal;
+		return normalTexture;
 	}
 
-	glm::vec4 Material::GetColor() const
+	ResourceId Material::GetMetallicRoughnessTexture() const
 	{
-		return color;
+		return metallicRoughnessTexture;
+	}
+
+	glm::vec4 Material::GetAlbedoColor() const
+	{
+		return albedoColor;
+	}
+
+	float Material::GetMetallicFactor() const
+	{
+		return metallicFactor;
+	}
+
+	float Material::GetRoughnessFactor() const
+	{
+		return roughnessFactor;
 	}
 
 	const Vulkan::ShaderVariant& Material::GetShaderVariant() const

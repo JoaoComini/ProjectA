@@ -14,43 +14,30 @@ namespace Engine
     {
     }
 
-	Vulkan::PipelineLayout& ShadowSubpass::GetPipelineLayout(const std::vector<Vulkan::ShaderModule>& shaders)
+	Vulkan::PipelineLayout& ShadowSubpass::GetPipelineLayout(const std::vector<Vulkan::ShaderModule*>& shaders)
 	{
 		return device.GetResourceCache().RequestPipelineLayout({ shaders[0] });
 	}
 
-	Vulkan::Pipeline& ShadowSubpass::GetPipeline(Vulkan::PipelineLayout& pipelineLayout)
+	Vulkan::Pipeline& ShadowSubpass::GetPipeline(Vulkan::PipelineLayout& pipelineLayout, Vulkan::PipelineSpec& spec)
     {
-		auto spec = Vulkan::PipelineSpec
-		{
-			.vertexInput
-			{
-				.attributes = {
-					VkVertexInputAttributeDescription{
-						.location = 0,
-						.binding = 0,
-						.format = VK_FORMAT_R32G32B32_SFLOAT,
-						.offset = offsetof(Vertex, position),
-					},
-				},
-				.bindings = {
-					VkVertexInputBindingDescription{
-						.binding = 0,
-						.stride = sizeof(Vertex),
-						.inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
-					}
-				}
-			},
-			.multisample
-			{
-				.rasterizationSamples = sampleCount
-			}
-		};
+		spec.vertexInput.attributes.resize(1);
+		spec.vertexInput.attributes[0].location = 0;
+		spec.vertexInput.attributes[0].binding = 0;
+		spec.vertexInput.attributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+		spec.vertexInput.attributes[0].offset = offsetof(Vertex, position);
+
+		spec.vertexInput.bindings.resize(1);
+		spec.vertexInput.bindings[0].binding = 0;
+		spec.vertexInput.bindings[0].stride = sizeof(Vertex);
+		spec.vertexInput.bindings[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+		spec.multisample.rasterizationSamples = sampleCount;
 
 		return device.GetResourceCache().RequestPipeline(pipelineLayout, *renderPass, spec);
     }
 
-    glm::mat4 ShadowSubpass::GetViewProjection() const
+	std::pair<glm::mat4, glm::mat4> ShadowSubpass::GetViewProjection() const
     {
 		auto [entity, found] = scene.FindFirstEntity<Component::Transform, Component::DirectionalLight>();
 
@@ -61,9 +48,9 @@ namespace Engine
 			auto projection = shadowCamera.GetProjection();
 			auto view = glm::inverse(transform.GetLocalMatrix());
 
-			return projection * view;
+			return { view, projection };
 		}
 
-		return glm::mat4{ 1.f };
+		return {};
     }
 }

@@ -40,9 +40,12 @@ FLATBUFFERS_STRUCT_END(Color, 16);
 
 struct MaterialT : public ::flatbuffers::NativeTable {
   typedef Material TableType;
-  uint64_t diffuse = 0;
-  uint64_t normal = 0;
-  std::unique_ptr<flatbuffers::Color> color{};
+  uint64_t albedo_texture = 0;
+  uint64_t normal_texture = 0;
+  uint64_t metallic_roughness_texture = 0;
+  std::unique_ptr<flatbuffers::Color> albedo_color{};
+  float metallic_factor = 0.0f;
+  float roughness_factor = 0.0f;
   MaterialT() = default;
   MaterialT(const MaterialT &o);
   MaterialT(MaterialT&&) FLATBUFFERS_NOEXCEPT = default;
@@ -53,24 +56,39 @@ struct Material FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef MaterialT NativeTableType;
   typedef MaterialBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_DIFFUSE = 4,
-    VT_NORMAL = 6,
-    VT_COLOR = 8
+    VT_ALBEDO_TEXTURE = 4,
+    VT_NORMAL_TEXTURE = 6,
+    VT_METALLIC_ROUGHNESS_TEXTURE = 8,
+    VT_ALBEDO_COLOR = 10,
+    VT_METALLIC_FACTOR = 12,
+    VT_ROUGHNESS_FACTOR = 14
   };
-  uint64_t diffuse() const {
-    return GetField<uint64_t>(VT_DIFFUSE, 0);
+  uint64_t albedo_texture() const {
+    return GetField<uint64_t>(VT_ALBEDO_TEXTURE, 0);
   }
-  uint64_t normal() const {
-    return GetField<uint64_t>(VT_NORMAL, 0);
+  uint64_t normal_texture() const {
+    return GetField<uint64_t>(VT_NORMAL_TEXTURE, 0);
   }
-  const flatbuffers::Color *color() const {
-    return GetStruct<const flatbuffers::Color *>(VT_COLOR);
+  uint64_t metallic_roughness_texture() const {
+    return GetField<uint64_t>(VT_METALLIC_ROUGHNESS_TEXTURE, 0);
+  }
+  const flatbuffers::Color *albedo_color() const {
+    return GetStruct<const flatbuffers::Color *>(VT_ALBEDO_COLOR);
+  }
+  float metallic_factor() const {
+    return GetField<float>(VT_METALLIC_FACTOR, 0.0f);
+  }
+  float roughness_factor() const {
+    return GetField<float>(VT_ROUGHNESS_FACTOR, 0.0f);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<uint64_t>(verifier, VT_DIFFUSE, 8) &&
-           VerifyField<uint64_t>(verifier, VT_NORMAL, 8) &&
-           VerifyField<flatbuffers::Color>(verifier, VT_COLOR, 4) &&
+           VerifyField<uint64_t>(verifier, VT_ALBEDO_TEXTURE, 8) &&
+           VerifyField<uint64_t>(verifier, VT_NORMAL_TEXTURE, 8) &&
+           VerifyField<uint64_t>(verifier, VT_METALLIC_ROUGHNESS_TEXTURE, 8) &&
+           VerifyField<flatbuffers::Color>(verifier, VT_ALBEDO_COLOR, 4) &&
+           VerifyField<float>(verifier, VT_METALLIC_FACTOR, 4) &&
+           VerifyField<float>(verifier, VT_ROUGHNESS_FACTOR, 4) &&
            verifier.EndTable();
   }
   MaterialT *UnPack(const ::flatbuffers::resolver_function_t *_resolver = nullptr) const;
@@ -82,14 +100,23 @@ struct MaterialBuilder {
   typedef Material Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
-  void add_diffuse(uint64_t diffuse) {
-    fbb_.AddElement<uint64_t>(Material::VT_DIFFUSE, diffuse, 0);
+  void add_albedo_texture(uint64_t albedo_texture) {
+    fbb_.AddElement<uint64_t>(Material::VT_ALBEDO_TEXTURE, albedo_texture, 0);
   }
-  void add_normal(uint64_t normal) {
-    fbb_.AddElement<uint64_t>(Material::VT_NORMAL, normal, 0);
+  void add_normal_texture(uint64_t normal_texture) {
+    fbb_.AddElement<uint64_t>(Material::VT_NORMAL_TEXTURE, normal_texture, 0);
   }
-  void add_color(const flatbuffers::Color *color) {
-    fbb_.AddStruct(Material::VT_COLOR, color);
+  void add_metallic_roughness_texture(uint64_t metallic_roughness_texture) {
+    fbb_.AddElement<uint64_t>(Material::VT_METALLIC_ROUGHNESS_TEXTURE, metallic_roughness_texture, 0);
+  }
+  void add_albedo_color(const flatbuffers::Color *albedo_color) {
+    fbb_.AddStruct(Material::VT_ALBEDO_COLOR, albedo_color);
+  }
+  void add_metallic_factor(float metallic_factor) {
+    fbb_.AddElement<float>(Material::VT_METALLIC_FACTOR, metallic_factor, 0.0f);
+  }
+  void add_roughness_factor(float roughness_factor) {
+    fbb_.AddElement<float>(Material::VT_ROUGHNESS_FACTOR, roughness_factor, 0.0f);
   }
   explicit MaterialBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -104,28 +131,40 @@ struct MaterialBuilder {
 
 inline ::flatbuffers::Offset<Material> CreateMaterial(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    uint64_t diffuse = 0,
-    uint64_t normal = 0,
-    const flatbuffers::Color *color = nullptr) {
+    uint64_t albedo_texture = 0,
+    uint64_t normal_texture = 0,
+    uint64_t metallic_roughness_texture = 0,
+    const flatbuffers::Color *albedo_color = nullptr,
+    float metallic_factor = 0.0f,
+    float roughness_factor = 0.0f) {
   MaterialBuilder builder_(_fbb);
-  builder_.add_normal(normal);
-  builder_.add_diffuse(diffuse);
-  builder_.add_color(color);
+  builder_.add_metallic_roughness_texture(metallic_roughness_texture);
+  builder_.add_normal_texture(normal_texture);
+  builder_.add_albedo_texture(albedo_texture);
+  builder_.add_roughness_factor(roughness_factor);
+  builder_.add_metallic_factor(metallic_factor);
+  builder_.add_albedo_color(albedo_color);
   return builder_.Finish();
 }
 
 ::flatbuffers::Offset<Material> CreateMaterial(::flatbuffers::FlatBufferBuilder &_fbb, const MaterialT *_o, const ::flatbuffers::rehasher_function_t *_rehasher = nullptr);
 
 inline MaterialT::MaterialT(const MaterialT &o)
-      : diffuse(o.diffuse),
-        normal(o.normal),
-        color((o.color) ? new flatbuffers::Color(*o.color) : nullptr) {
+      : albedo_texture(o.albedo_texture),
+        normal_texture(o.normal_texture),
+        metallic_roughness_texture(o.metallic_roughness_texture),
+        albedo_color((o.albedo_color) ? new flatbuffers::Color(*o.albedo_color) : nullptr),
+        metallic_factor(o.metallic_factor),
+        roughness_factor(o.roughness_factor) {
 }
 
 inline MaterialT &MaterialT::operator=(MaterialT o) FLATBUFFERS_NOEXCEPT {
-  std::swap(diffuse, o.diffuse);
-  std::swap(normal, o.normal);
-  std::swap(color, o.color);
+  std::swap(albedo_texture, o.albedo_texture);
+  std::swap(normal_texture, o.normal_texture);
+  std::swap(metallic_roughness_texture, o.metallic_roughness_texture);
+  std::swap(albedo_color, o.albedo_color);
+  std::swap(metallic_factor, o.metallic_factor);
+  std::swap(roughness_factor, o.roughness_factor);
   return *this;
 }
 
@@ -138,9 +177,12 @@ inline MaterialT *Material::UnPack(const ::flatbuffers::resolver_function_t *_re
 inline void Material::UnPackTo(MaterialT *_o, const ::flatbuffers::resolver_function_t *_resolver) const {
   (void)_o;
   (void)_resolver;
-  { auto _e = diffuse(); _o->diffuse = _e; }
-  { auto _e = normal(); _o->normal = _e; }
-  { auto _e = color(); if (_e) _o->color = std::unique_ptr<flatbuffers::Color>(new flatbuffers::Color(*_e)); }
+  { auto _e = albedo_texture(); _o->albedo_texture = _e; }
+  { auto _e = normal_texture(); _o->normal_texture = _e; }
+  { auto _e = metallic_roughness_texture(); _o->metallic_roughness_texture = _e; }
+  { auto _e = albedo_color(); if (_e) _o->albedo_color = std::unique_ptr<flatbuffers::Color>(new flatbuffers::Color(*_e)); }
+  { auto _e = metallic_factor(); _o->metallic_factor = _e; }
+  { auto _e = roughness_factor(); _o->roughness_factor = _e; }
 }
 
 inline ::flatbuffers::Offset<Material> Material::Pack(::flatbuffers::FlatBufferBuilder &_fbb, const MaterialT* _o, const ::flatbuffers::rehasher_function_t *_rehasher) {
@@ -151,14 +193,20 @@ inline ::flatbuffers::Offset<Material> CreateMaterial(::flatbuffers::FlatBufferB
   (void)_rehasher;
   (void)_o;
   struct _VectorArgs { ::flatbuffers::FlatBufferBuilder *__fbb; const MaterialT* __o; const ::flatbuffers::rehasher_function_t *__rehasher; } _va = { &_fbb, _o, _rehasher}; (void)_va;
-  auto _diffuse = _o->diffuse;
-  auto _normal = _o->normal;
-  auto _color = _o->color ? _o->color.get() : nullptr;
+  auto _albedo_texture = _o->albedo_texture;
+  auto _normal_texture = _o->normal_texture;
+  auto _metallic_roughness_texture = _o->metallic_roughness_texture;
+  auto _albedo_color = _o->albedo_color ? _o->albedo_color.get() : nullptr;
+  auto _metallic_factor = _o->metallic_factor;
+  auto _roughness_factor = _o->roughness_factor;
   return flatbuffers::CreateMaterial(
       _fbb,
-      _diffuse,
-      _normal,
-      _color);
+      _albedo_texture,
+      _normal_texture,
+      _metallic_roughness_texture,
+      _albedo_color,
+      _metallic_factor,
+      _roughness_factor);
 }
 
 inline const flatbuffers::Material *GetMaterial(const void *buf) {

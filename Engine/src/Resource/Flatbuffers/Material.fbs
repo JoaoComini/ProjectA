@@ -9,9 +9,12 @@ struct Color
 
 table Material
 {
-    diffuse:uint64 = 0;
-    normal:uint64 = 0;
-    color:Color;
+    albedo_texture:uint64 = 0;
+    normal_texture:uint64 = 0;
+    metallic_roughness_texture:uint64 = 0;
+    albedo_color:Color;
+    metallic_factor:float = 0;
+    roughness_factor:float = 0;
 }
 
 root_type Material;

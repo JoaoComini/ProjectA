@@ -25,6 +25,7 @@ struct TextureT : public ::flatbuffers::NativeTable {
   int32_t height = 0;
   int32_t component = 0;
   std::vector<uint8_t> image{};
+  uint32_t type = 0;
 };
 
 struct Texture FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
@@ -34,7 +35,8 @@ struct Texture FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
     VT_WIDTH = 4,
     VT_HEIGHT = 6,
     VT_COMPONENT = 8,
-    VT_IMAGE = 10
+    VT_IMAGE = 10,
+    VT_TYPE = 12
   };
   int32_t width() const {
     return GetField<int32_t>(VT_WIDTH, 0);
@@ -48,6 +50,9 @@ struct Texture FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   const ::flatbuffers::Vector<uint8_t> *image() const {
     return GetPointer<const ::flatbuffers::Vector<uint8_t> *>(VT_IMAGE);
   }
+  uint32_t type() const {
+    return GetField<uint32_t>(VT_TYPE, 0);
+  }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<int32_t>(verifier, VT_WIDTH, 4) &&
@@ -55,6 +60,7 @@ struct Texture FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
            VerifyField<int32_t>(verifier, VT_COMPONENT, 4) &&
            VerifyOffset(verifier, VT_IMAGE) &&
            verifier.VerifyVector(image()) &&
+           VerifyField<uint32_t>(verifier, VT_TYPE, 4) &&
            verifier.EndTable();
   }
   TextureT *UnPack(const ::flatbuffers::resolver_function_t *_resolver = nullptr) const;
@@ -78,6 +84,9 @@ struct TextureBuilder {
   void add_image(::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> image) {
     fbb_.AddOffset(Texture::VT_IMAGE, image);
   }
+  void add_type(uint32_t type) {
+    fbb_.AddElement<uint32_t>(Texture::VT_TYPE, type, 0);
+  }
   explicit TextureBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
@@ -94,8 +103,10 @@ inline ::flatbuffers::Offset<Texture> CreateTexture(
     int32_t width = 0,
     int32_t height = 0,
     int32_t component = 0,
-    ::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> image = 0) {
+    ::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> image = 0,
+    uint32_t type = 0) {
   TextureBuilder builder_(_fbb);
+  builder_.add_type(type);
   builder_.add_image(image);
   builder_.add_component(component);
   builder_.add_height(height);
@@ -108,14 +119,16 @@ inline ::flatbuffers::Offset<Texture> CreateTextureDirect(
     int32_t width = 0,
     int32_t height = 0,
     int32_t component = 0,
-    const std::vector<uint8_t> *image = nullptr) {
+    const std::vector<uint8_t> *image = nullptr,
+    uint32_t type = 0) {
   auto image__ = image ? _fbb.CreateVector<uint8_t>(*image) : 0;
   return flatbuffers::CreateTexture(
       _fbb,
       width,
       height,
       component,
-      image__);
+      image__,
+      type);
 }
 
 ::flatbuffers::Offset<Texture> CreateTexture(::flatbuffers::FlatBufferBuilder &_fbb, const TextureT *_o, const ::flatbuffers::rehasher_function_t *_rehasher = nullptr);
@@ -133,6 +146,7 @@ inline void Texture::UnPackTo(TextureT *_o, const ::flatbuffers::resolver_functi
   { auto _e = height(); _o->height = _e; }
   { auto _e = component(); _o->component = _e; }
   { auto _e = image(); if (_e) { _o->image.resize(_e->size()); std::copy(_e->begin(), _e->end(), _o->image.begin()); } }
+  { auto _e = type(); _o->type = _e; }
 }
 
 inline ::flatbuffers::Offset<Texture> Texture::Pack(::flatbuffers::FlatBufferBuilder &_fbb, const TextureT* _o, const ::flatbuffers::rehasher_function_t *_rehasher) {
@@ -147,12 +161,14 @@ inline ::flatbuffers::Offset<Texture> CreateTexture(::flatbuffers::FlatBufferBui
   auto _height = _o->height;
   auto _component = _o->component;
   auto _image = _o->image.size() ? _fbb.CreateVector(_o->image) : 0;
+  auto _type = _o->type;
   return flatbuffers::CreateTexture(
       _fbb,
       _width,
       _height,
       _component,
-      _image);
+      _image,
+      _type);
 }
 
 inline const flatbuffers::Texture *GetTexture(const void *buf) {

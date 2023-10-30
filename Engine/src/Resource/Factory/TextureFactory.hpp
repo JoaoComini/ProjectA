@@ -17,6 +17,7 @@ namespace Engine
 		int height;
 		int component;
 		std::vector<uint8_t> image;
+		TextureType type;
 	};
 
 	class TextureFactory : Factory<Texture, TextureSpec>

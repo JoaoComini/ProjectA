@@ -13,14 +13,28 @@ namespace Engine
 	class Material : public Resource
 	{
 	public:
-		Material(ResourceId diffuse, ResourceId normal, glm::vec4 color = glm::vec4{1.f});
+		Material(
+			ResourceId albedoTexture,
+			ResourceId normalTexture,
+			ResourceId metallicRoughnessTexture,
+			glm::vec4 albedoColor = glm::vec4{ 1.f },
+			float metallicFactor = 0.f,
+			float roughnessFactor = 0.f
+		);
+
 		~Material() = default;
 
-		ResourceId GetDiffuse() const;
+		ResourceId GetAlbedoTexture() const;
 
-		ResourceId GetNormal() const;
+		ResourceId GetNormalTexture() const;
 
-		glm::vec4 GetColor() const;
+		ResourceId GetMetallicRoughnessTexture() const;
+
+		glm::vec4 GetAlbedoColor() const;
+
+		float GetMetallicFactor() const;
+
+		float GetRoughnessFactor() const;
 
 		static ResourceType GetStaticType()
 		{
@@ -37,9 +51,13 @@ namespace Engine
 	private:
 		void PrepareShaderVariant();
 
-		ResourceId diffuse;
-		ResourceId normal;
-		glm::vec4 color{ 1.f };
+		ResourceId albedoTexture;
+		ResourceId normalTexture;
+		ResourceId metallicRoughnessTexture;
+
+		glm::vec4 albedoColor{ 1.f };
+		float metallicFactor{ 0.f };
+		float roughnessFactor{ 0.f };
 
 		Vulkan::ShaderVariant shaderVariant;
 	};

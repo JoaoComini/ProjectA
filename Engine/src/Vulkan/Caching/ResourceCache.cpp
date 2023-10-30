@@ -22,12 +22,12 @@ namespace Vulkan
         return shaderModules.Get(device, stage, source, variant);
     }
 
-    Vulkan::PipelineLayout& ResourceCache::RequestPipelineLayout(const std::vector<ShaderModule>& shaderModules)
+    Vulkan::PipelineLayout& ResourceCache::RequestPipelineLayout(const std::vector<ShaderModule*>& shaderModules)
     {
         return pipelineLayouts.Get(device, shaderModules);
     }
 
-    Pipeline& ResourceCache::RequestPipeline(const PipelineLayout& layout, const RenderPass& renderPass, PipelineSpec spec)
+    Pipeline& ResourceCache::RequestPipeline(const PipelineLayout& layout, const RenderPass& renderPass, PipelineSpec& spec)
     {
         return pipelines.Get(device, layout, renderPass, spec);
     }

@@ -118,15 +118,15 @@ namespace std
 namespace std
 {
     template <>
-    struct hash<std::vector<Vulkan::ShaderModule>>
+    struct hash<std::vector<Vulkan::ShaderModule*>>
     {
-        size_t operator()(const std::vector<Vulkan::ShaderModule>& modules) const
+        size_t operator()(const std::vector<Vulkan::ShaderModule*>& modules) const
         {
             size_t hash{ 0 };
 
             for (auto& m : modules)
             {
-                HashCombine(hash, m.GetHash());
+                HashCombine(hash, m->GetHash());
             }
 
             return hash;

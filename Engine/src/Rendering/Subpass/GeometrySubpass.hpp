@@ -6,15 +6,23 @@
 
 namespace Engine
 {
-	struct GlobalUniform
+	struct alignas(16) GlobalUniform
 	{
+		glm::mat4 model;
 		glm::mat4 viewProjection;
+		glm::vec3 cameraPosition;
 	};
 
 	struct ModelUniform
 	{
-		glm::mat4 model;
 		glm::vec4 color;
+	};
+
+	struct PbrPushConstant
+	{
+		glm::vec4 albedoColor;
+		float metallicFactor;
+		float roughnessFactor;
 	};
 
 	class GeometrySubpass : public Subpass
@@ -30,19 +38,19 @@ namespace Engine
 		virtual void Draw(Vulkan::CommandBuffer& commandBuffer) override;
 
 	protected:
-		virtual Vulkan::Pipeline& GetPipeline(Vulkan::PipelineLayout& pipelineLayout);
+		virtual Vulkan::Pipeline& GetPipeline(Vulkan::PipelineLayout& pipelineLayout, Vulkan::PipelineSpec& spec);
 
-		virtual glm::mat4 GetViewProjection() const;
+		virtual std::pair<glm::mat4, glm::mat4> GetViewProjection() const;
 
 		Scene& scene;
 	private:
-		void UpdateGlobalUniform(Vulkan::CommandBuffer& commandBuffer);
+		void UpdateGlobalUniform(Vulkan::CommandBuffer& commandBuffer, const glm::mat4& transform);
 		std::shared_ptr<Mesh> GetMeshFromEntity(Entity entity);
 		std::shared_ptr<Material> GetMaterialFromPrimitive(const Primitive& primitive);
-		void UpdateModelUniform(Vulkan::CommandBuffer& commandBuffer, const Material& material, const glm::mat4& transform);
+		void UpdateModelUniform(Vulkan::CommandBuffer& commandBuffer, const Material& material);
 
-		GlobalUniform globalUniform{};
-
+		std::vector<Vulkan::ShaderModule*> shaders;
+		Vulkan::PipelineSpec pipelineSpec;
 	};
 
 }

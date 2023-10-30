@@ -37,7 +37,7 @@ namespace Engine
         commandBuffer.BindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, set, descriptorSet);
     }
 
-    Vulkan::PipelineLayout& Subpass::GetPipelineLayout(const std::vector<Vulkan::ShaderModule>& shaders)
+    Vulkan::PipelineLayout& Subpass::GetPipelineLayout(const std::vector<Vulkan::ShaderModule*>& shaders)
     {
         return device.GetResourceCache().RequestPipelineLayout(shaders);
     }

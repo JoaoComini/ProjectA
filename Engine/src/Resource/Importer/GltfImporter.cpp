@@ -87,12 +87,33 @@ namespace Engine
             auto& gltfTexture = model.textures[i];
             auto& image = model.images[gltfTexture.source];
 
+            TextureType type = TextureType::Unknown;
+
+            for (size_t j = 0; j < model.materials.size(); j++)
+            {
+                auto& material = model.materials[j];
+
+                if (material.normalTexture.index == i)
+                {
+                    type = TextureType::Normal;
+                }
+                else if (material.pbrMetallicRoughness.metallicRoughnessTexture.index == i)
+                {
+                    type = TextureType::MetallicRoughness;
+                }
+                else if (material.pbrMetallicRoughness.baseColorTexture.index == i)
+                {
+                    type = TextureType::Albedo;
+                }
+            }
+
             TextureSpec spec
             {
                 .width = image.width,
                 .height = image.height,
                 .component = image.component,
-                .image = image.image
+                .image = image.image,
+                .type = type
             };
 
             auto id = ResourceManager::Get().CreateResource<Texture>(parent.stem() / "texture", spec);
@@ -112,27 +133,26 @@ namespace Engine
         for (size_t i = 0; i < model.materials.size(); i++)
         {
             auto& material = model.materials[i];
-            auto& values = material.values;
-            auto& additionalValues = material.additionalValues;
-
+            auto& pbr = material.pbrMetallicRoughness;
             MaterialSpec spec{};
 
-            if (values.find("baseColorTexture") != values.end()) {
-                auto index = values["baseColorTexture"].TextureIndex();
-                spec.diffuse = textures[index];
+            if (pbr.baseColorTexture.index != -1) {
+                spec.albedoTexture = textures[pbr.baseColorTexture.index];
             }
 
-            if (values.find("baseColorFactor") != values.end())
+            if (pbr.metallicRoughnessTexture.index != -1)
             {
-                const auto& factor = values["baseColorFactor"].ColorFactor();
-                spec.color = glm::vec4(factor[0], factor[1], factor[2], factor[3]);
+                spec.metallicRoughnessTexture = textures[pbr.metallicRoughnessTexture.index];
             }
 
-            if (additionalValues.find("normalTexture") != additionalValues.end())
+            if (material.normalTexture.index != -1)
             {
-                auto index = additionalValues["normalTexture"].TextureIndex();
-                spec.normal = textures[index];
+                spec.normalTexture = textures[material.normalTexture.index];
             }
+
+            spec.albedoColor = glm::make_vec4(pbr.baseColorFactor.data());
+            spec.metallicFactor = pbr.metallicFactor;
+            spec.roughnessFactor = pbr.roughnessFactor;
 
             auto id = ResourceManager::Get().CreateResource<Material>(parent.stem() / "material", spec);
 

@@ -14,10 +14,10 @@ namespace Vulkan
 		{
 			VkPipelineShaderStageCreateInfo stageCreateinfo{};
 			stageCreateinfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-			stageCreateinfo.stage = static_cast<VkShaderStageFlagBits>(shaderModule.GetStage());
+			stageCreateinfo.stage = static_cast<VkShaderStageFlagBits>(shaderModule->GetStage());
 			stageCreateinfo.pName = "main";
 
-			auto& spirv = shaderModule.GetSpirv();
+			auto& spirv = shaderModule->GetSpirv();
 
 			VkShaderModuleCreateInfo createInfo{};
 			createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;

@@ -18,10 +18,10 @@ namespace Engine
 		);
 
 	protected:
-		virtual Vulkan::PipelineLayout& GetPipelineLayout(const std::vector<Vulkan::ShaderModule>& shaders) override;
-		virtual Vulkan::Pipeline& GetPipeline(Vulkan::PipelineLayout& pipelineLayout) override;
+		virtual Vulkan::PipelineLayout& GetPipelineLayout(const std::vector<Vulkan::ShaderModule*>& shaders) override;
+		virtual Vulkan::Pipeline& GetPipeline(Vulkan::PipelineLayout& pipelineLayout, Vulkan::PipelineSpec& spec) override;
 
-		virtual glm::mat4 GetViewProjection() const override;
+		virtual std::pair<glm::mat4, glm::mat4> GetViewProjection() const override;
 
 	private:
 		Camera& shadowCamera;

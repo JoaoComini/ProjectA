@@ -1,14 +1,10 @@
 #include "GlslCompiler.hpp"
 
-#include <SPIRV/GLSL.std.450.h>
 #include <SPIRV/GlslangToSpv.h>
-#include <glslang/Include/ShHandle.h>
-#include <glslang/OSDependent/osinclude.h>
 #include <glslang/Public/ResourceLimits.h>
 
 namespace Vulkan
 {
-
     void GlslCompiler::CompileToSpv(VkShaderStageFlagBits stage, const ShaderSource& source, const ShaderVariant& variant, std::vector<uint32_t>& spirv)
     {
         glslang::InitializeProcess();

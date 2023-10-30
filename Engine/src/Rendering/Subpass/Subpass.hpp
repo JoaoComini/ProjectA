@@ -44,7 +44,7 @@ namespace Engine
 
 		void FlushDescriptorSet(Vulkan::CommandBuffer& commandBuffer, Vulkan::PipelineLayout& pipelineLayout, uint32_t set);
 
-		virtual Vulkan::PipelineLayout& GetPipelineLayout(const std::vector<Vulkan::ShaderModule>& shaders);
+		virtual Vulkan::PipelineLayout& GetPipelineLayout(const std::vector<Vulkan::ShaderModule*>& shaders);
 
 		VkSampleCountFlagBits sampleCount{ VK_SAMPLE_COUNT_1_BIT };
 

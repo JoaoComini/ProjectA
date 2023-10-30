@@ -17,8 +17,8 @@ namespace Vulkan
 
 		Framebuffer& RequestFramebuffer(const RenderPass& renderPass, const Engine::RenderTarget& renderTarget);
 		ShaderModule& RequestShaderModule(VkShaderStageFlagBits stage, const ShaderSource& source, const ShaderVariant& variant);
-		PipelineLayout& RequestPipelineLayout(const std::vector<ShaderModule>& shaderModules);
-		Pipeline& RequestPipeline(const PipelineLayout& layout, const RenderPass& renderPass, PipelineSpec spec);
+		PipelineLayout& RequestPipelineLayout(const std::vector<ShaderModule*>& shaderModules);
+		Pipeline& RequestPipeline(const PipelineLayout& layout, const RenderPass& renderPass, PipelineSpec& spec);
 			
 	private:
 		Cache<Framebuffer> framebuffers;

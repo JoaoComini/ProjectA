@@ -12,9 +12,12 @@ namespace Engine
 {
 	struct MaterialSpec
 	{
-		ResourceId diffuse{ 0 };
-		ResourceId normal{ 0 };
-		glm::vec4 color{ 1.f };
+		ResourceId albedoTexture{ 0 };
+		ResourceId normalTexture{ 0 };
+		ResourceId metallicRoughnessTexture{ 0 };
+		glm::vec4 albedoColor{ 1.f };
+		float metallicFactor{ 0.f };
+		float roughnessFactor{ 0.f };
 	};
 
 	class MaterialFactory : Factory<Material, MaterialSpec>

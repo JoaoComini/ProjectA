@@ -18,12 +18,14 @@ namespace Vulkan
 	class PipelineLayout : public Resource<VkPipelineLayout>
 	{
 	public:
-		PipelineLayout(const Device& device, const std::vector<ShaderModule>& shaderModules);
+		PipelineLayout(const Device& device, const std::vector<ShaderModule*>& shaderModules);
 		~PipelineLayout();
 
 		DescriptorSetLayout& GetDescriptorSetLayout(uint32_t set);
 
-		const std::vector<ShaderModule>& GetShaderModules() const;
+		const std::vector<ShaderModule*>& GetShaderModules() const;
+
+		bool HasShaderResource(ShaderResourceType type) const;
 
 	private:
 		void PrepareSetResources();
@@ -33,9 +35,11 @@ namespace Vulkan
 		std::unordered_map<uint64_t, ShaderResource> setResources;
 		std::map<uint32_t, std::vector<ShaderResource>> shaderSets;
 
+		std::unordered_map<ShaderResourceType, std::vector<ShaderResource>> shaderResourceLookUp;
+
 		std::vector<std::shared_ptr<DescriptorSetLayout>> descriptorSetLayouts;
 
-		std::vector<ShaderModule> shaderModules;
+		std::vector<ShaderModule*> shaderModules;
 
 		const Device& device;
 	};

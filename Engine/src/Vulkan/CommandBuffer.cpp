@@ -92,6 +92,11 @@ namespace Vulkan
 		vkCmdBindDescriptorSets(handle, bindPoint, pipelineLayout.GetHandle(), firstSet, 1, &descriptorSet, 0, nullptr);
 	}
 
+	void CommandBuffer::PushConstants(const PipelineLayout& pipelineLayout, VkShaderStageFlags stages, uint32_t offset, uint32_t size, void* data)
+	{
+		vkCmdPushConstants(handle, pipelineLayout.GetHandle(), stages, offset, size, data);
+	}
+
 	void CommandBuffer::EndRenderPass()
 	{
 		vkCmdEndRenderPass(handle);
