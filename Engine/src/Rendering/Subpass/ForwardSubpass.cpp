@@ -34,11 +34,12 @@ namespace Engine
 
     void ForwardSubpass::Draw(Vulkan::CommandBuffer& commandBuffer)
     {
-        LightUniform lightUniform{};
+        LightsUniform lightsUniform{};
         ShadowUniform shadowUniform{};
 
         auto [entity, found] = scene.FindFirstEntity<Component::Transform, Component::DirectionalLight>();
 
+        size_t count = 0;
         if (found)
         {
             const auto& transform = entity.GetComponent<Component::Transform>();
@@ -50,11 +51,25 @@ namespace Engine
 
             const auto& light = entity.GetComponent<Component::DirectionalLight>();
 
-            lightUniform.color = { light.color, light.intensity };
-            lightUniform.vector = glm::vec4{ transform.rotation * glm::vec3{ 0.f, 0.f, 1.f }, 1.f };
+            lightsUniform.lights[count].color = {light.color, light.intensity};
+            lightsUniform.lights[count].vector = glm::vec4{transform.rotation * glm::vec3{0.f, 0.f, 1.f}, 1.f};
+
+            count++;
         }
 
-        UpdateLightUniform(commandBuffer, lightUniform);
+        scene.ForEachEntity<Component::Transform, Component::PointLight>([&](Entity entity) {
+            const auto& transform = entity.GetComponent<Component::Transform>();
+            const auto& light = entity.GetComponent<Component::PointLight>();
+
+            lightsUniform.lights[count].color = { light.color, light.range };
+            lightsUniform.lights[count].vector = { transform.position, 0.f };
+
+            count++;
+        });
+
+        lightsUniform.count = count;
+
+        UpdateLightUniform(commandBuffer, lightsUniform);
 
         BindShadowMap();
 
@@ -63,11 +78,11 @@ namespace Engine
         GeometrySubpass::Draw(commandBuffer);
     }
 
-    void ForwardSubpass::UpdateLightUniform(Vulkan::CommandBuffer& commandBuffer, LightUniform uniform)
+    void ForwardSubpass::UpdateLightUniform(Vulkan::CommandBuffer& commandBuffer, LightsUniform uniform)
     {
         auto& frame = Renderer::Get().GetCurrentFrame();
 
-        auto allocation = frame.RequestBufferAllocation(Vulkan::BufferUsageFlags::UNIFORM, sizeof(LightUniform));
+        auto allocation = frame.RequestBufferAllocation(Vulkan::BufferUsageFlags::UNIFORM, sizeof(LightsUniform));
 
         allocation.SetData(&uniform);
 

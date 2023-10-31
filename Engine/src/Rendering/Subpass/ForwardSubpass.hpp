@@ -6,10 +6,16 @@
 
 namespace Engine
 {
-	struct LightUniform
+	struct Light
 	{
 		glm::vec4 vector;
 		glm::vec4 color;
+	};
+
+	struct alignas(16) LightsUniform
+	{
+		Light lights[32];
+		int count;
 	};
 
 	struct ShadowUniform
@@ -33,7 +39,7 @@ namespace Engine
 	private:
 		void CreateShadowMapSampler();
 
-		void UpdateLightUniform(Vulkan::CommandBuffer& commandBuffer, LightUniform uniform);
+		void UpdateLightUniform(Vulkan::CommandBuffer& commandBuffer, LightsUniform uniform);
 
 		void BindShadowMap();
 

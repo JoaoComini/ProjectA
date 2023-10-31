@@ -130,4 +130,11 @@ namespace Controls
 		ImGui::ColorEdit4("Color", &component->color.r, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoAlpha);
 		ImGui::SliderFloat("Intensity", &component->intensity, 0.1f, 5.f);
 	}
+
+	template<>
+	void Component(Engine::Component::PointLight* component)
+	{
+		ImGui::ColorEdit4("Color", &component->color.r, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoAlpha);
+		ImGui::SliderFloat("Range", &component->range, 0.1f, 1000.f);
+	}
 };

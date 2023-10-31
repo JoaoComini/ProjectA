@@ -1,5 +1,9 @@
 #version 450
 
+#define MAX_LIGHT_COUNT 32
+#define DIRECTIONAL_LIGHT 1.0
+#define POINT_LIGHT 0.0
+
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec3 inNormal;
 layout(location = 2) in vec2 inUV;
@@ -24,10 +28,16 @@ layout(set = 0, binding = 2) uniform sampler2D normalTexture;
 layout(set = 0, binding = 3) uniform sampler2D metallicRoughnessTexture;
 #endif
 
-layout(set = 0, binding = 4) uniform LightUniform {
+struct Light
+{
     vec4 vector;
     vec4 color;
-} light;
+};
+
+layout(set = 0, binding = 4) uniform LightUniform {
+    Light array[MAX_LIGHT_COUNT];
+	int count;
+} lights;
 
 layout(set = 0, binding = 5) uniform sampler2DShadow shadowMap;
 
@@ -72,14 +82,32 @@ float PCFShadow()
 	return shadow / 9.0;
 }
 
-vec3 ApplyDirectionalLight(vec3 normal)
+// Lightning --------------------------------------------------------
+
+vec3 ApplyDirectionalLight(vec3 normal, int index)
 {
     vec3 N      = normal;
-	vec3 L      = normalize(-light.vector.xyz);
+	vec3 L      = normalize(-lights.array[index].vector.xyz);
 	float NDotL = clamp(dot(N, L), 0.0, 1.0);
 
-	return NDotL * light.color.rgb * light.color.w;
+	return NDotL * lights.array[index].color.rgb * lights.array[index].color.w;
 }
+
+
+vec3 ApplyPointLight(vec3 normal, int index)
+{
+    vec3 N      = normal;
+	vec3 L      = lights.array[index].vector.xyz - inPosition;
+
+	float dist = length(L);
+	float attenuance = 1.0 / (dist * dist);
+
+	L = normalize(L);
+	float NDotL = clamp(dot(N, L), 0.0, 1.0);
+
+	return NDotL * lights.array[index].color.rgb * lights.array[index].color.w * attenuance;
+}
+
 
 // PBR --------------------------------------------------------------
 const float PI = 3.14159265359;
@@ -185,14 +213,7 @@ void main()
 
 	vec3 N = Normal();
 	vec3 V = normalize(global.cameraPosition - inPosition);
-	vec3 L = normalize(-light.vector.xyz);
-
-	vec3 H = normalize(V + L);
-
 	float NdotV = Saturate(dot(N, V));
-	float LdotH = Saturate(dot(L, H));
-	float NdotH = Saturate(dot(N, H));
-	float NdotL = Saturate(dot(N, L));
 
 	vec4 albedo = Albedo();
 	float metallic = Metallic();
@@ -200,18 +221,54 @@ void main()
 
 	vec3 diffuse = albedo.rgb * (1.0 - metallic);
 
-	vec3  F   = F_Schlick(F0, F90, LdotH);
-	float Vis = V_SmithGGXCorrelated(NdotV, NdotL, roughness);
-	float D   = D_GGX(NdotH, roughness);
-	vec3  Fr  = F * D * Vis;
+	vec3 Lo = vec3(0.0);
+	for(int i = 0; i < lights.count; i++)
+	{
+		vec3 L = vec3(0.0);
 
-	float Fd = Fr_DisneyDiffuse(NdotV, NdotL, LdotH, roughness);
+		if (lights.array[i].vector.w == DIRECTIONAL_LIGHT)
+		{
+			L = normalize(-lights.array[i].vector.xyz);
+		}
+		else
+		{
+			L = normalize(lights.array[i].vector.xyz - inPosition);
+		}
 
-	vec3 Lo = ApplyDirectionalLight(N) * PCFShadow() * (diffuse * (vec3(1.0) - F) * Fd + Fr);
+		vec3 H = normalize(V + L);
 
-    vec3 ambientColor = vec3(0.10) * albedo.rgb;
+		float LdotH = Saturate(dot(L, H));
+		float NdotH = Saturate(dot(N, H));
+		float NdotL = Saturate(dot(N, L));
+
+		vec3  F   = F_Schlick(F0, F90, LdotH);
+		float Vis = V_SmithGGXCorrelated(NdotV, NdotL, roughness);
+		float D   = D_GGX(NdotH, roughness);
+		vec3  Fr  = F * D * Vis;
+
+		float Fd = Fr_DisneyDiffuse(NdotV, NdotL, LdotH, roughness);
+
+		if (lights.array[i].vector.w == DIRECTIONAL_LIGHT)
+		{
+			Lo += ApplyDirectionalLight(N, i) * (diffuse * (vec3(1.0) - F) * Fd + Fr);
+
+			if (i == 0)
+			{
+				Lo *= PCFShadow();
+			}
+		}
+		else
+		{
+			Lo += ApplyPointLight(N, i) * (diffuse * (vec3(1.0) - F) * Fd + Fr);
+		}
+	}
+
+    vec3 ambientColor = vec3(0.03) * albedo.rgb;
 
 	outColor = vec4(ambientColor + Lo, albedo.a);
+
+	float gamma = 2.2;
+    outColor.rgb = pow(outColor.rgb, vec3(1.0 / gamma));
 
     if (outColor.a < 0.5) {
         discard;

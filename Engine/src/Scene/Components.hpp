@@ -64,5 +64,11 @@ namespace Engine::Component
 		float intensity = 1.f;
 	};
 
+	struct PointLight
+	{
+		glm::vec3 color{ 1.f };
+		float range = 1.f;
+	};
+
 };
 
