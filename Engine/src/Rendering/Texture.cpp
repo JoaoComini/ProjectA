@@ -8,7 +8,7 @@
 
 namespace Engine
 {
-	Texture::Texture(Vulkan::Device& device, uint32_t width, uint32_t height, std::vector<uint8_t> content, TextureType textureType)
+	Texture::Texture(Vulkan::Device& device, uint32_t width, uint32_t height, std::vector<uint8_t> content)
 	{
 		uint32_t size = content.size();
 
@@ -29,9 +29,7 @@ namespace Engine
 
 		int mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(width, height)))) + 1;
 
-		VkFormat format = textureType == TextureType::Albedo ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8A8_UNORM;
-
-		image = std::make_unique<Vulkan::Image>(device, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, format, extent, VK_SAMPLE_COUNT_1_BIT, mipLevels);
+		image = std::make_unique<Vulkan::Image>(device, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_FORMAT_R8G8B8A8_UNORM, extent, VK_SAMPLE_COUNT_1_BIT, mipLevels);
 		imageView = std::make_unique<Vulkan::ImageView>(device, *image, mipLevels);
 
 		device.SetImageLayout(*image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);

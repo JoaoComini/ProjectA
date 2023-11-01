@@ -20,7 +20,6 @@ namespace Engine
         texture.height = spec.height;
         texture.component = spec.component;
         texture.image = spec.image;
-        texture.type = static_cast<uint32_t>(spec.type);
 
         flatbuffers::FlatBufferBuilder builder(1024);
 
@@ -42,6 +41,6 @@ namespace Engine
 
         auto image = texture->image();
 
-        return std::make_shared<Texture>(device, texture->width(), texture->height(), std::vector<uint8_t>{ image->data(), image->data() + image->size() }, static_cast<TextureType>(texture->type()));
+        return std::make_shared<Texture>(device, texture->width(), texture->height(), std::vector<uint8_t>{ image->data(), image->data() + image->size() });
     }
 }

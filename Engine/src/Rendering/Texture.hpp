@@ -9,19 +9,10 @@
 
 namespace Engine
 {
-
-	enum TextureType
-	{
-		Albedo,
-		Normal,
-		MetallicRoughness,
-		Unknown
-	};
-
 	class Texture : public Resource
 	{
 	public:
-		Texture(Vulkan::Device& device, uint32_t width, uint32_t height, std::vector<uint8_t> data, TextureType textureType);
+		Texture(Vulkan::Device& device, uint32_t width, uint32_t height, std::vector<uint8_t> data);
 		~Texture() = default;
 
 		Vulkan::ImageView& GetImageView() const;
@@ -41,8 +32,6 @@ namespace Engine
 		std::unique_ptr<Vulkan::Image> image;
 		std::unique_ptr<Vulkan::ImageView> imageView;
 		std::unique_ptr<Vulkan::Sampler> sampler;
-
-		TextureType textureType;
 	};
 
 }

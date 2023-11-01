@@ -19,6 +19,6 @@ namespace Engine
 
         uint32_t size = width * height * channels;
 
-        return std::make_shared<Texture>(device, width, height, std::vector<uint8_t>{ pixels, pixels + size }, TextureType::Albedo);
+        return std::make_shared<Texture>(device, width, height, std::vector<uint8_t>{ pixels, pixels + size });
     }
 };

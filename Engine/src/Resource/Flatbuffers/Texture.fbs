@@ -7,7 +7,6 @@ table Texture
     height:int;
     component:int;
     image:[uint8];
-    type:uint32;
 }
 
 root_type Texture;

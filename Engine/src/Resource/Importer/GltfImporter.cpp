@@ -87,33 +87,12 @@ namespace Engine
             auto& gltfTexture = model.textures[i];
             auto& image = model.images[gltfTexture.source];
 
-            TextureType type = TextureType::Unknown;
-
-            for (size_t j = 0; j < model.materials.size(); j++)
-            {
-                auto& material = model.materials[j];
-
-                if (material.normalTexture.index == i)
-                {
-                    type = TextureType::Normal;
-                }
-                else if (material.pbrMetallicRoughness.metallicRoughnessTexture.index == i)
-                {
-                    type = TextureType::MetallicRoughness;
-                }
-                else if (material.pbrMetallicRoughness.baseColorTexture.index == i)
-                {
-                    type = TextureType::Albedo;
-                }
-            }
-
             TextureSpec spec
             {
                 .width = image.width,
                 .height = image.height,
                 .component = image.component,
                 .image = image.image,
-                .type = type
             };
 
             auto id = ResourceManager::Get().CreateResource<Texture>(parent.stem() / "texture", spec);
