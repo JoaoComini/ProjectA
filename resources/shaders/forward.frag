@@ -110,6 +110,7 @@ vec3 ApplyPointLight(vec3 normal, int index)
 
 
 // PBR --------------------------------------------------------------
+
 const float PI = 3.14159265359;
 
 // [0] Frensel Schlick
@@ -208,16 +209,21 @@ float Roughness()
 
 void main()
 {
+	vec4 albedo = Albedo();
+
+	if (albedo.a < 0.5) {
+        discard;
+    }
+
+	float metallic = Metallic();
+	float roughness = Roughness();
+
 	vec3 F0 = vec3(0.04);
 	float F90 = Saturate(50.0 * F0.r);
 
 	vec3 N = Normal();
 	vec3 V = normalize(global.cameraPosition - inPosition);
 	float NdotV = Saturate(dot(N, V));
-
-	vec4 albedo = Albedo();
-	float metallic = Metallic();
-	float roughness = Roughness();
 
 	vec3 diffuse = albedo.rgb * (1.0 - metallic);
 
@@ -266,11 +272,4 @@ void main()
     vec3 ambientColor = vec3(0.03) * albedo.rgb;
 
 	outColor = vec4(ambientColor + Lo, albedo.a);
-
-	float gamma = 2.2;
-    outColor.rgb = pow(outColor.rgb, vec3(1.0 / gamma));
-
-    if (outColor.a < 0.5) {
-        discard;
-    }
 }

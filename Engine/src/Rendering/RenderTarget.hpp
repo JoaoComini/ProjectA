@@ -17,6 +17,7 @@ namespace Engine
 	public:
 		RenderTarget(Vulkan::Device& device, std::vector<std::unique_ptr<Vulkan::Image>>&& images);
 		~RenderTarget() = default;
+		RenderTarget& operator=(RenderTarget&& other) noexcept;
 
 		const std::vector<std::unique_ptr<Vulkan::ImageView>>& GetViews() const;
 		const std::vector<Vulkan::AttachmentInfo>& GetAttachments() const;

@@ -38,6 +38,16 @@ namespace Engine
 		}
 	}
 
+	RenderTarget& RenderTarget::operator=(RenderTarget&& other) noexcept
+	{
+		views = std::move(other.views);
+		images = std::move(other.images);
+		attachments = std::move(attachments);
+		extent = other.extent;
+
+		return *this;
+	}
+
 	const std::vector<std::unique_ptr<Vulkan::ImageView>>& RenderTarget::GetViews() const
 	{
 		return views;

@@ -1,0 +1,63 @@
+#include "CompositionSubpass.hpp"
+
+#include "Vulkan/Caching/ResourceCache.hpp"
+#include "Rendering/Renderer.hpp"
+
+namespace Engine
+{
+    CompositionSubpass::CompositionSubpass(
+        Vulkan::Device& device,
+        Vulkan::ShaderSource&& vertexSource,
+        Vulkan::ShaderSource&& fragmentSource,
+        RenderTarget* gBufferTarget
+    ) : Subpass{ device, std::move(vertexSource), std::move(fragmentSource) }, gBufferTarget(gBufferTarget)
+    {
+        auto properties = device.GetPhysicalDeviceProperties();
+        VkSamplerCreateInfo sampler = { VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
+        sampler.magFilter = VK_FILTER_NEAREST;
+        sampler.minFilter = VK_FILTER_NEAREST;
+        sampler.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        sampler.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        sampler.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        sampler.mipLodBias = 0.0f;
+        sampler.anisotropyEnable = VK_TRUE;
+        sampler.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
+        sampler.minLod = 0.0f;
+        sampler.maxLod = 1.0f;
+        sampler.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+
+        gBufferSampler = std::make_unique<Vulkan::Sampler>(device, sampler);
+    }
+
+    void CompositionSubpass::Draw(Vulkan::CommandBuffer& commandBuffer)
+    {
+        auto& view = gBufferTarget->GetViews()[0];
+
+        BindImage(*view, *gBufferSampler, 0, 0, 0);
+
+        auto settings = Renderer::Get().GetSettings();
+
+        auto allocation = Renderer::Get().GetCurrentFrame().RequestBufferAllocation(Vulkan::BufferUsageFlags::UNIFORM, sizeof(HdrSettings));
+        allocation.SetData(&settings.hdr);
+
+        BindBuffer(allocation.GetBuffer(), allocation.GetOffset(), allocation.GetSize(), 0, 1, 0);
+
+        auto& resourceCache = device.GetResourceCache();
+
+        auto& vertexShader = resourceCache.RequestShaderModule(VK_SHADER_STAGE_VERTEX_BIT, GetVertexShader(), {});
+        auto& fragmentShader = resourceCache.RequestShaderModule(VK_SHADER_STAGE_FRAGMENT_BIT, GetFragmentShader(), {});
+
+        auto& pipelineLayout = GetPipelineLayout({ &vertexShader, &fragmentShader });
+
+        FlushDescriptorSet(commandBuffer, pipelineLayout, 0);
+
+        Vulkan::PipelineSpec spec{};
+        spec.rasterization.cullMode = VK_CULL_MODE_FRONT_BIT;
+        spec.inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+        auto& pipeline = resourceCache.RequestPipeline(pipelineLayout, *renderPass, spec);
+
+        commandBuffer.BindPipeline(pipeline, VK_PIPELINE_BIND_POINT_GRAPHICS);
+
+        vkCmdDraw(commandBuffer.GetHandle(), 3, 1, 0, 0);
+    }
+}

@@ -32,7 +32,7 @@ namespace Engine
 			Vulkan::ShaderSource&& fragmentSource,
 			Scene& scene,
 			Camera& shadowCamera,
-			std::vector<std::unique_ptr<RenderTarget>>& shadowRenderTargets
+			RenderTarget* shadowTarget
 		);
 
 		void Draw(Vulkan::CommandBuffer& commandBuffer) override;
@@ -46,7 +46,7 @@ namespace Engine
 		void UpdateShadowUniform(Vulkan::CommandBuffer& commandBuffer, ShadowUniform uniform);
 	private:
 		Camera& shadowCamera;
-		std::vector<std::unique_ptr<RenderTarget>>& shadowRenderTargets;
+		RenderTarget* shadowTarget;
 		std::unique_ptr<Vulkan::Sampler> shadowMapSampler;
 
 	};

@@ -15,6 +15,9 @@ namespace Engine
 	{
 		pipelineSpec.vertexInput.bindings.reserve(10);
 		pipelineSpec.vertexInput.attributes.reserve(10);
+		pipelineSpec.inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+		pipelineSpec.depthStencil.depthTestEnable = VK_TRUE;
+		pipelineSpec.depthStencil.depthWriteEnable = VK_TRUE;
 	}
 
 	Vulkan::Pipeline& GeometrySubpass::GetPipeline(Vulkan::PipelineLayout& pipelineLayout, Vulkan::PipelineSpec& spec)

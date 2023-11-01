@@ -34,7 +34,7 @@ namespace Engine
 		void SetColorResolveAttachments(std::vector<uint32_t> colorResolve);
 
 		bool IsDepthStencilDisabled() const;
-		void EnableDepthStencil();
+		void DisableDepthStencil();
 
 		void SetSampleCount(VkSampleCountFlagBits sampleCount);
 		VkSampleCountFlagBits GetSampleCount() const;

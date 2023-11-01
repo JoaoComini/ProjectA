@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Subpass/Subpass.hpp"
-#include "RenderTarget.hpp"
+#include "Rendering/Subpass/Subpass.hpp"
+#include "Rendering/RenderTarget.hpp"
 
 #include "Vulkan/RenderPass.hpp"
 

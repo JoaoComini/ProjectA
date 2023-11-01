@@ -9,10 +9,10 @@ namespace Engine
         Vulkan::ShaderSource&& fragmentSource,
         Scene& scene,
         Camera& shadowCamera,
-        std::vector<std::unique_ptr<RenderTarget>>& shadowRenderTargets
+        RenderTarget* shadowTarget
     ) : GeometrySubpass { device, std::move(vertexSource), std::move(fragmentSource), scene },
         shadowCamera{ shadowCamera },
-        shadowRenderTargets{ shadowRenderTargets }
+        shadowTarget{ shadowTarget }
     {
         CreateShadowMapSampler();
     }
@@ -91,7 +91,6 @@ namespace Engine
 
     void ForwardSubpass::BindShadowMap()
     {
-        auto& shadowTarget = shadowRenderTargets[Renderer::Get().GetCurrentFrameIndex()];
         auto& shadowMap = shadowTarget->GetViews()[0];
 
         BindImage(*shadowMap, *shadowMapSampler, 0, 5, 0);

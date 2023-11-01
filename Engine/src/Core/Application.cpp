@@ -57,7 +57,7 @@ namespace Engine {
 
 		renderPipeline = std::make_unique<RenderPipeline>(*device, *scene);
 
-		Gui::Setup(*instance, *device, *physicalDevice, *window, renderPipeline->GetMainRenderPass());
+		Gui::Setup(*instance, *device, *physicalDevice, *window, renderPipeline->GetLastRenderPass());
 
 		running = true;
 	}

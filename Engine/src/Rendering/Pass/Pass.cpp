@@ -1,6 +1,6 @@
 #include "Pass.hpp"
 
-#include "Renderer.hpp"
+#include "Rendering/Renderer.hpp"
 
 #include "Vulkan/Caching/ResourceCache.hpp"
 

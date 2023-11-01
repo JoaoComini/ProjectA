@@ -27,6 +27,17 @@
 
 namespace Engine
 {
+	struct HdrSettings
+	{
+		float exposure{ 1.0 };
+		float gamma{ 2.2 };
+	};
+
+	struct RendererSettings
+	{
+		HdrSettings hdr;
+	};
+
 	class Renderer : public Singleton<Renderer>
 	{
 	public:
@@ -44,6 +55,9 @@ namespace Engine
 		RenderFrame& GetCurrentFrame() const;
 		uint32_t GetCurrentFrameIndex() const;
 		uint32_t GetFrameCount() const;
+
+		void SetSettings(RendererSettings settings);
+		RendererSettings GetSettings() const;
 	private:
 		void CreateFrames();
 
@@ -64,6 +78,8 @@ namespace Engine
 
 		Camera* mainCamera;
 		glm::mat4 mainCameraTransform;
+
+		RendererSettings settings;
 
 		Vulkan::Device& device;
 	};

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Pass.hpp"
+#include "Pass/Pass.hpp"
 
 #include "Scene/Scene.hpp"
 
@@ -13,24 +13,29 @@ namespace Engine
 
 		void Draw(Vulkan::CommandBuffer& commandBuffer);
 
-		Vulkan::RenderPass& GetMainRenderPass() const;
+		Vulkan::RenderPass& GetLastRenderPass() const;
 	private:
-		void SetupMainPass();
+		void SetupGBufferPass();
 		void SetupShadowPass();
+		void SetupCompositionPass();
 
+		std::unique_ptr<RenderTarget> CreateGBufferPassTarget();
 		std::unique_ptr<RenderTarget> CreateShadowPassTarget();
 
 		void DrawShadowPass(Vulkan::CommandBuffer& commandBuffer);
 		void DrawMainPass(Vulkan::CommandBuffer& commandBuffer);
+		void DrawCompositionPass(Vulkan::CommandBuffer& commandBuffer);
 
 		void SetViewportAndScissor(Vulkan::CommandBuffer& commandBuffer, VkExtent2D extent);
 
 		std::unique_ptr<Pass> mainPass;
 		std::unique_ptr<Pass> shadowPass;
+		std::unique_ptr<Pass> compositionPass;
 
 		std::unique_ptr<Camera> shadowCamera;
 
-		std::vector<std::unique_ptr<RenderTarget>> shadowPassTargets;
+		std::unique_ptr<RenderTarget> shadowTarget;
+		std::unique_ptr<RenderTarget> gBufferTarget;
 
 		Scene& scene;
 		Vulkan::Device& device;

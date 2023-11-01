@@ -12,7 +12,7 @@ set(EDITOR_SRC_FILES
     "src/Widget/EntityGizmo.cpp"
     "src/Util/ResourceTree.cpp"
     "src/EditorCamera.cpp"
-)
+ )
     
 add_executable(Editor ${EDITOR_SRC_FILES})
 

@@ -2,7 +2,7 @@
 
 #include <imgui.h>
 
-
+#include <Rendering/Renderer.hpp>
 
 void MainMenuBar::Draw()
 {
@@ -33,6 +33,10 @@ void MainMenuBar::Draw()
 			openMetrics = true;
 		});
 
+		MainMenuItem("Settings", [&]() {
+			openSettings = true;
+		});
+
 		ImGui::EndMenu();
 	}
 
@@ -40,14 +44,28 @@ void MainMenuBar::Draw()
 
 	if (openMetrics)
 	{
-		if (ImGui::Begin("Metrics", &openMetrics))
-		{
-			ImGuiIO& io = ImGui::GetIO();
+		ImGui::Begin("Metrics", &openMetrics);
+		
+		ImGuiIO& io = ImGui::GetIO();
 
-			ImGui::Text("Frametime: %.3f ms/frame", 1000.0f / io.Framerate);
-			ImGui::Text("Framerate: %.1f FPS", io.Framerate);
-			ImGui::End();
-		}
+		ImGui::Text("Frametime: %.3f ms/frame", 1000.0f / io.Framerate);
+		ImGui::Text("Framerate: %.1f FPS", io.Framerate);
+		ImGui::End();
+		
+	}
+
+	if (openSettings)
+	{
+		ImGui::Begin("Settings", &openSettings);
+
+		auto settings = Engine::Renderer::Get().GetSettings();
+
+		ImGui::DragFloat("Exposure", &settings.hdr.exposure, 0.1);
+		ImGui::DragFloat("Gamma", &settings.hdr.gamma, 0.1);
+			
+		Engine::Renderer::Get().SetSettings(settings);
+
+		ImGui::End();
 	}
 }
 

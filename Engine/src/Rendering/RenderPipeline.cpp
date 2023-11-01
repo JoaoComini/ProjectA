@@ -2,6 +2,7 @@
 
 #include "Subpass/ForwardSubpass.hpp"
 #include "Subpass/ShadowSubpass.hpp"
+#include "Subpass/CompositionSubpass.hpp"
 
 namespace Engine
 {
@@ -9,12 +10,16 @@ namespace Engine
 		: device(device), scene(scene)
     {
 		shadowCamera = std::make_unique<OrthographicCamera>(-200.f, 200.f, -200.f, 200.f, 120.f, -120.f);
-		SetupMainPass();
+
 		SetupShadowPass();
+		SetupGBufferPass();
+		SetupCompositionPass();
     }
 
-	void RenderPipeline::SetupMainPass()
+	void RenderPipeline::SetupGBufferPass()
 	{
+		gBufferTarget = CreateGBufferPassTarget();
+
 		auto vertexSource = Vulkan::ShaderSource{ "resources/shaders/forward.vert" };
 		auto fragmentSource = Vulkan::ShaderSource{ "resources/shaders/forward.frag" };
 
@@ -24,7 +29,7 @@ namespace Engine
 			std::move(fragmentSource),
 			scene,
 			*shadowCamera,
-			shadowPassTargets
+			shadowTarget.get()
 		);
 
 		forwardSubpass->SetColorResolveAttachments({ 0 });
@@ -38,30 +43,63 @@ namespace Engine
 
 		std::vector<Vulkan::LoadStoreInfo> loadStoreInfos
 		{
-			Vulkan::LoadStoreInfo{
+			{
 				.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
 				.storeOp = VK_ATTACHMENT_STORE_OP_STORE,
 			},
-			Vulkan::LoadStoreInfo{
+			{
 				.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
 				.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
 			},
-			Vulkan::LoadStoreInfo{
+			{
 				.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
 				.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
 			}
 		};
 
 		mainPass->SetLoadStoreInfos(loadStoreInfos);
-		mainPass->Prepare(Renderer::Get().GetCurrentFrame().GetTarget());
+		mainPass->Prepare(*gBufferTarget);
+	}
+
+	std::unique_ptr<RenderTarget> RenderPipeline::CreateGBufferPassTarget()
+	{
+		auto extent = Renderer::Get().GetCurrentFrame().GetTarget().GetExtent();
+
+		auto colorResolve = std::make_unique<Vulkan::Image>(
+			device,
+			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+			VK_FORMAT_R16G16B16A16_SFLOAT,
+			VkExtent3D{ extent.width, extent.height, 1 },
+			VK_SAMPLE_COUNT_1_BIT
+		);
+
+		auto depth = std::make_unique<Vulkan::Image>(
+			device,
+			VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+			VK_FORMAT_D32_SFLOAT,
+			VkExtent3D{ extent.width, extent.height, 1 },
+			device.GetMaxSampleCount()
+		);
+
+		auto color = std::make_unique<Vulkan::Image>(
+			device,
+			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+			VK_FORMAT_R16G16B16A16_SFLOAT,
+			VkExtent3D{ extent.width, extent.height, 1 },
+			device.GetMaxSampleCount()
+		);
+
+		std::vector<std::unique_ptr<Vulkan::Image>> images;
+		images.push_back(std::move(colorResolve));
+		images.push_back(std::move(depth));
+		images.push_back(std::move(color));
+
+		return std::make_unique<RenderTarget>(device, std::move(images));
 	}
 
 	void RenderPipeline::SetupShadowPass()
 	{
-		for (size_t i = 0; i < Renderer::Get().GetFrameCount(); i++)
-		{
-			shadowPassTargets.push_back(CreateShadowPassTarget());
-		}
+		shadowTarget = CreateShadowPassTarget();
 
 		auto vertexSource = Vulkan::ShaderSource{ "resources/shaders/shadowmap.vert" };
 		auto fragmentSource = Vulkan::ShaderSource{ "resources/shaders/shadowmap.frag" };
@@ -77,10 +115,9 @@ namespace Engine
 		std::vector<std::unique_ptr<Subpass>> subpasses;
 		subpasses.push_back(std::move(subpass));
 
-
 		shadowPass = std::make_unique<Pass>(device, std::move(subpasses));
 
-		shadowPass->Prepare(*shadowPassTargets[0]);
+		shadowPass->Prepare(*shadowTarget);
 	}
 
 	std::unique_ptr<RenderTarget> RenderPipeline::CreateShadowPassTarget()
@@ -99,17 +136,43 @@ namespace Engine
 		return std::make_unique<RenderTarget>(device, std::move(images));
 	}
 
+	void RenderPipeline::SetupCompositionPass()
+	{
+		auto vertexSource = Vulkan::ShaderSource{ "resources/shaders/composition.vert" };
+		auto fragmentSource = Vulkan::ShaderSource{ "resources/shaders/composition.frag" };
+
+		auto subpass = std::make_unique<CompositionSubpass>(
+			device,
+			std::move(vertexSource),
+			std::move(fragmentSource),
+			gBufferTarget.get()
+		);
+
+		std::vector<std::unique_ptr<Subpass>> subpasses;
+		subpasses.push_back(std::move(subpass));
+
+		compositionPass = std::make_unique<Pass>(device, std::move(subpasses));
+
+		compositionPass->SetLoadStoreInfos({
+			{
+				.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
+				.storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+			}
+		});
+
+		compositionPass->Prepare(Renderer::Get().GetCurrentFrame().GetTarget());
+	}
+
 	void RenderPipeline::Draw(Vulkan::CommandBuffer& commandBuffer)
 	{
 		DrawShadowPass(commandBuffer);
 		DrawMainPass(commandBuffer);
+		DrawCompositionPass(commandBuffer);
 	}
 
 	void RenderPipeline::DrawShadowPass(Vulkan::CommandBuffer& commandBuffer)
 	{
-		auto& target = shadowPassTargets[Renderer::Get().GetCurrentFrameIndex()];
-
-		VkExtent2D extent = target->GetExtent();
+		VkExtent2D extent = shadowTarget->GetExtent();
 
 		SetViewportAndScissor(commandBuffer, extent);
 		
@@ -122,26 +185,14 @@ namespace Engine
 			barrier.srcStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 			barrier.dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 
-			commandBuffer.ImageMemoryBarrier(*target->GetViews()[0], barrier);
+			commandBuffer.ImageMemoryBarrier(*shadowTarget->GetViews()[0], barrier);
 		}
 
-		shadowPass->Draw(commandBuffer, *target);
+		shadowPass->Draw(commandBuffer, *shadowTarget);
 
 		commandBuffer.EndRenderPass();
-	}
-
-	void RenderPipeline::DrawMainPass(Vulkan::CommandBuffer& commandBuffer)
-	{
-		auto& target = Renderer::Get().GetCurrentFrame().GetTarget();
-
-		VkExtent2D extent = target.GetExtent();
-
-		SetViewportAndScissor(commandBuffer, extent);
 
 		{
-			auto& shadowTarget = shadowPassTargets[Renderer::Get().GetCurrentFrameIndex()];
-			auto& shadowMap = shadowTarget->GetViews()[0];
-
 			Vulkan::ImageMemoryBarrierInfo barrier{};
 			barrier.oldLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 			barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -150,10 +201,80 @@ namespace Engine
 			barrier.srcStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 			barrier.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 
-			commandBuffer.ImageMemoryBarrier(*shadowMap, barrier);
+			commandBuffer.ImageMemoryBarrier(*shadowTarget->GetViews()[0], barrier);
+		}
+	}
+
+	void RenderPipeline::DrawMainPass(Vulkan::CommandBuffer& commandBuffer)
+	{
+		{
+			if (
+				gBufferTarget->GetExtent().width != Renderer::Get().GetCurrentFrame().GetTarget().GetExtent().width ||
+				gBufferTarget->GetExtent().height != Renderer::Get().GetCurrentFrame().GetTarget().GetExtent().height
+				)
+			{
+				*gBufferTarget = std::move(*CreateGBufferPassTarget());
+			}
 		}
 
-		mainPass->Draw(commandBuffer, target);
+		VkExtent2D extent = gBufferTarget->GetExtent();
+
+		SetViewportAndScissor(commandBuffer, extent);
+
+		auto& views = gBufferTarget->GetViews();
+
+		{
+			Vulkan::ImageMemoryBarrierInfo barrier{};
+
+			barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+			barrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			barrier.srcAccessMask = 0;
+			barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+			barrier.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+			barrier.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+
+			commandBuffer.ImageMemoryBarrier(*views[0], barrier);
+			commandBuffer.ImageMemoryBarrier(*views[2], barrier);
+		}
+
+		{
+			Vulkan::ImageMemoryBarrierInfo barrier{};
+			barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+			barrier.newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+			barrier.srcAccessMask = 0;
+			barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+			barrier.srcStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+			barrier.dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+
+			commandBuffer.ImageMemoryBarrier(*views[1], barrier);
+		}
+
+		mainPass->Draw(commandBuffer, *gBufferTarget);
+
+		commandBuffer.EndRenderPass();
+
+		{
+			Vulkan::ImageMemoryBarrierInfo barrier{};
+			barrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+			barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+			barrier.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+			barrier.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+
+			commandBuffer.ImageMemoryBarrier(*views[0], barrier);
+		}
+	}
+
+	void RenderPipeline::DrawCompositionPass(Vulkan::CommandBuffer& commandBuffer)
+	{
+		auto& target = Renderer::Get().GetCurrentFrame().GetTarget();
+
+		VkExtent2D extent = target.GetExtent();
+
+		SetViewportAndScissor(commandBuffer, extent);
+
+		compositionPass->Draw(commandBuffer, target);
 	}
 
 	void RenderPipeline::SetViewportAndScissor(Vulkan::CommandBuffer& commandBuffer, VkExtent2D extent)
@@ -174,8 +295,8 @@ namespace Engine
 		);
 	}
 
-	Vulkan::RenderPass& RenderPipeline::GetMainRenderPass() const
+	Vulkan::RenderPass& RenderPipeline::GetLastRenderPass() const
 	{
-		return mainPass->GetRenderPass();
+		return compositionPass->GetRenderPass();
 	}
 }

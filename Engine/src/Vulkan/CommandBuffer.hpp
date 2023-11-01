@@ -60,6 +60,8 @@ namespace Vulkan
 		void BindPipeline(const Pipeline& pipeline, VkPipelineBindPoint bindPoint);
 		void BindDescriptorSet(VkPipelineBindPoint bindPoint, const PipelineLayout& pipelineLayout, uint32_t firstSet, VkDescriptorSet descriptorSet);
 		void PushConstants(const PipelineLayout& pipelineLayout, VkShaderStageFlags stages, uint32_t offset, uint32_t size, void* data);
+		void Draw(uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance);
+
 		void EndRenderPass();
 
 		void Free();

@@ -13,7 +13,6 @@
 #include "EditorCamera.hpp"
 
 #include "Rendering/Subpass/GeometrySubpass.hpp"
-#include "Rendering/Pass.hpp"
 
 namespace Engine
 {

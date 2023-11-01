@@ -24,5 +24,6 @@ private:
 	void MainMenuItem(std::string label, std::function<void()> callbackFn);
 
 	bool openMetrics = false;
+	bool openSettings = false;
 };
 

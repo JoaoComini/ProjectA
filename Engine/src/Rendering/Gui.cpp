@@ -50,7 +50,7 @@ namespace Engine
 		initInfo.DescriptorPool = descriptorPool->GetHandle();
 		initInfo.MinImageCount = 3;
 		initInfo.ImageCount = 3;
-		initInfo.MSAASamples = device.GetMaxSampleCount();
+		initInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 
 		ImGui_ImplVulkan_Init(&initInfo, renderPass.GetHandle());
 

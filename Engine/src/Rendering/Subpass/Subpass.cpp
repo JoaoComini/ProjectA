@@ -87,9 +87,9 @@ namespace Engine
         return disableDepthStencil;
     }
 
-    void Subpass::EnableDepthStencil()
+    void Subpass::DisableDepthStencil()
     {
-        disableDepthStencil = false;
+        disableDepthStencil = true;
     }
 
     void Subpass::SetSampleCount(VkSampleCountFlagBits sampleCount)

@@ -21,6 +21,11 @@ namespace Vulkan
 		VkSampleCountFlagBits rasterizationSamples{ VK_SAMPLE_COUNT_1_BIT };
 	};
 
+	struct InputAssemblySpec
+	{
+		VkPrimitiveTopology topology{ VK_PRIMITIVE_TOPOLOGY_POINT_LIST };
+	};
+
 	struct RasterizationSpec
 	{
 		VkCullModeFlags cullMode{ VK_CULL_MODE_BACK_BIT };
@@ -31,11 +36,19 @@ namespace Vulkan
 		float depthBiasSlopeFactor = 0.0f;
 	};
 
+	struct DepthStencilSpec
+	{
+		VkBool32 depthTestEnable;
+		VkBool32 depthWriteEnable;
+	};
+
 	struct PipelineSpec
 	{
 		VertexInputSpec vertexInput;
 		MultisampleSpec multisample;
+		InputAssemblySpec inputAssembly;
 		RasterizationSpec rasterization;
+		DepthStencilSpec depthStencil;
 	};
 
 	class Pipeline : public Resource<VkPipeline>

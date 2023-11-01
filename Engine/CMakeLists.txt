@@ -113,11 +113,12 @@ set(ENGINE_SRC_FILES
     "src/Rendering/RenderPipeline.cpp"
     "src/Rendering/Texture.cpp"
     "src/Rendering/Gui.cpp"
-    "src/Rendering/Pass.cpp"
+    "src/Rendering/Pass/Pass.cpp"
     "src/Rendering/Subpass/Subpass.cpp"
     "src/Rendering/Subpass/GeometrySubpass.cpp"
     "src/Rendering/Subpass/ForwardSubpass.cpp"
     "src/Rendering/Subpass/ShadowSubpass.cpp"
+    "src/Rendering/Subpass/CompositionSubpass.cpp"
     "src/Common/FileSystem.cpp"
     "src/Common/Uuid.cpp"
     "src/Vulkan/Buffer.cpp"
@@ -162,7 +163,7 @@ set(ENGINE_SRC_FILES
     "src/Resource/Factory/SceneFactory.cpp"
     "src/Resource/Flatbuffers/NativeVertex.cpp"
     "src/Platform/Windows/FileDialog.cpp"
-  )
+)
 
 add_library(Engine STATIC ${ENGINE_SRC_FILES})
 

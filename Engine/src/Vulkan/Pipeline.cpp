@@ -52,8 +52,7 @@ namespace Vulkan
 
 		VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
 		inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-		inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-		inputAssembly.primitiveRestartEnable = VK_FALSE;
+		inputAssembly.topology = spec.inputAssembly.topology;
 
 		VkPipelineViewportStateCreateInfo viewportState{};
 		viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
@@ -66,7 +65,7 @@ namespace Vulkan
 		rasterizer.rasterizerDiscardEnable = VK_FALSE;
 		rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
 		rasterizer.lineWidth = 1.0f;
-		rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
+		rasterizer.cullMode = spec.rasterization.cullMode;
 		rasterizer.frontFace = spec.rasterization.frontFace;
 		rasterizer.depthBiasEnable = spec.rasterization.depthBiasEnable;
 		rasterizer.depthBiasConstantFactor = spec.rasterization.depthBiasConstantFactor;
@@ -100,8 +99,8 @@ namespace Vulkan
 		VkPipelineDepthStencilStateCreateInfo depthStencil{};
 		depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
 		depthStencil.pNext = nullptr;
-		depthStencil.depthTestEnable = VK_TRUE;
-		depthStencil.depthWriteEnable = VK_TRUE;
+		depthStencil.depthTestEnable = spec.depthStencil.depthTestEnable;
+		depthStencil.depthWriteEnable = spec.depthStencil.depthWriteEnable;
 		depthStencil.depthCompareOp = VK_COMPARE_OP_GREATER_OR_EQUAL;
 		depthStencil.depthBoundsTestEnable = VK_FALSE;
 		depthStencil.minDepthBounds = 0.0f; // Optional

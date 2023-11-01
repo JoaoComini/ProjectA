@@ -102,23 +102,6 @@ namespace Engine
 			barrier.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 
 			commandBuffer.ImageMemoryBarrier(*views[0], barrier);
-
-			for (size_t i = 2; i < views.size(); i++)
-			{
-				commandBuffer.ImageMemoryBarrier(*views[i], barrier);
-			}
-		}
-
-		{
-			Vulkan::ImageMemoryBarrierInfo barrier{};
-			barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-			barrier.newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-			barrier.srcAccessMask = 0;
-			barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-			barrier.srcStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-			barrier.dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-
-			commandBuffer.ImageMemoryBarrier(*views[1], barrier);
 		}
 
 		return &commandBuffer;
@@ -249,33 +232,21 @@ namespace Engine
 		return frames.size();
 	}
 
+	void Renderer::SetSettings(RendererSettings settings)
+	{
+		this->settings = settings;
+	}
+
+	RendererSettings Renderer::GetSettings() const
+	{
+		return settings;
+	}
+
 	std::unique_ptr<RenderTarget> Renderer::CreateTarget(std::unique_ptr<Vulkan::Image> swapchainImage)
 	{
-		auto extent = swapchainImage->GetExtent();
-
-		auto depthImage = std::make_unique<Vulkan::Image>(
-			device,
-			VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-			VK_FORMAT_D32_SFLOAT,
-			VkExtent3D{ extent.width, extent.height, 1 },
-			device.GetMaxSampleCount()
-		);
-
-		auto format = swapchainImage->GetFormat();
-
-		auto colorImage = std::make_unique<Vulkan::Image>(
-			device,
-			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-			format,
-			VkExtent3D{ extent.width, extent.height, 1 },
-			device.GetMaxSampleCount()
-		);
-
 		std::vector<std::unique_ptr<Vulkan::Image>> images;
 
 		images.push_back(std::move(swapchainImage));
-		images.push_back(std::move(depthImage));
-		images.push_back(std::move(colorImage));
 
 		return std::make_unique<RenderTarget>(device, std::move(images));
 	}
