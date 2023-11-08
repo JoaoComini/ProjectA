@@ -73,12 +73,12 @@ namespace Engine
         if (indexBuffer != nullptr)
         {
             vkCmdBindIndexBuffer(commandBuffer.GetHandle(), indexBuffer->GetHandle(), 0, indexType);
-            vkCmdDrawIndexed(commandBuffer.GetHandle(), indexCount, 1, 0, 0, 0);
+            commandBuffer.DrawIndexed(indexCount, 1, 0, 0, 0);
 
             return;
         }
 
-        vkCmdDraw(commandBuffer.GetHandle(), vertexCount, 1, 0, 0);
+        commandBuffer.Draw(vertexCount, 1, 0, 0);
     }
 
     void Primitive::SetMaterial(ResourceId material)

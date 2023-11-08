@@ -31,6 +31,8 @@ namespace Engine
 
     void CompositionSubpass::Draw(Vulkan::CommandBuffer& commandBuffer)
     {
+        commandBuffer.SetRasterizationState({ VK_CULL_MODE_FRONT_BIT });
+
         auto& view = gBufferTarget->GetViews()[0];
 
         BindImage(*view, *gBufferSampler, 0, 0, 0);
@@ -49,15 +51,10 @@ namespace Engine
 
         auto& pipelineLayout = GetPipelineLayout({ &vertexShader, &fragmentShader });
 
+        commandBuffer.BindPipelineLayout(pipelineLayout);
+
         FlushDescriptorSet(commandBuffer, pipelineLayout, 0);
 
-        Vulkan::PipelineSpec spec{};
-        spec.rasterization.cullMode = VK_CULL_MODE_FRONT_BIT;
-        spec.inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-        auto& pipeline = resourceCache.RequestPipeline(pipelineLayout, *renderPass, spec);
-
-        commandBuffer.BindPipeline(pipeline, VK_PIPELINE_BIND_POINT_GRAPHICS);
-
-        vkCmdDraw(commandBuffer.GetHandle(), 3, 1, 0, 0);
+        commandBuffer.Draw(3, 1, 0, 0);
     }
 }

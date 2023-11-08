@@ -19,22 +19,22 @@ namespace Engine
 		return device.GetResourceCache().RequestPipelineLayout({ shaders[0] });
 	}
 
-	Vulkan::Pipeline& ShadowSubpass::GetPipeline(Vulkan::PipelineLayout& pipelineLayout, Vulkan::PipelineSpec& spec)
+	void ShadowSubpass::PreparePipelineState(Vulkan::CommandBuffer& commandBuffer)
     {
-		spec.vertexInput.attributes.resize(1);
-		spec.vertexInput.attributes[0].location = 0;
-		spec.vertexInput.attributes[0].binding = 0;
-		spec.vertexInput.attributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-		spec.vertexInput.attributes[0].offset = offsetof(Vertex, position);
+		Vulkan::VertexInputState vertexInputState{};
 
-		spec.vertexInput.bindings.resize(1);
-		spec.vertexInput.bindings[0].binding = 0;
-		spec.vertexInput.bindings[0].stride = sizeof(Vertex);
-		spec.vertexInput.bindings[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+		vertexInputState.attributes.resize(1);
+		vertexInputState.attributes[0].location = 0;
+		vertexInputState.attributes[0].binding = 0;
+		vertexInputState.attributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+		vertexInputState.attributes[0].offset = offsetof(Vertex, position);
 
-		spec.multisample.rasterizationSamples = sampleCount;
+		vertexInputState.bindings.resize(1);
+		vertexInputState.bindings[0].binding = 0;
+		vertexInputState.bindings[0].stride = sizeof(Vertex);
+		vertexInputState.bindings[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
-		return device.GetResourceCache().RequestPipeline(pipelineLayout, *renderPass, spec);
+		commandBuffer.SetVertexInputState(vertexInputState);
     }
 
 	std::pair<glm::mat4, glm::mat4> ShadowSubpass::GetViewProjection() const

@@ -6,6 +6,7 @@
 #include "Framebuffer.hpp"
 #include "Pipeline.hpp"
 #include "ImageView.hpp"
+#include "Caching/ResourceCache.hpp"
 
 namespace Vulkan
 {
@@ -35,6 +36,8 @@ namespace Vulkan
 
 	void CommandBuffer::Begin(BeginFlags flags)
 	{
+		pipelineState.Reset();
+
 		VkCommandBufferBeginInfo beginInfo{};
 		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 		beginInfo.flags = static_cast<VkFlags>(flags);                  // Optional
@@ -53,6 +56,10 @@ namespace Vulkan
 
 	void CommandBuffer::BeginRenderPass(const RenderPass& renderPass, const Framebuffer& framebuffer, const std::vector<VkClearValue>& clearValues, VkExtent2D extent)
 	{
+		pipelineState.Reset();
+
+		pipelineState.SetRenderPass(renderPass);
+
 		VkRenderPassBeginInfo info{
 			.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
 			.renderPass = renderPass.GetHandle(),
@@ -69,6 +76,8 @@ namespace Vulkan
 
 	void CommandBuffer::NextSubpass()
 	{
+		pipelineState.SetSubpassIndex(pipelineState.GetSubpassIndex() + 1);
+
 		vkCmdNextSubpass(handle, VK_SUBPASS_CONTENTS_INLINE);
 	}
 
@@ -82,19 +91,58 @@ namespace Vulkan
 		vkCmdSetScissor(handle, 0, scissors.size(), scissors.data());
 	}
 
-	void CommandBuffer::BindPipeline(const Pipeline& pipeline, VkPipelineBindPoint bindPoint)
+	void CommandBuffer::SetVertexInputState(const VertexInputState& state)
 	{
-		vkCmdBindPipeline(handle, bindPoint, pipeline.GetHandle());
+		pipelineState.SetVertexInputState(state);
 	}
 
-	void CommandBuffer::BindDescriptorSet(VkPipelineBindPoint bindPoint, const PipelineLayout& pipelineLayout, uint32_t firstSet, VkDescriptorSet descriptorSet)
+	void CommandBuffer::SetMultisampleState(const MultisampleState& state)
 	{
-		vkCmdBindDescriptorSets(handle, bindPoint, pipelineLayout.GetHandle(), firstSet, 1, &descriptorSet, 0, nullptr);
+		pipelineState.SetMultisampleState(state);
 	}
 
-	void CommandBuffer::PushConstants(const PipelineLayout& pipelineLayout, VkShaderStageFlags stages, uint32_t offset, uint32_t size, void* data)
+	void CommandBuffer::SetInputAssemblyState(const InputAssemblyState& state)
 	{
-		vkCmdPushConstants(handle, pipelineLayout.GetHandle(), stages, offset, size, data);
+		pipelineState.SetInputAssemblyState(state);
+	}
+
+	void CommandBuffer::SetRasterizationState(const RasterizationState& state)
+	{
+		pipelineState.SetRasterizationState(state);
+	}
+
+	void CommandBuffer::SetDepthStencilState(const DepthStencilState& state)
+	{
+		pipelineState.SetDepthStencilState(state);
+	}
+
+	void CommandBuffer::BindPipelineLayout(PipelineLayout& pipelineLayout)
+	{
+		pipelineState.SetPipelineLayout(pipelineLayout);
+	}
+
+	void CommandBuffer::BindDescriptorSet(VkDescriptorSet descriptorSet)
+	{
+		vkCmdBindDescriptorSets(handle, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineState.GetPipelineLayout()->GetHandle(), 0, 1, &descriptorSet, 0, nullptr);
+	}
+
+	void CommandBuffer::PushConstants(VkShaderStageFlags stages, uint32_t offset, uint32_t size, void* data)
+	{
+		vkCmdPushConstants(handle, pipelineState.GetPipelineLayout()->GetHandle(), stages, offset, size, data);
+	}
+
+	void CommandBuffer::Draw(uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance)
+	{
+		Flush();
+
+		vkCmdDraw(handle, vertexCount, instanceCount, firstVertex, firstInstance);
+	}
+
+	void CommandBuffer::DrawIndexed(uint32_t indexCount, uint32_t instanceCount, uint32_t firstIndex, int32_t vertexOffset, uint32_t firstInstance)
+	{
+		Flush();
+
+		vkCmdDrawIndexed(handle, indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
 	}
 
 	void CommandBuffer::EndRenderPass()
@@ -291,5 +339,19 @@ namespace Vulkan
 		barrier.subresourceRange = subresourceRange;
 
 		vkCmdPipelineBarrier(handle, barrierInfo.srcStageMask, barrierInfo.dstStageMask, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+	}
+
+	void CommandBuffer::Flush()
+	{
+		if (!pipelineState.IsDirty())
+		{
+			return;
+		}
+
+		pipelineState.ClearDirty();
+
+		auto& pipeline = device.GetResourceCache().RequestPipeline(pipelineState);
+
+		vkCmdBindPipeline(handle, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.GetHandle());
 	}
 }

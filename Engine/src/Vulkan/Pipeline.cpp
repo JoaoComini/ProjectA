@@ -6,15 +6,19 @@
 
 namespace Vulkan
 {
-	Pipeline::Pipeline(const Device& device, const PipelineLayout& layout, const RenderPass& renderPass, PipelineSpec spec) : device(device)
+	Pipeline::Pipeline(const Device& device, PipelineState state) : device(device)
 	{
+		auto renderPass = state.GetRenderPass();
+		auto pipelineLayout = state.GetPipelineLayout();
+
 		std::vector<VkShaderModule> shaderModules;
 		std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
-		for (auto& shaderModule : layout.GetShaderModules())
+	
+		for (auto& shaderModule : pipelineLayout->GetShaderModules())
 		{
 			VkPipelineShaderStageCreateInfo stageCreateinfo{};
 			stageCreateinfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-			stageCreateinfo.stage = static_cast<VkShaderStageFlagBits>(shaderModule->GetStage());
+			stageCreateinfo.stage = shaderModule->GetStage();
 			stageCreateinfo.pName = "main";
 
 			auto& spirv = shaderModule->GetSpirv();
@@ -43,39 +47,38 @@ namespace Vulkan
 		dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
 		dynamicState.pDynamicStates = dynamicStates.data();
 
+		auto& vertexInputState = state.GetVertexInputState();
 		VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
 		vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-		vertexInputInfo.vertexBindingDescriptionCount = spec.vertexInput.bindings.size();
-		vertexInputInfo.pVertexBindingDescriptions = spec.vertexInput.bindings.data();
-		vertexInputInfo.vertexAttributeDescriptionCount = spec.vertexInput.attributes.size();
-		vertexInputInfo.pVertexAttributeDescriptions = spec.vertexInput.attributes.data();
+		vertexInputInfo.vertexBindingDescriptionCount = vertexInputState.bindings.size();
+		vertexInputInfo.pVertexBindingDescriptions = vertexInputState.bindings.data();
+		vertexInputInfo.vertexAttributeDescriptionCount = vertexInputState.attributes.size();
+		vertexInputInfo.pVertexAttributeDescriptions = vertexInputState.attributes.data();
 
+		auto& inputAssemblyState = state.GetInputAssemblyState();
 		VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
 		inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-		inputAssembly.topology = spec.inputAssembly.topology;
+		inputAssembly.topology = inputAssemblyState.topology;
 
 		VkPipelineViewportStateCreateInfo viewportState{};
 		viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
 		viewportState.viewportCount = 1;
 		viewportState.scissorCount = 1;
 
+		auto& rasterizationState = state.GetRasterizationState();
 		VkPipelineRasterizationStateCreateInfo rasterizer{};
 		rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 		rasterizer.depthClampEnable = VK_FALSE;
 		rasterizer.rasterizerDiscardEnable = VK_FALSE;
 		rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
 		rasterizer.lineWidth = 1.0f;
-		rasterizer.cullMode = spec.rasterization.cullMode;
-		rasterizer.frontFace = spec.rasterization.frontFace;
-		rasterizer.depthBiasEnable = spec.rasterization.depthBiasEnable;
-		rasterizer.depthBiasConstantFactor = spec.rasterization.depthBiasConstantFactor;
-		rasterizer.depthBiasClamp = spec.rasterization.depthBiasClamp;
-		rasterizer.depthBiasSlopeFactor = spec.rasterization.depthBiasSlopeFactor;
+		rasterizer.cullMode = rasterizationState.cullMode;
+		rasterizer.frontFace = rasterizationState.frontFace;
 
+		auto& multisampleState = state.GetMultisampleState();
 		VkPipelineMultisampleStateCreateInfo multisampling{};
 		multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-		multisampling.sampleShadingEnable = VK_FALSE;
-		multisampling.rasterizationSamples = spec.multisample.rasterizationSamples;
+		multisampling.rasterizationSamples = multisampleState.rasterizationSamples;
 
 		VkPipelineColorBlendAttachmentState colorBlendAttachment{};
 		colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
@@ -96,15 +99,14 @@ namespace Vulkan
 		colorBlending.blendConstants[2] = 1.0f;
 		colorBlending.blendConstants[3] = 1.0f;
 
+		auto& depthStencilState = state.GetDepthStencilState();
 		VkPipelineDepthStencilStateCreateInfo depthStencil{};
 		depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
 		depthStencil.pNext = nullptr;
-		depthStencil.depthTestEnable = spec.depthStencil.depthTestEnable;
-		depthStencil.depthWriteEnable = spec.depthStencil.depthWriteEnable;
+		depthStencil.depthTestEnable = depthStencilState.depthTestEnable;
+		depthStencil.depthWriteEnable = depthStencilState.depthWriteEnable;
 		depthStencil.depthCompareOp = VK_COMPARE_OP_GREATER_OR_EQUAL;
 		depthStencil.depthBoundsTestEnable = VK_FALSE;
-		depthStencil.minDepthBounds = 0.0f; // Optional
-		depthStencil.maxDepthBounds = 1.0f; // Optional
 		depthStencil.stencilTestEnable = VK_FALSE;
 
 		VkGraphicsPipelineCreateInfo createInfo{};
@@ -119,9 +121,9 @@ namespace Vulkan
 		createInfo.pDepthStencilState = &depthStencil;
 		createInfo.pColorBlendState = &colorBlending;
 		createInfo.pDynamicState = &dynamicState;
-		createInfo.layout = layout.GetHandle();
-		createInfo.renderPass = renderPass.GetHandle();
-		createInfo.subpass = 0;
+		createInfo.layout = pipelineLayout->GetHandle();
+		createInfo.renderPass = renderPass->GetHandle();
+		createInfo.subpass = state.GetSubpassIndex();
 		createInfo.basePipelineHandle = VK_NULL_HANDLE;
 		createInfo.basePipelineIndex = -1;
 

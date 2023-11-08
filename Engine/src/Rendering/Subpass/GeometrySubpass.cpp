@@ -13,39 +13,37 @@ namespace Engine
 		Scene& scene
 	) : Subpass{ device, std::move(vertexSource), std::move(fragmentSource) }, scene(scene)
 	{
-		pipelineSpec.vertexInput.bindings.reserve(10);
-		pipelineSpec.vertexInput.attributes.reserve(10);
-		pipelineSpec.inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-		pipelineSpec.depthStencil.depthTestEnable = VK_TRUE;
-		pipelineSpec.depthStencil.depthWriteEnable = VK_TRUE;
 	}
 
-	Vulkan::Pipeline& GeometrySubpass::GetPipeline(Vulkan::PipelineLayout& pipelineLayout, Vulkan::PipelineSpec& spec)
+	void GeometrySubpass::PreparePipelineState(Vulkan::CommandBuffer& commandBuffer)
 	{
-		spec.vertexInput.attributes.resize(3);
-		spec.vertexInput.attributes[0].location = 0;
-		spec.vertexInput.attributes[0].binding = 0;
-		spec.vertexInput.attributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-		spec.vertexInput.attributes[0].offset = offsetof(Vertex, position);
+		Vulkan::VertexInputState vertexInputState{};
 
-		spec.vertexInput.attributes[1].location = 1;
-		spec.vertexInput.attributes[1].binding = 0;
-		spec.vertexInput.attributes[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-		spec.vertexInput.attributes[1].offset = offsetof(Vertex, normal);
+		vertexInputState.attributes.resize(3);
+		vertexInputState.attributes[0].location = 0;
+		vertexInputState.attributes[0].binding = 0;
+		vertexInputState.attributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+		vertexInputState.attributes[0].offset = offsetof(Vertex, position);
 
-		spec.vertexInput.attributes[2].location = 2;
-		spec.vertexInput.attributes[2].binding = 0;
-		spec.vertexInput.attributes[2].format = VK_FORMAT_R32G32B32_SFLOAT;
-		spec.vertexInput.attributes[2].offset = offsetof(Vertex, uv);
+		vertexInputState.attributes[1].location = 1;
+		vertexInputState.attributes[1].binding = 0;
+		vertexInputState.attributes[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+		vertexInputState.attributes[1].offset = offsetof(Vertex, normal);
 
-		spec.vertexInput.bindings.resize(1);
-		spec.vertexInput.bindings[0].binding = 0;
-		spec.vertexInput.bindings[0].stride = sizeof(Vertex);
-		spec.vertexInput.bindings[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+		vertexInputState.attributes[2].location = 2;
+		vertexInputState.attributes[2].binding = 0;
+		vertexInputState.attributes[2].format = VK_FORMAT_R32G32B32_SFLOAT;
+		vertexInputState.attributes[2].offset = offsetof(Vertex, uv);
 
-		spec.multisample.rasterizationSamples = sampleCount;
+		vertexInputState.bindings.resize(1);
+		vertexInputState.bindings[0].binding = 0;
+		vertexInputState.bindings[0].stride = sizeof(Vertex);
+		vertexInputState.bindings[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
-		return device.GetResourceCache().RequestPipeline(pipelineLayout, *renderPass, spec);
+		Vulkan::MultisampleState multisampleState{ sampleCount };
+
+		commandBuffer.SetVertexInputState(vertexInputState);
+		commandBuffer.SetMultisampleState(multisampleState);
 	}
 	
 	glm::mat4 GetEntityWorldMatrix(Entity entity)
@@ -70,6 +68,8 @@ namespace Engine
 
 	void GeometrySubpass::Draw(Vulkan::CommandBuffer& commandBuffer)
 	{
+		PreparePipelineState(commandBuffer);
+
 		scene.ForEachEntity<Component::Transform, Component::MeshRender>(
 			[&](Entity entity) {
 				glm::mat4 transform = GetEntityWorldMatrix(entity);
@@ -178,6 +178,8 @@ namespace Engine
 
 		auto& pipelineLayout = GetPipelineLayout(shaders);
 
+		commandBuffer.BindPipelineLayout(pipelineLayout);
+
 		if (pipelineLayout.HasShaderResource(Vulkan::ShaderResourceType::PushConstant))
 		{
 			PbrPushConstant pushConstant
@@ -187,11 +189,9 @@ namespace Engine
 				.roughnessFactor = material.GetRoughnessFactor(),
 			};
 
-			commandBuffer.PushConstants(pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PbrPushConstant), &pushConstant);
+			commandBuffer.PushConstants(VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PbrPushConstant), &pushConstant);
 		}
 
 		FlushDescriptorSet(commandBuffer, pipelineLayout, 0);
-
-		commandBuffer.BindPipeline(GetPipeline(pipelineLayout, pipelineSpec), VK_PIPELINE_BIND_POINT_GRAPHICS);
 	}
 }

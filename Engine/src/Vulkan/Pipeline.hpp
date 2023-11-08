@@ -7,69 +7,17 @@
 #include "RenderPass.hpp"
 #include "Resource.hpp"
 
+#include "PipelineState.hpp"
+
 namespace Vulkan
 {
-
-	struct VertexInputSpec
-	{
-		std::vector<VkVertexInputAttributeDescription> attributes;
-		std::vector<VkVertexInputBindingDescription> bindings;
-	};
-
-	struct MultisampleSpec
-	{
-		VkSampleCountFlagBits rasterizationSamples{ VK_SAMPLE_COUNT_1_BIT };
-	};
-
-	struct InputAssemblySpec
-	{
-		VkPrimitiveTopology topology{ VK_PRIMITIVE_TOPOLOGY_POINT_LIST };
-	};
-
-	struct RasterizationSpec
-	{
-		VkCullModeFlags cullMode{ VK_CULL_MODE_BACK_BIT };
-		VkFrontFace frontFace{ VK_FRONT_FACE_COUNTER_CLOCKWISE };
-		VkBool32 depthBiasEnable{ VK_FALSE };
-		float depthBiasConstantFactor = 0.0f; 
-		float depthBiasClamp = 0.0f;
-		float depthBiasSlopeFactor = 0.0f;
-	};
-
-	struct DepthStencilSpec
-	{
-		VkBool32 depthTestEnable;
-		VkBool32 depthWriteEnable;
-	};
-
-	struct PipelineSpec
-	{
-		VertexInputSpec vertexInput;
-		MultisampleSpec multisample;
-		InputAssemblySpec inputAssembly;
-		RasterizationSpec rasterization;
-		DepthStencilSpec depthStencil;
-	};
-
 	class Pipeline : public Resource<VkPipeline>
 	{
 	public:
-		Pipeline(const Device& device, const PipelineLayout& layout, const RenderPass& renderPass, PipelineSpec spec);
+		Pipeline(const Device& device, PipelineState state);
 		~Pipeline();
 
 	private:
 		const Device& device;
-	};
-};
-
-namespace std
-{
-	template <>
-	struct hash<Vulkan::PipelineSpec>
-	{
-		size_t operator()(const Vulkan::PipelineSpec& spec) const
-		{
-			return 0;
-		}
 	};
 };

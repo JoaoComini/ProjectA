@@ -38,7 +38,7 @@ namespace Engine
 		virtual void Draw(Vulkan::CommandBuffer& commandBuffer) override;
 
 	protected:
-		virtual Vulkan::Pipeline& GetPipeline(Vulkan::PipelineLayout& pipelineLayout, Vulkan::PipelineSpec& spec);
+		virtual void PreparePipelineState(Vulkan::CommandBuffer& commandBuffer);
 
 		virtual std::pair<glm::mat4, glm::mat4> GetViewProjection() const;
 
@@ -50,7 +50,6 @@ namespace Engine
 		void UpdateModelUniform(Vulkan::CommandBuffer& commandBuffer, const Material& material);
 
 		std::vector<Vulkan::ShaderModule*> shaders;
-		Vulkan::PipelineSpec pipelineSpec;
 	};
 
 }

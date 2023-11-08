@@ -27,9 +27,9 @@ namespace Vulkan
         return pipelineLayouts.Get(device, shaderModules);
     }
 
-    Pipeline& ResourceCache::RequestPipeline(const PipelineLayout& layout, const RenderPass& renderPass, PipelineSpec& spec)
+    Pipeline& ResourceCache::RequestPipeline(PipelineState& state)
     {
-        return pipelines.Get(device, layout, renderPass, spec);
+        return pipelines.Get(device, state);
     }
 
 }

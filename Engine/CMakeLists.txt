@@ -137,6 +137,7 @@ set(ENGINE_SRC_FILES
     "src/Vulkan/PhysicalDevice.cpp"
     "src/Vulkan/Pipeline.cpp"
     "src/Vulkan/PipelineLayout.cpp"
+    "src/Vulkan/PipelineState.cpp"
     "src/Vulkan/Queue.cpp"
     "src/Vulkan/RenderPass.cpp"
     "src/Vulkan/Sampler.cpp"

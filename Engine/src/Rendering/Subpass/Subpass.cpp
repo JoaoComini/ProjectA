@@ -34,7 +34,7 @@ namespace Engine
 
         auto descriptorSet = frame.RequestDescriptorSet(descritorSetLayout, bufferBindings[set], imageBindings[set]);
 
-        commandBuffer.BindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, set, descriptorSet);
+        commandBuffer.BindDescriptorSet(descriptorSet);
     }
 
     Vulkan::PipelineLayout& Subpass::GetPipelineLayout(const std::vector<Vulkan::ShaderModule*>& shaders)
