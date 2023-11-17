@@ -45,7 +45,6 @@ namespace Engine
 
 	class Mesh: public Resource
 	{
-
 	public:
 		void AddPrimitive(std::unique_ptr<Primitive> primitive);
 
@@ -60,6 +59,12 @@ namespace Engine
 		{
 			return GetStaticType();
 		}
+
+		class BuiltIn
+		{
+		public:
+			static std::shared_ptr<Mesh> Cube(Vulkan::Device& device);
+		};
 
 	private:
 		std::vector<std::unique_ptr<Primitive>> primitives;

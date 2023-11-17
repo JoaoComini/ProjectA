@@ -10,21 +10,12 @@
 
 namespace Engine
 {
-
-	struct TextureSpec
-	{
-		int width;
-		int height;
-		int component;
-		std::vector<uint8_t> image;
-	};
-
-	class TextureFactory : Factory<Texture, TextureSpec>
+	class TextureFactory : Factory<Texture, Texture>
 	{
 	public:
 		TextureFactory(Vulkan::Device& device);
 
-		void Create(std::filesystem::path destination, TextureSpec& spec) override;
+		void Create(std::filesystem::path destination, Texture& texture) override;
 		std::shared_ptr<Texture> Load(std::filesystem::path source) override;
 
 	private:

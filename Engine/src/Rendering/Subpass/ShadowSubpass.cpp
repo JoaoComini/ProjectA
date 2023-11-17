@@ -14,6 +14,21 @@ namespace Engine
     {
     }
 
+	void ShadowSubpass::Draw(Vulkan::CommandBuffer& commandBuffer)
+	{
+		auto [entity, found] = scene.FindFirstEntity<Component::Transform, Component::DirectionalLight>();
+
+		if (!found)
+		{
+			light = Entity{};
+			return;
+		}
+
+		light = entity;
+
+		GeometrySubpass::Draw(commandBuffer);
+	}
+
 	Vulkan::PipelineLayout& ShadowSubpass::GetPipelineLayout(const std::vector<Vulkan::ShaderModule*>& shaders)
 	{
 		return device.GetResourceCache().RequestPipelineLayout({ shaders[0] });
@@ -39,18 +54,16 @@ namespace Engine
 
 	std::pair<glm::mat4, glm::mat4> ShadowSubpass::GetViewProjection() const
     {
-		auto [entity, found] = scene.FindFirstEntity<Component::Transform, Component::DirectionalLight>();
-
-		if (found)
+		if (!light)
 		{
-			const auto& transform = entity.GetComponent<Component::Transform>();
-
-			auto projection = shadowCamera.GetProjection();
-			auto view = glm::inverse(transform.GetLocalMatrix());
-
-			return { view, projection };
+			return {};
 		}
 
-		return {};
+		const auto& transform = light.GetComponent<Component::Transform>();
+
+		auto projection = shadowCamera.GetProjection();
+		auto view = glm::inverse(transform.GetLocalMatrix());
+
+		return { view, projection };
     }
 }

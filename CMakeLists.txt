@@ -27,6 +27,8 @@ set(
     SHADER_SRC_FILES
     "${SHADER_SOURCE_DIR}/forward.vert"
     "${SHADER_SOURCE_DIR}/forward.frag"
+    "${SHADER_SOURCE_DIR}/skybox.vert"
+    "${SHADER_SOURCE_DIR}/skybox.frag"
     "${SHADER_SOURCE_DIR}/composition.vert"
     "${SHADER_SOURCE_DIR}/composition.frag"
     "${SHADER_SOURCE_DIR}/shadowmap.vert"

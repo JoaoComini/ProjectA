@@ -30,7 +30,6 @@ namespace Engine
 	struct HdrSettings
 	{
 		float exposure{ 1.0 };
-		float gamma{ 2.2 };
 	};
 
 	struct RendererSettings

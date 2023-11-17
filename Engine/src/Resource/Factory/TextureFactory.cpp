@@ -6,25 +6,28 @@
 
 #include "../Flatbuffers/Texture_generated.h"
 
-
 namespace Engine
 {
     TextureFactory::TextureFactory(Vulkan::Device& device)
         : device(device) { }
 
-    void TextureFactory::Create(std::filesystem::path destination, TextureSpec& spec)
+    void TextureFactory::Create(std::filesystem::path destination, Texture& texture)
     {
-        flatbuffers::TextureT texture;
+        flatbuffers::TextureT flatbuffer{};
+        flatbuffer.data = texture.GetData();
 
-        texture.width = spec.width;
-        texture.height = spec.height;
-        texture.component = spec.component;
-        texture.image = spec.image;
+        auto& mipmaps = texture.GetMipmaps();
+        for (auto& mipmap : mipmaps) {
+            flatbuffer.mipmaps.push_back({
+                mipmap.level,
+                mipmap.offset,
+                mipmap.extent.width,
+                mipmap.extent.height
+            });
+        }
 
         flatbuffers::FlatBufferBuilder builder(1024);
-
-        auto offset = flatbuffers::Texture::Pack(builder, &texture);
-
+        auto offset = flatbuffers::Texture::Pack(builder, &flatbuffer);
         builder.Finish(offset);
 
         uint8_t* buffer = builder.GetBufferPointer();
@@ -39,8 +42,25 @@ namespace Engine
 
         auto texture = flatbuffers::GetTexture(file.c_str());
 
-        auto image = texture->image();
+        std::vector<uint8_t> data{
+            texture->data()->data(),
+            texture->data()->data() + texture->data()->size()
+        };
 
-        return std::make_shared<Texture>(device, texture->width(), texture->height(), std::vector<uint8_t>{ image->data(), image->data() + image->size() });
+        std::vector<Mipmap> mipmaps;
+        for (auto it = texture->mipmaps()->begin(); it != texture->mipmaps()->end(); it++)
+        {
+            mipmaps.push_back({
+                it->level(),
+                it->offset(),
+                {
+                    it->width(),
+                    it->height(),
+                    1
+                }
+            });
+        }
+
+        return std::make_shared<Texture>(std::move(data), std::move(mipmaps));
     }
 }

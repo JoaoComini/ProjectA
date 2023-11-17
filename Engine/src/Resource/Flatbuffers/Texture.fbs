@@ -1,12 +1,18 @@
 
 namespace flatbuffers;
 
+struct Mipmap
+{
+    level:uint32;
+    offset:uint32;
+    width:uint32;
+    height:uint32;
+}
+
 table Texture
 {
-    width:int;
-    height:int;
-    component:int;
-    image:[uint8];
+    data:[uint8];
+    mipmaps:[Mipmap];
 }
 
 root_type Texture;

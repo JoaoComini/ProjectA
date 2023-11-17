@@ -100,4 +100,60 @@ namespace Engine
     {
         return primitives;
     }
+
+    std::shared_ptr<Mesh> Mesh::BuiltIn::Cube(Vulkan::Device& device)
+    {
+        static std::vector<Vertex> vertices{
+            {{ -1.0f,  1.0f, -1.0f }},
+            {{ -1.0f, -1.0f, -1.0f }},
+            {{ 1.0f, -1.0f, -1.0f  }},
+            {{ 1.0f, -1.0f, -1.0f  }},
+            {{ 1.0f,  1.0f, -1.0f  }},
+            {{ -1.0f,  1.0f, -1.0f }},
+
+            {{ -1.0f, -1.0f,  1.0f }},
+            {{ -1.0f, -1.0f, -1.0f }},
+            {{ -1.0f,  1.0f, -1.0f }},
+            {{ -1.0f,  1.0f, -1.0f }},
+            {{ -1.0f,  1.0f,  1.0f }},
+            {{ -1.0f, -1.0f,  1.0f }},
+
+            {{ 1.0f, -1.0f, -1.0f }},
+            {{ 1.0f, -1.0f,  1.0f }},
+            {{ 1.0f,  1.0f,  1.0f }},
+            {{ 1.0f,  1.0f,  1.0f }},
+            {{ 1.0f,  1.0f, -1.0f }},
+            {{ 1.0f, -1.0f, -1.0f }},
+
+            {{ -1.0f, -1.0f,  1.0f }},
+            {{ -1.0f,  1.0f,  1.0f }},
+            {{  1.0f,  1.0f,  1.0f }},
+            {{  1.0f,  1.0f,  1.0f }},
+            {{  1.0f, -1.0f,  1.0f }},
+            {{ -1.0f, -1.0f,  1.0f }},
+
+            {{ -1.0f,  1.0f, -1.0f }},
+            {{  1.0f,  1.0f, -1.0f }},
+            {{  1.0f,  1.0f,  1.0f }},
+            {{  1.0f,  1.0f,  1.0f }},
+            {{ -1.0f,  1.0f,  1.0f }},
+            {{ -1.0f,  1.0f, -1.0f }},
+
+            {{ -1.0f, -1.0f, -1.0f }},
+            {{ -1.0f, -1.0f,  1.0f }},
+            {{  1.0f, -1.0f, -1.0f }},
+            {{  1.0f, -1.0f, -1.0f }},
+            {{ -1.0f, -1.0f,  1.0f }},
+            {{  1.0f, -1.0f,  1.0f }}
+        };
+
+        auto mesh = std::make_shared<Mesh>();
+
+        auto primitive = std::make_unique<Primitive>(device);
+        primitive->AddVertexBuffer(vertices);
+
+        mesh->AddPrimitive(std::move(primitive));
+
+        return mesh;
+    }
 }

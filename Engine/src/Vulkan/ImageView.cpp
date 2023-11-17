@@ -5,23 +5,23 @@
 namespace Vulkan
 {
 
-	ImageView::ImageView(const Device& device, Image& image, uint32_t mipLevels): device(device), image(image)
+	ImageView::ImageView(const Device& device, Image& image, VkImageViewType viewType): device(device), image(image)
 	{
         VkImageAspectFlags aspectMask = image.GetFormat() == VK_FORMAT_D32_SFLOAT ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
 
         subresourceRange = {
                 .aspectMask = aspectMask,
                 .baseMipLevel = 0,
-                .levelCount = mipLevels,
+                .levelCount = image.GetMipLevels(),
                 .baseArrayLayer = 0,
-                .layerCount = 1,
+                .layerCount = image.GetArrayLayers(),
         };
 
         VkImageViewCreateInfo createInfo = {
             .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
             .pNext = nullptr,
             .image = image.GetHandle(),
-            .viewType = VK_IMAGE_VIEW_TYPE_2D,
+            .viewType = viewType,
             .format = image.GetFormat(),
             .subresourceRange = subresourceRange,
         };

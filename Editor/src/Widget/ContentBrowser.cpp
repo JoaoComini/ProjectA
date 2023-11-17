@@ -18,10 +18,14 @@ ContentBrowser::ContentBrowser(Vulkan::Device& device, Engine::Scene& scene)
 
 	Engine::TextureImporter importer{ device };
 
-	fileIconTexture = importer.Import("resources/icons/file.png");
+	fileIconTexture = importer.LoadDefault("resources/icons/file.png");
+	fileIconTexture->CreateVulkanResources(device);
+	fileIconTexture->UploadDataToGpu(device);
 	fileIconDescriptor = ImGui_ImplVulkan_AddTexture(fileIconTexture->GetSampler().GetHandle(), fileIconTexture->GetImageView().GetHandle(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-	directoryIconTexture = importer.Import("resources/icons/directory.png");
+	directoryIconTexture = importer.LoadDefault("resources/icons/directory.png");
+	directoryIconTexture->CreateVulkanResources(device);
+	directoryIconTexture->UploadDataToGpu(device);
 	directoryIconDescriptor = ImGui_ImplVulkan_AddTexture(directoryIconTexture->GetSampler().GetHandle(), directoryIconTexture->GetImageView().GetHandle(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 	RefreshResourceTree();

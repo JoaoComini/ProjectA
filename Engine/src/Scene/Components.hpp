@@ -70,5 +70,10 @@ namespace Engine::Component
 		float range = 1.f;
 	};
 
+	struct SkyLight
+	{
+		ResourceId cubemap{ 0 };
+	};
+
 };
 

@@ -3,6 +3,7 @@
 #include "Vulkan/Device.hpp"
 
 #include "Rendering/Texture.hpp"
+#include "Rendering/Cubemap.hpp"
 
 #include <filesystem>
 
@@ -13,7 +14,12 @@ namespace Engine
 	public:
 		TextureImporter(Vulkan::Device &device);
 
-		std::shared_ptr<Texture> Import(std::filesystem::path path);
+		void ImportDefault(std::filesystem::path path);
+		void ImportCubemap(std::filesystem::path path);
+
+		std::shared_ptr<Texture> LoadDefault(std::filesystem::path path);
+		std::shared_ptr<Cubemap> LoadCubemap(std::filesystem::path path);
+
 	private:
 		Vulkan::Device& device;
 	};

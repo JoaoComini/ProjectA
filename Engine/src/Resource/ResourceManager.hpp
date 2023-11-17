@@ -51,7 +51,7 @@ namespace Engine
         {
             auto unique = ResourceTools::FindUniqueResourcePath(path);
 
-            ResourceId id;
+            ResourceId id{};
 
             FactoryCreate<T>(unique, payload);
 

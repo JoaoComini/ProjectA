@@ -15,46 +15,72 @@ static_assert(FLATBUFFERS_VERSION_MAJOR == 23 &&
 
 namespace flatbuffers {
 
+struct Mipmap;
+
 struct Texture;
 struct TextureBuilder;
 struct TextureT;
 
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Mipmap FLATBUFFERS_FINAL_CLASS {
+ private:
+  uint32_t level_;
+  uint32_t offset_;
+  uint32_t width_;
+  uint32_t height_;
+
+ public:
+  Mipmap()
+      : level_(0),
+        offset_(0),
+        width_(0),
+        height_(0) {
+  }
+  Mipmap(uint32_t _level, uint32_t _offset, uint32_t _width, uint32_t _height)
+      : level_(::flatbuffers::EndianScalar(_level)),
+        offset_(::flatbuffers::EndianScalar(_offset)),
+        width_(::flatbuffers::EndianScalar(_width)),
+        height_(::flatbuffers::EndianScalar(_height)) {
+  }
+  uint32_t level() const {
+    return ::flatbuffers::EndianScalar(level_);
+  }
+  uint32_t offset() const {
+    return ::flatbuffers::EndianScalar(offset_);
+  }
+  uint32_t width() const {
+    return ::flatbuffers::EndianScalar(width_);
+  }
+  uint32_t height() const {
+    return ::flatbuffers::EndianScalar(height_);
+  }
+};
+FLATBUFFERS_STRUCT_END(Mipmap, 16);
+
 struct TextureT : public ::flatbuffers::NativeTable {
   typedef Texture TableType;
-  int32_t width = 0;
-  int32_t height = 0;
-  int32_t component = 0;
-  std::vector<uint8_t> image{};
+  std::vector<uint8_t> data{};
+  std::vector<flatbuffers::Mipmap> mipmaps{};
 };
 
 struct Texture FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef TextureT NativeTableType;
   typedef TextureBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_WIDTH = 4,
-    VT_HEIGHT = 6,
-    VT_COMPONENT = 8,
-    VT_IMAGE = 10
+    VT_DATA = 4,
+    VT_MIPMAPS = 6
   };
-  int32_t width() const {
-    return GetField<int32_t>(VT_WIDTH, 0);
+  const ::flatbuffers::Vector<uint8_t> *data() const {
+    return GetPointer<const ::flatbuffers::Vector<uint8_t> *>(VT_DATA);
   }
-  int32_t height() const {
-    return GetField<int32_t>(VT_HEIGHT, 0);
-  }
-  int32_t component() const {
-    return GetField<int32_t>(VT_COMPONENT, 0);
-  }
-  const ::flatbuffers::Vector<uint8_t> *image() const {
-    return GetPointer<const ::flatbuffers::Vector<uint8_t> *>(VT_IMAGE);
+  const ::flatbuffers::Vector<const flatbuffers::Mipmap *> *mipmaps() const {
+    return GetPointer<const ::flatbuffers::Vector<const flatbuffers::Mipmap *> *>(VT_MIPMAPS);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<int32_t>(verifier, VT_WIDTH, 4) &&
-           VerifyField<int32_t>(verifier, VT_HEIGHT, 4) &&
-           VerifyField<int32_t>(verifier, VT_COMPONENT, 4) &&
-           VerifyOffset(verifier, VT_IMAGE) &&
-           verifier.VerifyVector(image()) &&
+           VerifyOffset(verifier, VT_DATA) &&
+           verifier.VerifyVector(data()) &&
+           VerifyOffset(verifier, VT_MIPMAPS) &&
+           verifier.VerifyVector(mipmaps()) &&
            verifier.EndTable();
   }
   TextureT *UnPack(const ::flatbuffers::resolver_function_t *_resolver = nullptr) const;
@@ -66,17 +92,11 @@ struct TextureBuilder {
   typedef Texture Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
-  void add_width(int32_t width) {
-    fbb_.AddElement<int32_t>(Texture::VT_WIDTH, width, 0);
+  void add_data(::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> data) {
+    fbb_.AddOffset(Texture::VT_DATA, data);
   }
-  void add_height(int32_t height) {
-    fbb_.AddElement<int32_t>(Texture::VT_HEIGHT, height, 0);
-  }
-  void add_component(int32_t component) {
-    fbb_.AddElement<int32_t>(Texture::VT_COMPONENT, component, 0);
-  }
-  void add_image(::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> image) {
-    fbb_.AddOffset(Texture::VT_IMAGE, image);
+  void add_mipmaps(::flatbuffers::Offset<::flatbuffers::Vector<const flatbuffers::Mipmap *>> mipmaps) {
+    fbb_.AddOffset(Texture::VT_MIPMAPS, mipmaps);
   }
   explicit TextureBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -91,31 +111,24 @@ struct TextureBuilder {
 
 inline ::flatbuffers::Offset<Texture> CreateTexture(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    int32_t width = 0,
-    int32_t height = 0,
-    int32_t component = 0,
-    ::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> image = 0) {
+    ::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> data = 0,
+    ::flatbuffers::Offset<::flatbuffers::Vector<const flatbuffers::Mipmap *>> mipmaps = 0) {
   TextureBuilder builder_(_fbb);
-  builder_.add_image(image);
-  builder_.add_component(component);
-  builder_.add_height(height);
-  builder_.add_width(width);
+  builder_.add_mipmaps(mipmaps);
+  builder_.add_data(data);
   return builder_.Finish();
 }
 
 inline ::flatbuffers::Offset<Texture> CreateTextureDirect(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    int32_t width = 0,
-    int32_t height = 0,
-    int32_t component = 0,
-    const std::vector<uint8_t> *image = nullptr) {
-  auto image__ = image ? _fbb.CreateVector<uint8_t>(*image) : 0;
+    const std::vector<uint8_t> *data = nullptr,
+    const std::vector<flatbuffers::Mipmap> *mipmaps = nullptr) {
+  auto data__ = data ? _fbb.CreateVector<uint8_t>(*data) : 0;
+  auto mipmaps__ = mipmaps ? _fbb.CreateVectorOfStructs<flatbuffers::Mipmap>(*mipmaps) : 0;
   return flatbuffers::CreateTexture(
       _fbb,
-      width,
-      height,
-      component,
-      image__);
+      data__,
+      mipmaps__);
 }
 
 ::flatbuffers::Offset<Texture> CreateTexture(::flatbuffers::FlatBufferBuilder &_fbb, const TextureT *_o, const ::flatbuffers::rehasher_function_t *_rehasher = nullptr);
@@ -129,10 +142,8 @@ inline TextureT *Texture::UnPack(const ::flatbuffers::resolver_function_t *_reso
 inline void Texture::UnPackTo(TextureT *_o, const ::flatbuffers::resolver_function_t *_resolver) const {
   (void)_o;
   (void)_resolver;
-  { auto _e = width(); _o->width = _e; }
-  { auto _e = height(); _o->height = _e; }
-  { auto _e = component(); _o->component = _e; }
-  { auto _e = image(); if (_e) { _o->image.resize(_e->size()); std::copy(_e->begin(), _e->end(), _o->image.begin()); } }
+  { auto _e = data(); if (_e) { _o->data.resize(_e->size()); std::copy(_e->begin(), _e->end(), _o->data.begin()); } }
+  { auto _e = mipmaps(); if (_e) { _o->mipmaps.resize(_e->size()); for (::flatbuffers::uoffset_t _i = 0; _i < _e->size(); _i++) { _o->mipmaps[_i] = *_e->Get(_i); } } else { _o->mipmaps.resize(0); } }
 }
 
 inline ::flatbuffers::Offset<Texture> Texture::Pack(::flatbuffers::FlatBufferBuilder &_fbb, const TextureT* _o, const ::flatbuffers::rehasher_function_t *_rehasher) {
@@ -143,16 +154,12 @@ inline ::flatbuffers::Offset<Texture> CreateTexture(::flatbuffers::FlatBufferBui
   (void)_rehasher;
   (void)_o;
   struct _VectorArgs { ::flatbuffers::FlatBufferBuilder *__fbb; const TextureT* __o; const ::flatbuffers::rehasher_function_t *__rehasher; } _va = { &_fbb, _o, _rehasher}; (void)_va;
-  auto _width = _o->width;
-  auto _height = _o->height;
-  auto _component = _o->component;
-  auto _image = _o->image.size() ? _fbb.CreateVector(_o->image) : 0;
+  auto _data = _o->data.size() ? _fbb.CreateVector(_o->data) : 0;
+  auto _mipmaps = _o->mipmaps.size() ? _fbb.CreateVectorOfStructs(_o->mipmaps) : 0;
   return flatbuffers::CreateTexture(
       _fbb,
-      _width,
-      _height,
-      _component,
-      _image);
+      _data,
+      _mipmaps);
 }
 
 inline const flatbuffers::Texture *GetTexture(const void *buf) {

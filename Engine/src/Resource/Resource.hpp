@@ -14,6 +14,7 @@ namespace Engine
 	{
 		None = 0,
 		Texture,
+		Cubemap,
 		Material,
 		Mesh,
 		Prefab,

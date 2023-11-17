@@ -87,15 +87,25 @@ namespace Engine
             auto& gltfTexture = model.textures[i];
             auto& image = model.images[gltfTexture.source];
 
-            TextureSpec spec
+            std::vector<Mipmap> mipmaps
             {
-                .width = image.width,
-                .height = image.height,
-                .component = image.component,
-                .image = image.image,
+                Mipmap{
+                    0,
+                    0,
+                    {
+                        static_cast<uint32_t>(image.width),
+                        static_cast<uint32_t>(image.height),
+                        1
+                    }
+                }
             };
 
-            auto id = ResourceManager::Get().CreateResource<Texture>(parent.stem() / "texture", spec);
+            std::vector<uint8_t> data = image.image;
+
+            auto texture = std::make_shared<Texture>(std::move(data), std::move(mipmaps));
+            texture->GenerateMipmaps();
+
+            auto id = ResourceManager::Get().CreateResource<Texture>(parent.stem() / "texture", *texture);
 
             textures.push_back(id);
         }

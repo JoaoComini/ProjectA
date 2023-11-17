@@ -1,5 +1,7 @@
 #version 450
 
+#define GAMMA 2.2
+
 #define MAX_LIGHT_COUNT 32
 #define DIRECTIONAL_LIGHT 1.0
 #define POINT_LIGHT 0.0
@@ -93,6 +95,26 @@ vec3 ApplyDirectionalLight(vec3 normal, int index)
 	return NDotL * lights.array[index].color.rgb * lights.array[index].color.w;
 }
 
+float Sqr(float x)
+{
+	return x * x;
+}
+
+// TODO: parameterize intensity and falloff on PointLight component
+
+float Attenuate(float dist, float radius, float intensity, float falloff)
+{
+	float s = dist / radius;
+
+	if (s >= 1.0)
+	{
+		return 0.0;
+	}
+
+	float s2 = Sqr(s);
+
+	return intensity * Sqr(1 - s2) / (1 + falloff * s);
+}
 
 vec3 ApplyPointLight(vec3 normal, int index)
 {
@@ -100,12 +122,13 @@ vec3 ApplyPointLight(vec3 normal, int index)
 	vec3 L      = lights.array[index].vector.xyz - inPosition;
 
 	float dist = length(L);
-	float attenuance = 1.0 / (dist * dist);
+
+	float att = Attenuate(dist, lights.array[index].color.w, 1, 1);
 
 	L = normalize(L);
 	float NDotL = clamp(dot(N, L), 0.0, 1.0);
 
-	return NDotL * lights.array[index].color.rgb * lights.array[index].color.w * attenuance;
+	return NDotL * lights.array[index].color.rgb * att;
 }
 
 
@@ -163,7 +186,8 @@ float Saturate(float t)
 vec4 Albedo()
 {
 	#ifdef HAS_ALBEDO_TEXTURE
-    return texture(albedoTexture, inUV);
+	vec4 albedo = texture(albedoTexture, inUV);
+    return vec4(pow(albedo.rgb, vec3(GAMMA)), albedo.a);
 	#else
 	return pbr.albedoColor;
 	#endif
@@ -271,5 +295,11 @@ void main()
 
     vec3 ambientColor = vec3(0.03) * albedo.rgb;
 
-	outColor = vec4(ambientColor + Lo, albedo.a);
+	#ifdef HAS_ALBEDO_TEXTURE
+	vec3 finalColor = pow(ambientColor + Lo, vec3(1.0 / GAMMA));
+	#else
+	vec3 finalColor = ambientColor + Lo;
+	#endif
+
+	outColor = vec4(finalColor, albedo.a);
 }

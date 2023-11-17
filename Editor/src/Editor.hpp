@@ -34,6 +34,8 @@ namespace Engine
         void OpenScene(ResourceId id);
 
         void AddPrefabToScene(ResourceId id);
+        void AddSkyLightToScene(ResourceId id);
+
         void ImportFile();
 
         std::unique_ptr<EditorCamera> camera;

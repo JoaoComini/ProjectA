@@ -137,4 +137,10 @@ namespace Controls
 		ImGui::ColorEdit4("Color", &component->color.r, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoAlpha);
 		ImGui::SliderFloat("Range", &component->range, 0.1f, 1000.f);
 	}
+
+	template<>
+	void Component(Engine::Component::SkyLight* component)
+	{
+		ImGui::TextDisabled(component->cubemap.ToString().c_str());
+	}
 };

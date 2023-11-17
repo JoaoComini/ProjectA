@@ -2,16 +2,16 @@
 
 #include "ResourceManager.hpp"
 
+#include "Rendering/Cubemap.hpp"
+
 #include "Importer/GltfImporter.hpp"
+#include "Importer/TextureImporter.hpp"
 #include "Resource/Factory/TextureFactory.hpp"
 #include "Resource/Factory/MeshFactory.hpp"
 #include "Resource/Factory/MaterialFactory.hpp"
 #include "Resource/Factory/PrefabFactory.hpp"
 #include "Resource/Factory/SceneFactory.hpp"
 
-#include "yaml-cpp/yaml.h"
-
-#include <fstream>
 
 namespace Engine
 {
@@ -22,9 +22,24 @@ namespace Engine
 
     void ResourceManager::ImportResource(const std::filesystem::path& path)
     {
-        GltfImporter importer{ device };
-        
-        importer.Import(path);
+        auto extension = path.extension();
+
+        if (extension == ".glb")
+        {
+            GltfImporter importer{ device };
+
+            importer.Import(path);
+        }
+        else if (extension == ".hdr")
+        {
+            TextureImporter importer{ device };
+
+            importer.ImportCubemap(path);
+        }
+        else
+        {
+            throw std::runtime_error("resource format not supported");
+        }
     }
 
     bool ResourceManager::IsResourceLoaded(const ResourceId& id)
@@ -37,7 +52,25 @@ namespace Engine
     {
         TextureFactory factory{ device };
 
-        return factory.Load(path);
+        auto texture = factory.Load(path);
+        texture->CreateVulkanResources(device);
+        texture->UploadDataToGpu(device);
+
+        return texture;
+    }
+
+    template<>
+    std::shared_ptr<Cubemap> ResourceManager::FactoryLoad(std::filesystem::path path)
+    {
+        TextureFactory factory{ device };
+
+        auto texture = factory.Load(path);
+
+        auto cubemap = std::make_shared<Cubemap>(std::move(*texture));
+        cubemap->CreateVulkanResources(device);
+        cubemap->UploadDataToGpu(device);
+
+        return cubemap;
     }
 
     template<>
@@ -73,7 +106,15 @@ namespace Engine
     }
 
     template<>
-    void ResourceManager::FactoryCreate<Texture>(std::filesystem::path path, TextureSpec& payload)
+    void ResourceManager::FactoryCreate<Texture>(std::filesystem::path path, Texture& payload)
+    {
+        TextureFactory factory{ device };
+
+        factory.Create(path, payload);
+    }
+
+    template<>
+    void ResourceManager::FactoryCreate<Cubemap>(std::filesystem::path path, Cubemap& payload)
     {
         TextureFactory factory{ device };
 

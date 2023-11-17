@@ -164,6 +164,8 @@ set(ENGINE_SRC_FILES
     "src/Resource/Factory/SceneFactory.cpp"
     "src/Resource/Flatbuffers/NativeVertex.cpp"
     "src/Platform/Windows/FileDialog.cpp"
+    "src/Rendering/Cubemap.cpp"
+    "src/Rendering/Subpass/SkyboxSubpass.cpp"
 )
 
 add_library(Engine STATIC ${ENGINE_SRC_FILES})

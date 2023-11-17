@@ -27,14 +27,14 @@ void MainMenuBar::Draw()
 		ImGui::EndMenu();
 	}
 
-	if (ImGui::BeginMenu("Tools"))
+	if (ImGui::BeginMenu("Window"))
 	{
 		MainMenuItem("Metrics", [&]() {
 			openMetrics = true;
 		});
 
-		MainMenuItem("Settings", [&]() {
-			openSettings = true;
+		MainMenuItem("Environment", [&]() {
+			openEnvironment = true;
 		});
 
 		ImGui::EndMenu();
@@ -54,14 +54,13 @@ void MainMenuBar::Draw()
 		
 	}
 
-	if (openSettings)
+	if (openEnvironment)
 	{
-		ImGui::Begin("Settings", &openSettings);
+		ImGui::Begin("Environment", &openEnvironment);
 
 		auto settings = Engine::Renderer::Get().GetSettings();
 
 		ImGui::DragFloat("Exposure", &settings.hdr.exposure, 0.1);
-		ImGui::DragFloat("Gamma", &settings.hdr.gamma, 0.1);
 			
 		Engine::Renderer::Get().SetSettings(settings);
 

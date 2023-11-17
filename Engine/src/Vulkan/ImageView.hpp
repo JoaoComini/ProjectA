@@ -12,7 +12,7 @@ namespace Vulkan
 	class ImageView : public Resource<VkImageView>
 	{
 	public:
-		ImageView(const Device& device, Image& image, uint32_t mipLevels = 1);
+		ImageView(const Device& device, Image& image, VkImageViewType viewType = VK_IMAGE_VIEW_TYPE_2D);
 		~ImageView();
 
 		const Image& GetImage() const;

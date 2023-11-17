@@ -17,6 +17,8 @@ namespace Engine
 			Camera& shadowCamera
 		);
 
+		virtual void Draw(Vulkan::CommandBuffer& commandBuffer) override;
+
 	protected:
 		virtual Vulkan::PipelineLayout& GetPipelineLayout(const std::vector<Vulkan::ShaderModule*>& shaders) override;
 		virtual void PreparePipelineState(Vulkan::CommandBuffer& commandBuffer) override;
@@ -25,5 +27,7 @@ namespace Engine
 
 	private:
 		Camera& shadowCamera;
+
+		Entity light{};
 	};
 }

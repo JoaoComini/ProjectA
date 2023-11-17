@@ -108,6 +108,7 @@ namespace Engine
 			Serialize<Component::Camera>(emitter, entity);
 			Serialize<Component::DirectionalLight>(emitter, entity);
 			Serialize<Component::PointLight>(emitter, entity);
+			Serialize<Component::SkyLight>(emitter, entity);
 
 			emitter << YAML::EndMap;
 		});
@@ -224,6 +225,18 @@ namespace Engine
 		emitter << YAML::EndMap;
 	}
 
+	template<>
+	void SceneSerializer::Serialize(YAML::Emitter& emitter, Component::SkyLight* comp)
+	{
+		emitter << YAML::Key << "SkyLight";
+
+		emitter << YAML::BeginMap;
+
+		emitter << YAML::Key << "Cubemap" << YAML::Value << comp->cubemap;
+
+		emitter << YAML::EndMap;
+	}
+
 	void SceneSerializer::Deserialize(std::filesystem::path path)
 	{
 		YAML::Node scene = YAML::LoadFile(path.string());
@@ -251,6 +264,7 @@ namespace Engine
 			Deserialize<Component::Camera>(entity, "Camera", deserialized);
 			Deserialize<Component::DirectionalLight>(entity, "DirectionalLight", deserialized);
 			Deserialize<Component::PointLight>(entity, "PointLight", deserialized);
+			Deserialize<Component::SkyLight>(entity, "SkyLight", deserialized);
 		}
 
 		for (auto entity : entities)
@@ -309,6 +323,12 @@ namespace Engine
 	{
 		comp->color = node["Color"].as<glm::vec3>();
 		comp->range = node["Range"].as<float>();
+	}
+
+	template<>
+	void SceneSerializer::Deserialize(YAML::Node& node, Component::SkyLight* comp)
+	{
+		comp->cubemap = node["Cubemap"].as<Uuid>();
 	}
 
 	template<>

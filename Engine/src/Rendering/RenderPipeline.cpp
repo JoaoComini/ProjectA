@@ -1,6 +1,7 @@
 #include "RenderPipeline.hpp"
 
 #include "Subpass/ForwardSubpass.hpp"
+#include "Subpass/SkyboxSubpass.hpp"
 #include "Subpass/ShadowSubpass.hpp"
 #include "Subpass/CompositionSubpass.hpp"
 
@@ -20,24 +21,32 @@ namespace Engine
 	{
 		gBufferTarget = CreateGBufferPassTarget();
 
-		auto vertexSource = Vulkan::ShaderSource{ "resources/shaders/forward.vert" };
-		auto fragmentSource = Vulkan::ShaderSource{ "resources/shaders/forward.frag" };
-
 		auto forwardSubpass = std::make_unique<ForwardSubpass>(
 			device,
-			std::move(vertexSource),
-			std::move(fragmentSource),
+			Vulkan::ShaderSource{ "resources/shaders/forward.vert" },
+			Vulkan::ShaderSource{ "resources/shaders/forward.frag" },
 			scene,
 			*shadowCamera,
 			shadowTarget.get()
 		);
 
-		forwardSubpass->SetColorResolveAttachments({ 0 });
 		forwardSubpass->SetOutputAttachments({ 2 });
 		forwardSubpass->SetSampleCount(device.GetMaxSampleCount());
 
+		auto skyboxSubpass = std::make_unique<SkyboxSubpass>(
+			device,
+			Vulkan::ShaderSource{ "resources/shaders/skybox.vert" },
+			Vulkan::ShaderSource{ "resources/shaders/skybox.frag" },
+			scene
+		);
+
+		skyboxSubpass->SetOutputAttachments({ 2 });
+		skyboxSubpass->SetColorResolveAttachments({ 0 });
+		skyboxSubpass->SetSampleCount(device.GetMaxSampleCount());
+
 		std::vector<std::unique_ptr<Subpass>> subpasses;
 		subpasses.push_back(std::move(forwardSubpass));
+		subpasses.push_back(std::move(skyboxSubpass));
 
 		mainPass = std::make_unique<Pass>(device, std::move(subpasses));
 

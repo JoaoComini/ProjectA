@@ -45,6 +45,7 @@ void EntityInspector::Draw()
 		AddComponentMenuItem<Engine::Component::MeshRender>("Mesh Render");
 		AddComponentMenuItem<Engine::Component::DirectionalLight>("Directional Light");
 		AddComponentMenuItem<Engine::Component::PointLight>("Point Light");
+		AddComponentMenuItem<Engine::Component::SkyLight>("Sky Light");
 		ImGui::EndPopup();
 	}
 
@@ -81,6 +82,13 @@ void EntityInspector::Draw()
 	if (pointLight)
 	{
 		ComponentControlNode<Engine::Component::PointLight>("Point Light", pointLight);
+	}
+
+	auto skyLight = entity.TryGetComponent<Engine::Component::SkyLight>();
+
+	if (skyLight)
+	{
+		ComponentControlNode<Engine::Component::SkyLight>("Sky Light", skyLight);
 	}
 
 	ImGui::End();

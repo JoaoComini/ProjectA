@@ -8,6 +8,7 @@
 
 #include "Resource/ResourceManager.hpp"
 #include "Resource/Prefab.hpp"
+#include "Rendering/Cubemap.hpp"
 
 #include "Platform/FileDialog.hpp"
 #include "Project/Project.hpp"
@@ -69,6 +70,9 @@ namespace Engine
 				break;
 			case ResourceType::Prefab:
 				AddPrefabToScene(id);
+				break;
+			case ResourceType::Cubemap:
+				AddSkyLightToScene(id);
 				break;
 			default:
 				break;
@@ -197,9 +201,15 @@ namespace Engine
 		}
 	}
 
+	void Editor::AddSkyLightToScene(ResourceId id)
+	{
+		auto entity = GetScene().CreateEntity();
+		entity.AddComponent<Component::SkyLight>(id);
+	}
+
 	void Editor::ImportFile()
 	{
-		auto file = FileDialog::OpenFile(GetWindow(), "GLB File (*.glb)\0*.glb\0");
+		auto file = FileDialog::OpenFile(GetWindow(), "Resource Files (*.glb,*.hdr)\0*.glb;*.hdr\0");
 
 		if (file.empty())
 		{
