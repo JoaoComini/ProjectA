@@ -4,6 +4,10 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
+#include "Scene/Node/TransformNode.hpp"
+#include "Scene/Node/MeshNode.hpp"
+#include "Scene/Node/SkyLightNode.hpp"
+
 namespace Engine
 {
     void PrefabFactory::Create(std::filesystem::path destination, Prefab& model)
@@ -24,28 +28,43 @@ namespace Engine
         FileSystem::WriteFile(destination, { buffer, buffer + size });
     }
 
-    flatbuffers::Offset<flatbuffers::Node> PrefabFactory::WriteNode(flatbuffers::FlatBufferBuilder& builder, Node& node)
+    flatbuffers::Offset<flatbuffers::Node> PrefabFactory::WriteNode(flatbuffers::FlatBufferBuilder& builder, Node* node)
     {
         std::vector<flatbuffers::Offset<flatbuffers::Node>> childrenVector;
-        for (auto child : node.GetChildren())
+        for (auto child : node->GetChildren())
         {
-            auto offset = WriteNode(builder, *child);
+            auto offset = WriteNode(builder, child);
             childrenVector.push_back(offset);
         }
 
-        auto name = builder.CreateString(node.GetName());
+        auto name = builder.CreateString(node->GetName());
+        auto class_ = builder.CreateString(node->GetClass());
+
         auto children = builder.CreateVector(childrenVector);
 
         flatbuffers::NodeBuilder nodeBuilder(builder);
         nodeBuilder.add_name(name);
-        nodeBuilder.add_mesh(node.GetMesh());
+        nodeBuilder.add_class_(class_);
 
-        auto& transform = node.GetTransform();
-        nodeBuilder.add_transform(new flatbuffers::Transform(
-            std::span<const float, 3>(glm::value_ptr(transform.position), 3),
-            std::span<const float, 4>(glm::value_ptr(transform.rotation), 4),
-            std::span<const float, 3>(glm::value_ptr(transform.scale), 3)
-        ));
+        if (node->GetClass() == TransformNode::GetStaticClass() || node->GetClass() == MeshNode::GetStaticClass())
+        {
+            auto serialized = dynamic_cast<TransformNode*>(node);
+
+            auto position = serialized->GetPosition();
+            auto rotation = serialized->GetRotation();
+            auto scale = serialized->GetScale();
+
+            nodeBuilder.add_transform(new flatbuffers::Transform(
+                std::span<const float, 3>(glm::value_ptr(position), 3),
+                std::span<const float, 3>(glm::value_ptr(rotation), 3),
+                std::span<const float, 3>(glm::value_ptr(scale), 3)
+            ));
+        }
+        
+        if (node->GetClass() == MeshNode::GetStaticClass())
+        {
+            nodeBuilder.add_mesh(dynamic_cast<MeshNode*>(node)->GetMesh());
+        }
 
         nodeBuilder.add_children(children);
 
@@ -64,7 +83,7 @@ namespace Engine
         std::vector<std::unique_ptr<Node>> nodes;
         ReadNodes(*buffer.root, nullptr, nodes);
 
-        model->SetRoot(*nodes.back());
+        model->SetRoot(nodes.back().get());
         model->SetNodes(std::move(nodes));
 
         return model;
@@ -72,16 +91,48 @@ namespace Engine
 
     void PrefabFactory::ReadNodes(flatbuffers::NodeT& buffer, Node* parent, std::vector<std::unique_ptr<Node>>& nodes)
     {
-        auto node = std::make_unique<Node>();
+        std::unique_ptr<Node> node = nullptr;
+
+        if (buffer.class_ == Node::GetStaticClass())
+        {
+            node = std::make_unique<Node>();
+        }
+        else if (buffer.class_ == TransformNode::GetStaticClass())
+        {
+            auto serialized = std::make_unique<TransformNode>();
+
+            Transform transform{};
+
+            transform.origin = glm::make_vec3(buffer.transform->position()->data());
+            transform.basis.SetEulerAndScale(
+                glm::make_vec3(buffer.transform->rotation()->data()),
+                glm::make_vec3(buffer.transform->scale()->data())
+            );
+
+            serialized->SetTransform(transform);
+
+            node = std::move(serialized);
+        }
+        else if (buffer.class_ == MeshNode::GetStaticClass())
+        {
+            auto serialized = std::make_unique<MeshNode>();
+
+            Transform transform{};
+
+            transform.origin = glm::make_vec3(buffer.transform->position()->data());
+            transform.basis.SetEulerAndScale(
+                glm::make_vec3(buffer.transform->rotation()->data()),
+                glm::make_vec3(buffer.transform->scale()->data())
+            );
+
+            serialized->SetTransform(transform);
+
+            serialized->SetMesh(buffer.mesh);
+
+            node = std::move(serialized);
+        }
 
         node->SetName(buffer.name);
-
-        auto& transform = node->GetTransform();
-        transform.position = glm::make_vec3(buffer.transform->position()->data());
-        transform.rotation = glm::make_quat(buffer.transform->rotation()->data());
-        transform.scale = glm::make_vec3(buffer.transform->scale()->data());
-
-        node->SetMesh(buffer.mesh);
 
         for (auto& child : buffer.children)
         {
@@ -90,7 +141,7 @@ namespace Engine
 
         if (parent)
         {
-            parent->AddChild(*node);
+            parent->AddChild(node.get());
         }
 
         nodes.push_back(std::move(node));

@@ -5,7 +5,6 @@ include(FindVulkan)
 
 add_subdirectory(third_party/glm)
 add_subdirectory(third_party/vma)
-add_subdirectory(third_party/entt)
 
 # ----- YAML-CPP -----
 
@@ -149,8 +148,11 @@ set(ENGINE_SRC_FILES
     "src/Vulkan/Swapchain.cpp"
     "src/Vulkan/Caching/ResourceCache.cpp"
     "src/Scene/Scene.cpp"
-    "src/Scene/Entity.cpp"
-    "src/Scene/SceneSerializer.cpp"
+    "src/Scene/Node/Node.cpp"
+    "src/Scene/Node/TransformNode.cpp"
+    "src/Scene/Node/MeshNode.cpp"
+    "src/Scene/Node/SkyLightNode.cpp"
+    "src/Scene/Node/LightNode.cpp"
     "src/Project/Project.cpp"
     "src/Resource/ResourceManager.cpp"
     "src/Resource/ResourceRegistry.cpp"
@@ -166,6 +168,9 @@ set(ENGINE_SRC_FILES
     "src/Platform/Windows/FileDialog.cpp"
     "src/Rendering/Cubemap.cpp"
     "src/Rendering/Subpass/SkyboxSubpass.cpp"
+    "src/Rendering/RenderContext.cpp"
+    "src/Math/Transform.cpp"
+    "src/Math/Basis.cpp"
 )
 
 add_library(Engine STATIC ${ENGINE_SRC_FILES})
@@ -183,7 +188,6 @@ target_link_libraries(Engine
     VulkanMemoryAllocator
     stb
     tinygltf
-    EnTT
     ImGui
     ImGuizmo
     yaml-cpp

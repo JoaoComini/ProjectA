@@ -3,12 +3,13 @@ namespace flatbuffers;
 struct Transform
 {
     position:[float:3];
-    rotation:[float:4];
+    rotation:[float:3];
     scale:[float:3];
 }
 
 table Node
 {
+    class:string;
     name:string;
     mesh:uint64 = 0;
     transform:Transform;

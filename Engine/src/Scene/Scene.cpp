@@ -1,48 +1,21 @@
 #include "Scene.hpp"
 
-#include "Components.hpp"
-
 namespace Engine
 {
-    Entity Scene::CreateEntity(Uuid id)
+    Scene::Scene()
     {
-        Entity entity{ registry.create(), &registry };
-
-        entity.AddComponent<Component::Name>();
-        entity.AddComponent<Component::Relationship>();
-
-        entity.AddComponent<Component::Id>().id = id;
-        entityMap[id] = entity;
-
-        return entity;
+        root = new Node();
+        root->SetName("root");
+        root->SetScene(this);
     }
 
-    void Scene::DestroyEntity(Entity entity)
+    void Scene::OnUpdate(float timestep)
     {
-        entity.SetParent({});
-        entity.AddComponent<Component::Delete>();
 
-        for (auto& child : entity.GetChildren())
-        {
-            DestroyEntity(child);
-        }
     }
 
-    Entity Scene::FindEntityById(Uuid id)
+    Node* Scene::GetRoot() const
     {
-        if (entityMap.find(id) != entityMap.end())
-        {
-            return entityMap[id];
-        }
-
-        return {};
-    }
-
-    void Scene::Update()
-    {
-        ForEachEntity<Component::Delete>([&](Entity entity) {
-            entityMap.erase(entity.GetId());
-            registry.destroy(entity);
-        });
+        return root;
     }
 }

@@ -27,7 +27,7 @@ namespace Engine
 	{
 	public:
 		ForwardSubpass(
-			Vulkan::Device& device,
+			RenderContext& renderContext,
 			Vulkan::ShaderSource&& vertexSource,
 			Vulkan::ShaderSource&& fragmentSource,
 			Scene& scene,

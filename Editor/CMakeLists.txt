@@ -4,12 +4,12 @@ project(Editor VERSION 0.0.1)
 set(EDITOR_SRC_FILES
     "src/Editor.cpp"
     "src/Widget/SceneHierarchy.cpp"
-    "src/Widget/EntityInspector.cpp"
+    "src/Widget/NodeInspector.cpp"
     "src/Widget/Controls.cpp"
     "src/Widget/MainMenuBar.cpp"
     "src/Widget/ContentBrowser.cpp"
     "src/Widget/ViewportDragDrop.cpp"
-    "src/Widget/EntityGizmo.cpp"
+    "src/Widget/TransformNodeGizmo.cpp"
     "src/Util/ResourceTree.cpp"
     "src/EditorCamera.cpp"
  )

@@ -19,7 +19,7 @@ namespace Engine
     class ResourceManager: public Singleton<ResourceManager>
     {
     public:
-        ResourceManager(Vulkan::Device& device);
+        ResourceManager();
 
         template<typename T>
         std::shared_ptr<T> LoadResource(const ResourceId& id)

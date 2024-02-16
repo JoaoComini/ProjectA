@@ -28,7 +28,7 @@ struct PrefabT;
 FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Transform FLATBUFFERS_FINAL_CLASS {
  private:
   float position_[3];
-  float rotation_[4];
+  float rotation_[3];
   float scale_[3];
 
  public:
@@ -37,7 +37,7 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Transform FLATBUFFERS_FINAL_CLASS {
         rotation_(),
         scale_() {
   }
-  Transform(::flatbuffers::span<const float, 3> _position, ::flatbuffers::span<const float, 4> _rotation, ::flatbuffers::span<const float, 3> _scale) {
+  Transform(::flatbuffers::span<const float, 3> _position, ::flatbuffers::span<const float, 3> _rotation, ::flatbuffers::span<const float, 3> _scale) {
     ::flatbuffers::CastToArray(position_).CopyFromSpan(_position);
     ::flatbuffers::CastToArray(rotation_).CopyFromSpan(_rotation);
     ::flatbuffers::CastToArray(scale_).CopyFromSpan(_scale);
@@ -45,17 +45,18 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Transform FLATBUFFERS_FINAL_CLASS {
   const ::flatbuffers::Array<float, 3> *position() const {
     return &::flatbuffers::CastToArray(position_);
   }
-  const ::flatbuffers::Array<float, 4> *rotation() const {
+  const ::flatbuffers::Array<float, 3> *rotation() const {
     return &::flatbuffers::CastToArray(rotation_);
   }
   const ::flatbuffers::Array<float, 3> *scale() const {
     return &::flatbuffers::CastToArray(scale_);
   }
 };
-FLATBUFFERS_STRUCT_END(Transform, 40);
+FLATBUFFERS_STRUCT_END(Transform, 36);
 
 struct NodeT : public ::flatbuffers::NativeTable {
   typedef Node TableType;
+  std::string class_{};
   std::string name{};
   uint64_t mesh = 0;
   std::unique_ptr<flatbuffers::Transform> transform{};
@@ -70,11 +71,15 @@ struct Node FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef NodeT NativeTableType;
   typedef NodeBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_NAME = 4,
-    VT_MESH = 6,
-    VT_TRANSFORM = 8,
-    VT_CHILDREN = 10
+    VT_CLASS_ = 4,
+    VT_NAME = 6,
+    VT_MESH = 8,
+    VT_TRANSFORM = 10,
+    VT_CHILDREN = 12
   };
+  const ::flatbuffers::String *class_() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_CLASS_);
+  }
   const ::flatbuffers::String *name() const {
     return GetPointer<const ::flatbuffers::String *>(VT_NAME);
   }
@@ -89,6 +94,8 @@ struct Node FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_CLASS_) &&
+           verifier.VerifyString(class_()) &&
            VerifyOffset(verifier, VT_NAME) &&
            verifier.VerifyString(name()) &&
            VerifyField<uint64_t>(verifier, VT_MESH, 8) &&
@@ -107,6 +114,9 @@ struct NodeBuilder {
   typedef Node Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
+  void add_class_(::flatbuffers::Offset<::flatbuffers::String> class_) {
+    fbb_.AddOffset(Node::VT_CLASS_, class_);
+  }
   void add_name(::flatbuffers::Offset<::flatbuffers::String> name) {
     fbb_.AddOffset(Node::VT_NAME, name);
   }
@@ -132,6 +142,7 @@ struct NodeBuilder {
 
 inline ::flatbuffers::Offset<Node> CreateNode(
     ::flatbuffers::FlatBufferBuilder &_fbb,
+    ::flatbuffers::Offset<::flatbuffers::String> class_ = 0,
     ::flatbuffers::Offset<::flatbuffers::String> name = 0,
     uint64_t mesh = 0,
     const flatbuffers::Transform *transform = nullptr,
@@ -141,19 +152,23 @@ inline ::flatbuffers::Offset<Node> CreateNode(
   builder_.add_children(children);
   builder_.add_transform(transform);
   builder_.add_name(name);
+  builder_.add_class_(class_);
   return builder_.Finish();
 }
 
 inline ::flatbuffers::Offset<Node> CreateNodeDirect(
     ::flatbuffers::FlatBufferBuilder &_fbb,
+    const char *class_ = nullptr,
     const char *name = nullptr,
     uint64_t mesh = 0,
     const flatbuffers::Transform *transform = nullptr,
     const std::vector<::flatbuffers::Offset<flatbuffers::Node>> *children = nullptr) {
+  auto class___ = class_ ? _fbb.CreateString(class_) : 0;
   auto name__ = name ? _fbb.CreateString(name) : 0;
   auto children__ = children ? _fbb.CreateVector<::flatbuffers::Offset<flatbuffers::Node>>(*children) : 0;
   return flatbuffers::CreateNode(
       _fbb,
+      class___,
       name__,
       mesh,
       transform,
@@ -220,7 +235,8 @@ inline ::flatbuffers::Offset<Prefab> CreatePrefab(
 ::flatbuffers::Offset<Prefab> CreatePrefab(::flatbuffers::FlatBufferBuilder &_fbb, const PrefabT *_o, const ::flatbuffers::rehasher_function_t *_rehasher = nullptr);
 
 inline NodeT::NodeT(const NodeT &o)
-      : name(o.name),
+      : class_(o.class_),
+        name(o.name),
         mesh(o.mesh),
         transform((o.transform) ? new flatbuffers::Transform(*o.transform) : nullptr) {
   children.reserve(o.children.size());
@@ -228,6 +244,7 @@ inline NodeT::NodeT(const NodeT &o)
 }
 
 inline NodeT &NodeT::operator=(NodeT o) FLATBUFFERS_NOEXCEPT {
+  std::swap(class_, o.class_);
   std::swap(name, o.name);
   std::swap(mesh, o.mesh);
   std::swap(transform, o.transform);
@@ -244,6 +261,7 @@ inline NodeT *Node::UnPack(const ::flatbuffers::resolver_function_t *_resolver) 
 inline void Node::UnPackTo(NodeT *_o, const ::flatbuffers::resolver_function_t *_resolver) const {
   (void)_o;
   (void)_resolver;
+  { auto _e = class_(); if (_e) _o->class_ = _e->str(); }
   { auto _e = name(); if (_e) _o->name = _e->str(); }
   { auto _e = mesh(); _o->mesh = _e; }
   { auto _e = transform(); if (_e) _o->transform = std::unique_ptr<flatbuffers::Transform>(new flatbuffers::Transform(*_e)); }
@@ -258,12 +276,14 @@ inline ::flatbuffers::Offset<Node> CreateNode(::flatbuffers::FlatBufferBuilder &
   (void)_rehasher;
   (void)_o;
   struct _VectorArgs { ::flatbuffers::FlatBufferBuilder *__fbb; const NodeT* __o; const ::flatbuffers::rehasher_function_t *__rehasher; } _va = { &_fbb, _o, _rehasher}; (void)_va;
+  auto _class_ = _o->class_.empty() ? 0 : _fbb.CreateString(_o->class_);
   auto _name = _o->name.empty() ? 0 : _fbb.CreateString(_o->name);
   auto _mesh = _o->mesh;
   auto _transform = _o->transform ? _o->transform.get() : nullptr;
   auto _children = _o->children.size() ? _fbb.CreateVector<::flatbuffers::Offset<flatbuffers::Node>> (_o->children.size(), [](size_t i, _VectorArgs *__va) { return CreateNode(*__va->__fbb, __va->__o->children[i].get(), __va->__rehasher); }, &_va ) : 0;
   return flatbuffers::CreateNode(
       _fbb,
+      _class_,
       _name,
       _mesh,
       _transform,

@@ -1,5 +1,10 @@
 #include "SceneHierarchy.hpp"
 
+#include <Scene/Node/TransformNode.hpp>
+#include <Scene/Node/MeshNode.hpp>
+#include <Scene/Node/SkyLightNode.hpp>
+#include <Scene/Node/LightNode.hpp>
+
 #include <imgui.h>
 
 SceneHierarchy::SceneHierarchy(Engine::Scene& scene)
@@ -9,78 +14,86 @@ void SceneHierarchy::Draw()
 {
 	ImGui::Begin("Scene");
 
-	scene.ForEachEntity([&](Engine::Entity entity) {
-		EntityNode(entity, true);
-	});
-
-	if (ImGui::BeginPopupContextWindow("EntityMenu", ImGuiPopupFlags_NoOpenOverItems | ImGuiPopupFlags_MouseButtonRight))
+	if (ImGui::Button("Add Child"))
 	{
-		if (ImGui::MenuItem("Create Empty Entity"))
-		{
-			scene.CreateEntity();
-		}
+		ImGui::OpenPopup("##AddChild");
+	}
 
+	if (ImGui::BeginPopup("##AddChild"))
+	{
+		AddChildNode<Engine::Node>(scene.GetRoot());
+		AddChildNode<Engine::TransformNode>(scene.GetRoot());
+		AddChildNode<Engine::MeshNode>(scene.GetRoot());
+		AddChildNode<Engine::SkyLightNode>(scene.GetRoot());
+		AddChildNode<Engine::DirectionalLightNode>(scene.GetRoot());
+		AddChildNode<Engine::PointLightNode>(scene.GetRoot());
 		ImGui::EndPopup();
+	}
+
+	for (auto child: scene.GetRoot()->GetChildren())
+	{
+		DrawNode(child);
 	}
 
 	ImGui::End();
 }
 
-
-void SceneHierarchy::EntityNode(Engine::Entity entity, bool root)
+void SceneHierarchy::DrawNode(Engine::Node* node)
 {
-	if (entity.GetParent() && root)
-	{
-		return;
-	}
-
 	ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
 
-	std::vector<Engine::Entity> children = entity.GetChildren();
+	auto children = node->GetChildren();
 
 	if (children.size() == 0)
 	{
 		flags |= ImGuiTreeNodeFlags_Leaf;
 	}
 
-	if (selectedEntity == entity)
+	if (selectedNode == node)
 	{
 		flags |= ImGuiTreeNodeFlags_Selected;
-
-		if (onSelectEntityFn != nullptr)
-		{
-			onSelectEntityFn(selectedEntity);
-		}
 	}
 
-	auto name = entity.GetComponent<Engine::Component::Name>();
+	auto name = node->GetName();
 
-	auto id = (void*)(uint64_t)entity.GetHandle();
+	auto id = (void*)(uint64_t)node;
 
-	bool open = ImGui::TreeNodeEx(id, flags, name.name.c_str());
+	bool open = ImGui::TreeNodeEx(id, flags, name.data());
 
 	if (ImGui::IsItemClicked())
 	{
-		selectedEntity = entity;
+		selectedNode = node;
+
+		if (onSelectNodeFn != nullptr)
+		{
+			onSelectNodeFn(selectedNode);
+		}
 	}
 
 	ImGui::PushID(id);
 	if (ImGui::BeginPopupContextItem())
 	{
-		if (ImGui::MenuItem("Create Empty Entity"))
+		if (ImGui::BeginMenu("Add Child"))
 		{
-			auto empty = scene.CreateEntity();
-
-			empty.SetParent(entity);
+			AddChildNode<Engine::Node>(node);
+			AddChildNode<Engine::TransformNode>(node);
+			AddChildNode<Engine::MeshNode>(node);
+			AddChildNode<Engine::SkyLightNode>(node);
+			AddChildNode<Engine::DirectionalLightNode>(node);
+			AddChildNode<Engine::PointLightNode>(node);
+			ImGui::EndMenu();
 		}
 
-		if (ImGui::MenuItem("Destroy Entity"))
+		if (ImGui::MenuItem("Remove Node"))
 		{
-			scene.DestroyEntity(entity);
-
-			if (onSelectEntityFn != nullptr)
+			if (auto parent = node->GetParent())
 			{
-				onSelectEntityFn(Engine::Entity{});
+				parent->RemoveChild(node);
+			}
+
+			if (onSelectNodeFn != nullptr)
+			{
+				onSelectNodeFn(nullptr);
 			}
 		}
 
@@ -90,16 +103,16 @@ void SceneHierarchy::EntityNode(Engine::Entity entity, bool root)
 
 	if (open)
 	{
-		for (auto& child : children)
+		for (auto child : children)
 		{
-			EntityNode(child, false);
+			DrawNode(child);
 		}
 
 		ImGui::TreePop();
 	}
 }
 
-void SceneHierarchy::OnSelectEntity(std::function<void(Engine::Entity)> onSelectEntityFn)
+void SceneHierarchy::OnSelectNode(std::function<void(Engine::Node*)> onSelectNodeFn)
 {
-	this->onSelectEntityFn = onSelectEntityFn;
+	this->onSelectNodeFn = onSelectNodeFn;
 }

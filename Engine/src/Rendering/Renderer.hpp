@@ -1,32 +1,23 @@
 #pragma once
 
-#include <vulkan/vulkan.h>
-
-#include <glm/glm.hpp>
-
-#include "Core/Window.hpp"
-
-#include "Vulkan/Device.hpp"
-#include "Vulkan/Swapchain.hpp"
-#include "Vulkan/Image.hpp"
-#include "Vulkan/ImageView.hpp"
-#include "Vulkan/Buffer.hpp"
-#include "Vulkan/Framebuffer.hpp"
-#include "Vulkan/Pipeline.hpp"
-#include "Vulkan/PipelineLayout.hpp"
-#include "Vulkan/RenderPass.hpp"
-#include "Vulkan/DescriptorSetLayout.hpp"
 
 #include "Common/Singleton.hpp"
+#include "Resource/Resource.hpp"
+#include "Math/Transform.hpp"
+#include "Vulkan/CommandBuffer.hpp"
 
-#include "Mesh.hpp"
-#include "Texture.hpp"
-#include "Material.hpp"
-#include "Camera.hpp"
-#include "RenderFrame.hpp"
+#include "RenderPipeline.hpp"
+
+#include <vulkan/vulkan.h>
+#include <glm/glm.hpp>
 
 namespace Engine
 {
+	class Camera;
+	class RenderContext;
+	class Window;
+	class Scene;
+
 	struct HdrSettings
 	{
 		float exposure{ 1.0 };
@@ -37,49 +28,82 @@ namespace Engine
 		HdrSettings hdr;
 	};
 
+	struct MeshInstance
+	{
+		ResourceId mesh{ 0 };
+		glm::mat4 transform{};
+	};
+
+	struct DirectionalLightInstance
+	{
+		Transform transform{};
+		glm::vec3 color{1.f};
+		float intensity = 1.f;
+	};
+
+	struct PointLightInstance
+	{
+		Transform transform{};
+		glm::vec3 color{ 1.f };
+		float range = 1.f;
+	};
+
+	struct SkyLight
+	{
+		ResourceId cubemap{ 0 };
+	};
+
 	class Renderer : public Singleton<Renderer>
 	{
 	public:
-		Renderer(Vulkan::Device& device, std::unique_ptr<Vulkan::Swapchain> swapchain);
+		Renderer(std::unique_ptr<RenderPipeline>&& renderPipeline);
+		Renderer(Window& window, Scene& scene);
 
-		static void Setup(Vulkan::Device& device, const Vulkan::Surface& surface, const Window& window);
+		Uuid AddMeshInstance(const MeshInstance& instance);
+		void UpdateMeshInstance(Uuid id, const MeshInstance& instance);
+		const std::unordered_map<Uuid, MeshInstance>& GetMeshInstances() const;
+		void RemoveMeshInstance(Uuid id);
 
-		Vulkan::CommandBuffer* Begin();
-		void End(Vulkan::CommandBuffer& commandBuffer);
+		Uuid AddDirectionalLightInstance(const DirectionalLightInstance& instance);
+		void UpdateDirectionalLightInstance(Uuid id, const DirectionalLightInstance& instance);
+		const std::unordered_map<Uuid, DirectionalLightInstance>& GetDirectionalLights() const;
+		void RemoveDirectionalLightInstance(Uuid id);
+
+		Uuid AddPointLightInstance(const PointLightInstance& instance);
+		void UpdatePointLightInstance(Uuid id, const PointLightInstance& instance);
+		const std::unordered_map<Uuid, PointLightInstance>& GetPointLights() const;
+		void RemovePointLightInstance(Uuid id);
+
+		void SetSkyLight(SkyLight skyLight);
+		SkyLight GetSkyLight() const;
+
+		Vulkan::CommandBuffer& Begin();
+		void Draw();
+		void End();
 
 		void SetMainCamera(Camera& camera, glm::mat4 transform);
-
 		std::pair<Camera&, glm::mat4&> GetMainCamera();
-
-		RenderFrame& GetCurrentFrame() const;
-		uint32_t GetCurrentFrameIndex() const;
-		uint32_t GetFrameCount() const;
 
 		void SetSettings(RendererSettings settings);
 		RendererSettings GetSettings() const;
+
+		RenderContext& GetRenderContext();
+		RenderPipeline& GetRenderPipeline();
 	private:
-		void CreateFrames();
+		std::unique_ptr<RenderContext> context;
+		std::unique_ptr<RenderPipeline> pipeline;
 
-		Vulkan::Semaphore& Submit(Vulkan::CommandBuffer& commandBuffer);
+		Vulkan::CommandBuffer* activeCommandBuffer{ nullptr };
 
-		void Present(Vulkan::Semaphore& waitSemaphore);
-
-		bool RecreateSwapchain(bool force = false);
-
-		std::unique_ptr<RenderTarget> CreateTarget(std::unique_ptr<Vulkan::Image> swapchainImage);
-
-		uint32_t currentFrameIndex = 0;
-
-		std::unique_ptr<Vulkan::Swapchain> swapchain;
-		Vulkan::Semaphore* acquireSemaphore;
-
-		std::vector<std::unique_ptr<RenderFrame>> frames;
-
-		Camera* mainCamera;
-		glm::mat4 mainCameraTransform;
+		Camera* mainCamera{nullptr};
+		glm::mat4 mainTransform{};
 
 		RendererSettings settings;
 
-		Vulkan::Device& device;
+		std::unordered_map<Uuid, MeshInstance> meshInstances;
+		std::unordered_map<Uuid, DirectionalLightInstance> directionalLights;
+		std::unordered_map<Uuid, PointLightInstance> pointLights;
+
+		SkyLight skyLight;
 	};
 }

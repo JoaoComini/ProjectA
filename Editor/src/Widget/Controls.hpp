@@ -21,5 +21,5 @@ namespace Controls
 	void ResetButton(const std::string& label, float* value, ButtonCollors colors = ButtonCollors{}, float resetValue = 0.f);
 
 	template<typename T>
-	void Component(T* component);
+	void Node(T* node);
 };

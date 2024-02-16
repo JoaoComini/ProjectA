@@ -1,235 +1,131 @@
 #include "Renderer.hpp"
 
-#include <array>
-
 #include "Vulkan/CommandBuffer.hpp"
 #include "Vulkan/ShaderModule.hpp"
 
+#include "Camera.hpp"
 #include "Vertex.hpp"
 #include "Resource/ResourceManager.hpp"
+#include "RenderPipeline.hpp"
+#include "RenderContext.hpp"
+
+#include <array>
 
 namespace Engine
 {
 
-	void Renderer::Setup(Vulkan::Device& device, const Vulkan::Surface& surface, const Window& window)
+	Renderer::Renderer(Window& window, Scene& scene)
 	{
-		auto size = window.GetFramebufferSize();
-
-		auto swapchain = Vulkan::SwapchainBuilder()
-			.DesiredWidth(size.width)
-			.DesiredHeight(size.height)
-			.MinImageCount(3)
-			.Build(device, surface);
-
-		Create(device, std::move(swapchain));
+		context = std::make_unique<RenderContext>(window);
+		pipeline = std::make_unique<RenderPipeline>(*context, scene);
 	}
 
-	Renderer::Renderer(Vulkan::Device& device, std::unique_ptr<Vulkan::Swapchain> swapchain)
-		: device(device), swapchain(std::move(swapchain))
+	Uuid Renderer::AddMeshInstance(const MeshInstance& instance)
 	{
-		CreateFrames();
+		Uuid id{};
+
+		meshInstances.emplace(id, instance);
+
+		return id;
 	}
 
-	void Renderer::CreateFrames()
+	void Renderer::UpdateMeshInstance(Uuid id, const MeshInstance& instance)
 	{
-		VkExtent2D extent = swapchain->GetImageExtent();
-		VkFormat format = swapchain->GetImageFormat();
-
-		for (auto handle : swapchain->GetImages())
-		{
-			auto swapchainImage = std::make_unique<Vulkan::Image>(
-				device,
-				handle,
-				swapchain->GetImageUsage(),
-				format,
-				VkExtent3D{ extent.width, extent.height, 1 }
-			);
-
-			auto target = CreateTarget(std::move(swapchainImage));
-
-			auto frame = std::make_unique<RenderFrame>(device, std::move(target));
-
-			frames.emplace_back(std::move(frame));
-		}
+		meshInstances.insert_or_assign(id, instance);
 	}
 
-
-	Vulkan::CommandBuffer* Renderer::Begin()
+	const std::unordered_map<Uuid, MeshInstance>& Renderer::GetMeshInstances() const
 	{
-		auto& previousFrame = GetCurrentFrame();
-
-		acquireSemaphore = &previousFrame.RequestSemaphore();
-
-		auto result = swapchain->AcquireNextImageIndex(currentFrameIndex, *acquireSemaphore);
-
-		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
-		{
-			bool recreated = RecreateSwapchain(result == VK_ERROR_OUT_OF_DATE_KHR);
-
-			if (!recreated)
-			{
-				return nullptr; // FIX: use a fence pool to prevent the renderer from freezing
-			}
-
-			result = swapchain->AcquireNextImageIndex(currentFrameIndex, *acquireSemaphore);
-
-			if (result != VK_SUCCESS)
-			{
-				previousFrame.Reset();
-				return nullptr;
-			}
-		}
-
-		auto& frame = GetCurrentFrame();
-		frame.Reset();
-
-		auto& commandBuffer = frame.RequestCommandBuffer();
-
-		commandBuffer.Begin();
-
-		auto& target = Renderer::Get().GetCurrentFrame().GetTarget();
-
-		auto& views = target.GetViews();
-
-		{
-			Vulkan::ImageMemoryBarrierInfo barrier{};
-
-			barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-			barrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-			barrier.srcAccessMask = 0;
-			barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-			barrier.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-			barrier.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-
-			commandBuffer.ImageMemoryBarrier(*views[0], barrier);
-		}
-
-		return &commandBuffer;
+		return meshInstances;
 	}
 
-	void Renderer::End(Vulkan::CommandBuffer& commandBuffer)
+	void Renderer::RemoveMeshInstance(Uuid id)
 	{
-		commandBuffer.EndRenderPass();
+		meshInstances.erase(id);
+	}
 
-		auto& frame = GetCurrentFrame();
-		auto& views = frame.GetTarget().GetViews();
+	Uuid Renderer::AddDirectionalLightInstance(const DirectionalLightInstance& instance)
+	{
+		Uuid id{};
 
-		{
-			Vulkan::ImageMemoryBarrierInfo barrier{};
+		directionalLights.emplace(id, instance);
 
-			barrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-			barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-			barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-			barrier.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-			barrier.dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+		return id;
+	}
 
-			commandBuffer.ImageMemoryBarrier(*views[0], barrier);
-		}
+	void Renderer::UpdateDirectionalLightInstance(Uuid id, const DirectionalLightInstance& instance)
+	{
+		directionalLights.insert_or_assign(id, instance);
+	}
 
-		commandBuffer.End();
+	const std::unordered_map<Uuid, DirectionalLightInstance>& Renderer::GetDirectionalLights() const
+	{
+		return directionalLights;
+	}
 
-		Vulkan::Semaphore& waitSemaphore = Submit(commandBuffer);
+	void Renderer::RemoveDirectionalLightInstance(Uuid id)
+	{
+		directionalLights.erase(id);
+	}
 
-		Present(waitSemaphore);
+	Uuid Renderer::AddPointLightInstance(const PointLightInstance& instance)
+	{
+		Uuid id{};
 
-		acquireSemaphore = nullptr;
+		pointLights.emplace(id, instance);
+
+		return id;
+	}
+
+	void Renderer::UpdatePointLightInstance(Uuid id, const PointLightInstance& instance)
+	{
+		pointLights.insert_or_assign(id, instance);
+	}
+
+	const std::unordered_map<Uuid, PointLightInstance>& Renderer::GetPointLights() const
+	{
+		return pointLights;
+	}
+
+	void Renderer::RemovePointLightInstance(Uuid id)
+	{
+		pointLights.erase(id);
+	}
+
+	void Renderer::SetSkyLight(SkyLight skyLight)
+	{
+		this->skyLight = skyLight;
+	}
+
+	SkyLight Renderer::GetSkyLight() const
+	{
+		return skyLight;
+	}
+
+	Vulkan::CommandBuffer& Renderer::Begin()
+	{
+		return *(activeCommandBuffer = context->Begin());
+	}
+
+	void Renderer::Draw()
+	{
+		pipeline->Draw(*activeCommandBuffer);
+	}
+
+	void Renderer::End()
+	{
+		context->End(*activeCommandBuffer);
 	}
 
 	void Renderer::SetMainCamera(Camera& camera, glm::mat4 transform)
 	{
 		mainCamera = &camera;
-		mainCameraTransform = std::move(transform);
+		mainTransform = std::move(transform);
 	}
 
 	std::pair<Camera&, glm::mat4&> Renderer::GetMainCamera()
 	{
-		return { *mainCamera, mainCameraTransform };
-	}
-
-	Vulkan::Semaphore& Renderer::Submit(Vulkan::CommandBuffer& commandBuffer)
-	{
-		auto& frame = GetCurrentFrame();
-		Vulkan::Semaphore& renderFinishedSemaphore = frame.RequestSemaphore();
-		Vulkan::Fence& renderFence = frame.GetRenderFence();
-
-		device.GetGraphicsQueue().Submit(commandBuffer, *acquireSemaphore, renderFinishedSemaphore, renderFence);
-
-		return renderFinishedSemaphore;
-	}
-
-	void Renderer::Present(Vulkan::Semaphore& waitSemaphore)
-	{
-		auto result = device.GetPresentQueue().Present(*swapchain, waitSemaphore, currentFrameIndex);
-
-		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
-		{
-			RecreateSwapchain();
-		}
-		else if (result != VK_SUCCESS)
-		{
-			throw std::runtime_error("failed to present swap chain image!");
-		}
-	}
-
-	bool Renderer::RecreateSwapchain(bool force)
-	{
-		auto details = device.GetSurfaceSupportDetails();
-
-		VkExtent2D currentExtent = details.capabilities.currentExtent;
-		VkExtent2D swapchainExtent = swapchain->GetImageExtent();
-
-		if (currentExtent.width == 0 || currentExtent.height == 0)
-		{
-			return false;
-		}
-
-		if (currentExtent.width == swapchainExtent.width && currentExtent.height == swapchainExtent.height && !force)
-		{
-			return false;
-		}
-
-		device.WaitIdle();
-
-		swapchain->Recreate(currentExtent.width, currentExtent.height);
-
-		VkExtent2D extent = swapchain->GetImageExtent();
-		VkFormat format = swapchain->GetImageFormat();
-
-		auto it = frames.begin();
-
-		for (auto& handle : swapchain->GetImages())
-		{
-			auto swapchainImage = std::make_unique<Vulkan::Image>(
-				device,
-				handle,
-				swapchain->GetImageUsage(),
-				format,
-				VkExtent3D{ extent.width, extent.height, 1 }
-			);
-
-			auto target = CreateTarget(std::move(swapchainImage));
-
-			(*it)->SetTarget(std::move(target));
-
-			it++;
-		}
-
-		return true;
-	}
-
-	RenderFrame& Renderer::GetCurrentFrame() const
-	{
-		return *frames[currentFrameIndex];
-	}
-
-	uint32_t Renderer::GetCurrentFrameIndex() const
-	{
-		return currentFrameIndex;
-	}
-
-	uint32_t Renderer::GetFrameCount() const
-	{
-		return frames.size();
+		return { *mainCamera, mainTransform };
 	}
 
 	void Renderer::SetSettings(RendererSettings settings)
@@ -242,12 +138,13 @@ namespace Engine
 		return settings;
 	}
 
-	std::unique_ptr<RenderTarget> Renderer::CreateTarget(std::unique_ptr<Vulkan::Image> swapchainImage)
+	RenderContext& Renderer::GetRenderContext()
 	{
-		std::vector<std::unique_ptr<Vulkan::Image>> images;
+		return *context;
+	}
 
-		images.push_back(std::move(swapchainImage));
-
-		return std::make_unique<RenderTarget>(device, std::move(images));
+	RenderPipeline& Renderer::GetRenderPipeline()
+	{
+		return *pipeline;
 	}
 }

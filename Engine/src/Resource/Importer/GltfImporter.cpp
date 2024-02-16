@@ -18,6 +18,9 @@
 
 #include "Project/Project.hpp"
 
+#include "Scene/Node/MeshNode.hpp"
+#include "Scene/Node/TransformNode.hpp"
+
 #include <iostream>
 #include <queue>
 
@@ -255,29 +258,39 @@ namespace Engine
 
         for (auto& gltfNode : gltfModel.nodes)
         {
-            auto node = std::make_unique<Node>();
+            std::unique_ptr<Node> node = nullptr;
 
             if (gltfNode.mesh >= 0)
             {
-                node->SetMesh(meshes[gltfNode.mesh]);
+                node = std::make_unique<MeshNode>();
+                dynamic_cast<MeshNode&>(*node).SetMesh(meshes[gltfNode.mesh]);
+            }
+            else
+            {
+                node = std::make_unique<TransformNode>();
             }
 
-            auto& transform = node->GetTransform();
+            auto transform = Transform{};
+            glm::quat rotation{};
 
             if (!gltfNode.translation.empty())
             {
-                std::transform(gltfNode.translation.begin(), gltfNode.translation.end(), glm::value_ptr(transform.position), [](auto value) { return static_cast<float>(value); });
+                std::transform(gltfNode.translation.begin(), gltfNode.translation.end(), glm::value_ptr(transform.origin), [](auto value) { return static_cast<float>(value); });
             }
 
             if (!gltfNode.rotation.empty())
             {
-                std::transform(gltfNode.rotation.begin(), gltfNode.rotation.end(), glm::value_ptr(transform.rotation), [](auto value) { return static_cast<float>(value); });
+                std::transform(gltfNode.rotation.begin(), gltfNode.rotation.end(), glm::value_ptr(rotation), [](auto value) { return static_cast<float>(value); });
             }
 
             if (!gltfNode.name.empty())
             {
                 node->SetName(gltfNode.name);
             }
+
+            transform.basis.SetQuaternion(rotation);
+
+            //dynamic_cast<TransformNode&>(*node).SetTransform(transform);
 
             nodes.push_back(std::move(node));
         }
@@ -295,13 +308,13 @@ namespace Engine
         root->SetName(scene.name);
 
         auto model = std::make_shared<Prefab>();
-        model->SetRoot(*root);
+        model->SetRoot(root.get());
 
-        std::queue<std::pair<Node&, int>> traverseNodes;
+        std::queue<std::pair<Node*, int>> traverseNodes;
 
         for (auto nodeIndex : scene.nodes)
         {
-            traverseNodes.push(std::make_pair(std::ref(*root), nodeIndex));
+            traverseNodes.push(std::make_pair(root.get(), nodeIndex));
         }
 
         while (!traverseNodes.empty())
@@ -309,14 +322,14 @@ namespace Engine
             auto nodeIt = traverseNodes.front();
             traverseNodes.pop();
 
-            auto& current = *nodes[nodeIt.second];
+            auto& current = nodes[nodeIt.second];
             auto& parent = nodeIt.first;
 
-            parent.AddChild(current);
+            parent->AddChild(current.get());
 
             for (auto childIndex : gltfModel.nodes[nodeIt.second].children)
             {
-                traverseNodes.push(std::make_pair(std::ref(current), childIndex));
+                traverseNodes.push(std::make_pair(current.get(), childIndex));
             }
         }
 

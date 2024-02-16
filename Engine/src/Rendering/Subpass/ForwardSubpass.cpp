@@ -1,16 +1,17 @@
 #include "ForwardSubpass.hpp"
 
+#include "Rendering/Renderer.hpp"
 
 namespace Engine
 {
     ForwardSubpass::ForwardSubpass(
-        Vulkan::Device& device,
+        RenderContext& renderContext,
         Vulkan::ShaderSource&& vertexSource,
         Vulkan::ShaderSource&& fragmentSource,
         Scene& scene,
         Camera& shadowCamera,
         RenderTarget* shadowTarget
-    ) : GeometrySubpass { device, std::move(vertexSource), std::move(fragmentSource), scene },
+    ) : GeometrySubpass { renderContext, std::move(vertexSource), std::move(fragmentSource), scene },
         shadowCamera{ shadowCamera },
         shadowTarget{ shadowTarget }
     {
@@ -29,7 +30,7 @@ namespace Engine
         samplerCreateInfo.compareEnable = VK_TRUE;
         samplerCreateInfo.compareOp = VK_COMPARE_OP_GREATER_OR_EQUAL;
 
-        shadowMapSampler = std::make_unique<Vulkan::Sampler>(device, samplerCreateInfo);
+        shadowMapSampler = std::make_unique<Vulkan::Sampler>(GetRenderContext().GetDevice(), samplerCreateInfo);
     }
 
     void ForwardSubpass::Draw(Vulkan::CommandBuffer& commandBuffer)
@@ -37,35 +38,36 @@ namespace Engine
         LightsUniform lightsUniform{};
         ShadowUniform shadowUniform{};
 
-        auto [entity, found] = scene.FindFirstEntity<Component::Transform, Component::DirectionalLight>();
+        auto& directionalLights = Renderer::Get().GetDirectionalLights();
 
         size_t count = 0;
-        if (found)
+        for (auto& [_, light] : directionalLights)
         {
-            const auto& transform = entity.GetComponent<Component::Transform>();
-
             auto projection = shadowCamera.GetProjection();
-            auto view = glm::inverse(transform.GetLocalMatrix());
+            auto view = glm::inverse(light.transform.GetMatrix());
 
             shadowUniform.viewProjection = projection * view;
 
-            const auto& light = entity.GetComponent<Component::DirectionalLight>();
-
             lightsUniform.lights[count].color = {light.color, light.intensity};
-            lightsUniform.lights[count].vector = glm::vec4{transform.rotation * glm::vec3{0.f, 0.f, 1.f}, 1.f};
+
+            auto rotation = glm::quat(light.transform.basis.GetEulerNormalized());
+
+            lightsUniform.lights[count].vector = glm::vec4{ rotation * glm::vec3{0.f, 0.f, 1.f}, 1.f};
 
             count++;
+
+            break;
         }
 
-        scene.ForEachEntity<Component::Transform, Component::PointLight>([&](Entity entity) {
-            const auto& transform = entity.GetComponent<Component::Transform>();
-            const auto& light = entity.GetComponent<Component::PointLight>();
+        auto& pointLights = Renderer::Get().GetPointLights();
 
+        for (auto& [_, light] : pointLights)
+        {
             lightsUniform.lights[count].color = { light.color, light.range };
-            lightsUniform.lights[count].vector = { transform.position, 0.f };
-
+            lightsUniform.lights[count].vector = { light.transform.origin, 0.f };
+            
             count++;
-        });
+        }
 
         lightsUniform.count = count;
 
@@ -80,7 +82,7 @@ namespace Engine
 
     void ForwardSubpass::UpdateLightUniform(Vulkan::CommandBuffer& commandBuffer, LightsUniform uniform)
     {
-        auto& frame = Renderer::Get().GetCurrentFrame();
+        auto& frame = GetRenderContext().GetCurrentFrame();
 
         auto allocation = frame.RequestBufferAllocation(Vulkan::BufferUsageFlags::UNIFORM, sizeof(LightsUniform));
 
@@ -98,7 +100,7 @@ namespace Engine
 
     void ForwardSubpass::UpdateShadowUniform(Vulkan::CommandBuffer& commandBuffer, ShadowUniform uniform)
     {
-        auto& frame = Renderer::Get().GetCurrentFrame();
+        auto& frame = GetRenderContext().GetCurrentFrame();
 
         auto allocation = frame.RequestBufferAllocation(Vulkan::BufferUsageFlags::UNIFORM, sizeof(ShadowUniform));
 

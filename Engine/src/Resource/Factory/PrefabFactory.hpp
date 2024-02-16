@@ -19,7 +19,7 @@ namespace Engine
 		std::shared_ptr<Prefab> Load(std::filesystem::path source) override;
 
 	private:
-		flatbuffers::Offset<flatbuffers::Node> WriteNode(flatbuffers::FlatBufferBuilder& builder, Node& node);
+		flatbuffers::Offset<flatbuffers::Node> WriteNode(flatbuffers::FlatBufferBuilder& builder, Node* node);
 		void ReadNodes(flatbuffers::NodeT& buffer, Node* parent, std::vector<std::unique_ptr<Node>>& nodes);
 
 	};

@@ -12,7 +12,7 @@ namespace Engine
 	{
 	public:
 		SkyboxSubpass(
-			Vulkan::Device& device,
+			RenderContext& renderContext,
 			Vulkan::ShaderSource&& vertexSource,
 			Vulkan::ShaderSource&& fragmentSource,
 			Scene &scene

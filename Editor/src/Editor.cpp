@@ -9,10 +9,11 @@
 #include "Resource/ResourceManager.hpp"
 #include "Resource/Prefab.hpp"
 #include "Rendering/Cubemap.hpp"
+#include "Rendering/Renderer.hpp"
 
 #include "Platform/FileDialog.hpp"
 #include "Project/Project.hpp"
-#include "Scene/SceneSerializer.hpp"
+#include "Scene/Node/SkyLightNode.hpp"
 
 namespace Engine
 {
@@ -34,15 +35,15 @@ namespace Engine
 		camera = std::make_unique<EditorCamera>(glm::radians(60.f), (float)width / height, 0.1f, 2000.f);
 
 		sceneHierarchy = std::make_unique<SceneHierarchy>(GetScene());
-		entityInspector = std::make_unique<EntityInspector>();
+		nodeInspector = std::make_unique<NodeInspector>();
 		mainMenuBar = std::make_unique<MainMenuBar>();
-		contentBrowser = std::make_unique<ContentBrowser>(GetDevice(), GetScene());
+		contentBrowser = std::make_unique<ContentBrowser>(Renderer::Get().GetRenderContext().GetDevice(), GetScene());
 		viewportDragDrop = std::make_unique<ViewportDragDrop>();
-		entityGizmo = std::make_unique<EntityGizmo>(*camera);
+		transformNodeGizmo = std::make_unique<TransformNodeGizmo>(*camera);
 
-		sceneHierarchy->OnSelectEntity([&](auto entity) {
-			entityInspector->SetEntity(entity);
-			entityGizmo->SetEntity(entity);
+		sceneHierarchy->OnSelectNode([&](Node* node) {
+			nodeInspector->SetNode(node);
+			transformNodeGizmo->SetTransformNode(dynamic_cast<TransformNode*>(node));
 		});
 
 		mainMenuBar->OnExit([&]() {
@@ -82,7 +83,7 @@ namespace Engine
 
 	Editor::~Editor()
 	{
-		GetDevice().WaitIdle();
+		Renderer::Get().GetRenderContext().GetDevice().WaitIdle();
 	}
 
 	void Editor::OnUpdate(float timestep)
@@ -104,9 +105,9 @@ namespace Engine
 
 		mainMenuBar->Draw();
 		sceneHierarchy->Draw();
-		entityInspector->Draw();
+		nodeInspector->Draw();
 		contentBrowser->Draw();
-		entityGizmo->Draw();
+		transformNodeGizmo->Draw();
     }
 
 	void Editor::DrawViewportDragDrop(ImGuiID dockId)
@@ -133,11 +134,8 @@ namespace Engine
 
 	void Editor::NewScene()
 	{
-		Scene scene;
-		SetScene(scene);
-
-		entityInspector->SetEntity({});
-		entityGizmo->SetEntity({});
+		nodeInspector->SetNode(nullptr);
+		transformNodeGizmo->SetTransformNode(nullptr);
 	}
 
 	void Editor::SaveScene()
@@ -161,50 +159,23 @@ namespace Engine
 	{
 		auto scene = ResourceManager::Get().LoadResource<Scene>(id);
 
-		SetScene(*scene);
-
-		entityInspector->SetEntity({});
-		entityGizmo->SetEntity({});
-	}
-
-	void AddEntity(Scene& scene, Node& node, Entity* parent)
-	{
-		auto entity = scene.CreateEntity();
-
-		auto& transform = entity.AddComponent<Engine::Component::Transform>(node.GetTransform());
-
-		if (node.GetMesh())
-		{
-			entity.AddComponent<Engine::Component::MeshRender>(node.GetMesh());
-		}
-
-		entity.GetComponent<Engine::Component::Name>().name = node.GetName();
-
-		if (parent)
-		{
-			entity.SetParent(*parent);
-		}
-
-		for (auto& child : node.GetChildren())
-		{
-			AddEntity(scene, *child, &entity);
-		}
+		nodeInspector->SetNode(nullptr);
+		transformNodeGizmo->SetTransformNode(nullptr);
 	}
 
 	void Editor::AddPrefabToScene(ResourceId id)
 	{
 		auto prefab = ResourceManager::Get().LoadResource<Prefab>(id);
 
-		for (auto child : prefab->GetRoot().GetChildren())
-		{
-			AddEntity(GetScene(), *child, nullptr);
-		}
+		GetScene().GetRoot()->AddChild(prefab->Instantiate());
 	}
 
 	void Editor::AddSkyLightToScene(ResourceId id)
 	{
-		auto entity = GetScene().CreateEntity();
-		entity.AddComponent<Component::SkyLight>(id);
+		auto node = new SkyLightNode();
+		node->SetCubemap(id);
+
+		GetScene().GetRoot()->AddChild(std::move(node));
 	}
 
 	void Editor::ImportFile()

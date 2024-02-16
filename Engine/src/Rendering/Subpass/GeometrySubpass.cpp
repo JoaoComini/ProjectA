@@ -3,15 +3,16 @@
 #include "Resource/ResourceManager.hpp"
 
 #include "Vulkan/Caching/ResourceCache.hpp"
+#include "Rendering/Renderer.hpp"
 
 namespace Engine
 {
 	GeometrySubpass::GeometrySubpass(
-		Vulkan::Device& device,
+		RenderContext& renderContext,
 		Vulkan::ShaderSource&& vertexSource,
 		Vulkan::ShaderSource&& fragmentSource,
 		Scene& scene
-	) : Subpass{ device, std::move(vertexSource), std::move(fragmentSource) }, scene(scene)
+	) : Subpass{ renderContext, std::move(vertexSource), std::move(fragmentSource) }, scene(scene)
 	{
 	}
 
@@ -45,59 +46,38 @@ namespace Engine
 		commandBuffer.SetVertexInputState(vertexInputState);
 		commandBuffer.SetMultisampleState(multisampleState);
 	}
-	
-	glm::mat4 GetEntityWorldMatrix(Entity entity)
-	{
-		auto parent = entity.GetParent();
-		auto& transform = entity.GetComponent<Component::Transform>();
-
-		if (!parent)
-		{
-			return transform.GetLocalMatrix();
-		}
-
-		auto parentTransform = parent.TryGetComponent<Component::Transform>();
-
-		if (!parentTransform)
-		{
-			return transform.GetLocalMatrix();
-		}
-
-		return GetEntityWorldMatrix(parent) * transform.GetLocalMatrix();
-	}
 
 	void GeometrySubpass::Draw(Vulkan::CommandBuffer& commandBuffer)
 	{
 		PreparePipelineState(commandBuffer);
 
-		scene.ForEachEntity<Component::Transform, Component::MeshRender>(
-			[&](Entity entity) {
-				glm::mat4 transform = GetEntityWorldMatrix(entity);
+		auto& instances = Renderer::Get().GetMeshInstances();
 
-				UpdateGlobalUniform(commandBuffer, transform);
+		for (auto& [_, instance] : instances)
+		{
+			UpdateGlobalUniform(commandBuffer, instance.transform);
 
-				auto mesh = GetMeshFromEntity(entity);
+			auto mesh = ResourceManager::Get().LoadResource<Mesh>(instance.mesh);
 
-				if (!mesh)
-				{
-					return;
-				}
-
-				for (auto& primitive : mesh->GetPrimitives())
-				{
-					auto material = GetMaterialFromPrimitive(*primitive);
-
-					if (!material)
-					{
-						continue;
-					}
-
-					UpdateModelUniform(commandBuffer, *material);
-
-					primitive->Draw(commandBuffer);
-				}
+			if (!mesh)
+			{
+				return;
 			}
-		);
+
+			for (auto& primitive : mesh->GetPrimitives())
+			{
+				auto material = GetMaterialFromPrimitive(*primitive);
+
+				if (!material)
+				{
+					continue;
+				}
+
+				UpdateModelUniform(commandBuffer, *material);
+
+				primitive->Draw(commandBuffer);
+			}
+		}
 	}
 
 	void GeometrySubpass::UpdateGlobalUniform(Vulkan::CommandBuffer& commandBuffer, const glm::mat4& transform)
@@ -109,7 +89,7 @@ namespace Engine
 		uniform.viewProjection = projection * view;
 		uniform.cameraPosition = glm::inverse(view)[3];
 
-		auto& frame = Renderer::Get().GetCurrentFrame();
+		auto& frame = GetRenderContext().GetCurrentFrame();
 
 		auto allocation = frame.RequestBufferAllocation(Vulkan::BufferUsageFlags::UNIFORM, sizeof(GlobalUniform));
 
@@ -125,13 +105,6 @@ namespace Engine
 		return { glm::inverse(transform), camera.GetProjection() };
 	}
 
-	std::shared_ptr<Mesh> GeometrySubpass::GetMeshFromEntity(Entity entity)
-	{
-		auto& meshRender = entity.GetComponent<Component::MeshRender>();
-
-		return ResourceManager::Get().LoadResource<Mesh>(meshRender.mesh);
-	}
-
 	std::shared_ptr<Material> GeometrySubpass::GetMaterialFromPrimitive(const Primitive& primitive)
 	{
 		ResourceId materialId = primitive.GetMaterial();
@@ -141,30 +114,24 @@ namespace Engine
 
 	void GeometrySubpass::UpdateModelUniform(Vulkan::CommandBuffer& commandBuffer, const Material& material)
 	{
-		auto& frame = Renderer::Get().GetCurrentFrame();
+		auto& frame = GetRenderContext().GetCurrentFrame();
 
-		auto albedo = ResourceManager::Get().LoadResource<Texture>(material.GetAlbedoTexture());
-
-		if (albedo)
+		if (auto albedo = ResourceManager::Get().LoadResource<Texture>(material.GetAlbedoTexture()))
 		{
 			BindImage(albedo->GetImageView(), albedo->GetSampler(), 0, 1, 0);
 		}
 
-		auto normal = ResourceManager::Get().LoadResource<Texture>(material.GetNormalTexture());
-
-		if (normal)
+		if (auto normal = ResourceManager::Get().LoadResource<Texture>(material.GetNormalTexture()))
 		{
 			BindImage(normal->GetImageView(), normal->GetSampler(), 0, 2, 0);
 		}
 
-		auto metallicRoughness = ResourceManager::Get().LoadResource<Texture>(material.GetMetallicRoughnessTexture());
-
-		if (metallicRoughness)
+		if (auto metallicRoughness = ResourceManager::Get().LoadResource<Texture>(material.GetMetallicRoughnessTexture()))
 		{
 			BindImage(metallicRoughness->GetImageView(), metallicRoughness->GetSampler(), 0, 3, 0);
 		}
 
-		auto& resourceCache = device.GetResourceCache();
+		auto& resourceCache = GetRenderContext().GetDevice().GetResourceCache();
 
 		auto& variant = material.GetShaderVariant();
 

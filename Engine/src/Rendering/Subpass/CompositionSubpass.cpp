@@ -6,13 +6,13 @@
 namespace Engine
 {
     CompositionSubpass::CompositionSubpass(
-        Vulkan::Device& device,
+        RenderContext& renderContext,
         Vulkan::ShaderSource&& vertexSource,
         Vulkan::ShaderSource&& fragmentSource,
         RenderTarget* gBufferTarget
-    ) : Subpass{ device, std::move(vertexSource), std::move(fragmentSource) }, gBufferTarget(gBufferTarget)
+    ) : Subpass{ renderContext, std::move(vertexSource), std::move(fragmentSource) }, gBufferTarget(gBufferTarget)
     {
-        auto properties = device.GetPhysicalDeviceProperties();
+        auto properties = GetRenderContext().GetDevice().GetPhysicalDeviceProperties();
         VkSamplerCreateInfo sampler = { VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
         sampler.magFilter = VK_FILTER_NEAREST;
         sampler.minFilter = VK_FILTER_NEAREST;
@@ -26,7 +26,7 @@ namespace Engine
         sampler.maxLod = 1.0f;
         sampler.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 
-        gBufferSampler = std::make_unique<Vulkan::Sampler>(device, sampler);
+        gBufferSampler = std::make_unique<Vulkan::Sampler>(GetRenderContext().GetDevice(), sampler);
     }
 
     void CompositionSubpass::Draw(Vulkan::CommandBuffer& commandBuffer)
@@ -39,12 +39,12 @@ namespace Engine
 
         auto settings = Renderer::Get().GetSettings();
 
-        auto allocation = Renderer::Get().GetCurrentFrame().RequestBufferAllocation(Vulkan::BufferUsageFlags::UNIFORM, sizeof(HdrSettings));
+        auto allocation = GetRenderContext().GetCurrentFrame().RequestBufferAllocation(Vulkan::BufferUsageFlags::UNIFORM, sizeof(HdrSettings));
         allocation.SetData(&settings.hdr);
 
         BindBuffer(allocation.GetBuffer(), allocation.GetOffset(), allocation.GetSize(), 0, 1, 0);
 
-        auto& resourceCache = device.GetResourceCache();
+        auto& resourceCache = GetRenderContext().GetDevice().GetResourceCache();
 
         auto& vertexShader = resourceCache.RequestShaderModule(VK_SHADER_STAGE_VERTEX_BIT, GetVertexShader(), {});
         auto& fragmentShader = resourceCache.RequestShaderModule(VK_SHADER_STAGE_FRAGMENT_BIT, GetFragmentShader(), {});

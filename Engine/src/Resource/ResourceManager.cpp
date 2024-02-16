@@ -3,6 +3,8 @@
 #include "ResourceManager.hpp"
 
 #include "Rendering/Cubemap.hpp"
+#include "Rendering/Renderer.hpp"
+#include "Rendering/RenderContext.hpp"
 
 #include "Importer/GltfImporter.hpp"
 #include "Importer/TextureImporter.hpp"
@@ -15,8 +17,7 @@
 
 namespace Engine
 {
-    ResourceManager::ResourceManager(Vulkan::Device& device)
-        : device(device)
+    ResourceManager::ResourceManager() : device(Renderer::Get().GetRenderContext().GetDevice())
     {
     }
 

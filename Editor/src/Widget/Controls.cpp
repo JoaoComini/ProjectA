@@ -3,7 +3,8 @@
 #include <imgui.h>
 #include <glm/glm.hpp>
 
-#include <Scene/Components.hpp>
+#include <Scene/Node/TransformNode.hpp>
+#include <Scene/Node/LightNode.hpp>
 
 #include <Rendering/Camera.hpp>
 
@@ -82,65 +83,69 @@ namespace Controls
 	}
 
 	template<>
-	void Component(Engine::Component::Transform* transform)
+	void Node(Engine::TransformNode* node)
 	{
-		glm::vec3 rotation = glm::degrees(glm::eulerAngles(transform->rotation));
+		auto position = node->GetPosition();
+		auto rotation = glm::degrees(node->GetRotation());
+		auto scale = node->GetScale();
 
-		Controls::Vec3("Position", transform->position);
+		Controls::Vec3("Position", position);
 		Controls::Vec3("Rotation", rotation);
-		Controls::Vec3("Scale", transform->scale, 1.f);
+		Controls::Vec3("Scale", scale, 1.f);
 
-		transform->rotation = glm::quat(glm::radians(rotation));
+		node->SetPosition(position);
+		node->SetRotation(glm::radians(rotation));
+		node->SetScale(scale);
 	}
 
 	template<>
-	void Component(Engine::Component::Camera* component)
+	void Node(Engine::DirectionalLightNode* node)
 	{
-		auto camera = dynamic_cast<Engine::PerspectiveCamera *>(component->camera);
+		float intensity = node->GetIntensity();
+		glm::vec3 color = node->GetColor();
 
-		float fov = glm::degrees(camera->GetFov());
-		float near = camera->GetNear();
-		float far = camera->GetFar();
+		ImGui::ColorEdit4("Color", &color.r, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoAlpha);
+		ImGui::SliderFloat("Intensity", &intensity, 0.1f, 5.f);
 
-		if (Controls::Float("FOV", &fov))
-		{
-			camera->SetFov(glm::radians(fov));
-		}
-
-		if (Controls::Float("Near", &near, 0.1f))
-		{
-			camera->SetNear(near);
-		}
-
-		if (Controls::Float("Far", &far, 0.1f))
-		{
-			camera->SetFar(far);
-		}
+		node->SetIntensity(intensity);
+		node->SetColor(color);
 	}
 
 	template<>
-	void Component(Engine::Component::MeshRender* component)
+	void Node(Engine::PointLightNode* node)
 	{
-		ImGui::TextDisabled(component->mesh.ToString().c_str());
+		float range = node->GetRange();
+		glm::vec3 color = node->GetColor();
+
+		ImGui::ColorEdit4("Color", &color.r, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoAlpha);
+		ImGui::SliderFloat("Range", &range, 0.1f, 1000.f);
+
+		node->SetRange(range);
+		node->SetColor(color);
 	}
 
-	template<>
-	void Component(Engine::Component::DirectionalLight* component)
-	{
-		ImGui::ColorEdit4("Color", &component->color.r, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoAlpha);
-		ImGui::SliderFloat("Intensity", &component->intensity, 0.1f, 5.f);
-	}
+	//template<>
+	//void Component(Engine::Component::Camera* component)
+	//{
+	//	auto camera = dynamic_cast<Engine::PerspectiveCamera *>(component->camera);
 
-	template<>
-	void Component(Engine::Component::PointLight* component)
-	{
-		ImGui::ColorEdit4("Color", &component->color.r, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoAlpha);
-		ImGui::SliderFloat("Range", &component->range, 0.1f, 1000.f);
-	}
+	//	float fov = glm::degrees(camera->GetFov());
+	//	float near = camera->GetNear();
+	//	float far = camera->GetFar();
 
-	template<>
-	void Component(Engine::Component::SkyLight* component)
-	{
-		ImGui::TextDisabled(component->cubemap.ToString().c_str());
-	}
+	//	if (Controls::Float("FOV", &fov))
+	//	{
+	//		camera->SetFov(glm::radians(fov));
+	//	}
+
+	//	if (Controls::Float("Near", &near, 0.1f))
+	//	{
+	//		camera->SetNear(near);
+	//	}
+
+	//	if (Controls::Float("Far", &far, 0.1f))
+	//	{
+	//		camera->SetFar(far);
+	//	}
+	//}
 };

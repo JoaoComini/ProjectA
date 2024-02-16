@@ -8,7 +8,7 @@ namespace Engine
 	{
 	public:
 		CompositionSubpass(
-			Vulkan::Device& device,
+			RenderContext& renderContext,
 			Vulkan::ShaderSource&& vertexSource,
 			Vulkan::ShaderSource&& fragmentSource,
 			RenderTarget* gBufferTarget

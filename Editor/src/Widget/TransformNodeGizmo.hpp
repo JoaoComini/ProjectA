@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Scene/Entity.hpp>
+#include <Scene/Node/TransformNode.hpp>
 
 #include <imgui.h>
 #include <ImGuizmo.h>
@@ -8,18 +8,18 @@
 #include "Widget.hpp"
 #include "../EditorCamera.hpp"
 
-class EntityGizmo : public Widget
+class TransformNodeGizmo : public Widget
 {
 public:
-	EntityGizmo(EditorCamera& camera);
+	TransformNodeGizmo(EditorCamera& camera);
 
     void Draw() override;
 
-	void SetEntity(Engine::Entity entity);
+	void SetTransformNode(Engine::TransformNode* node);
 
 private:
 	EditorCamera& camera;
-    Engine::Entity entity{};
+	Engine::TransformNode* node{ nullptr };
 
 	ImGuizmo::OPERATION operation = ImGuizmo::OPERATION::TRANSLATE;
 };

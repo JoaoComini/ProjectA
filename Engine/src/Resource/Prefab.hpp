@@ -4,58 +4,12 @@
 
 #include <string_view>
 
-#include "Scene/Components.hpp"
+#include "Scene/Node/Node.hpp"
 
 #include "Resource.hpp"
 
 namespace Engine
 {
-	struct Node
-	{
-
-	public:
-		void SetName(std::string name)
-		{
-			this->name.name = name;
-		}
-
-		std::string_view GetName()
-		{
-			return name.name;
-		}
-
-		void SetMesh(ResourceId id)
-		{
-			this->meshRender.mesh = id;
-		}
-
-		ResourceId GetMesh()
-		{
-			return meshRender.mesh;
-		}
-
-		Component::Transform& GetTransform()
-		{
-			return transform;
-		}
-
-		void AddChild(Node& child)
-		{
-			children.push_back(&child);
-		}
-
-		const std::vector<Node*> GetChildren() const
-		{
-			return children;
-		}
-
-	private:
-		Component::Name name;
-		Component::Transform transform;
-		Component::MeshRender meshRender;
-
-		std::vector<Node *> children;
-	};
 
 	class Prefab : public Resource
 	{
@@ -65,14 +19,14 @@ namespace Engine
 			this->nodes = std::move(nodes);
 		}
 
-		Node& GetRoot()
+		Node* GetRoot()
 		{
-			return *root;
+			return root;
 		}
 
-		void SetRoot(Node& node)
+		void SetRoot(Node* node)
 		{
-			root = &node;
+			root = node;
 		}
 
 		static ResourceType GetStaticType()
@@ -83,6 +37,11 @@ namespace Engine
 		virtual ResourceType GetType() const override
 		{
 			return GetStaticType();
+		}
+
+		Node* Instantiate()
+		{
+			return root->Clone();
 		}
 
 	private:

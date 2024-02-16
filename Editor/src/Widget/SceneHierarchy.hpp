@@ -2,6 +2,8 @@
 
 #include <Scene/Scene.hpp>
 
+#include <imgui.h>
+
 #include "Widget.hpp"
 
 class SceneHierarchy: public Widget
@@ -12,12 +14,25 @@ public:
 
 	void Draw() override;
 
-	void OnSelectEntity(std::function<void(Engine::Entity)> onSelectEntityFn);
+	template<typename T>
+	void AddChildNode(Engine::Node* parent)
+	{
+		auto label = T::GetStaticClass();
+		if (ImGui::MenuItem(label.data()))
+		{
+			parent->AddChild(new T());
+
+			ImGui::CloseCurrentPopup();
+		}
+	}
+
+	void OnSelectNode(std::function<void(Engine::Node*)> onSelectNodeFn);
 
 private:
-	void EntityNode(Engine::Entity entity, bool root);
+	void DrawNode(Engine::Node* node);
 
 	Engine::Scene& scene;
-	Engine::Entity selectedEntity;
-	std::function<void(Engine::Entity)> onSelectEntityFn;
+	Engine::Node* selectedNode{ nullptr };
+
+	std::function<void(Engine::Node*)> onSelectNodeFn;
 };
