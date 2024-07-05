@@ -3,6 +3,7 @@
 #include "Subpass.hpp"
 #include "Scene/Scene.hpp"
 
+#include "Rendering/Mesh.hpp"
 
 namespace Engine
 {
@@ -29,7 +30,7 @@ namespace Engine
 	{
 	public:
 		GeometrySubpass(
-			Vulkan::Device& device,
+			RenderContext& renderContext,
 			Vulkan::ShaderSource&& vertexSource,
 			Vulkan::ShaderSource&& fragmentSource,
 			Scene& scene
@@ -45,7 +46,6 @@ namespace Engine
 		Scene& scene;
 	private:
 		void UpdateGlobalUniform(Vulkan::CommandBuffer& commandBuffer, const glm::mat4& transform);
-		std::shared_ptr<Mesh> GetMeshFromEntity(Entity entity);
 		std::shared_ptr<Material> GetMaterialFromPrimitive(const Primitive& primitive);
 		void UpdateModelUniform(Vulkan::CommandBuffer& commandBuffer, const Material& material);
 

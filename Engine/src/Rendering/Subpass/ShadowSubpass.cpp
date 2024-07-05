@@ -2,36 +2,23 @@
 
 #include "Vulkan/Caching/ResourceCache.hpp"
 
+#include "Rendering/Renderer.hpp"
+
 namespace Engine
 {
     ShadowSubpass::ShadowSubpass(
-        Vulkan::Device& device,
+        RenderContext& renderContext,
         Vulkan::ShaderSource&& vertexSource,
         Vulkan::ShaderSource&& fragmentSource,
         Scene& scene,
 		Camera& shadowCamera
-    ) : GeometrySubpass{device, std::move(vertexSource), std::move(fragmentSource), scene}, shadowCamera(shadowCamera)
+    ) : GeometrySubpass{renderContext, std::move(vertexSource), std::move(fragmentSource), scene}, shadowCamera(shadowCamera)
     {
     }
 
-	void ShadowSubpass::Draw(Vulkan::CommandBuffer& commandBuffer)
-	{
-		auto [entity, found] = scene.FindFirstEntity<Component::Transform, Component::DirectionalLight>();
-
-		if (!found)
-		{
-			light = Entity{};
-			return;
-		}
-
-		light = entity;
-
-		GeometrySubpass::Draw(commandBuffer);
-	}
-
 	Vulkan::PipelineLayout& ShadowSubpass::GetPipelineLayout(const std::vector<Vulkan::ShaderModule*>& shaders)
 	{
-		return device.GetResourceCache().RequestPipelineLayout({ shaders[0] });
+		return GetRenderContext().GetDevice().GetResourceCache().RequestPipelineLayout({ shaders[0] });
 	}
 
 	void ShadowSubpass::PreparePipelineState(Vulkan::CommandBuffer& commandBuffer)
@@ -54,12 +41,14 @@ namespace Engine
 
 	std::pair<glm::mat4, glm::mat4> ShadowSubpass::GetViewProjection() const
     {
-		if (!light)
+		auto [entity, found] = scene.FindFirstEntity<Component::Transform, Component::DirectionalLight>();
+
+		if (!found)
 		{
 			return {};
 		}
 
-		const auto& transform = light.GetComponent<Component::Transform>();
+		const auto& transform = entity.GetComponent<Component::Transform>();
 
 		auto projection = shadowCamera.GetProjection();
 		auto view = glm::inverse(transform.GetLocalMatrix());

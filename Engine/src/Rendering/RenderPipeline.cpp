@@ -1,5 +1,7 @@
 #include "RenderPipeline.hpp"
 
+#include "Scene/Scene.hpp"
+
 #include "Subpass/ForwardSubpass.hpp"
 #include "Subpass/SkyboxSubpass.hpp"
 #include "Subpass/ShadowSubpass.hpp"
@@ -7,8 +9,8 @@
 
 namespace Engine
 {
-    RenderPipeline::RenderPipeline(Vulkan::Device& device, Scene& scene)
-		: device(device), scene(scene)
+    RenderPipeline::RenderPipeline(RenderContext& renderContext, Scene& scene)
+		: renderContext(renderContext), scene(scene)
     {
 		shadowCamera = std::make_unique<OrthographicCamera>(-200.f, 200.f, -200.f, 200.f, 120.f, -120.f);
 
@@ -22,7 +24,7 @@ namespace Engine
 		gBufferTarget = CreateGBufferPassTarget();
 
 		auto forwardSubpass = std::make_unique<ForwardSubpass>(
-			device,
+			renderContext,
 			Vulkan::ShaderSource{ "resources/shaders/forward.vert" },
 			Vulkan::ShaderSource{ "resources/shaders/forward.frag" },
 			scene,
@@ -31,10 +33,10 @@ namespace Engine
 		);
 
 		forwardSubpass->SetOutputAttachments({ 2 });
-		forwardSubpass->SetSampleCount(device.GetMaxSampleCount());
+		forwardSubpass->SetSampleCount(renderContext.GetDevice().GetMaxSampleCount());
 
 		auto skyboxSubpass = std::make_unique<SkyboxSubpass>(
-			device,
+			renderContext,
 			Vulkan::ShaderSource{ "resources/shaders/skybox.vert" },
 			Vulkan::ShaderSource{ "resources/shaders/skybox.frag" },
 			scene
@@ -42,13 +44,13 @@ namespace Engine
 
 		skyboxSubpass->SetOutputAttachments({ 2 });
 		skyboxSubpass->SetColorResolveAttachments({ 0 });
-		skyboxSubpass->SetSampleCount(device.GetMaxSampleCount());
+		skyboxSubpass->SetSampleCount(renderContext.GetDevice().GetMaxSampleCount());
 
 		std::vector<std::unique_ptr<Subpass>> subpasses;
 		subpasses.push_back(std::move(forwardSubpass));
 		subpasses.push_back(std::move(skyboxSubpass));
 
-		mainPass = std::make_unique<Pass>(device, std::move(subpasses));
+		mainPass = std::make_unique<Pass>(renderContext.GetDevice(), std::move(subpasses));
 
 		std::vector<Vulkan::LoadStoreInfo> loadStoreInfos
 		{
@@ -72,10 +74,10 @@ namespace Engine
 
 	std::unique_ptr<RenderTarget> RenderPipeline::CreateGBufferPassTarget()
 	{
-		auto extent = Renderer::Get().GetCurrentFrame().GetTarget().GetExtent();
+		auto extent = renderContext.GetCurrentFrame().GetTarget().GetExtent();
 
 		auto colorResolve = std::make_unique<Vulkan::Image>(
-			device,
+			renderContext.GetDevice(),
 			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
 			VK_FORMAT_R16G16B16A16_SFLOAT,
 			VkExtent3D{ extent.width, extent.height, 1 },
@@ -83,19 +85,19 @@ namespace Engine
 		);
 
 		auto depth = std::make_unique<Vulkan::Image>(
-			device,
+			renderContext.GetDevice(),
 			VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
 			VK_FORMAT_D32_SFLOAT,
 			VkExtent3D{ extent.width, extent.height, 1 },
-			device.GetMaxSampleCount()
+			renderContext.GetDevice().GetMaxSampleCount()
 		);
 
 		auto color = std::make_unique<Vulkan::Image>(
-			device,
+			renderContext.GetDevice(),
 			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
 			VK_FORMAT_R16G16B16A16_SFLOAT,
 			VkExtent3D{ extent.width, extent.height, 1 },
-			device.GetMaxSampleCount()
+			renderContext.GetDevice().GetMaxSampleCount()
 		);
 
 		std::vector<std::unique_ptr<Vulkan::Image>> images;
@@ -103,7 +105,7 @@ namespace Engine
 		images.push_back(std::move(depth));
 		images.push_back(std::move(color));
 
-		return std::make_unique<RenderTarget>(device, std::move(images));
+		return std::make_unique<RenderTarget>(renderContext.GetDevice(), std::move(images));
 	}
 
 	void RenderPipeline::SetupShadowPass()
@@ -114,7 +116,7 @@ namespace Engine
 		auto fragmentSource = Vulkan::ShaderSource{ "resources/shaders/shadowmap.frag" };
 
 		auto subpass = std::make_unique<ShadowSubpass>(
-			device,
+			renderContext,
 			std::move(vertexSource),
 			std::move(fragmentSource),
 			scene,
@@ -124,7 +126,7 @@ namespace Engine
 		std::vector<std::unique_ptr<Subpass>> subpasses;
 		subpasses.push_back(std::move(subpass));
 
-		shadowPass = std::make_unique<Pass>(device, std::move(subpasses));
+		shadowPass = std::make_unique<Pass>(renderContext.GetDevice(), std::move(subpasses));
 
 		shadowPass->Prepare(*shadowTarget);
 	}
@@ -132,7 +134,7 @@ namespace Engine
 	std::unique_ptr<RenderTarget> RenderPipeline::CreateShadowPassTarget()
 	{
 		auto depthImage = std::make_unique<Vulkan::Image>(
-			device,
+			renderContext.GetDevice(),
 			VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
 			VK_FORMAT_D32_SFLOAT,
 			VkExtent3D{ 4096, 4096, 1 }
@@ -142,7 +144,7 @@ namespace Engine
 
 		images.push_back(std::move(depthImage));
 
-		return std::make_unique<RenderTarget>(device, std::move(images));
+		return std::make_unique<RenderTarget>(renderContext.GetDevice(), std::move(images));
 	}
 
 	void RenderPipeline::SetupCompositionPass()
@@ -151,7 +153,7 @@ namespace Engine
 		auto fragmentSource = Vulkan::ShaderSource{ "resources/shaders/composition.frag" };
 
 		auto subpass = std::make_unique<CompositionSubpass>(
-			device,
+			renderContext,
 			std::move(vertexSource),
 			std::move(fragmentSource),
 			gBufferTarget.get()
@@ -160,7 +162,7 @@ namespace Engine
 		std::vector<std::unique_ptr<Subpass>> subpasses;
 		subpasses.push_back(std::move(subpass));
 
-		compositionPass = std::make_unique<Pass>(device, std::move(subpasses));
+		compositionPass = std::make_unique<Pass>(renderContext.GetDevice(), std::move(subpasses));
 
 		compositionPass->SetLoadStoreInfos({
 			{
@@ -169,7 +171,7 @@ namespace Engine
 			}
 		});
 
-		compositionPass->Prepare(Renderer::Get().GetCurrentFrame().GetTarget());
+		compositionPass->Prepare(renderContext.GetCurrentFrame().GetTarget());
 	}
 
 	void RenderPipeline::Draw(Vulkan::CommandBuffer& commandBuffer)
@@ -218,8 +220,8 @@ namespace Engine
 	{
 		{
 			if (
-				gBufferTarget->GetExtent().width != Renderer::Get().GetCurrentFrame().GetTarget().GetExtent().width ||
-				gBufferTarget->GetExtent().height != Renderer::Get().GetCurrentFrame().GetTarget().GetExtent().height
+				gBufferTarget->GetExtent().width != renderContext.GetCurrentFrame().GetTarget().GetExtent().width ||
+				gBufferTarget->GetExtent().height != renderContext.GetCurrentFrame().GetTarget().GetExtent().height
 				)
 			{
 				*gBufferTarget = std::move(*CreateGBufferPassTarget());
@@ -277,7 +279,7 @@ namespace Engine
 
 	void RenderPipeline::DrawCompositionPass(Vulkan::CommandBuffer& commandBuffer)
 	{
-		auto& target = Renderer::Get().GetCurrentFrame().GetTarget();
+		auto& target = renderContext.GetCurrentFrame().GetTarget();
 
 		VkExtent2D extent = target.GetExtent();
 

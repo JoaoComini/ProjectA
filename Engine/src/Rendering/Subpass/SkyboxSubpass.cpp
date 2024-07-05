@@ -15,13 +15,13 @@ namespace Engine
     };
 
     SkyboxSubpass::SkyboxSubpass(
-        Vulkan::Device& device,
+        RenderContext& renderContext,
         Vulkan::ShaderSource&& vertexSource,
         Vulkan::ShaderSource&& fragmentSource,
         Scene& scene
-    ) : Subpass {device, std::move(vertexSource), std::move(fragmentSource)}, scene(scene)
+    ) : Subpass {renderContext, std::move(vertexSource), std::move(fragmentSource)}, scene(scene)
     {
-        cube = Mesh::BuiltIn::Cube(device);
+        cube = Mesh::BuiltIn::Cube(renderContext.GetDevice());
     }
 
     void SkyboxSubpass::Draw(Vulkan::CommandBuffer& commandBuffer)
@@ -42,7 +42,7 @@ namespace Engine
 
         auto skybox = ResourceManager::Get().LoadResource<Cubemap>(skyLight.cubemap);
 
-        auto& resourceCache = device.GetResourceCache();
+        auto& resourceCache = GetRenderContext().GetDevice().GetResourceCache();
 
         auto& vertexShader = resourceCache.RequestShaderModule(VK_SHADER_STAGE_VERTEX_BIT, GetVertexShader(), {});
         auto& fragmentShader = resourceCache.RequestShaderModule(VK_SHADER_STAGE_FRAGMENT_BIT, GetFragmentShader(), {});
@@ -77,7 +77,7 @@ namespace Engine
         GlobalUniform uniform{};
         uniform.viewProjection = projection * view;
 
-        auto& frame = Renderer::Get().GetCurrentFrame();
+        auto& frame = GetRenderContext().GetCurrentFrame();
 
         auto allocation = frame.RequestBufferAllocation(Vulkan::BufferUsageFlags::UNIFORM, sizeof(GlobalUniform));
 

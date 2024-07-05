@@ -6,8 +6,8 @@
 
 namespace Engine
 {
-    Subpass::Subpass(Vulkan::Device& device, Vulkan::ShaderSource&& vertexSource, Vulkan::ShaderSource&& fragmentSource)
-        : device(device), vertexShader(vertexSource), fragmentShader(fragmentSource)
+    Subpass::Subpass(RenderContext& renderContext, Vulkan::ShaderSource&& vertexSource, Vulkan::ShaderSource&& fragmentSource)
+        : renderContext(renderContext), vertexShader(vertexSource), fragmentShader(fragmentSource)
     {
     }
 
@@ -28,7 +28,7 @@ namespace Engine
 
     void Subpass::FlushDescriptorSet(Vulkan::CommandBuffer& commandBuffer, Vulkan::PipelineLayout& pipelineLayout, uint32_t set)
     {
-        auto& frame = Renderer::Get().GetCurrentFrame();
+        auto& frame = renderContext.GetCurrentFrame();
 
         auto& descritorSetLayout = pipelineLayout.GetDescriptorSetLayout(set);
 
@@ -37,9 +37,14 @@ namespace Engine
         commandBuffer.BindDescriptorSet(descriptorSet);
     }
 
+    RenderContext& Subpass::GetRenderContext()
+    {
+        return renderContext;
+    }
+
     Vulkan::PipelineLayout& Subpass::GetPipelineLayout(const std::vector<Vulkan::ShaderModule*>& shaders)
     {
-        return device.GetResourceCache().RequestPipelineLayout(shaders);
+        return renderContext.GetDevice().GetResourceCache().RequestPipelineLayout(shaders);
     }
 
     const Vulkan::ShaderSource& Subpass::GetVertexShader() const

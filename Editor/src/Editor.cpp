@@ -36,7 +36,7 @@ namespace Engine
 		sceneHierarchy = std::make_unique<SceneHierarchy>(GetScene());
 		entityInspector = std::make_unique<EntityInspector>();
 		mainMenuBar = std::make_unique<MainMenuBar>();
-		contentBrowser = std::make_unique<ContentBrowser>(GetDevice(), GetScene());
+		contentBrowser = std::make_unique<ContentBrowser>(Renderer::Get().GetRenderContext().GetDevice(), GetScene());
 		viewportDragDrop = std::make_unique<ViewportDragDrop>();
 		entityGizmo = std::make_unique<EntityGizmo>(*camera);
 
@@ -82,7 +82,7 @@ namespace Engine
 
 	Editor::~Editor()
 	{
-		GetDevice().WaitIdle();
+		Renderer::Get().GetRenderContext().GetDevice().WaitIdle();
 	}
 
 	void Editor::OnUpdate(float timestep)

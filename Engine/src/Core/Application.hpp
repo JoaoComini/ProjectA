@@ -3,17 +3,9 @@
 #include <memory>
 #include <vector>
 
-#include "Vulkan/Instance.hpp"
-#include "Vulkan/PhysicalDevice.hpp"
-#include "Vulkan/Device.hpp"
-
-#include "Rendering/Renderer.hpp"
-#include "Rendering/RenderPipeline.hpp"
-#include "Rendering/Gui.hpp"
 #include "Scene/Scene.hpp"
 
 #include "Window.hpp"
-#include "WindowSurface.hpp"
 
 namespace Engine {
 
@@ -57,21 +49,10 @@ namespace Engine {
 
 		Window& GetWindow();
 
-		Vulkan::Device& GetDevice();
-
-		void SetupVulkan();
-
 		void SetCameraAspectRatio(Entity entity);
 
 		std::unique_ptr<Window> window;
-		std::unique_ptr<Vulkan::Instance> instance;
-		std::unique_ptr<Vulkan::Surface> surface;
-		std::unique_ptr<Vulkan::PhysicalDevice> physicalDevice;
-		std::unique_ptr<Vulkan::Device> device;
-
 		std::unique_ptr<Scene> scene;
-
-		std::unique_ptr<RenderPipeline> renderPipeline;
 
 		bool running = false;
 	};

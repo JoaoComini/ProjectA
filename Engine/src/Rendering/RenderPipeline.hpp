@@ -2,14 +2,14 @@
 
 #include "Pass/Pass.hpp"
 
-#include "Scene/Scene.hpp"
-
 namespace Engine
 {
+	class Scene;
+
 	class RenderPipeline
 	{
 	public:
-		RenderPipeline(Vulkan::Device& device, Scene& scene);
+		RenderPipeline(RenderContext& renderContext, Scene& scene);
 
 		void Draw(Vulkan::CommandBuffer& commandBuffer);
 
@@ -37,7 +37,7 @@ namespace Engine
 		std::unique_ptr<RenderTarget> shadowTarget;
 		std::unique_ptr<RenderTarget> gBufferTarget;
 
+		RenderContext& renderContext;
 		Scene& scene;
-		Vulkan::Device& device;
 	};
 }

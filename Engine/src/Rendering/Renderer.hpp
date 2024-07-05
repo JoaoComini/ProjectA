@@ -1,32 +1,22 @@
 #pragma once
 
-#include <vulkan/vulkan.h>
-
-#include <glm/glm.hpp>
-
-#include "Core/Window.hpp"
-
-#include "Vulkan/Device.hpp"
-#include "Vulkan/Swapchain.hpp"
-#include "Vulkan/Image.hpp"
-#include "Vulkan/ImageView.hpp"
-#include "Vulkan/Buffer.hpp"
-#include "Vulkan/Framebuffer.hpp"
-#include "Vulkan/Pipeline.hpp"
-#include "Vulkan/PipelineLayout.hpp"
-#include "Vulkan/RenderPass.hpp"
-#include "Vulkan/DescriptorSetLayout.hpp"
 
 #include "Common/Singleton.hpp"
+#include "Resource/Resource.hpp"
+#include "Vulkan/CommandBuffer.hpp"
 
-#include "Mesh.hpp"
-#include "Texture.hpp"
-#include "Material.hpp"
-#include "Camera.hpp"
-#include "RenderFrame.hpp"
+#include "RenderPipeline.hpp"
+#include "RenderContext.hpp"
+
+#include <vulkan/vulkan.h>
+#include <glm/glm.hpp>
 
 namespace Engine
 {
+	class Camera;
+	class Window;
+	class Scene;
+
 	struct HdrSettings
 	{
 		float exposure{ 1.0 };
@@ -40,46 +30,29 @@ namespace Engine
 	class Renderer : public Singleton<Renderer>
 	{
 	public:
-		Renderer(Vulkan::Device& device, std::unique_ptr<Vulkan::Swapchain> swapchain);
+		Renderer(Window& window, Scene& scene);
 
-		static void Setup(Vulkan::Device& device, const Vulkan::Surface& surface, const Window& window);
-
-		Vulkan::CommandBuffer* Begin();
-		void End(Vulkan::CommandBuffer& commandBuffer);
+		Vulkan::CommandBuffer& Begin();
+		void Draw();
+		void End();
 
 		void SetMainCamera(Camera& camera, glm::mat4 transform);
-
 		std::pair<Camera&, glm::mat4&> GetMainCamera();
-
-		RenderFrame& GetCurrentFrame() const;
-		uint32_t GetCurrentFrameIndex() const;
-		uint32_t GetFrameCount() const;
 
 		void SetSettings(RendererSettings settings);
 		RendererSettings GetSettings() const;
+
+		RenderContext& GetRenderContext();
+		RenderPipeline& GetRenderPipeline();
 	private:
-		void CreateFrames();
+		std::unique_ptr<RenderContext> context;
+		std::unique_ptr<RenderPipeline> pipeline;
 
-		Vulkan::Semaphore& Submit(Vulkan::CommandBuffer& commandBuffer);
+		Vulkan::CommandBuffer* activeCommandBuffer{ nullptr };
 
-		void Present(Vulkan::Semaphore& waitSemaphore);
-
-		bool RecreateSwapchain(bool force = false);
-
-		std::unique_ptr<RenderTarget> CreateTarget(std::unique_ptr<Vulkan::Image> swapchainImage);
-
-		uint32_t currentFrameIndex = 0;
-
-		std::unique_ptr<Vulkan::Swapchain> swapchain;
-		Vulkan::Semaphore* acquireSemaphore;
-
-		std::vector<std::unique_ptr<RenderFrame>> frames;
-
-		Camera* mainCamera;
-		glm::mat4 mainCameraTransform;
+		Camera* mainCamera{ nullptr };
+		glm::mat4 mainTransform{};
 
 		RendererSettings settings;
-
-		Vulkan::Device& device;
 	};
 }

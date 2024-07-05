@@ -109,6 +109,7 @@ set(ENGINE_SRC_FILES
     "src/Rendering/Material.cpp"
     "src/Rendering/Mesh.cpp"
     "src/Rendering/Renderer.cpp"
+    "src/Rendering/RenderContext.cpp"
     "src/Rendering/RenderTarget.cpp"
     "src/Rendering/RenderPipeline.cpp"
     "src/Rendering/Texture.cpp"

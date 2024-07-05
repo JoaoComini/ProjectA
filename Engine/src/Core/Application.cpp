@@ -5,12 +5,11 @@
 
 #include "GLFW/glfw3.h"
 
-#include "Vulkan/DescriptorPool.hpp"
-
 #include "Scene/Scene.hpp"
 #include "Scene/Components.hpp"
 
 #include "Rendering/Gui.hpp"
+#include "Rendering/Renderer.hpp"
 
 #include "Resource/ResourceManager.hpp"
 #include "Resource/ResourceRegistry.hpp"
@@ -44,39 +43,20 @@ namespace Engine {
 			}
 		);
 
-		SetupVulkan();
-
-		Renderer::Setup(*device, *surface, *window);
-
-		ResourceManager::Create(*device);
-		ResourceRegistry::Create();
-		Input::Create<WindowInput>(*window);
-
 		scene = std::make_unique<Scene>();
 		scene->OnComponentAdded<Component::Camera, &Application::SetCameraAspectRatio>(this);
 
-		renderPipeline = std::make_unique<RenderPipeline>(*device, *scene);
-
-		Gui::Setup(*instance, *device, *physicalDevice, *window, renderPipeline->GetLastRenderPass());
+		Renderer::Create(*window, *scene);
+		Gui::Create(*window);
+		ResourceManager::Create();
+		ResourceRegistry::Create();
+		Input::Create<WindowInput>(*window);
 
 		running = true;
 	}
 
-	void Application::SetupVulkan()
-	{
-		instance = Vulkan::InstanceBuilder().Build();
-
-		surface = window->CreateSurface(*instance);
-
-		physicalDevice = Vulkan::PhysicalDevicePicker::PickBestSuitable(*instance, *surface);
-
-		device = std::make_unique<Vulkan::Device>(*instance, *physicalDevice);
-	}
-
 	Application::~Application()
 	{
-		device->WaitIdle();
-
 		Container::TearDown();
 	}
 
@@ -93,20 +73,19 @@ namespace Engine {
 			auto timestep = std::chrono::duration<float>(currentTime - lastTime);
 			lastTime = currentTime;
 
-			if (auto commandBuffer = Renderer::Get().Begin())
-			{
-				OnUpdate(timestep.count());
+			OnUpdate(timestep.count());
 
-				renderPipeline->Draw(*commandBuffer);
+			auto& commandBuffer = Renderer::Get().Begin();
 
-				Gui::Get().Begin();
+			Renderer::Get().Draw();
 
-				OnGui();
+			Gui::Get().Begin();
 
-				Gui::Get().End(*commandBuffer);
+			OnGui();
 
-				Renderer::Get().End(*commandBuffer);
-			}
+			Gui::Get().End(commandBuffer);
+
+			Renderer::Get().End();
 		}
 	}
 
@@ -146,10 +125,5 @@ namespace Engine {
 	Window& Application::GetWindow()
 	{
 		return *window;
-	}
-
-	Vulkan::Device& Application::GetDevice()
-	{
-		return *device;
 	}
 }

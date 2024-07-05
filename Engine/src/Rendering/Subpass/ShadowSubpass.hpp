@@ -10,14 +10,12 @@ namespace Engine
 	{
 	public:
 		ShadowSubpass(
-			Vulkan::Device& device,
+			RenderContext& renderContext,
 			Vulkan::ShaderSource&& vertexSource,
 			Vulkan::ShaderSource&& fragmentSource,
 			Scene& scene,
 			Camera& shadowCamera
 		);
-
-		virtual void Draw(Vulkan::CommandBuffer& commandBuffer) override;
 
 	protected:
 		virtual Vulkan::PipelineLayout& GetPipelineLayout(const std::vector<Vulkan::ShaderModule*>& shaders) override;
@@ -27,7 +25,5 @@ namespace Engine
 
 	private:
 		Camera& shadowCamera;
-
-		Entity light{};
 	};
 }

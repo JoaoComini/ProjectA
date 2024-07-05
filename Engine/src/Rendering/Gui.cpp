@@ -1,6 +1,13 @@
 #include "Gui.hpp"
 
+#include "Vulkan/DescriptorPool.hpp"
+#include "Vulkan/CommandBuffer.hpp"
+
 #include "Rendering/Renderer.hpp"
+#include "Rendering/RenderContext.hpp"
+#include "Rendering/RenderPipeline.hpp"
+
+#include "Core/Window.hpp"
 
 #include <imgui.h>
 #include <ImGuizmo.h>
@@ -12,7 +19,8 @@
 
 namespace Engine
 {
-    void Gui::Setup(Vulkan::Instance& instance, Vulkan::Device& device, Vulkan::PhysicalDevice& physicalDevice, Window& window, Vulkan::RenderPass& renderPass)
+    Gui::Gui(Window& window)
+		: window(window)
     {
 		std::vector<VkDescriptorPoolSize> poolSizes =
 		{
@@ -29,7 +37,7 @@ namespace Engine
 			{ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
 		};
 
-		std::unique_ptr<Vulkan::DescriptorPool> descriptorPool = std::make_unique<Vulkan::DescriptorPool>(device, poolSizes, 1000);
+		descriptorPool = std::make_unique<Vulkan::DescriptorPool>(Renderer::Get().GetRenderContext().GetDevice(), poolSizes, 1000);
 
 		ImGui::CreateContext();
 
@@ -43,27 +51,32 @@ namespace Engine
 		ImGui_ImplGlfw_InitForVulkan(static_cast<GLFWwindow*>(window.GetHandle()), true);
 
 		ImGui_ImplVulkan_InitInfo initInfo = {};
-		initInfo.Instance = instance.GetHandle();
-		initInfo.PhysicalDevice = physicalDevice.GetHandle();
-		initInfo.Device = device.GetHandle();
-		initInfo.Queue = device.GetGraphicsQueue().GetHandle();
+		initInfo.Instance = Renderer::Get().GetRenderContext().GetInstance().GetHandle();
+		initInfo.PhysicalDevice = Renderer::Get().GetRenderContext().GetPhysicalDevice().GetHandle();
+		initInfo.Device = Renderer::Get().GetRenderContext().GetDevice().GetHandle();
+		initInfo.Queue = Renderer::Get().GetRenderContext().GetDevice().GetGraphicsQueue().GetHandle();
 		initInfo.DescriptorPool = descriptorPool->GetHandle();
 		initInfo.MinImageCount = 3;
 		initInfo.ImageCount = 3;
 		initInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 
-		ImGui_ImplVulkan_Init(&initInfo, renderPass.GetHandle());
+		ImGui_ImplVulkan_Init(&initInfo, Renderer::Get().GetRenderPipeline().GetLastRenderPass().GetHandle());
 
-		device.OneTimeSubmit([](Vulkan::CommandBuffer& buffer) {
+		Renderer::Get().GetRenderContext().GetDevice().OneTimeSubmit([](Vulkan::CommandBuffer& buffer) {
 			ImGui_ImplVulkan_CreateFontsTexture(buffer.GetHandle());
 		});
 
-		device.ResetCommandPool();
+		Renderer::Get().GetRenderContext().GetDevice().ResetCommandPool();
 
 		ImGui_ImplVulkan_DestroyFontUploadObjects();
-
-		Create(std::move(descriptorPool), window);
     }
+
+	Gui::~Gui()
+	{
+		ImGui_ImplVulkan_Shutdown();
+		ImGui_ImplGlfw_Shutdown();
+		ImGui::DestroyContext();
+	}
 
 	void Gui::Begin()
 	{
@@ -88,15 +101,5 @@ namespace Engine
 		io.DisplaySize = ImVec2((float)width, (float)height);
 
 		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer.GetHandle());
-	}
-
-	Gui::Gui(std::unique_ptr<Vulkan::DescriptorPool> descriptorPool, Window& window)
-		: descriptorPool(std::move(descriptorPool)), window(window) { }
-
-	Gui::~Gui()
-	{
-		ImGui_ImplVulkan_Shutdown();
-		ImGui_ImplGlfw_Shutdown();
-		ImGui::DestroyContext();
 	}
 };

@@ -1,16 +1,17 @@
 #include "ForwardSubpass.hpp"
 
+#include "Rendering/Renderer.hpp"
 
 namespace Engine
 {
     ForwardSubpass::ForwardSubpass(
-        Vulkan::Device& device,
+        RenderContext& renderContext,
         Vulkan::ShaderSource&& vertexSource,
         Vulkan::ShaderSource&& fragmentSource,
         Scene& scene,
         Camera& shadowCamera,
         RenderTarget* shadowTarget
-    ) : GeometrySubpass { device, std::move(vertexSource), std::move(fragmentSource), scene },
+    ) : GeometrySubpass { renderContext, std::move(vertexSource), std::move(fragmentSource), scene },
         shadowCamera{ shadowCamera },
         shadowTarget{ shadowTarget }
     {
@@ -29,7 +30,7 @@ namespace Engine
         samplerCreateInfo.compareEnable = VK_TRUE;
         samplerCreateInfo.compareOp = VK_COMPARE_OP_GREATER_OR_EQUAL;
 
-        shadowMapSampler = std::make_unique<Vulkan::Sampler>(device, samplerCreateInfo);
+        shadowMapSampler = std::make_unique<Vulkan::Sampler>(GetRenderContext().GetDevice(), samplerCreateInfo);
     }
 
     void ForwardSubpass::Draw(Vulkan::CommandBuffer& commandBuffer)
@@ -51,8 +52,8 @@ namespace Engine
 
             const auto& light = entity.GetComponent<Component::DirectionalLight>();
 
-            lightsUniform.lights[count].color = {light.color, light.intensity};
-            lightsUniform.lights[count].vector = glm::vec4{transform.rotation * glm::vec3{0.f, 0.f, 1.f}, 1.f};
+            lightsUniform.lights[count].color = { light.color, light.intensity };
+            lightsUniform.lights[count].vector = glm::vec4{ transform.rotation * glm::vec3{0.f, 0.f, 1.f}, 1.f };
 
             count++;
         }
@@ -80,7 +81,7 @@ namespace Engine
 
     void ForwardSubpass::UpdateLightUniform(Vulkan::CommandBuffer& commandBuffer, LightsUniform uniform)
     {
-        auto& frame = Renderer::Get().GetCurrentFrame();
+        auto& frame = GetRenderContext().GetCurrentFrame();
 
         auto allocation = frame.RequestBufferAllocation(Vulkan::BufferUsageFlags::UNIFORM, sizeof(LightsUniform));
 
@@ -98,7 +99,7 @@ namespace Engine
 
     void ForwardSubpass::UpdateShadowUniform(Vulkan::CommandBuffer& commandBuffer, ShadowUniform uniform)
     {
-        auto& frame = Renderer::Get().GetCurrentFrame();
+        auto& frame = GetRenderContext().GetCurrentFrame();
 
         auto allocation = frame.RequestBufferAllocation(Vulkan::BufferUsageFlags::UNIFORM, sizeof(ShadowUniform));
 

@@ -1,14 +1,14 @@
 #pragma once
 
 #include <memory>
-#include <vector>
+#include <list>
 
 class Container
 {
 public:
 	static void Register(std::shared_ptr<void> instance)
 	{
-		singletons.push_back(instance);
+		singletons.emplace_front(instance);
 	}
 
 	static void TearDown()
@@ -18,7 +18,7 @@ public:
 
 private:
 	Container() = default;
-	inline static std::vector<std::shared_ptr<void>> singletons;
+	inline static std::list<std::shared_ptr<void>> singletons;
 };
 
 

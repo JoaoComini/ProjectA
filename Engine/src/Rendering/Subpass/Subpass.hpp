@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Rendering/Camera.hpp"
+#include "Rendering/RenderContext.hpp"
 #include "Rendering/RenderFrame.hpp"
 
 #include "Vulkan/CommandBuffer.hpp"
@@ -14,7 +15,7 @@ namespace Engine
 	class Subpass
 	{
 	public:
-		Subpass(Vulkan::Device& device, Vulkan::ShaderSource&& vertexSource, Vulkan::ShaderSource&& fragmentSource);
+		Subpass(RenderContext& renderContext, Vulkan::ShaderSource&& vertexSource, Vulkan::ShaderSource&& fragmentSource);
 		virtual ~Subpass() = default;
 
 		virtual void Prepare(Vulkan::RenderPass& renderPass);
@@ -39,6 +40,8 @@ namespace Engine
 		void SetSampleCount(VkSampleCountFlagBits sampleCount);
 		VkSampleCountFlagBits GetSampleCount() const;
 	protected:
+		RenderContext& GetRenderContext();
+
 		void BindImage(const Vulkan::ImageView& imageView, const Vulkan::Sampler& sampler, uint32_t set, uint32_t binding, uint32_t array_element);
 		void BindBuffer(const Vulkan::Buffer& buffer, uint32_t offset, uint32_t size, uint32_t set, uint32_t binding, uint32_t arrayElement);
 
@@ -49,8 +52,9 @@ namespace Engine
 		VkSampleCountFlagBits sampleCount{ VK_SAMPLE_COUNT_1_BIT };
 
 		Vulkan::RenderPass* renderPass = nullptr;
-		Vulkan::Device& device;
 	private:
+		RenderContext& renderContext;
+
 		Vulkan::ShaderSource vertexShader;
 		Vulkan::ShaderSource fragmentShader;
 
