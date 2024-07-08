@@ -17,9 +17,8 @@ namespace Vulkan
 
         VkApplicationInfo appInfo{};
         appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-        appInfo.pApplicationName = "Hello Triangle";
+        appInfo.pApplicationName = "ProjectA";
         appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-        appInfo.pEngineName = "No Engine";
         appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
         appInfo.apiVersion = VK_API_VERSION_1_3;
 
@@ -76,6 +75,8 @@ namespace Vulkan
         const char **glfwExtensions = glfwGetRequiredInstanceExtensions(&count);
 
         std::vector<const char *> extensions(glfwExtensions, glfwExtensions + count);
+
+        extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 
 #ifndef NDEBUG
         extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);

@@ -3,7 +3,6 @@
 #include <vulkan/vulkan.h>
 
 #include "PipelineLayout.hpp"
-#include "RenderPass.hpp"
 
 #include <vector>
 
@@ -47,10 +46,17 @@ namespace Vulkan
 		bool operator==(DepthStencilState const&) const = default;
 	};
 
+	struct PipelineRenderingState
+	{
+		std::vector<VkFormat> colorAttachmentFormats;
+		VkFormat depthAttachmentFormat;
+
+		bool operator==(PipelineRenderingState const&) const = default;
+	};
+
 	class PipelineState
 	{
 	public:
-		void SetRenderPass(const RenderPass& renderPass);
 		void SetPipelineLayout(PipelineLayout& pipelineLayout);
 
 		void SetVertexInputState(const VertexInputState& state);
@@ -58,13 +64,13 @@ namespace Vulkan
 		void SetInputAssemblyState(const InputAssemblyState& state);
 		void SetRasterizationState(const RasterizationState& state);
 		void SetDepthStencilState(const DepthStencilState& state);
+		void SetPipelineRenderingState(const PipelineRenderingState& state);
 
 		void SetSubpassIndex(uint32_t index);
 
 		void ClearDirty();
 		void Reset();
 
-		const RenderPass* GetRenderPass() const;
 		const PipelineLayout* GetPipelineLayout() const;
 		
 		const VertexInputState& GetVertexInputState() const;
@@ -72,6 +78,7 @@ namespace Vulkan
 		const InputAssemblyState& GetInputAssemblyState() const;
 		const RasterizationState& GetRasterizationState() const;
 		const DepthStencilState& GetDepthStencilState() const;
+		const PipelineRenderingState& GetPipelineRenderingState() const;
 
 		uint32_t GetSubpassIndex() const;
 
@@ -80,7 +87,6 @@ namespace Vulkan
 	private:
 		bool dirty{ false };
 
-		const RenderPass* renderPass{ nullptr };
 		PipelineLayout* pipelineLayout { nullptr };
 
 		VertexInputState vertexInput{};
@@ -88,6 +94,7 @@ namespace Vulkan
 		InputAssemblyState inputAssembly{};
 		RasterizationState rasterization{};
 		DepthStencilState depthStencil{};
+		PipelineRenderingState pipelineRendering{};
 
 		uint32_t subpassIndex{ 0 };
 	};
@@ -102,10 +109,25 @@ namespace std
 		{
 			size_t hash{ 0 };
 
-			HashCombine(hash, state.GetRenderPass());
 			HashCombine(hash, state.GetPipelineLayout());
+			HashCombine(hash, state.GetPipelineRenderingState());
 
 			return hash;
 		}
 	};
+
+	template <>
+	struct hash<Vulkan::PipelineRenderingState>
+	{
+		size_t operator()(const Vulkan::PipelineRenderingState& state) const
+		{
+			size_t hash{ 0 };
+			
+			HashCombine(hash, state.colorAttachmentFormats);
+			HashCombine(hash, state.depthAttachmentFormat);
+
+			return hash;
+		}
+	};
+
 };

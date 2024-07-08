@@ -2,6 +2,7 @@
 
 #include "Vulkan/DescriptorPool.hpp"
 #include "Vulkan/CommandBuffer.hpp"
+#include "Vulkan/Swapchain.hpp"
 
 #include "Rendering/Renderer.hpp"
 #include "Rendering/RenderContext.hpp"
@@ -59,8 +60,10 @@ namespace Engine
 		initInfo.MinImageCount = 3;
 		initInfo.ImageCount = 3;
 		initInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+		initInfo.UseDynamicRendering = true;
+		initInfo.ColorAttachmentFormat = Renderer::Get().GetRenderContext().GetSwapchain().GetImageFormat();
 
-		ImGui_ImplVulkan_Init(&initInfo, Renderer::Get().GetRenderPipeline().GetLastRenderPass().GetHandle());
+		ImGui_ImplVulkan_Init(&initInfo, VK_NULL_HANDLE);
 
 		Renderer::Get().GetRenderContext().GetDevice().OneTimeSubmit([](Vulkan::CommandBuffer& buffer) {
 			ImGui_ImplVulkan_CreateFontsTexture(buffer.GetHandle());

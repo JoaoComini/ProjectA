@@ -11,11 +11,6 @@ namespace Engine
     {
     }
 
-    void Subpass::Prepare(Vulkan::RenderPass& renderPass)
-    {
-        this->renderPass = &renderPass;
-    }
-
     void Subpass::BindBuffer(const Vulkan::Buffer& buffer, uint32_t offset, uint32_t size, uint32_t set, uint32_t binding, uint32_t arrayElement)
     {
         bufferBindings[set][binding][arrayElement] = { buffer.GetHandle(), offset, size };

@@ -32,8 +32,8 @@ namespace Engine
 			shadowTarget.get()
 		);
 
-		forwardSubpass->SetOutputAttachments({ 2 });
-		forwardSubpass->SetSampleCount(renderContext.GetDevice().GetMaxSampleCount());
+		forwardSubpass->SetOutputAttachments({ 0 });
+		//forwardSubpass->SetSampleCount(renderContext.GetDevice().GetMaxSampleCount());
 
 		auto skyboxSubpass = std::make_unique<SkyboxSubpass>(
 			renderContext,
@@ -42,9 +42,9 @@ namespace Engine
 			scene
 		);
 
-		skyboxSubpass->SetOutputAttachments({ 2 });
-		skyboxSubpass->SetColorResolveAttachments({ 0 });
-		skyboxSubpass->SetSampleCount(renderContext.GetDevice().GetMaxSampleCount());
+		skyboxSubpass->SetOutputAttachments({ 0 });
+		//skyboxSubpass->SetColorResolveAttachments({ 0 });
+		//skyboxSubpass->SetSampleCount(renderContext.GetDevice().GetMaxSampleCount());
 
 		std::vector<std::unique_ptr<Subpass>> subpasses;
 		subpasses.push_back(std::move(forwardSubpass));
@@ -62,48 +62,47 @@ namespace Engine
 				.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
 				.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
 			},
-			{
-				.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-				.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-			}
+			//{
+			//	.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+			//	.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+			//}
 		};
 
 		mainPass->SetLoadStoreInfos(loadStoreInfos);
-		mainPass->Prepare(*gBufferTarget);
 	}
 
 	std::unique_ptr<RenderTarget> RenderPipeline::CreateGBufferPassTarget()
 	{
 		auto extent = renderContext.GetCurrentFrame().GetTarget().GetExtent();
 
-		auto colorResolve = std::make_unique<Vulkan::Image>(
-			renderContext.GetDevice(),
-			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-			VK_FORMAT_R16G16B16A16_SFLOAT,
-			VkExtent3D{ extent.width, extent.height, 1 },
-			VK_SAMPLE_COUNT_1_BIT
-		);
+		//auto colorResolve = std::make_unique<Vulkan::Image>(
+		//	renderContext.GetDevice(),
+		//	VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+		//	VK_FORMAT_R16G16B16A16_SFLOAT,
+		//	VkExtent3D{ extent.width, extent.height, 1 },
+		//	VK_SAMPLE_COUNT_1_BIT
+		//);
 
 		auto depth = std::make_unique<Vulkan::Image>(
 			renderContext.GetDevice(),
 			VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
 			VK_FORMAT_D32_SFLOAT,
-			VkExtent3D{ extent.width, extent.height, 1 },
-			renderContext.GetDevice().GetMaxSampleCount()
+			VkExtent3D{ extent.width, extent.height, 1 }
+			//renderContext.GetDevice().GetMaxSampleCount()
 		);
 
 		auto color = std::make_unique<Vulkan::Image>(
 			renderContext.GetDevice(),
-			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
 			VK_FORMAT_R16G16B16A16_SFLOAT,
-			VkExtent3D{ extent.width, extent.height, 1 },
-			renderContext.GetDevice().GetMaxSampleCount()
+			VkExtent3D{ extent.width, extent.height, 1 }
+			//renderContext.GetDevice().GetMaxSampleCount()
 		);
 
 		std::vector<std::unique_ptr<Vulkan::Image>> images;
-		images.push_back(std::move(colorResolve));
-		images.push_back(std::move(depth));
+		//images.push_back(std::move(colorResolve));
 		images.push_back(std::move(color));
+		images.push_back(std::move(depth));
 
 		return std::make_unique<RenderTarget>(renderContext.GetDevice(), std::move(images));
 	}
@@ -127,8 +126,6 @@ namespace Engine
 		subpasses.push_back(std::move(subpass));
 
 		shadowPass = std::make_unique<Pass>(renderContext.GetDevice(), std::move(subpasses));
-
-		shadowPass->Prepare(*shadowTarget);
 	}
 
 	std::unique_ptr<RenderTarget> RenderPipeline::CreateShadowPassTarget()
@@ -170,8 +167,6 @@ namespace Engine
 				.storeOp = VK_ATTACHMENT_STORE_OP_STORE,
 			}
 		});
-
-		compositionPass->Prepare(renderContext.GetCurrentFrame().GetTarget());
 	}
 
 	void RenderPipeline::Draw(Vulkan::CommandBuffer& commandBuffer)
@@ -201,7 +196,7 @@ namespace Engine
 
 		shadowPass->Draw(commandBuffer, *shadowTarget);
 
-		commandBuffer.EndRenderPass();
+		commandBuffer.EndRendering();
 
 		{
 			Vulkan::ImageMemoryBarrierInfo barrier{};
@@ -245,7 +240,7 @@ namespace Engine
 			barrier.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 
 			commandBuffer.ImageMemoryBarrier(*views[0], barrier);
-			commandBuffer.ImageMemoryBarrier(*views[2], barrier);
+			//commandBuffer.ImageMemoryBarrier(*views[2], barrier);
 		}
 
 		{
@@ -262,7 +257,7 @@ namespace Engine
 
 		mainPass->Draw(commandBuffer, *gBufferTarget);
 
-		commandBuffer.EndRenderPass();
+		commandBuffer.EndRendering();
 
 		{
 			Vulkan::ImageMemoryBarrierInfo barrier{};
@@ -304,10 +299,5 @@ namespace Engine
 				.extent = extent
 			}}
 		);
-	}
-
-	Vulkan::RenderPass& RenderPipeline::GetLastRenderPass() const
-	{
-		return compositionPass->GetRenderPass();
 	}
 }

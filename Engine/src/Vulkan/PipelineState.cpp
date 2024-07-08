@@ -12,16 +12,6 @@ bool operator==(const VkVertexInputBindingDescription& lhs, const VkVertexInputB
 
 namespace Vulkan
 {
-    void PipelineState::SetRenderPass(const RenderPass& renderPass)
-    {
-        if (!this->renderPass || this->renderPass->GetHandle() != renderPass.GetHandle())
-        {
-            this->renderPass = &renderPass;
-
-            dirty = true;
-        }
-    }
-
     void PipelineState::SetPipelineLayout(PipelineLayout& pipelineLayout)
     {
         if (!this->pipelineLayout || this->pipelineLayout->GetHandle() != pipelineLayout.GetHandle())
@@ -82,11 +72,11 @@ namespace Vulkan
         }
     }
 
-    void PipelineState::SetSubpassIndex(uint32_t index)
+    void PipelineState::SetPipelineRenderingState(const PipelineRenderingState& state)
     {
-        if (subpassIndex != index)
+        if (pipelineRendering != state)
         {
-            subpassIndex = index;
+            pipelineRendering = state;
 
             dirty = true;
         }
@@ -101,7 +91,6 @@ namespace Vulkan
     {
         ClearDirty();
 
-        renderPass = nullptr;
         pipelineLayout = nullptr;
 
         vertexInput.attributes.clear();
@@ -111,12 +100,6 @@ namespace Vulkan
         inputAssembly = {};
         rasterization = {};
         depthStencil = {};
-        subpassIndex = 0;
-    }
-
-    const RenderPass* PipelineState::GetRenderPass() const
-    {
-        return renderPass;
     }
 
     const PipelineLayout* PipelineState::GetPipelineLayout() const
@@ -149,9 +132,9 @@ namespace Vulkan
         return depthStencil;
     }
 
-    uint32_t PipelineState::GetSubpassIndex() const
+    const PipelineRenderingState& PipelineState::GetPipelineRenderingState() const
     {
-        return subpassIndex;
+        return pipelineRendering;
     }
 
     bool PipelineState::IsDirty() const

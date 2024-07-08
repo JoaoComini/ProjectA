@@ -117,7 +117,9 @@ namespace Engine
 
 	void RenderContext::End(Vulkan::CommandBuffer& commandBuffer)
 	{
-		commandBuffer.EndRenderPass();
+		//commandBuffer.EndRenderPass();
+
+		commandBuffer.EndRendering();
 
 		auto& frame = GetCurrentFrame();
 		auto& views = frame.GetTarget().GetViews();
@@ -251,5 +253,10 @@ namespace Engine
 	Vulkan::PhysicalDevice& RenderContext::GetPhysicalDevice()
 	{
 		return *physicalDevice;
+	}
+
+	Vulkan::Swapchain& RenderContext::GetSwapchain()
+	{
+		return *swapchain;
 	}
 }

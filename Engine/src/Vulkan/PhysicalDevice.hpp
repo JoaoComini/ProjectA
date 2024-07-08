@@ -3,6 +3,7 @@
 #include <vulkan/vulkan.h>
 #include <vector>
 #include <string.h>
+#include <memory>
 
 #include "Instance.hpp"
 #include "Surface.hpp"

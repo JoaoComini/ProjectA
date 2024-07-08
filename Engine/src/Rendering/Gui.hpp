@@ -4,7 +4,6 @@
 
 namespace Vulkan
 {
-    class RenderPass;
     class DescriptorPool;
     class CommandBuffer;
 }

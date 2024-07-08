@@ -28,3 +28,22 @@ inline void Hash(std::size_t& seed, const T& first, const Args &... args)
 	Hash(seed, first);
 	Hash(seed, args...);
 }
+
+namespace std
+{
+	template<typename T>
+	struct hash<std::vector<T>>
+	{
+		size_t operator()(const std::vector<T>& vec) const
+		{
+			std::size_t hash{ 0 };
+
+			for (const auto& item : vec)
+			{
+				HashCombine(hash, item);
+			}
+
+			return hash;
+		}
+	};
+}

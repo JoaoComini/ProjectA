@@ -12,13 +12,26 @@ namespace Vulkan
 {
 	class CommandPool;
 	class Device;
-	class RenderPass;
 	class Framebuffer;
 	class Pipeline;
 	class PipelineLayout;
 	class Image;
 	class ImageView;
 	class Buffer;
+
+	struct AttachmentInfo
+	{
+		VkFormat format{ VK_FORMAT_UNDEFINED };
+		VkSampleCountFlagBits samples{ VK_SAMPLE_COUNT_1_BIT };
+		VkImageUsageFlags usage{ VK_IMAGE_USAGE_SAMPLED_BIT };
+		VkImageLayout initialLayout{ VK_IMAGE_LAYOUT_UNDEFINED };
+	};
+
+	struct LoadStoreInfo
+	{
+		VkAttachmentLoadOp loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		VkAttachmentStoreOp storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	};
 
 	struct ImageMemoryBarrierInfo
 	{
@@ -56,9 +69,8 @@ namespace Vulkan
 		void Begin(BeginFlags flags = BeginFlags::None);
 		void End();
 
-		void BeginRenderPass(const RenderPass& renderPass, const Framebuffer& framebuffer, const std::vector<VkClearValue>& clearValues, VkExtent2D extent);
-		void NextSubpass();
-		void EndRenderPass();
+		void BeginRendering(const std::vector<AttachmentInfo> attachments, const std::vector<std::unique_ptr<ImageView>>& views, const std::vector<VkClearValue>& clearValues, const std::vector<LoadStoreInfo> loadStoreInfos, VkExtent2D extent);
+		void EndRendering();
 
 		void SetViewport(const std::vector<VkViewport>& viewports);
 		void SetScissor(const std::vector<VkRect2D>& scissors);

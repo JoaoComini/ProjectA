@@ -37,6 +37,7 @@ namespace Engine
         Vulkan::Device& GetDevice();
         Vulkan::PhysicalDevice& GetPhysicalDevice();
         Vulkan::Instance& GetInstance();
+        Vulkan::Swapchain& GetSwapchain();
 
     private:
         void CreateFrames();

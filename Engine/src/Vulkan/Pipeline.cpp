@@ -8,7 +8,6 @@ namespace Vulkan
 {
 	Pipeline::Pipeline(const Device& device, PipelineState state) : device(device)
 	{
-		auto renderPass = state.GetRenderPass();
 		auto pipelineLayout = state.GetPipelineLayout();
 
 		std::vector<VkShaderModule> shaderModules;
@@ -102,12 +101,20 @@ namespace Vulkan
 		auto& depthStencilState = state.GetDepthStencilState();
 		VkPipelineDepthStencilStateCreateInfo depthStencil{};
 		depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-		depthStencil.pNext = nullptr;
 		depthStencil.depthTestEnable = depthStencilState.depthTestEnable;
 		depthStencil.depthWriteEnable = depthStencilState.depthWriteEnable;
 		depthStencil.depthCompareOp = VK_COMPARE_OP_GREATER_OR_EQUAL;
 		depthStencil.depthBoundsTestEnable = VK_FALSE;
 		depthStencil.stencilTestEnable = VK_FALSE;
+		depthStencil.pNext = nullptr;
+
+		auto& pipelineRenderingState = state.GetPipelineRenderingState();
+		VkPipelineRenderingCreateInfo pipelineRendering{};
+		pipelineRendering.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
+		pipelineRendering.colorAttachmentCount = pipelineRenderingState.colorAttachmentFormats.size();
+		pipelineRendering.pColorAttachmentFormats = pipelineRenderingState.colorAttachmentFormats.size() > 0 ? pipelineRenderingState.colorAttachmentFormats.data() : nullptr;
+		pipelineRendering.depthAttachmentFormat = pipelineRenderingState.depthAttachmentFormat;
+		pipelineRendering.pNext = nullptr;
 
 		VkGraphicsPipelineCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -122,10 +129,9 @@ namespace Vulkan
 		createInfo.pColorBlendState = &colorBlending;
 		createInfo.pDynamicState = &dynamicState;
 		createInfo.layout = pipelineLayout->GetHandle();
-		createInfo.renderPass = renderPass->GetHandle();
-		createInfo.subpass = state.GetSubpassIndex();
 		createInfo.basePipelineHandle = VK_NULL_HANDLE;
 		createInfo.basePipelineIndex = -1;
+		createInfo.pNext = &pipelineRendering;
 
 		if (vkCreateGraphicsPipelines(device.GetHandle(), VK_NULL_HANDLE, 1, &createInfo, nullptr, &handle) != VK_SUCCESS)
 		{

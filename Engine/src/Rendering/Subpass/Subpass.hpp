@@ -18,8 +18,6 @@ namespace Engine
 		Subpass(RenderContext& renderContext, Vulkan::ShaderSource&& vertexSource, Vulkan::ShaderSource&& fragmentSource);
 		virtual ~Subpass() = default;
 
-		virtual void Prepare(Vulkan::RenderPass& renderPass);
-
 		virtual void Draw(Vulkan::CommandBuffer& commandBuffer) = 0;
 
 		const Vulkan::ShaderSource& GetVertexShader() const;
@@ -50,8 +48,6 @@ namespace Engine
 		virtual Vulkan::PipelineLayout& GetPipelineLayout(const std::vector<Vulkan::ShaderModule*>& shaders);
 
 		VkSampleCountFlagBits sampleCount{ VK_SAMPLE_COUNT_1_BIT };
-
-		Vulkan::RenderPass* renderPass = nullptr;
 	private:
 		RenderContext& renderContext;
 

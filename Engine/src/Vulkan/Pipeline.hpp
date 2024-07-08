@@ -4,7 +4,6 @@
 
 #include "Device.hpp"
 #include "PipelineLayout.hpp"
-#include "RenderPass.hpp"
 #include "Resource.hpp"
 
 #include "PipelineState.hpp"

@@ -12,8 +12,6 @@ namespace Engine
 		RenderPipeline(RenderContext& renderContext, Scene& scene);
 
 		void Draw(Vulkan::CommandBuffer& commandBuffer);
-
-		Vulkan::RenderPass& GetLastRenderPass() const;
 	private:
 		void SetupGBufferPass();
 		void SetupShadowPass();

@@ -2,8 +2,6 @@
 
 #include "Device.hpp"
 #include "CommandPool.hpp"
-#include "RenderPass.hpp"
-#include "Framebuffer.hpp"
 #include "Pipeline.hpp"
 #include "ImageView.hpp"
 #include "Caching/ResourceCache.hpp"
@@ -40,8 +38,8 @@ namespace Vulkan
 
 		VkCommandBufferBeginInfo beginInfo{};
 		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		beginInfo.flags = static_cast<VkFlags>(flags);                  // Optional
-		beginInfo.pInheritanceInfo = nullptr; // Optional
+		beginInfo.flags = static_cast<VkFlags>(flags);
+		beginInfo.pInheritanceInfo = nullptr;
 
 		if (vkBeginCommandBuffer(handle, &beginInfo) != VK_SUCCESS)
 		{
@@ -54,31 +52,67 @@ namespace Vulkan
 		vkEndCommandBuffer(handle);
 	}
 
-	void CommandBuffer::BeginRenderPass(const RenderPass& renderPass, const Framebuffer& framebuffer, const std::vector<VkClearValue>& clearValues, VkExtent2D extent)
+	void CommandBuffer::BeginRendering(const std::vector<AttachmentInfo> attachments, const std::vector <std::unique_ptr<ImageView>>& views, const std::vector<VkClearValue>& clearValues, const std::vector<LoadStoreInfo> loadStoreInfos, VkExtent2D extent)
 	{
 		pipelineState.Reset();
 
-		pipelineState.SetRenderPass(renderPass);
+		std::vector<VkRenderingAttachmentInfo> colorInfos;
+		std::vector<VkRenderingAttachmentInfo> depthInfos;
 
-		VkRenderPassBeginInfo info{
-			.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-			.renderPass = renderPass.GetHandle(),
-			.framebuffer = framebuffer.GetHandle(),
-			.renderArea = {
-				.extent = extent,
-			},
-			.clearValueCount = static_cast<uint32_t>(clearValues.size()),
-			.pClearValues = clearValues.data()
+		PipelineRenderingState state{};
+
+		for (size_t i = 0; i < attachments.size(); i++)
+		{
+			VkRenderingAttachmentInfo info{
+				.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO
+			};
+
+			info.imageView = views[i]->GetHandle();
+			info.clearValue = clearValues[i];
+			info.loadOp = loadStoreInfos[i].loadOp;
+			info.storeOp = loadStoreInfos[i].storeOp;
+
+			if (attachments[i].format == VK_FORMAT_D32_SFLOAT)
+			{
+				info.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+				state.depthAttachmentFormat = attachments[i].format;
+
+				depthInfos.push_back(std::move(info));
+				continue;
+			}
+
+			info.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			state.colorAttachmentFormats.push_back(attachments[i].format);
+
+			colorInfos.push_back(std::move(info));
+		}
+
+		pipelineState.SetPipelineRenderingState(state);
+
+		VkRenderingInfo renderingInfo{
+			.sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
 		};
 
-		vkCmdBeginRenderPass(handle, &info, VK_SUBPASS_CONTENTS_INLINE);
+		renderingInfo.renderArea = {
+			.offset = { 0, 0 },
+			.extent = extent
+		};
+
+		renderingInfo.layerCount = 1;
+		renderingInfo.colorAttachmentCount = colorInfos.size();
+		renderingInfo.pColorAttachments = colorInfos.data();
+
+		if (!depthInfos.empty())
+		{
+			renderingInfo.pDepthAttachment = depthInfos.data();
+		}
+
+		vkCmdBeginRendering(handle, &renderingInfo);
 	}
 
-	void CommandBuffer::NextSubpass()
+	void CommandBuffer::EndRendering()
 	{
-		pipelineState.SetSubpassIndex(pipelineState.GetSubpassIndex() + 1);
-
-		vkCmdNextSubpass(handle, VK_SUBPASS_CONTENTS_INLINE);
+		vkCmdEndRendering(handle);
 	}
 
 	void CommandBuffer::SetViewport(const std::vector<VkViewport>& viewports)
@@ -143,11 +177,6 @@ namespace Vulkan
 		Flush();
 
 		vkCmdDrawIndexed(handle, indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
-	}
-
-	void CommandBuffer::EndRenderPass()
-	{
-		vkCmdEndRenderPass(handle);
 	}
 
 	void CommandBuffer::Free()

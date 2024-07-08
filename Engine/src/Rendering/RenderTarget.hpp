@@ -5,8 +5,7 @@
 #include "Vulkan/Device.hpp"
 #include "Vulkan/Image.hpp"
 #include "Vulkan/ImageView.hpp"
-#include "Vulkan/RenderPass.hpp"
-#include "Vulkan/Framebuffer.hpp"
+#include "Vulkan/CommandBuffer.hpp"
 
 #include <vector>
 
@@ -15,6 +14,7 @@ namespace Engine
 	class RenderTarget
 	{
 	public:
+
 		RenderTarget(Vulkan::Device& device, std::vector<std::unique_ptr<Vulkan::Image>>&& images);
 		~RenderTarget() = default;
 		RenderTarget& operator=(RenderTarget&& other) noexcept;
@@ -31,8 +31,6 @@ namespace Engine
 		std::vector<Vulkan::AttachmentInfo> attachments;
 
 		VkExtent2D extent{};
-
-		Vulkan::Device& device;
 	};
 }
 

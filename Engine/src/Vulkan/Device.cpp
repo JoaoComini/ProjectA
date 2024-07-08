@@ -30,10 +30,16 @@ namespace Vulkan
 			.samplerAnisotropy = VK_TRUE,
 		};
 
-		const std::vector<const char*> extensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+		const std::vector<const char*> extensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME };
+
+		VkPhysicalDeviceDynamicRenderingFeatures dynamicRenderingFeatures {
+			.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES,
+			.dynamicRendering = VK_TRUE,
+		};
 
 		VkDeviceCreateInfo deviceCreateinfo{
 			.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+			.pNext = &dynamicRenderingFeatures,
 			.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size()),
 			.pQueueCreateInfos = queueCreateInfos.data(),
 			.enabledLayerCount = 0,

@@ -13,6 +13,7 @@ namespace Engine
     ) : Subpass{ renderContext, std::move(vertexSource), std::move(fragmentSource) }, gBufferTarget(gBufferTarget)
     {
         auto properties = GetRenderContext().GetDevice().GetPhysicalDeviceProperties();
+
         VkSamplerCreateInfo sampler = { VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
         sampler.magFilter = VK_FILTER_NEAREST;
         sampler.minFilter = VK_FILTER_NEAREST;
