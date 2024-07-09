@@ -96,33 +96,15 @@ namespace Engine
 
 		commandBuffer.Begin();
 
-		auto& target = GetCurrentFrame().GetTarget();
-		auto& views = target.GetViews();
-
-		{
-			Vulkan::ImageMemoryBarrierInfo barrier{};
-
-			barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-			barrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-			barrier.srcAccessMask = 0;
-			barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-			barrier.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-			barrier.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-
-			commandBuffer.ImageMemoryBarrier(*views[0], barrier);
-		}
-
 		return &commandBuffer;
 	}
 
 	void RenderContext::End(Vulkan::CommandBuffer& commandBuffer)
 	{
-		//commandBuffer.EndRenderPass();
-
 		commandBuffer.EndRendering();
 
 		auto& frame = GetCurrentFrame();
-		auto& views = frame.GetTarget().GetViews();
+		auto& attachments = frame.GetTarget().GetColorAttachments();
 
 		{
 			Vulkan::ImageMemoryBarrierInfo barrier{};
@@ -133,7 +115,7 @@ namespace Engine
 			barrier.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 			barrier.dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
 
-			commandBuffer.ImageMemoryBarrier(*views[0], barrier);
+			commandBuffer.ImageMemoryBarrier(attachments[0]->GetView(), barrier);
 		}
 
 		commandBuffer.End();
@@ -216,13 +198,22 @@ namespace Engine
 		return true;
 	}
 
-	std::unique_ptr<RenderTarget> RenderContext::CreateRenderTarget(std::unique_ptr<Vulkan::Image> swapchainImage)
+	std::unique_ptr<RenderTarget> RenderContext::CreateRenderTarget(std::unique_ptr<Vulkan::Image>&& swapchainImage)
 	{
-		std::vector<std::unique_ptr<Vulkan::Image>> images;
+		auto attachment = std::make_unique<RenderAttachment>(
+			*device,
+			std::move(swapchainImage),
+			VkClearValue{
+				.color = { 0.f, 0.f, 0.f, 1.f },
+			},
+			Vulkan::LoadStoreInfo{}
+		);
 
-		images.push_back(std::move(swapchainImage));
+		auto target = std::make_unique<RenderTarget>();
 
-		return std::make_unique<RenderTarget>(*device, std::move(images));
+		target->AddColorAttachment(std::move(attachment));
+
+		return std::move(target);
 	}
 
 	RenderFrame& RenderContext::GetCurrentFrame() const

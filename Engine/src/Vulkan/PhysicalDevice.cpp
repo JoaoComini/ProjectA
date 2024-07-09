@@ -92,6 +92,35 @@ namespace Vulkan
         return properties;
     }
 
+    VkFormat PhysicalDevice::GetSupportedDepthFormat(bool DepthOnly) const
+    {
+        std::vector<VkFormat> candidates = {
+                VK_FORMAT_D32_SFLOAT,
+                VK_FORMAT_D32_SFLOAT_S8_UINT,
+                VK_FORMAT_D24_UNORM_S8_UINT,
+                VK_FORMAT_D16_UNORM_S8_UINT,
+                VK_FORMAT_D16_UNORM
+        };
+
+        for (auto& candidate : candidates)
+        {
+            if (DepthOnly && !Details::IsDepthOnlyFormat(candidate))
+            {
+                continue;
+            }
+
+            VkFormatProperties properties{};
+            vkGetPhysicalDeviceFormatProperties(handle, candidate, &properties);
+
+            if (properties.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT)
+            {
+                return candidate;
+            }
+        }
+
+        return VK_FORMAT_UNDEFINED;
+    }
+
     VkPhysicalDevice PhysicalDevice::GetHandle() const
     {
         return handle;

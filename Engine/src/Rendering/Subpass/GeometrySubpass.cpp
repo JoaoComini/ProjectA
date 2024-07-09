@@ -41,10 +41,7 @@ namespace Engine
 		vertexInputState.bindings[0].stride = sizeof(Vertex);
 		vertexInputState.bindings[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
-		Vulkan::MultisampleState multisampleState{ sampleCount };
-
 		commandBuffer.SetVertexInputState(vertexInputState);
-		commandBuffer.SetMultisampleState(multisampleState);
 	}
 
 	glm::mat4 GetEntityWorldMatrix(Entity entity)

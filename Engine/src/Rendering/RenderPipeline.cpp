@@ -32,9 +32,6 @@ namespace Engine
 			shadowTarget.get()
 		);
 
-		forwardSubpass->SetOutputAttachments({ 0 });
-		//forwardSubpass->SetSampleCount(renderContext.GetDevice().GetMaxSampleCount());
-
 		auto skyboxSubpass = std::make_unique<SkyboxSubpass>(
 			renderContext,
 			Vulkan::ShaderSource{ "resources/shaders/skybox.vert" },
@@ -42,69 +39,79 @@ namespace Engine
 			scene
 		);
 
-		skyboxSubpass->SetOutputAttachments({ 0 });
-		//skyboxSubpass->SetColorResolveAttachments({ 0 });
-		//skyboxSubpass->SetSampleCount(renderContext.GetDevice().GetMaxSampleCount());
-
 		std::vector<std::unique_ptr<Subpass>> subpasses;
 		subpasses.push_back(std::move(forwardSubpass));
 		subpasses.push_back(std::move(skyboxSubpass));
 
 		mainPass = std::make_unique<Pass>(renderContext.GetDevice(), std::move(subpasses));
-
-		std::vector<Vulkan::LoadStoreInfo> loadStoreInfos
-		{
-			{
-				.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-				.storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-			},
-			{
-				.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-				.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-			},
-			//{
-			//	.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-			//	.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-			//}
-		};
-
-		mainPass->SetLoadStoreInfos(loadStoreInfos);
 	}
 
 	std::unique_ptr<RenderTarget> RenderPipeline::CreateGBufferPassTarget()
 	{
 		auto extent = renderContext.GetCurrentFrame().GetTarget().GetExtent();
 
-		//auto colorResolve = std::make_unique<Vulkan::Image>(
-		//	renderContext.GetDevice(),
-		//	VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-		//	VK_FORMAT_R16G16B16A16_SFLOAT,
-		//	VkExtent3D{ extent.width, extent.height, 1 },
-		//	VK_SAMPLE_COUNT_1_BIT
-		//);
-
-		auto depth = std::make_unique<Vulkan::Image>(
-			renderContext.GetDevice(),
-			VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-			VK_FORMAT_D32_SFLOAT,
-			VkExtent3D{ extent.width, extent.height, 1 }
-			//renderContext.GetDevice().GetMaxSampleCount()
-		);
-
-		auto color = std::make_unique<Vulkan::Image>(
+		auto colorResolveImage = std::make_unique<Vulkan::Image>(
 			renderContext.GetDevice(),
 			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
 			VK_FORMAT_R16G16B16A16_SFLOAT,
-			VkExtent3D{ extent.width, extent.height, 1 }
-			//renderContext.GetDevice().GetMaxSampleCount()
+			VkExtent3D{ extent.width, extent.height, 1 },
+			VK_SAMPLE_COUNT_1_BIT
 		);
 
-		std::vector<std::unique_ptr<Vulkan::Image>> images;
-		//images.push_back(std::move(colorResolve));
-		images.push_back(std::move(color));
-		images.push_back(std::move(depth));
+		auto depthImage = std::make_unique<Vulkan::Image>(
+			renderContext.GetDevice(),
+			VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+			renderContext.GetPhysicalDevice().GetSupportedDepthFormat(),
+			VkExtent3D{ extent.width, extent.height, 1 },
+			renderContext.GetDevice().GetMaxSampleCount()
+		);
 
-		return std::make_unique<RenderTarget>(renderContext.GetDevice(), std::move(images));
+		auto colorImage = std::make_unique<Vulkan::Image>(
+			renderContext.GetDevice(),
+			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+			VK_FORMAT_R16G16B16A16_SFLOAT,
+			VkExtent3D{ extent.width, extent.height, 1 },
+			renderContext.GetDevice().GetMaxSampleCount()
+		);
+
+		auto colorResolveAttachment = std::make_unique<RenderAttachment>(
+			renderContext.GetDevice(),
+			std::move(colorResolveImage),
+			VkClearValue{},
+			Vulkan::LoadStoreInfo{}
+		);
+
+		auto colorAttachment = std::make_unique<RenderAttachment>(
+			renderContext.GetDevice(),
+			std::move(colorImage),
+			VkClearValue {
+				.color = { 0.f, 0.f, 0.f, 1.f }
+			},
+			Vulkan::LoadStoreInfo {
+				.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+				.storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+			}
+		);
+
+		colorAttachment->SetResolve(std::move(colorResolveAttachment));
+
+		auto depthAttachment = std::make_unique<RenderAttachment>(
+			renderContext.GetDevice(),
+			std::move(depthImage),
+			VkClearValue {
+				.depthStencil = { 0.f, 0 }
+			},
+			Vulkan::LoadStoreInfo {
+				.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+				.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+			}
+		);
+
+		auto target = std::make_unique<RenderTarget>();
+		target->AddColorAttachment(std::move(colorAttachment));
+		target->SetDepthAttachment(std::move(depthAttachment));
+
+		return std::move(target);
 	}
 
 	void RenderPipeline::SetupShadowPass()
@@ -130,18 +137,27 @@ namespace Engine
 
 	std::unique_ptr<RenderTarget> RenderPipeline::CreateShadowPassTarget()
 	{
-		auto depthImage = std::make_unique<Vulkan::Image>(
+		auto image = std::make_unique<Vulkan::Image>(
 			renderContext.GetDevice(),
 			VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-			VK_FORMAT_D32_SFLOAT,
-			VkExtent3D{ 4096, 4096, 1 }
+			renderContext.GetPhysicalDevice().GetSupportedDepthFormat(true),
+			VkExtent3D{ 2048, 2048, 1 }
 		);
 
-		std::vector<std::unique_ptr<Vulkan::Image>> images;
+		auto attachment = std::make_unique<RenderAttachment>(
+			renderContext.GetDevice(),
+			std::move(image),
+			VkClearValue{
+				.depthStencil = { 0.f, 0 }
+			},
+			Vulkan::LoadStoreInfo{}
+		);
 
-		images.push_back(std::move(depthImage));
+		auto target = std::make_unique<RenderTarget>();
 
-		return std::make_unique<RenderTarget>(renderContext.GetDevice(), std::move(images));
+		target->SetDepthAttachment(std::move(attachment));
+
+		return std::move(target);
 	}
 
 	void RenderPipeline::SetupCompositionPass()
@@ -160,13 +176,6 @@ namespace Engine
 		subpasses.push_back(std::move(subpass));
 
 		compositionPass = std::make_unique<Pass>(renderContext.GetDevice(), std::move(subpasses));
-
-		compositionPass->SetLoadStoreInfos({
-			{
-				.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
-				.storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-			}
-		});
 	}
 
 	void RenderPipeline::Draw(Vulkan::CommandBuffer& commandBuffer)
@@ -181,17 +190,19 @@ namespace Engine
 		VkExtent2D extent = shadowTarget->GetExtent();
 
 		SetViewportAndScissor(commandBuffer, extent);
+
+		auto& depthAttachment = shadowTarget->GetDepthAttachment();
 		
 		{
 			Vulkan::ImageMemoryBarrierInfo barrier{};
 			barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 			barrier.newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 			barrier.srcAccessMask = 0;
-			barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+			barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 			barrier.srcStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 			barrier.dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 
-			commandBuffer.ImageMemoryBarrier(*shadowTarget->GetViews()[0], barrier);
+			commandBuffer.ImageMemoryBarrier(depthAttachment->GetView(), barrier);
 		}
 
 		shadowPass->Draw(commandBuffer, *shadowTarget);
@@ -207,7 +218,7 @@ namespace Engine
 			barrier.srcStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 			barrier.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 
-			commandBuffer.ImageMemoryBarrier(*shadowTarget->GetViews()[0], barrier);
+			commandBuffer.ImageMemoryBarrier(depthAttachment->GetView(), barrier);
 		}
 	}
 
@@ -227,7 +238,7 @@ namespace Engine
 
 		SetViewportAndScissor(commandBuffer, extent);
 
-		auto& views = gBufferTarget->GetViews();
+		auto& colorAttachments = gBufferTarget->GetColorAttachments();
 
 		{
 			Vulkan::ImageMemoryBarrierInfo barrier{};
@@ -239,9 +250,15 @@ namespace Engine
 			barrier.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 			barrier.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 
-			commandBuffer.ImageMemoryBarrier(*views[0], barrier);
-			//commandBuffer.ImageMemoryBarrier(*views[2], barrier);
+			commandBuffer.ImageMemoryBarrier(colorAttachments[0]->GetView(), barrier);
+
+			if (auto& resolve = colorAttachments[0]->GetResolve())
+			{
+				commandBuffer.ImageMemoryBarrier(resolve->GetView(), barrier);
+			}
 		}
+
+		auto& depthAttachment = gBufferTarget->GetDepthAttachment();
 
 		{
 			Vulkan::ImageMemoryBarrierInfo barrier{};
@@ -252,7 +269,7 @@ namespace Engine
 			barrier.srcStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 			barrier.dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 
-			commandBuffer.ImageMemoryBarrier(*views[1], barrier);
+			commandBuffer.ImageMemoryBarrier(depthAttachment->GetView(), barrier);
 		}
 
 		mainPass->Draw(commandBuffer, *gBufferTarget);
@@ -268,7 +285,14 @@ namespace Engine
 			barrier.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 			barrier.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 
-			commandBuffer.ImageMemoryBarrier(*views[0], barrier);
+			if (auto& resolve = colorAttachments[0]->GetResolve())
+			{
+				commandBuffer.ImageMemoryBarrier(resolve->GetView(), barrier);
+
+				return;
+			}
+
+			commandBuffer.ImageMemoryBarrier(colorAttachments[0]->GetView(), barrier);
 		}
 	}
 
@@ -279,6 +303,21 @@ namespace Engine
 		VkExtent2D extent = target.GetExtent();
 
 		SetViewportAndScissor(commandBuffer, extent);
+
+		auto& attachments = target.GetColorAttachments();
+
+		{
+			Vulkan::ImageMemoryBarrierInfo barrier{};
+
+			barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+			barrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			barrier.srcAccessMask = 0;
+			barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+			barrier.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+			barrier.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+
+			commandBuffer.ImageMemoryBarrier(attachments[0]->GetView(), barrier);
+		}
 
 		compositionPass->Draw(commandBuffer, target);
 	}

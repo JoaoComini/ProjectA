@@ -22,21 +22,6 @@ namespace Engine
 
 		const Vulkan::ShaderSource& GetVertexShader() const;
 		const Vulkan::ShaderSource& GetFragmentShader() const;
-
-		const std::vector<uint32_t>& GetInputAttachments() const;
-		void SetInputAttachments(std::vector<uint32_t> input);
-
-		const std::vector<uint32_t>& GetOutputAttachments() const;
-		void SetOutputAttachments(std::vector<uint32_t> output);
-
-		const std::vector<uint32_t>& GetColorResolveAttachments() const;
-		void SetColorResolveAttachments(std::vector<uint32_t> colorResolve);
-
-		bool IsDepthStencilDisabled() const;
-		void DisableDepthStencil();
-
-		void SetSampleCount(VkSampleCountFlagBits sampleCount);
-		VkSampleCountFlagBits GetSampleCount() const;
 	protected:
 		RenderContext& GetRenderContext();
 
@@ -46,17 +31,11 @@ namespace Engine
 		void FlushDescriptorSet(Vulkan::CommandBuffer& commandBuffer, Vulkan::PipelineLayout& pipelineLayout, uint32_t set);
 
 		virtual Vulkan::PipelineLayout& GetPipelineLayout(const std::vector<Vulkan::ShaderModule*>& shaders);
-
-		VkSampleCountFlagBits sampleCount{ VK_SAMPLE_COUNT_1_BIT };
 	private:
 		RenderContext& renderContext;
 
 		Vulkan::ShaderSource vertexShader;
 		Vulkan::ShaderSource fragmentShader;
-
-		std::vector<uint32_t> inputAttachments{};
-		std::vector<uint32_t> outputAttachments{ 0 };
-		std::vector<uint32_t> colorResolveAttachments{};
 
 		std::map<uint32_t, BindingMap<VkDescriptorBufferInfo>> bufferBindings;
 		std::map<uint32_t, BindingMap<VkDescriptorImageInfo>> imageBindings;

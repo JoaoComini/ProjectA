@@ -36,12 +36,29 @@ namespace Vulkan::Details
         }
         else
         {
-            VkExtent2D extent = {static_cast<uint32_t>(desiredWidth), static_cast<uint32_t>(desiredHeight)};
+            VkExtent2D extent = { static_cast<uint32_t>(desiredWidth), static_cast<uint32_t>(desiredHeight) };
 
             extent.width = std::clamp(extent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
             extent.height = std::clamp(extent.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
 
             return extent;
         }
+    }
+
+    bool IsDepthFormat(VkFormat format)
+    {
+        return IsDepthOnlyFormat(format) || IsDepthStencilFormat(format);
+    }
+
+    bool IsDepthOnlyFormat(VkFormat format)
+    {
+        return format == VK_FORMAT_D16_UNORM || format == VK_FORMAT_D32_SFLOAT;
+    }
+
+    bool IsDepthStencilFormat(VkFormat format)
+    {
+        return format == VK_FORMAT_D16_UNORM_S8_UINT
+            || format == VK_FORMAT_D24_UNORM_S8_UINT
+            || format == VK_FORMAT_D32_SFLOAT_S8_UINT;
     }
 }

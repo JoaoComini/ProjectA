@@ -23,8 +23,6 @@ namespace Vulkan
 	{
 		VkFormat format{ VK_FORMAT_UNDEFINED };
 		VkSampleCountFlagBits samples{ VK_SAMPLE_COUNT_1_BIT };
-		VkImageUsageFlags usage{ VK_IMAGE_USAGE_SAMPLED_BIT };
-		VkImageLayout initialLayout{ VK_IMAGE_LAYOUT_UNDEFINED };
 	};
 
 	struct LoadStoreInfo
@@ -69,7 +67,7 @@ namespace Vulkan
 		void Begin(BeginFlags flags = BeginFlags::None);
 		void End();
 
-		void BeginRendering(const std::vector<AttachmentInfo> attachments, const std::vector<std::unique_ptr<ImageView>>& views, const std::vector<VkClearValue>& clearValues, const std::vector<LoadStoreInfo> loadStoreInfos, VkExtent2D extent);
+		void BeginRendering(const VkRenderingInfo& renderingInfo);
 		void EndRendering();
 
 		void SetViewport(const std::vector<VkViewport>& viewports);
@@ -79,6 +77,7 @@ namespace Vulkan
 		void SetInputAssemblyState(const InputAssemblyState& state);
 		void SetRasterizationState(const RasterizationState& state);
 		void SetDepthStencilState(const DepthStencilState& state);
+		void SetPipelineRenderingState(const PipelineRenderingState& state);
 
 		void BindPipelineLayout(PipelineLayout& pipelineLayout);
 		void BindDescriptorSet(VkDescriptorSet descriptorSet);

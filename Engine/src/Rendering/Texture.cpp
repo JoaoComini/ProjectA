@@ -18,7 +18,7 @@ namespace Engine
 	{
 	}
 
-	Texture::Texture(Texture&& other)
+	Texture::Texture(Texture&& other) noexcept
 	{
 		data = std::move(other.data);
 		mipmaps = std::move(other.mipmaps);

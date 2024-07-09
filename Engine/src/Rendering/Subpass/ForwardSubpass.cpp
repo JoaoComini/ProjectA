@@ -92,9 +92,9 @@ namespace Engine
 
     void ForwardSubpass::BindShadowMap()
     {
-        auto& shadowMap = shadowTarget->GetViews()[0];
+        auto& shadowMap = shadowTarget->GetDepthAttachment()->GetView();
 
-        BindImage(*shadowMap, *shadowMapSampler, 0, 5, 0);
+        BindImage(shadowMap, *shadowMapSampler, 0, 5, 0);
     }
 
     void ForwardSubpass::UpdateShadowUniform(Vulkan::CommandBuffer& commandBuffer, ShadowUniform uniform)

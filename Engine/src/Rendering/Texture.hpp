@@ -22,7 +22,7 @@ namespace Engine
 	{
 	public:
 		Texture(std::vector<uint8_t>&& data, std::vector<Mipmap>&& mipmaps);
-		Texture(Texture&& other);
+		Texture(Texture&& other) noexcept;
 
 		void GenerateMipmaps();
 		void CreateVulkanResources(Vulkan::Device& device);

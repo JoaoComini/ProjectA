@@ -52,60 +52,9 @@ namespace Vulkan
 		vkEndCommandBuffer(handle);
 	}
 
-	void CommandBuffer::BeginRendering(const std::vector<AttachmentInfo> attachments, const std::vector <std::unique_ptr<ImageView>>& views, const std::vector<VkClearValue>& clearValues, const std::vector<LoadStoreInfo> loadStoreInfos, VkExtent2D extent)
+	void CommandBuffer::BeginRendering(const VkRenderingInfo& renderingInfo)
 	{
 		pipelineState.Reset();
-
-		std::vector<VkRenderingAttachmentInfo> colorInfos;
-		std::vector<VkRenderingAttachmentInfo> depthInfos;
-
-		PipelineRenderingState state{};
-
-		for (size_t i = 0; i < attachments.size(); i++)
-		{
-			VkRenderingAttachmentInfo info{
-				.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO
-			};
-
-			info.imageView = views[i]->GetHandle();
-			info.clearValue = clearValues[i];
-			info.loadOp = loadStoreInfos[i].loadOp;
-			info.storeOp = loadStoreInfos[i].storeOp;
-
-			if (attachments[i].format == VK_FORMAT_D32_SFLOAT)
-			{
-				info.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-				state.depthAttachmentFormat = attachments[i].format;
-
-				depthInfos.push_back(std::move(info));
-				continue;
-			}
-
-			info.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-			state.colorAttachmentFormats.push_back(attachments[i].format);
-
-			colorInfos.push_back(std::move(info));
-		}
-
-		pipelineState.SetPipelineRenderingState(state);
-
-		VkRenderingInfo renderingInfo{
-			.sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
-		};
-
-		renderingInfo.renderArea = {
-			.offset = { 0, 0 },
-			.extent = extent
-		};
-
-		renderingInfo.layerCount = 1;
-		renderingInfo.colorAttachmentCount = colorInfos.size();
-		renderingInfo.pColorAttachments = colorInfos.data();
-
-		if (!depthInfos.empty())
-		{
-			renderingInfo.pDepthAttachment = depthInfos.data();
-		}
 
 		vkCmdBeginRendering(handle, &renderingInfo);
 	}
@@ -148,6 +97,11 @@ namespace Vulkan
 	void CommandBuffer::SetDepthStencilState(const DepthStencilState& state)
 	{
 		pipelineState.SetDepthStencilState(state);
+	}
+
+	void CommandBuffer::SetPipelineRenderingState(const PipelineRenderingState& state)
+	{
+		pipelineState.SetPipelineRenderingState(state);
 	}
 
 	void CommandBuffer::BindPipelineLayout(PipelineLayout& pipelineLayout)
@@ -336,10 +290,6 @@ namespace Vulkan
 
 		auto subresourceRange = imageView.GetSubresourceRange();
 		auto format = image.GetFormat();
-
-		subresourceRange.aspectMask = format == VK_FORMAT_D32_SFLOAT
-			? VK_IMAGE_ASPECT_DEPTH_BIT
-			: VK_IMAGE_ASPECT_COLOR_BIT;
 
 		VkImageMemoryBarrier barrier{};
 		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;

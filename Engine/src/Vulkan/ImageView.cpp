@@ -7,15 +7,26 @@ namespace Vulkan
 
 	ImageView::ImageView(const Device& device, Image& image, VkImageViewType viewType): device(device), image(image)
 	{
-        VkImageAspectFlags aspectMask = image.GetFormat() == VK_FORMAT_D32_SFLOAT ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
-
         subresourceRange = {
-                .aspectMask = aspectMask,
                 .baseMipLevel = 0,
                 .levelCount = image.GetMipLevels(),
                 .baseArrayLayer = 0,
                 .layerCount = image.GetArrayLayers(),
         };
+
+        if (Details::IsDepthFormat(image.GetFormat()))
+        {
+            subresourceRange.aspectMask |= VK_IMAGE_ASPECT_DEPTH_BIT;
+
+            if (Details::IsDepthStencilFormat(image.GetFormat()))
+            {
+                subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+            }
+        }
+        else
+        {
+            subresourceRange.aspectMask |= VK_IMAGE_ASPECT_COLOR_BIT;
+        }
 
         VkImageViewCreateInfo createInfo = {
             .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,

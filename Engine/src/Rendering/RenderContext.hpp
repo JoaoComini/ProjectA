@@ -48,7 +48,7 @@ namespace Engine
 
         bool RecreateSwapchain(bool force = false);
 
-        std::unique_ptr<RenderTarget> CreateRenderTarget(std::unique_ptr<Vulkan::Image> swapchainImage);
+        std::unique_ptr<RenderTarget> CreateRenderTarget(std::unique_ptr<Vulkan::Image>&& swapchainImage);
 
     private:
         std::unique_ptr<Vulkan::Instance> instance;

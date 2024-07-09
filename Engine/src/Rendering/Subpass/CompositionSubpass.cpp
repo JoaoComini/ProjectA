@@ -34,9 +34,11 @@ namespace Engine
     {
         commandBuffer.SetRasterizationState({ VK_CULL_MODE_FRONT_BIT });
 
-        auto& view = gBufferTarget->GetViews()[0];
+        auto& attachment = gBufferTarget->GetColorAttachments()[0];
 
-        BindImage(*view, *gBufferSampler, 0, 0, 0);
+        auto& view = attachment->GetResolve() ? attachment->GetResolve()->GetView() : attachment->GetView();
+
+        BindImage(view, *gBufferSampler, 0, 0, 0);
 
         auto settings = Renderer::Get().GetSettings();
 

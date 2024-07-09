@@ -13,4 +13,8 @@ namespace Vulkan::Details
     VkSurfaceFormatKHR FindSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &availableFormats);
     VkPresentModeKHR FindPresentMode(const std::vector<VkPresentModeKHR> &availablePresentModes);
     VkExtent2D GetImageExtent(int desiredWidth, int desiredHeight, const VkSurfaceCapabilitiesKHR &capabilities);
+
+    bool IsDepthFormat(VkFormat format);
+    bool IsDepthOnlyFormat(VkFormat format);
+    bool IsDepthStencilFormat(VkFormat format);
 }

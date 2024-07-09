@@ -103,7 +103,7 @@ namespace Vulkan
 		depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
 		depthStencil.depthTestEnable = depthStencilState.depthTestEnable;
 		depthStencil.depthWriteEnable = depthStencilState.depthWriteEnable;
-		depthStencil.depthCompareOp = VK_COMPARE_OP_GREATER_OR_EQUAL;
+		depthStencil.depthCompareOp = VK_COMPARE_OP_GREATER;
 		depthStencil.depthBoundsTestEnable = VK_FALSE;
 		depthStencil.stencilTestEnable = VK_FALSE;
 		depthStencil.pNext = nullptr;
@@ -112,7 +112,7 @@ namespace Vulkan
 		VkPipelineRenderingCreateInfo pipelineRendering{};
 		pipelineRendering.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
 		pipelineRendering.colorAttachmentCount = pipelineRenderingState.colorAttachmentFormats.size();
-		pipelineRendering.pColorAttachmentFormats = pipelineRenderingState.colorAttachmentFormats.size() > 0 ? pipelineRenderingState.colorAttachmentFormats.data() : nullptr;
+		pipelineRendering.pColorAttachmentFormats = pipelineRenderingState.colorAttachmentFormats.data();
 		pipelineRendering.depthAttachmentFormat = pipelineRenderingState.depthAttachmentFormat;
 		pipelineRendering.pNext = nullptr;
 

@@ -30,6 +30,7 @@ namespace Vulkan
 
         SurfaceSupportDetails GetSurfaceSupportDetails() const;
         VkPhysicalDeviceProperties GetProperties() const;
+        VkFormat GetSupportedDepthFormat(bool DepthOnly = false) const;
 
         VkPhysicalDevice GetHandle() const;
 

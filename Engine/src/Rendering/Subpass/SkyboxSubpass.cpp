@@ -65,10 +65,6 @@ namespace Engine
 
         commandBuffer.SetVertexInputState(vertexInputState);
 
-        Vulkan::MultisampleState multisampleState{ sampleCount };
-
-        commandBuffer.SetMultisampleState(multisampleState);
-
         auto [camera, transform] = Renderer::Get().GetMainCamera();
 
         glm::mat4 view = glm::mat3{ glm::inverse(transform) };
