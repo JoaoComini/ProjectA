@@ -7,6 +7,8 @@
 #include "Subpass/ShadowSubpass.hpp"
 #include "Subpass/CompositionSubpass.hpp"
 
+#include "Vulkan/Swapchain.hpp"
+
 namespace Engine
 {
     RenderPipeline::RenderPipeline(RenderContext& renderContext, Scene& scene)
@@ -48,64 +50,33 @@ namespace Engine
 
 	std::unique_ptr<RenderTarget> RenderPipeline::CreateGBufferPassTarget()
 	{
-		auto extent = renderContext.GetCurrentFrame().GetTarget().GetExtent();
+		auto extent = renderContext.GetSwapchain().GetImageExtent();
 
-		auto colorResolveImage = std::make_unique<Vulkan::Image>(
-			renderContext.GetDevice(),
-			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-			VK_FORMAT_R16G16B16A16_SFLOAT,
-			VkExtent3D{ extent.width, extent.height, 1 },
-			VK_SAMPLE_COUNT_1_BIT
-		);
+		auto colorResolveAttachment = RenderAttachment::Builder(renderContext.GetDevice())
+			.Usage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT)
+			.Format(VK_FORMAT_R16G16B16A16_SFLOAT)
+			.Extent(extent)
+			.Build();
 
-		auto depthImage = std::make_unique<Vulkan::Image>(
-			renderContext.GetDevice(),
-			VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-			renderContext.GetPhysicalDevice().GetSupportedDepthFormat(),
-			VkExtent3D{ extent.width, extent.height, 1 },
-			renderContext.GetDevice().GetMaxSampleCount()
-		);
+		auto colorAttachment = RenderAttachment::Builder(renderContext.GetDevice())
+			.Format(VK_FORMAT_R16G16B16A16_SFLOAT)
+			.Extent(extent)
+			.SampleCount(renderContext.GetDevice().GetMaxSampleCount())
+			.ClearValue({ .color = {0.f, 0.f , 0.f, 1.f} })
+			.Resolve(std::move(colorResolveAttachment))
+			.Build();
 
-		auto colorImage = std::make_unique<Vulkan::Image>(
-			renderContext.GetDevice(),
-			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-			VK_FORMAT_R16G16B16A16_SFLOAT,
-			VkExtent3D{ extent.width, extent.height, 1 },
-			renderContext.GetDevice().GetMaxSampleCount()
-		);
-
-		auto colorResolveAttachment = std::make_unique<RenderAttachment>(
-			renderContext.GetDevice(),
-			std::move(colorResolveImage),
-			VkClearValue{},
-			Vulkan::LoadStoreInfo{}
-		);
-
-		auto colorAttachment = std::make_unique<RenderAttachment>(
-			renderContext.GetDevice(),
-			std::move(colorImage),
-			VkClearValue {
-				.color = { 0.f, 0.f, 0.f, 1.f }
-			},
-			Vulkan::LoadStoreInfo {
-				.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-				.storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-			}
-		);
-
-		colorAttachment->SetResolve(std::move(colorResolveAttachment));
-
-		auto depthAttachment = std::make_unique<RenderAttachment>(
-			renderContext.GetDevice(),
-			std::move(depthImage),
-			VkClearValue {
-				.depthStencil = { 0.f, 0 }
-			},
-			Vulkan::LoadStoreInfo {
+		auto depthAttachment = RenderAttachment::Builder(renderContext.GetDevice())
+			.Usage(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
+			.Format(renderContext.GetPhysicalDevice().GetSupportedDepthFormat())
+			.SampleCount(renderContext.GetDevice().GetMaxSampleCount())
+			.Extent(extent)
+			.ClearValue({ .depthStencil = {0.f, 0} })
+			.LoadStoreInfo({
 				.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
 				.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-			}
-		);
+			})
+			.Build();
 
 		auto target = std::make_unique<RenderTarget>();
 		target->AddColorAttachment(std::move(colorAttachment));
@@ -137,21 +108,12 @@ namespace Engine
 
 	std::unique_ptr<RenderTarget> RenderPipeline::CreateShadowPassTarget()
 	{
-		auto image = std::make_unique<Vulkan::Image>(
-			renderContext.GetDevice(),
-			VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-			renderContext.GetPhysicalDevice().GetSupportedDepthFormat(true),
-			VkExtent3D{ 2048, 2048, 1 }
-		);
-
-		auto attachment = std::make_unique<RenderAttachment>(
-			renderContext.GetDevice(),
-			std::move(image),
-			VkClearValue{
-				.depthStencil = { 0.f, 0 }
-			},
-			Vulkan::LoadStoreInfo{}
-		);
+		auto attachment = RenderAttachment::Builder(renderContext.GetDevice())
+			.Usage(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT)
+			.Extent({ 2048, 2048 })
+			.ClearValue({ .depthStencil { 0.f, 0} })
+			.Format(renderContext.GetPhysicalDevice().GetSupportedDepthFormat(true))
+			.Build();
 
 		auto target = std::make_unique<RenderTarget>();
 

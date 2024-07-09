@@ -89,6 +89,7 @@ namespace Vulkan
 
         return *this;
     }
+
     ImageBuilder& ImageBuilder::Format(VkFormat format)
     {
         this->format = format;
