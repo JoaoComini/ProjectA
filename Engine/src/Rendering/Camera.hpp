@@ -8,52 +8,58 @@ namespace Engine
 	class Camera
 	{
 	public:
-		virtual ~Camera() = default;
-		virtual glm::mat4 GetProjection() const = 0;
-	};
+		enum Type
+		{
+			Pespective,
+			Orthographic
+		};
 
-	class PerspectiveCamera : public Camera
-	{
-	public:
-		PerspectiveCamera(float fov, float aspectRatio, float nearClip, float farClip);
+		Camera() = default;
+		
+		void SetPerspective(float fov, float nearClip, float farClip);
+		void SetOrthographic(float size, float nearClip, float farClip);
 
 		void SetAspectRatio(float aspectRatio);
 
-		glm::mat4 GetProjection() const override;
+		void SetType(Type type);
+		Type GetType() const;
 
-		float GetFov();
+		glm::mat4 GetProjection();
+
+		float GetFov() const;
 		void SetFov(float fov);
 
-		float GetNear();
+		float GetSize() const;
+		void SetSize(float size);
+
+		float GetNear() const;
 		void SetNear(float nearClip);
 
-		float GetFar();
+		float GetFar() const;
 		void SetFar(float farClip);
+
+		template <class Archive>
+		void Serialize(Archive& ar)
+		{
+			ar(type, fov, aspectRatio, size, nearClip, farClip);
+		}
 
 	private:
 		void UpdateProjection();
 
-		float fov{};
-		float aspectRatio{};
-		float nearClip{};
-		float farClip{};
+		Type type{ Type::Pespective };
 
-		glm::mat4 projection{};
-	};
+		// Perspective
+		float fov{ glm::radians(45.f) };
+		float aspectRatio{ 16.f / 9.f };
 
-	class OrthographicCamera : public Camera
-	{
-	public:
-		OrthographicCamera(float left, float right, float bottom, float top, float nearClip, float farClip);
+		// Orthographic
+		float size{};
+		
+		float nearClip{ 1.f };
+		float farClip{ 3000.f };
 
-		glm::mat4 GetProjection() const override;
-
-		float left{};
-		float right{};
-		float bottom{};
-		float top{};
-		float nearClip{};
-		float farClip{};
+		bool dirty{ true };
 
 		glm::mat4 projection{};
 	};

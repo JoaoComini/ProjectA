@@ -23,40 +23,10 @@ namespace Engine
 	class Scene : public Resource
 	{
 	public:
+		Scene& operator=(const Scene& other);
 
-		Scene& operator=(const Scene& other)
-		{
-			Resource::operator=(other);
-
-			registry.clear();
-			entityMap.clear();
-
-			const auto entities = other.registry.storage<entt::entity>();
-			registry.storage<entt::entity>().push(entities->cbegin(), entities->cend());
-
-			CopyComponent<Component::Transform>(other.registry);
-			CopyComponent<Component::Id>(other.registry);
-			CopyComponent<Component::Name>(other.registry);
-			CopyComponent<Component::MeshRender>(other.registry);
-			CopyComponent<Component::Camera>(other.registry);
-			CopyComponent<Component::DirectionalLight>(other.registry);
-			CopyComponent<Component::PointLight>(other.registry);
-			CopyComponent<Component::SkyLight>(other.registry);
-
-			CopyRelationships(other.registry);
-
-			ForEachEntity<Component::Id>([&](Entity entity) {
-				auto id = entity.GetComponent<Component::Id>().id;
-				entityMap[id] = entity;
-			});
-
-			return *this;
-		}
-
-		Entity CreateEntity(Uuid id = {});
+		Entity CreateEntity();
 		void DestroyEntity(Entity entity);
-
-		Entity FindEntityById(Uuid id);
 
 		void Update();
 
@@ -131,44 +101,65 @@ namespace Engine
 			return GetStaticType();
 		}
 
+		template<class Archive>
+		void Save(Archive& ar) const
+		{
+			entt::snapshot snapshot{ registry };
+
+			snapshot
+				.get<entt::entity>(ar)
+				.get<Component::Name>(ar)
+				.get<Component::Relationship>(ar)
+				.get<Component::Transform>(ar)
+				.get<Component::MeshRender>(ar)
+				.get<Component::Camera>(ar)
+				.get<Component::DirectionalLight>(ar)
+				.get<Component::PointLight>(ar)
+				.get<Component::SkyLight>(ar);
+		}
+
+		template<class Archive>
+		void Load(Archive& ar)
+		{
+			entt::snapshot_loader loader{ registry };
+
+			loader
+				.get<entt::entity>(ar)
+				.get<Component::Name>(ar)
+				.get<Component::Relationship>(ar)
+				.get<Component::Transform>(ar)
+				.get<Component::MeshRender>(ar)
+				.get<Component::Camera>(ar)
+				.get<Component::DirectionalLight>(ar)
+				.get<Component::PointLight>(ar)
+				.get<Component::SkyLight>(ar);
+		}
+
 	private:
+		template<typename... T>
+		void CopyComponents(Component::Group<T...>, const entt::registry& other)
+		{
+			([&]()
+				{
+					CopyComponent<T>(other);
+				}(),
+			...);
+		
+		}
 
 		template<typename T>
 		void CopyComponent(const entt::registry& other)
 		{
 			const auto components = other.storage<T>();
 
-			if (components)
+			if (! components)
 			{
-				registry.insert<T>(components->entt::sparse_set::begin(), components->entt::sparse_set::end(), components->begin());
+				return;
 			}
-		}
 
-		void CopyRelationships(const entt::registry& other)
-		{
-			const auto components = other.storage<Component::Relationship>();
-
-			if (components)
-			{
-				std::vector<Component::Relationship> transformed;
-
-				for (auto it = components->begin(); it != components->end(); it++)
-				{
-					transformed.push_back({
-						.children = it->children,
-						.first = { it->first, &registry },
-						.prev = { it->prev, &registry },
-						.next = { it->next, &registry },
-						.parent = { it->parent, &registry }
-					});
-				}
-
-				registry.insert<Component::Relationship>(components->entt::sparse_set::begin(), components->entt::sparse_set::end(), transformed.begin());
-			}
+			registry.insert<T>(components->entt::sparse_set::begin(), components->entt::sparse_set::end(), components->begin());
 		}
 
 		entt::registry registry;
-
-		std::unordered_map<Uuid, Entity> entityMap;
 	};
 };

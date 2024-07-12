@@ -64,12 +64,16 @@ namespace Engine
 			return handle == other.handle && registry == other.registry;
 		}
 
+		template <class Archive>
+		void Serialize(Archive& ar)
+		{
+			ar(handle);
+		}
+
 		void SetParent(Entity parent);
 		Entity GetParent() const;
 
 		std::vector<Entity> GetChildren() const;
-
-		Uuid GetId() const;
 	private:
 		entt::entity handle{ entt::null };
 		entt::registry* registry = nullptr;

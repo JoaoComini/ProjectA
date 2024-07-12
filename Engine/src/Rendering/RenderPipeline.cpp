@@ -14,7 +14,9 @@ namespace Engine
     RenderPipeline::RenderPipeline(RenderContext& renderContext, Scene& scene)
 		: renderContext(renderContext), scene(scene)
     {
-		shadowCamera = std::make_unique<OrthographicCamera>(-200.f, 200.f, -200.f, 200.f, 120.f, -120.f);
+		shadowCamera = std::make_unique<Camera>();
+		shadowCamera->SetOrthographic(200.f, 120.f, -120.f);
+		shadowCamera->SetAspectRatio(1.f);
 
 		SetupShadowPass();
 		SetupGBufferPass();

@@ -36,12 +36,12 @@ namespace Engine
         auto& thisComp = GetComponent<Component::Relationship>();
         auto& childComp = entity.GetComponent<Component::Relationship>();
 
-        childComp.parent = *this;
+        childComp.parent = handle;
         childComp.next = thisComp.first;
 
-        if (thisComp.first)
+        if (thisComp.first != entt::null)
         {
-            thisComp.first.GetComponent<Component::Relationship>().prev = entity;
+            registry->get<Component::Relationship>(thisComp.first).prev = entity;
         }
 
         thisComp.first = entity;
@@ -60,14 +60,14 @@ namespace Engine
             thisComp.first = childComp.next;
         }
 
-        if (childComp.next)
+        if (childComp.next != entt::null)
         {
-            childComp.next.GetComponent<Component::Relationship>().prev = childComp.prev;
+            registry->get<Component::Relationship>(childComp.next).prev = childComp.prev;
         }
 
-        if (childComp.prev)
+        if (childComp.prev != entt::null)
         {
-            childComp.prev.GetComponent<Component::Relationship>().next = childComp.next;
+            registry->get<Component::Relationship>(childComp.next).next = childComp.next;
         }
 
         thisComp.children -= 1;
@@ -75,7 +75,7 @@ namespace Engine
 
     Entity Entity::GetParent() const
     {
-        return GetComponent<Component::Relationship>().parent;
+        return { GetComponent<Component::Relationship>().parent, registry };
     }
 
     std::vector<Entity> Entity::GetChildren() const
@@ -87,17 +87,11 @@ namespace Engine
         auto current = comp.first;
         for (size_t i = 0; i < comp.children; i++)
         {
-            children.push_back(current);
+            children.push_back({ current, registry });
 
-            current = current.GetComponent<Component::Relationship>().next;
+            current = registry->get<Component::Relationship>(current).next;
         }
 
         return children;
     }
-
-    Uuid Entity::GetId() const
-    {
-        return GetComponent<Component::Id>().id;
-    }
-
 }

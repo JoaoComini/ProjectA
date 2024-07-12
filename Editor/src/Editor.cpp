@@ -12,7 +12,6 @@
 
 #include "Platform/FileDialog.hpp"
 #include "Project/Project.hpp"
-#include "Scene/SceneSerializer.hpp"
 
 namespace Engine
 {

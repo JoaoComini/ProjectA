@@ -32,21 +32,14 @@ namespace Engine::Component
 		std::string name = "Empty Entity";
 	};
 
-	struct Id
-	{
-		Uuid id;
-	};
-
 	struct Relationship
 	{
-		std::size_t children;
-		Entity first;
-		Entity prev;
-		Entity next;
-		Entity parent;
+		std::size_t children{ 0 };
+		entt::entity first{ entt::null };
+		entt::entity prev{ entt::null };
+		entt::entity next{ entt::null  };
+		entt::entity parent{ entt::null };
 	};
-
-	struct Delete{};
 
 	struct MeshRender
 	{
@@ -55,7 +48,7 @@ namespace Engine::Component
 
 	struct Camera
 	{
-		Engine::Camera* camera;
+		Engine::Camera camera;
 	};
 
 	struct DirectionalLight
@@ -74,6 +67,22 @@ namespace Engine::Component
 	{
 		ResourceId cubemap{ 0 };
 	};
+
+	struct Delete {};
+
+	template <typename... Component>
+	struct Group { };
+
+	using Serializable = Group<
+		Transform,
+		Name,
+		Relationship,
+		MeshRender,
+		Camera,
+		DirectionalLight,
+		PointLight,
+		SkyLight
+	>;
 
 };
 

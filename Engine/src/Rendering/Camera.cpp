@@ -5,72 +5,116 @@
 
 namespace Engine
 {
-	PerspectiveCamera::PerspectiveCamera(float fov, float aspectRatio, float nearClip, float farClip)
-		: fov(fov), aspectRatio(aspectRatio), nearClip(nearClip), farClip(farClip)
+	void Camera::SetPerspective(float fov, float nearClip, float farClip)
 	{
-		UpdateProjection();
+		type = Type::Pespective;
+
+		this->fov = fov;
+
+		this->nearClip = nearClip;
+		this->farClip = farClip;
+
+		dirty = true;
 	}
 
-	void PerspectiveCamera::SetAspectRatio(float aspectRatio)
+	void Camera::SetOrthographic(float size, float nearClip, float farClip)
+	{
+		type = Type::Orthographic;
+
+		this->size = size;
+
+		this->nearClip = nearClip;
+		this->farClip = farClip;
+
+		dirty = true;
+	}
+
+	void Camera::SetAspectRatio(float aspectRatio)
 	{
 		this->aspectRatio = aspectRatio;
 
-		UpdateProjection();
+		dirty = true;
 	}
 
-	glm::mat4 PerspectiveCamera::GetProjection() const
+	Camera::Type Camera::GetType() const
 	{
-		return this->projection;
+		return type;
 	}
 
-	float PerspectiveCamera::GetFov()
+	void Camera::SetType(Camera::Type type)
+	{
+		this->type = type;
+
+		dirty = true;
+	}
+
+	float Camera::GetFov() const
 	{
 		return fov;
 	}
 
-	void PerspectiveCamera::SetFov(float fov)
+	void Camera::SetFov(float fov)
 	{
 		this->fov = fov;
-		UpdateProjection();
+
+		dirty = true;
 	}
 
-	float PerspectiveCamera::GetNear()
+	float Camera::GetNear() const
 	{
 		return nearClip;
 	}
 
-	void PerspectiveCamera::SetNear(float nearClip)
+	void Camera::SetNear(float nearClip)
 	{
 		this->nearClip = nearClip;
-		UpdateProjection();
+
+		dirty = true;
 	}
 
-	float PerspectiveCamera::GetFar()
+	float Camera::GetFar() const
 	{
 		return farClip;
 	}
 
-	void PerspectiveCamera::SetFar(float farClip)
+	void Camera::SetFar(float farClip)
 	{
 		this->farClip = farClip;
-		UpdateProjection();
+
+		dirty = true;
 	}
 
-	void PerspectiveCamera::UpdateProjection()
+	void Camera::UpdateProjection()
 	{
-		this->projection = glm::perspective(fov, aspectRatio, farClip, nearClip);
-		this->projection[1][1] *= -1;
-	}
+		if (! dirty)
+		{
+			return;
+		}
 
-	OrthographicCamera::OrthographicCamera(float left, float right, float bottom, float top, float nearClip, float farClip)
-		: left(left), right(right), bottom(bottom), top(top), nearClip(nearClip), farClip(farClip)
-	{
-		projection = glm::ortho(left, right, bottom, top, farClip, nearClip);
+		switch (type)
+		{
+		case Engine::Camera::Pespective:
+			projection = glm::perspective(fov, aspectRatio, farClip, nearClip);
+			break;
+		case Engine::Camera::Orthographic:
+			float left = -size * aspectRatio * 0.5f;
+			float right = size * aspectRatio * 0.5f;
+			float bottom = -size * 0.5f;
+			float top = size * 0.5f;
+
+			projection = glm::ortho(left, right, bottom, top, farClip, nearClip);
+			break;
+		}
+
 		projection[1][1] *= -1;
+
+		dirty = false;
 	}
 
-	glm::mat4 OrthographicCamera::GetProjection() const
+	glm::mat4 Camera::GetProjection()
 	{
+		UpdateProjection();
+
 		return projection;
 	}
 }

@@ -293,7 +293,7 @@ void main()
 		}
 	}
 
-    vec3 ambientColor = vec3(0.03) * albedo.rgb;
+    vec3 ambientColor = vec3(0.1) * albedo.rgb;
 
 	#ifdef HAS_ALBEDO_TEXTURE
 	vec3 finalColor = pow(ambientColor + Lo, vec3(1.0 / GAMMA));

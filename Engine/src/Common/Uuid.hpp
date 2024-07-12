@@ -31,6 +31,12 @@ namespace Engine
 			return std::to_string(value);
 		}
 
+		template <class Archive>
+		void Serialize(Archive& ar)
+		{
+			ar(value);
+		}
+
 	private:
 		uint64_t value;
 	};

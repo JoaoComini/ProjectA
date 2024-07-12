@@ -37,3 +37,6 @@
 [submodule "Engine/third_party/glslang"]
 	path = Engine/third_party/glslang
 	url = https://github.com/KhronosGroup/glslang.git
+[submodule "Engine/third_party/cereal"]
+	path = Engine/third_party/cereal
+	url = https://github.com/USCiLab/cereal.git

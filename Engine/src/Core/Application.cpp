@@ -102,9 +102,9 @@ namespace Engine {
 
 		auto& comp = entity.GetComponent<Component::Camera>();
 
-		auto camera = dynamic_cast<PerspectiveCamera*>(comp.camera);
+		auto camera = comp.camera;
 
-		camera->SetAspectRatio((float)width / height);
+		camera.SetAspectRatio((float)width / height);
 	}
 
 	void Application::Exit()

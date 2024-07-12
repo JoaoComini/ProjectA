@@ -6,7 +6,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-class EditorCamera: public Engine::PerspectiveCamera
+class EditorCamera: public Engine::Camera
 {
 public:
 	EditorCamera(float fov, float aspectRatio, float nearClip, float farClip);

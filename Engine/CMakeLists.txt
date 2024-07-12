@@ -94,6 +94,11 @@ set(ENABLE_OPT OFF CACHE BOOL "" FORCE)
 set(SKIP_GLSLANG_INSTALL ON CACHE BOOL "" FORCE)
 add_subdirectory(third_party/glslang)
 
+# -------- CEREAL --------
+
+set(SKIP_PERFORMANCE_COMPARISON ON CACHE BOOL "" FORCE)
+add_subdirectory(third_party/cereal)
+
 # -----------------------
 
 set(ENGINE_SRC_FILES
@@ -150,7 +155,6 @@ set(ENGINE_SRC_FILES
     "src/Vulkan/Caching/ResourceCache.cpp"
     "src/Scene/Scene.cpp"
     "src/Scene/Entity.cpp"
-    "src/Scene/SceneSerializer.cpp"
     "src/Project/Project.cpp"
     "src/Resource/ResourceManager.cpp"
     "src/Resource/ResourceRegistry.cpp"
@@ -193,6 +197,7 @@ target_link_libraries(Engine
     glslang
     glslang-default-resource-limits
     SPIRV
+    cereal::cereal
 )
 
 target_compile_definitions(Engine PRIVATE
@@ -202,6 +207,9 @@ target_compile_definitions(Engine PRIVATE
     GLM_FORCE_RADIANS
     TINYGLTF_USE_CPP14
     FLATBUFFERS_USE_STD_SPAN
+    CEREAL_SERIALIZE_FUNCTION_NAME=Serialize
+    CEREAL_SAVE_FUNCTION_NAME=Save
+    CEREAL_LOAD_FUNCTION_NAME=Load
     $<$<PLATFORM_ID:Windows>:PLATFORM_WINDOWS>
     $<$<PLATFORM_ID:Linux>:PLATFORM_LINUX>
 )

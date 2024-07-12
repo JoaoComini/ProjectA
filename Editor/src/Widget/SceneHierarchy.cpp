@@ -26,7 +26,6 @@ void SceneHierarchy::Draw()
 	ImGui::End();
 }
 
-
 void SceneHierarchy::EntityNode(Engine::Entity entity, bool root)
 {
 	if (entity.GetParent() && root)
