@@ -33,7 +33,7 @@ namespace Engine
         void SaveScene();
         void OpenScene(ResourceId id);
 
-        void AddPrefabToScene(ResourceId id);
+        void AddScene(ResourceId id);
         void AddSkyLightToScene(ResourceId id);
 
         void ImportFile();

@@ -17,7 +17,6 @@ namespace Engine
 		Cubemap,
 		Material,
 		Mesh,
-		Prefab,
 		Scene,
 	};
 

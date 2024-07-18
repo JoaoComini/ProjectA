@@ -1,7 +1,6 @@
 #include "ContentBrowser.hpp"
 
 #include "Resource/ResourceManager.hpp"
-#include "Resource/Prefab.hpp"
 #include "Resource/Importer/TextureImporter.hpp"
 #include "Project/Project.hpp"
 
@@ -34,6 +33,11 @@ ContentBrowser::ContentBrowser(Vulkan::Device& device, Engine::Scene& scene)
 ContentBrowser::~ContentBrowser()
 {
 	device.WaitIdle();
+}
+
+void ContentBrowser::OnResourceDoubleClick(std::function<void(Engine::ResourceId, Engine::ResourceMetadata)> onResourceDoubleClick)
+{
+	this->onResourceDoubleClick = onResourceDoubleClick;
 }
 
 void ContentBrowser::Draw()
@@ -180,6 +184,11 @@ bool ContentBrowser::ContentBrowserFile(std::filesystem::path path, ResourceTree
 		}
 
 		ImGui::EndPopup();
+	}
+
+	if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0) && onResourceDoubleClick)
+	{
+		onResourceDoubleClick(node->id, node->metadata);
 	}
 
 	ImGui::TextWrapped(filename.c_str());

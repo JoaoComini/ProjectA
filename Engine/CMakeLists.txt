@@ -164,7 +164,7 @@ set(ENGINE_SRC_FILES
     "src/Resource/Factory/TextureFactory.cpp"
     "src/Resource/Factory/MaterialFactory.cpp"
     "src/Resource/Factory/MeshFactory.cpp"
-    "src/Resource/Factory/PrefabFactory.cpp"
+    
     "src/Resource/Factory/SceneFactory.cpp"
     "src/Resource/Flatbuffers/NativeVertex.cpp"
     "src/Platform/Windows/FileDialog.cpp"
@@ -221,7 +221,6 @@ set(
     "src/Resource/Flatbuffers/Material.fbs"
     "src/Resource/Flatbuffers/Texture.fbs"
     "src/Resource/Flatbuffers/Mesh.fbs"
-    "src/Resource/Flatbuffers/Prefab.fbs"
 )
 
 if (WIN32)
@@ -265,7 +264,6 @@ set(ENGINE_TEST_FILES
     "test/Resource/ResourceTest.cpp"
     "test/Resource/Factory/TextureFactoryTest.cpp"
     "test/Resource/Factory/MeshFactoryTest.cpp"
-    "test/Resource/Factory/PrefabFactoryTest.cpp"
  )
 
 add_executable(Engine_Test ${ENGINE_TEST_FILES})

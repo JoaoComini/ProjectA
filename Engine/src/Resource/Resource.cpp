@@ -12,7 +12,6 @@ namespace Engine
             { ResourceType::Texture, "Texture" },
             { ResourceType::Cubemap, "Cubemap" },
             { ResourceType::Material, "Material" },
-            { ResourceType::Prefab, "Prefab" },
             { ResourceType::Scene, "Scene" },
             { ResourceType::None, "None" }
         };
@@ -35,7 +34,6 @@ namespace Engine
             { "Texture", ResourceType::Texture },
             { "Cubemap", ResourceType::Cubemap},
             { "Material", ResourceType::Material },
-            { "Prefab", ResourceType::Prefab },
             { "Scene", ResourceType::Scene },
             { "None", ResourceType::None }
         };

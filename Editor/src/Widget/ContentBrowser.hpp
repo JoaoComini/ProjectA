@@ -20,6 +20,8 @@ public:
 
 	virtual void Draw() override;
 	void RefreshResourceTree();
+
+	void OnResourceDoubleClick(std::function<void(Engine::ResourceId, Engine::ResourceMetadata)> onResourceDoubleClick);
 private:
 	void ContentBrowserBackButton();
 
@@ -41,6 +43,8 @@ private:
 	VkDescriptorSet directoryIconDescriptor;
 
 	float itemSize = 96;
+
+	std::function<void(Engine::ResourceId, Engine::ResourceMetadata)> onResourceDoubleClick;
 		
 	const Vulkan::Device& device;
 	Engine::Scene& scene;

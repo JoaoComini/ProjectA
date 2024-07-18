@@ -9,7 +9,7 @@
 #include "Rendering/Texture.hpp"
 #include "Rendering/Mesh.hpp"
 
-#include "Resource/Prefab.hpp"
+#include "Scene/Scene.hpp"
 
 namespace Engine
 {
@@ -26,9 +26,9 @@ namespace Engine
 		std::vector<ResourceId> ImportTextures(std::filesystem::path parent, tinygltf::Model& model);
 		std::vector<ResourceId> ImportMaterials(std::filesystem::path parent, tinygltf::Model& model, std::vector<ResourceId>& textures);
 		std::vector<ResourceId> ImportMeshes(std::filesystem::path parent, tinygltf::Model& model, std::vector<ResourceId>& materials);
-		std::vector<std::unique_ptr<Node>> ImportNodes(tinygltf::Model& model, std::vector<ResourceId>& meshes);
+		std::vector<Entity> ImportEntities(tinygltf::Model& model, std::vector<ResourceId>& meshes, Scene &scene);
 
-		void ImportPrefab(std::filesystem::path path, tinygltf::Model& gltfModel, std::vector<std::unique_ptr<Node>>& nodes);
+		void SetupRelationship(const std::string& name, tinygltf::Model& gltfModel, Scene& scene, std::vector<Entity>& entities);
 
 		std::filesystem::path GetPrefabDirectory(std::filesystem::path path);
 

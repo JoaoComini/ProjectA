@@ -7,7 +7,6 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "Resource/ResourceManager.hpp"
-#include "Resource/Prefab.hpp"
 #include "Rendering/Cubemap.hpp"
 
 #include "Platform/FileDialog.hpp"
@@ -60,15 +59,23 @@ namespace Engine
 			NewScene();
 		});
 
-		viewportDragDrop->OnDropResource([&](auto id, auto metadata)
-		{
+		contentBrowser->OnResourceDoubleClick([&](auto id, auto metadata) {
 			switch (metadata.type)
 			{
 			case ResourceType::Scene:
 				OpenScene(id);
 				break;
-			case ResourceType::Prefab:
-				AddPrefabToScene(id);
+			default:
+				break;
+			}
+		});
+
+		viewportDragDrop->OnDropResource([&](auto id, auto metadata)
+		{
+			switch (metadata.type)
+			{
+			case ResourceType::Scene:
+				AddScene(id);
 				break;
 			case ResourceType::Cubemap:
 				AddSkyLightToScene(id);
@@ -152,8 +159,14 @@ namespace Engine
 			id = ResourceManager::Get().CreateResource<Scene>("untitled", GetScene());
 		}
 		
-		OpenScene(id);
 		contentBrowser->RefreshResourceTree();
+	}
+
+	void Editor::AddScene(ResourceId id)
+	{
+		auto scene = ResourceManager::Get().LoadResource<Scene>(id);
+
+		GetScene().Add(*scene);
 	}
 
 	void Editor::OpenScene(ResourceId id)
@@ -164,40 +177,6 @@ namespace Engine
 
 		entityInspector->SetEntity({});
 		entityGizmo->SetEntity({});
-	}
-
-	void AddEntity(Scene& scene, Node& node, Entity* parent)
-	{
-		auto entity = scene.CreateEntity();
-
-		auto& transform = entity.AddComponent<Engine::Component::Transform>(node.GetTransform());
-
-		if (node.GetMesh())
-		{
-			entity.AddComponent<Engine::Component::MeshRender>(node.GetMesh());
-		}
-
-		entity.GetComponent<Engine::Component::Name>().name = node.GetName();
-
-		if (parent)
-		{
-			entity.SetParent(*parent);
-		}
-
-		for (auto& child : node.GetChildren())
-		{
-			AddEntity(scene, *child, &entity);
-		}
-	}
-
-	void Editor::AddPrefabToScene(ResourceId id)
-	{
-		auto prefab = ResourceManager::Get().LoadResource<Prefab>(id);
-
-		for (auto child : prefab->GetRoot().GetChildren())
-		{
-			AddEntity(GetScene(), *child, nullptr);
-		}
 	}
 
 	void Editor::AddSkyLightToScene(ResourceId id)

@@ -24,11 +24,13 @@ namespace Engine
 	{
 	public:
 		Scene& operator=(const Scene& other);
+		Scene& operator+(const Scene& other);
 
 		Entity CreateEntity();
 		void DestroyEntity(Entity entity);
-
 		void Update();
+
+		void Add(const Scene& scene);
 
 		template<typename... Args, typename Func>
 		void ForEachEntity(Func func)
@@ -44,7 +46,7 @@ namespace Engine
 						continue;
 					}
 
-					func(Entity{ entity, &registry });
+					func(Entity { entity, &registry });
 				}
 			}
 			else
@@ -53,12 +55,12 @@ namespace Engine
 
 				for (auto entity : view)
 				{
-					if (!registry.valid(entity))
+					if (! registry.valid(entity))
 					{
 						continue;
 					}
 
-					func(Entity{ entity, &registry });
+					func(Entity { entity, &registry });
 				}
 			}
 		}
@@ -89,16 +91,6 @@ namespace Engine
 		void OnComponentAdded(Type instance)
 		{
 			registry.on_construct<T>().connect<MemberFunc>(instance);
-		}
-
-		static ResourceType GetStaticType()
-		{
-			return ResourceType::Scene;
-		}
-
-		virtual ResourceType GetType() const override
-		{
-			return GetStaticType();
 		}
 
 		template<class Archive>
@@ -135,31 +127,17 @@ namespace Engine
 				.get<Component::SkyLight>(ar);
 		}
 
+		static ResourceType GetStaticType()
+		{
+			return ResourceType::Scene;
+		}
+
+		virtual ResourceType GetType() const override
+		{
+			return GetStaticType();
+		}
+
 	private:
-		template<typename... T>
-		void CopyComponents(Component::Group<T...>, const entt::registry& other)
-		{
-			([&]()
-				{
-					CopyComponent<T>(other);
-				}(),
-			...);
-		
-		}
-
-		template<typename T>
-		void CopyComponent(const entt::registry& other)
-		{
-			const auto components = other.storage<T>();
-
-			if (! components)
-			{
-				return;
-			}
-
-			registry.insert<T>(components->entt::sparse_set::begin(), components->entt::sparse_set::end(), components->begin());
-		}
-
 		entt::registry registry;
 	};
 };

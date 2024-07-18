@@ -73,6 +73,9 @@ namespace Engine
 		void SetParent(Entity parent);
 		Entity GetParent() const;
 
+		void SetName(const std::string& name);
+		std::string_view GetName() const;
+
 		std::vector<Entity> GetChildren() const;
 	private:
 		entt::entity handle{ entt::null };

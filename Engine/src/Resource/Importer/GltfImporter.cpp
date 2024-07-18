@@ -12,7 +12,6 @@
 #include "Resource/Factory/TextureFactory.hpp"
 #include "Resource/Factory/MaterialFactory.hpp"
 #include "Resource/Factory/MeshFactory.hpp"
-#include "Resource/Factory/PrefabFactory.hpp"
 
 #include "Resource/ResourceManager.hpp"
 
@@ -38,6 +37,8 @@ namespace Engine
         {
             return;
         }
+
+        auto scene = Scene{};
     
         auto textures = ImportTextures(directory, model);
 
@@ -45,9 +46,11 @@ namespace Engine
 
         auto meshes = ImportMeshes(directory, model, materials);
 
-        auto nodes =  ImportNodes(model, meshes);
+        auto entities =  ImportEntities(model, meshes, scene);
         
-        ImportPrefab(directory, model, nodes);
+        SetupRelationship(directory.stem().string(), model, scene, entities);
+
+        ResourceManager::Get().CreateResource<Scene>(directory.stem() / directory.stem(), scene);
     }
 
     tinygltf::Model GltfImporter::LoadModel(std::filesystem::path path)
@@ -79,8 +82,6 @@ namespace Engine
     std::vector<ResourceId> GltfImporter::ImportTextures(std::filesystem::path parent, tinygltf::Model& model)
     {
         std::vector<ResourceId> textures;
-
-        TextureFactory factory{ device };
 
         for (size_t i = 0; i < model.textures.size(); i++)
         {
@@ -117,8 +118,6 @@ namespace Engine
     {
         std::vector<ResourceId> materials;
 
-        MaterialFactory factory;
-
         for (size_t i = 0; i < model.materials.size(); i++)
         {
             auto& material = model.materials[i];
@@ -154,8 +153,6 @@ namespace Engine
     std::vector<ResourceId> GltfImporter::ImportMeshes(std::filesystem::path parent, tinygltf::Model& model, std::vector<ResourceId>& materials)
     {
         std::vector<ResourceId> meshes;
-
-        MeshFactory factory{ device };
 
         for (auto& mesh : model.meshes)
         {
@@ -249,20 +246,20 @@ namespace Engine
         return meshes;
     }
 
-    std::vector<std::unique_ptr<Node>> GltfImporter::ImportNodes(tinygltf::Model& gltfModel, std::vector<ResourceId>& meshes)
+    std::vector<Entity> GltfImporter::ImportEntities(tinygltf::Model& gltfModel, std::vector<ResourceId>& meshes, Scene& scene)
     {
-        std::vector<std::unique_ptr<Node>> nodes;
+        std::vector<Entity> entities;
 
         for (auto& gltfNode : gltfModel.nodes)
         {
-            auto node = std::make_unique<Node>();
+            auto entity = scene.CreateEntity();
 
             if (gltfNode.mesh >= 0)
             {
-                node->SetMesh(meshes[gltfNode.mesh]);
+                entity.AddComponent<Component::MeshRender>(meshes[gltfNode.mesh]);
             }
 
-            auto& transform = node->GetTransform();
+            auto transform = Component::Transform{};
 
             if (!gltfNode.translation.empty())
             {
@@ -274,57 +271,50 @@ namespace Engine
                 std::transform(gltfNode.rotation.begin(), gltfNode.rotation.end(), glm::value_ptr(transform.rotation), [](auto value) { return static_cast<float>(value); });
             }
 
+            entity.AddComponent<Component::Transform>(transform);
+
             if (!gltfNode.name.empty())
             {
-                node->SetName(gltfNode.name);
+                entity.SetName(gltfNode.name);
             }
 
-            nodes.push_back(std::move(node));
+            entities.push_back(entity);
         }
 
-        return nodes;
+        return entities;
     }
 
-    void GltfImporter::ImportPrefab(std::filesystem::path parent, tinygltf::Model& gltfModel, std::vector<std::unique_ptr<Node>>& nodes)
+    void GltfImporter::SetupRelationship(const std::string& name, tinygltf::Model& gltfModel, Scene& scene, std::vector<Entity>& entities)
     {
-        PrefabFactory factory;
-            
-        tinygltf::Scene scene = gltfModel.scenes[gltfModel.defaultScene];
+        auto root = scene.CreateEntity();
+        root.SetName(name);
+        root.AddComponent<Component::Transform>();
 
-        auto root = std::make_unique<Node>();
-        root->SetName(scene.name);
-
-        auto model = std::make_shared<Prefab>();
-        model->SetRoot(*root);
-
-        std::queue<std::pair<Node&, int>> traverseNodes;
-
-        for (auto nodeIndex : scene.nodes)
+        for (auto& gltfScene : gltfModel.scenes)
         {
-            traverseNodes.push(std::make_pair(std::ref(*root), nodeIndex));
-        }
+            std::queue<std::pair<Entity, int>> traverseNodes;
 
-        while (!traverseNodes.empty())
-        {
-            auto nodeIt = traverseNodes.front();
-            traverseNodes.pop();
-
-            auto& current = *nodes[nodeIt.second];
-            auto& parent = nodeIt.first;
-
-            parent.AddChild(current);
-
-            for (auto childIndex : gltfModel.nodes[nodeIt.second].children)
+            for (auto index : gltfScene.nodes)
             {
-                traverseNodes.push(std::make_pair(std::ref(current), childIndex));
+                traverseNodes.push(std::make_pair(root, index));
+            }
+
+            while (! traverseNodes.empty())
+            {
+                auto& it = traverseNodes.front();
+                traverseNodes.pop();
+
+                auto& current = entities[it.second];
+                auto& parent = it.first;
+
+                current.SetParent(parent);
+
+                for (auto index: gltfModel.nodes[it.second].children)
+                {
+                    traverseNodes.push(std::make_pair(current, index));
+                }
             }
         }
-
-        nodes.push_back(std::move(root));
-
-        model->SetNodes(std::move(nodes));
-
-        ResourceManager::Get().CreateResource<Prefab>(parent.stem() / parent.stem().string(), *model);
     }
 
     std::filesystem::path GltfImporter::GetPrefabDirectory(std::filesystem::path path)

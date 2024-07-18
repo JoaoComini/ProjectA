@@ -10,10 +10,7 @@
 #include "Resource/Factory/TextureFactory.hpp"
 #include "Resource/Factory/MeshFactory.hpp"
 #include "Resource/Factory/MaterialFactory.hpp"
-#include "Resource/Factory/PrefabFactory.hpp"
 #include "Resource/Factory/SceneFactory.hpp"
-
-
 
 namespace Engine
 {
@@ -91,14 +88,6 @@ namespace Engine
     }
 
     template<>
-    std::shared_ptr<Prefab> ResourceManager::FactoryLoad(std::filesystem::path path)
-    {
-        PrefabFactory factory;
-
-        return factory.Load(path);
-    }
-
-    template<>
     std::shared_ptr<Scene> ResourceManager::FactoryLoad(std::filesystem::path path)
     {
         SceneFactory factory;
@@ -134,14 +123,6 @@ namespace Engine
     void ResourceManager::FactoryCreate<Material>(std::filesystem::path path, MaterialSpec& payload)
     {
         MaterialFactory factory;
-
-        factory.Create(path, payload);
-    }
-
-    template<>
-    void ResourceManager::FactoryCreate<Prefab>(std::filesystem::path path, Prefab& payload)
-    {
-        PrefabFactory factory;
 
         factory.Create(path, payload);
     }

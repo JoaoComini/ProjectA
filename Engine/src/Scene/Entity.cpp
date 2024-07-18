@@ -73,6 +73,16 @@ namespace Engine
         thisComp.children -= 1;
     }
 
+    void Entity::SetName(const std::string& name)
+    {
+        GetComponent<Component::Name>().name = name;
+    }
+
+    std::string_view Entity::GetName() const
+    {
+        return GetComponent<Component::Name>().name;
+    }
+
     Entity Entity::GetParent() const
     {
         return { GetComponent<Component::Relationship>().parent, registry };
