@@ -9,6 +9,11 @@
 
 namespace Engine
 {
+	struct ResourceEntry
+	{
+		ResourceId id;
+		ResourceMetadata metadata;
+	};
 
 	class ResourceRegistry : public Singleton<ResourceRegistry>
 	{
@@ -18,6 +23,7 @@ namespace Engine
 
 		ResourceMetadata* FindMetadataById(ResourceId id);
 		ResourceId FindResourceByPath(std::filesystem::path path);
+		std::vector<ResourceEntry> GetEntriesByType(ResourceType type);
 
 		void ResourceCreated(ResourceId id, ResourceMetadata metadata);
 		void ResourceDeleted(ResourceId id);

@@ -24,13 +24,16 @@ namespace Engine
 	{
 	public:
 		Scene& operator=(const Scene& other);
-		Scene& operator+(const Scene& other);
 
 		Entity CreateEntity();
 		void DestroyEntity(Entity entity);
-		void Update();
+		void Cleanup();
 
 		void Add(const Scene& scene);
+
+		void Pause();
+		void Resume();
+		bool IsPaused() const;
 
 		template<typename... Args, typename Func>
 		void ForEachEntity(Func func)
@@ -67,18 +70,18 @@ namespace Engine
 
 
 		template<typename... Args, typename P = decltype(Predicate)>
-		std::pair<Entity, bool> FindFirstEntity(P predicate = Predicate)
+		Entity FindFirstEntity(P predicate = Predicate)
 		{
 			auto view = registry.view<Args...>();
 
 			for (auto entity : view) {
-				if (predicate({ entity, &registry }))
+				if (predicate(Entity{ entity, &registry }))
 				{
-					return { { entity, &registry }, true };
+					return { entity, &registry };
 				}
 			}
 
-			return { {}, false };
+			return {};
 		}
 		
 		template<typename T, auto FreeFunc>
@@ -107,7 +110,8 @@ namespace Engine
 				.get<Component::Camera>(ar)
 				.get<Component::DirectionalLight>(ar)
 				.get<Component::PointLight>(ar)
-				.get<Component::SkyLight>(ar);
+				.get<Component::SkyLight>(ar)
+				.get<Component::Script>(ar);
 		}
 
 		template<class Archive>
@@ -124,7 +128,8 @@ namespace Engine
 				.get<Component::Camera>(ar)
 				.get<Component::DirectionalLight>(ar)
 				.get<Component::PointLight>(ar)
-				.get<Component::SkyLight>(ar);
+				.get<Component::SkyLight>(ar)
+				.get<Component::Script>(ar);
 		}
 
 		static ResourceType GetStaticType()
@@ -137,7 +142,14 @@ namespace Engine
 			return GetStaticType();
 		}
 
+		static std::string GetExtension()
+		{
+			return "scn";
+		}
+
 	private:
 		entt::registry registry;
+
+		bool paused = false;
 	};
 };

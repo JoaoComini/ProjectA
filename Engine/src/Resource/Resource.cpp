@@ -13,7 +13,8 @@ namespace Engine
             { ResourceType::Cubemap, "Cubemap" },
             { ResourceType::Material, "Material" },
             { ResourceType::Scene, "Scene" },
-            { ResourceType::None, "None" }
+            { ResourceType::None, "None" },
+            { ResourceType::Script, "Script" }
         };
 
         auto string = map.find(type);
@@ -35,7 +36,8 @@ namespace Engine
             { "Cubemap", ResourceType::Cubemap},
             { "Material", ResourceType::Material },
             { "Scene", ResourceType::Scene },
-            { "None", ResourceType::None }
+            { "None", ResourceType::None },
+            { "Script", ResourceType::Script }
         };
 
         auto type = map.find(string);

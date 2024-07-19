@@ -4,8 +4,8 @@
 #include <vector>
 
 #include "Scene/Scene.hpp"
-
 #include "Window.hpp"
+#include "Scripting/ScriptRunner.hpp"
 
 namespace Engine {
 
@@ -44,15 +44,20 @@ namespace Engine {
 		virtual void OnGui() {}
 		virtual void OnWindowResize(int width, int height);
 
+		void StartScripts();
+		void UpdateScripts(float timestep);
+		void StopScripts();
+
 		Scene& GetScene();
 		void SetScene(Scene& scene);
 
 		Window& GetWindow();
 
 		void SetCameraAspectRatio(Entity entity);
-
+	private:
 		std::unique_ptr<Window> window;
 		std::unique_ptr<Scene> scene;
+		std::unique_ptr<ScriptRunner> scriptRunner;
 
 		bool running = false;
 	};

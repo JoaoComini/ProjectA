@@ -39,13 +39,13 @@ namespace Engine
 
 	void Renderer::SetMainCamera(Camera& camera, glm::mat4 transform)
 	{
-		mainCamera = &camera;
+		mainCamera = camera;
 		mainTransform = std::move(transform);
 	}
 
 	std::pair<Camera&, glm::mat4&> Renderer::GetMainCamera()
 	{
-		return { *mainCamera, mainTransform };
+		return { mainCamera, mainTransform };
 	}
 
 	void Renderer::SetSettings(RendererSettings settings)

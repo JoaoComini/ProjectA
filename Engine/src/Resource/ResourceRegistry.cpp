@@ -37,6 +37,23 @@ namespace Engine
         return { 0 };
     }
 
+    std::vector<ResourceEntry> ResourceRegistry::GetEntriesByType(ResourceType type)
+    {
+        std::vector<ResourceEntry> resources;
+
+        for (const auto& [id, metadata] : registry)
+        {
+            if (metadata.type != type)
+            {
+                continue;
+            }
+
+            resources.push_back({id, metadata});
+        }
+
+        return resources;
+    }
+
     void ResourceRegistry::ResourceCreated(ResourceId id, ResourceMetadata metadata)
     {
         registry[id] = metadata;

@@ -40,3 +40,9 @@
 [submodule "Engine/third_party/cereal"]
 	path = Engine/third_party/cereal
 	url = https://github.com/USCiLab/cereal.git
+[submodule "Engine/third_party/sol2"]
+	path = Engine/third_party/sol2
+	url = https://github.com/ThePhD/sol2.git
+[submodule "Engine/third_party/lua"]
+	path = Engine/third_party/lua
+	url = https://github.com/lua/lua.git

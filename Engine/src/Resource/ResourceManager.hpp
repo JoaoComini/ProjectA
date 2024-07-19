@@ -46,10 +46,25 @@ namespace Engine
             return resource;
         }
 
+        void UnloadResource(const ResourceId& id)
+        {
+            if (! ResourceRegistry::Get().HasResource(id))
+            {
+                return;
+            }
+
+            if (! IsResourceLoaded(id))
+            {
+                return;
+            }
+
+            loadedResources.erase(id);
+        }
+
         template<typename T, typename P>
         ResourceId CreateResource(std::filesystem::path path, P& payload)
         {
-            auto unique = ResourceTools::FindUniqueResourcePath(path);
+            auto unique = ResourceTools::FindUniqueResourcePath(path, T::GetExtension());
 
             ResourceId id{};
 

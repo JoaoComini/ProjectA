@@ -45,11 +45,6 @@ void SceneHierarchy::EntityNode(Engine::Entity entity, bool root)
 	if (selectedEntity == entity)
 	{
 		flags |= ImGuiTreeNodeFlags_Selected;
-
-		if (onSelectEntityFn != nullptr)
-		{
-			onSelectEntityFn(selectedEntity);
-		}
 	}
 
 	auto name = entity.GetComponent<Engine::Component::Name>();
@@ -61,6 +56,11 @@ void SceneHierarchy::EntityNode(Engine::Entity entity, bool root)
 	if (ImGui::IsItemClicked())
 	{
 		selectedEntity = entity;
+
+		if (onSelectEntityFn != nullptr)
+		{
+			onSelectEntityFn(selectedEntity);
+		}
 	}
 
 	ImGui::PushID(id);
@@ -85,6 +85,7 @@ void SceneHierarchy::EntityNode(Engine::Entity entity, bool root)
 
 		ImGui::EndPopup();
 	}
+
 	ImGui::PopID();
 
 	if (open)

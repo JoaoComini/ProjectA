@@ -38,10 +38,10 @@ namespace Engine
         LightsUniform lightsUniform{};
         ShadowUniform shadowUniform{};
 
-        auto [entity, found] = scene.FindFirstEntity<Component::Transform, Component::DirectionalLight>();
+        auto entity = scene.FindFirstEntity<Component::Transform, Component::DirectionalLight>();
 
         size_t count = 0;
-        if (found)
+        if (entity)
         {
             const auto& transform = entity.GetComponent<Component::Transform>();
 

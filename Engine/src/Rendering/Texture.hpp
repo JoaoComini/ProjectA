@@ -38,6 +38,11 @@ namespace Engine
 			return ResourceType::Texture;
 		}
 
+		static std::string GetExtension()
+		{
+			return "pares";
+		}
+
 		virtual ResourceType GetType() const override
 		{
 			return GetStaticType();

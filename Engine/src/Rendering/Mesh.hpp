@@ -60,6 +60,11 @@ namespace Engine
 			return GetStaticType();
 		}
 
+		static std::string GetExtension()
+		{
+			return "pares";
+		}
+
 		class BuiltIn
 		{
 		public:

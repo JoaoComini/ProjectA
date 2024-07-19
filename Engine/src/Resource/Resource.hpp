@@ -18,6 +18,7 @@ namespace Engine
 		Material,
 		Mesh,
 		Scene,
+		Script,
 	};
 
 	std::string ResourceTypeToString(ResourceType type);
@@ -32,6 +33,7 @@ namespace Engine
 	class Resource
 	{
 	public:
+		virtual ~Resource() {}
 		ResourceId id{ 0 };
 		virtual ResourceType GetType() const = 0;
 	};

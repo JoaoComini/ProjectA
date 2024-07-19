@@ -35,6 +35,7 @@ namespace Engine
 		entityInspector = std::make_unique<EntityInspector>();
 		mainMenuBar = std::make_unique<MainMenuBar>();
 		contentBrowser = std::make_unique<ContentBrowser>(Renderer::Get().GetRenderContext().GetDevice(), GetScene());
+		toolbar = std::make_unique<Toolbar>(GetScene());
 		viewportDragDrop = std::make_unique<ViewportDragDrop>();
 		entityGizmo = std::make_unique<EntityGizmo>(*camera);
 
@@ -84,6 +85,43 @@ namespace Engine
 				break;
 			}
 		});
+
+		toolbar->OnPlay([&]() {
+			entityGizmo->SetEntity({});
+			sceneCopy = GetScene();
+			GetScene().Resume();
+			StartScripts();
+		});
+
+		toolbar->OnStop([&]() {
+			GetScene().Pause();
+			StopScripts();
+			SetScene(sceneCopy);
+			entityInspector->SetEntity({});
+			entityGizmo->SetEntity({});
+		});
+
+		fileWatcher = std::make_unique<FileWatcher>(Project::GetResourceDirectory());
+		fileWatcher->OnUpdate([](auto path) {
+			auto id = ResourceRegistry::Get().FindResourceByPath(path);
+
+			if (!id)
+			{
+				return;
+			}
+
+			auto metadata = ResourceRegistry::Get().FindMetadataById(id);
+
+			// only reload scripts for now
+			if (!metadata || metadata->type != ResourceType::Script)
+			{
+				return;
+			}
+
+			ResourceManager::Get().UnloadResource(id);
+		});
+
+		GetScene().Pause();
     }
 
 	Editor::~Editor()
@@ -93,14 +131,33 @@ namespace Engine
 
 	void Editor::OnUpdate(float timestep)
 	{
-		camera->Update(timestep);
-		auto transform = camera->GetTransform();
+		if (GetScene().IsPaused())
+		{
+			camera->Update(timestep);
+			auto transform = camera->GetTransform();
 
-		Renderer::Get().SetMainCamera(*camera, transform);
+			Renderer::Get().SetMainCamera(*camera, transform);
+			return;
+		}
+
+		auto entity = GetScene().FindFirstEntity<Component::Transform, Component::Camera>();
+
+		if (entity)
+		{
+			auto camera = entity.GetComponent<Component::Camera>().camera;
+			auto transform = entity.GetComponent<Component::Transform>().GetLocalMatrix();
+
+			Renderer::Get().SetMainCamera(camera, transform);
+		}
+
+		UpdateScripts(timestep);
 	}
 
     void Editor::OnGui()
     {
+		mainMenuBar->Draw();
+		toolbar->Draw();
+
 		ImGuiIO& io = ImGui::GetIO();
 		
 		ImGuiViewport* viewport = ImGui::GetMainViewport();
@@ -108,7 +165,6 @@ namespace Engine
 
 		DrawViewportDragDrop(id);
 
-		mainMenuBar->Draw();
 		sceneHierarchy->Draw();
 		entityInspector->Draw();
 		contentBrowser->Draw();

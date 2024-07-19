@@ -41,9 +41,9 @@ namespace Engine
 
 	std::pair<glm::mat4, glm::mat4> ShadowSubpass::GetViewProjection() const
     {
-		auto [entity, found] = scene.FindFirstEntity<Component::Transform, Component::DirectionalLight>();
+		auto entity = scene.FindFirstEntity<Component::Transform, Component::DirectionalLight>();
 
-		if (!found)
+		if (!entity)
 		{
 			return {};
 		}

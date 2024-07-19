@@ -143,4 +143,34 @@ namespace Controls
 	{
 		ImGui::TextDisabled(component->cubemap.ToString().c_str());
 	}
+
+	template<>
+	void Component(Engine::Component::Script* component)
+	{
+		auto currentId = component->script;
+		auto currentMetadata = Engine::ResourceRegistry::Get().FindMetadataById(currentId);
+
+		if (ImGui::BeginCombo("##ScriptCombo", currentMetadata ? currentMetadata->path.string().c_str() : ""))
+		{
+			auto entries = Engine::ResourceRegistry::Get().GetEntriesByType(Engine::ResourceType::Script);
+
+			for (const auto& [id, metadata] : entries)
+			{
+				bool selected = currentId == id;
+
+				if (ImGui::Selectable(metadata.path.string().c_str(), selected))
+				{
+					currentId = id;
+					component->script = currentId;
+				}
+
+				if (selected)
+				{
+					ImGui::SetItemDefaultFocus();
+				}
+			}
+
+			ImGui::EndCombo();
+		}
+	}
 };

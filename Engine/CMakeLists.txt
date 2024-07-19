@@ -30,7 +30,6 @@ add_subdirectory(third_party/tinygltf)
 # -------- STB --------
 
 add_library(stb INTERFACE)
-
 target_include_directories(stb INTERFACE third_party/stb)
 
 # -------- IMGUI -------
@@ -82,8 +81,6 @@ set(SPIRV_CROSS_ENABLE_TESTS OFF CACHE BOOL "" FORCE)
 set(SPIRV_CROSS_ENABLE_C_API OFF CACHE BOOL "" FORCE)
 add_subdirectory(third_party/spirv-cross)
 
-# -----------------------
-
 # ------- GLSLANG -------
 
 set(BUILD_EXTERNAL OFF CACHE BOOL "" FORCE)
@@ -96,10 +93,69 @@ add_subdirectory(third_party/glslang)
 
 # -------- CEREAL --------
 
+set(BUILD_SANDBOX OFF CACHE BOOL "" FORCE)
 set(SKIP_PERFORMANCE_COMPARISON ON CACHE BOOL "" FORCE)
 add_subdirectory(third_party/cereal)
 
-# -----------------------
+# --------- LUA ----------
+
+add_library(lua
+  "third_party/lua/lapi.c"
+  "third_party/lua/lauxlib.c"
+  "third_party/lua/lbaselib.c"
+  "third_party/lua/lcode.c"
+  "third_party/lua/lcorolib.c"
+  "third_party/lua/lctype.c"
+  "third_party/lua/ldblib.c"
+  "third_party/lua/ldebug.c"
+  "third_party/lua/ldo.c"
+  "third_party/lua/ldump.c"
+  "third_party/lua/lfunc.c"
+  "third_party/lua/lgc.c"
+  "third_party/lua/linit.c"
+  "third_party/lua/liolib.c"
+  "third_party/lua/llex.c"
+  "third_party/lua/lmathlib.c"
+  "third_party/lua/lmem.c"
+  "third_party/lua/loadlib.c"
+  "third_party/lua/lobject.c"
+  "third_party/lua/lopcodes.c"
+  "third_party/lua/loslib.c"
+  "third_party/lua/lparser.c"
+  "third_party/lua/lstate.c"
+  "third_party/lua/lstring.c"
+  "third_party/lua/lstrlib.c"
+  "third_party/lua/ltable.c"
+  "third_party/lua/ltablib.c"
+  "third_party/lua/ltests.c"
+  "third_party/lua/ltm.c"
+  "third_party/lua/lua.c"
+  "third_party/lua/lundump.c"
+  "third_party/lua/lutf8lib.c"
+  "third_party/lua/lvm.c"
+  "third_party/lua/lzio.c"
+)
+
+add_library(lua::lua ALIAS lua)
+
+if (UNIX)
+  target_compile_definitions(lua PRIVATE LUA_USE_LINUX)
+  target_link_libraries(lua PRIVATE dl)
+endif()
+
+target_include_directories(
+    lua
+    PUBLIC
+    third_party/lua
+)
+
+# -------- SOL2 --------
+
+set(SOL2_LUA_VERSION "5.4.7" CACHE STRING "The version of Lua used")
+set(SOL2_BUILD_LUA FALSE CACHE BOOL "")
+add_subdirectory(third_party/sol2)
+
+# ------------------------
 
 set(ENGINE_SRC_FILES
     "src/Core/Application.cpp"
@@ -164,12 +220,15 @@ set(ENGINE_SRC_FILES
     "src/Resource/Factory/TextureFactory.cpp"
     "src/Resource/Factory/MaterialFactory.cpp"
     "src/Resource/Factory/MeshFactory.cpp"
-    
     "src/Resource/Factory/SceneFactory.cpp"
     "src/Resource/Flatbuffers/NativeVertex.cpp"
     "src/Platform/Windows/FileDialog.cpp"
     "src/Rendering/Cubemap.cpp"
     "src/Rendering/Subpass/SkyboxSubpass.cpp"
+    "src/Scripting/ScriptRunner.cpp"
+    "src/Scripting/Script.cpp"
+    "src/Scripting/ScriptInstance.cpp"
+    "src/Scripting/ScriptBridge.cpp"
 )
 
 add_library(Engine STATIC ${ENGINE_SRC_FILES})
@@ -183,7 +242,7 @@ target_include_directories(Engine
 target_link_libraries(Engine
     ${Vulkan_LIBRARIES}
     glfw
-    glm::glm
+    glm
     VulkanMemoryAllocator
     stb
     tinygltf
@@ -197,7 +256,9 @@ target_link_libraries(Engine
     glslang
     glslang-default-resource-limits
     SPIRV
-    cereal::cereal
+    cereal
+    lua
+    sol2
 )
 
 target_compile_definitions(Engine PRIVATE
@@ -210,6 +271,8 @@ target_compile_definitions(Engine PRIVATE
     CEREAL_SERIALIZE_FUNCTION_NAME=Serialize
     CEREAL_SAVE_FUNCTION_NAME=Save
     CEREAL_LOAD_FUNCTION_NAME=Load
+    SOL_ALL_SAFETIES_ON
+    SOL_DEFAULT_PASS_ON_ERROR
     $<$<PLATFORM_ID:Windows>:PLATFORM_WINDOWS>
     $<$<PLATFORM_ID:Linux>:PLATFORM_LINUX>
 )
@@ -223,12 +286,6 @@ set(
     "src/Resource/Flatbuffers/Mesh.fbs"
 )
 
-if (WIN32)
-    set(FLATBUFFERS_FLATC_EXECUTABLE ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/flatc.exe)
-else ()
-    set(FLATBUFFERS_FLATC_EXECUTABLE ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/flatc)
-endif ()
-
 add_custom_target(Engine_Flatbuffers)
 
 foreach(SCHEMA_SRC IN LISTS FLATBUFFERS_SCHEMAS)
@@ -236,7 +293,7 @@ foreach(SCHEMA_SRC IN LISTS FLATBUFFERS_SCHEMAS)
     string(REGEX REPLACE "\\.fbs$" "_generated.h" GEN_HEADER ${SCHEMA_SRC})
     add_custom_command(
         COMMAND
-        ${FLATBUFFERS_FLATC_EXECUTABLE}
+        flatc
         --cpp --gen-object-api
         -o ${CMAKE_CURRENT_SOURCE_DIR}/${SCHEMA_DIR}
         -I ${CMAKE_CURRENT_SOURCE_DIR}/${SCHEMA_DIR}
@@ -248,7 +305,7 @@ foreach(SCHEMA_SRC IN LISTS FLATBUFFERS_SCHEMAS)
     target_sources(Engine_Flatbuffers PRIVATE ${GEN_HEADER})
 endforeach()
 
-add_dependencies(Engine Engine_Flatbuffers)
+add_dependencies(Engine flatc Engine_Flatbuffers)
 
 # -------- TESTS --------
 

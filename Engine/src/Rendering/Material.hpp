@@ -46,6 +46,11 @@ namespace Engine
 			return GetStaticType();
 		}
 
+		static std::string GetExtension()
+		{
+			return "pares";
+		}
+
 		const Vulkan::ShaderVariant& GetShaderVariant() const;
 
 	private:

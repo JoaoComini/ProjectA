@@ -40,6 +40,7 @@ private:
 		bool open = ImGui::TreeNodeEx(label.c_str(), flags, label.c_str());
 
 		bool deleted = false;
+
 		if (typeid(T) != typeid(Engine::Component::Transform))
 		{
 			auto frameHeight = ImGui::GetFrameHeight();

@@ -77,6 +77,12 @@ namespace Engine
 		{
 			ar(light.cubemap);
 		}
+
+		template <class Archive>
+		void Serialize(Archive& ar, Script& script)
+		{
+			ar(script.script);
+		}
 	}
 
     void SceneFactory::Create(std::filesystem::path destination, Scene& scene)

@@ -4,6 +4,8 @@
 #include "Resource/Importer/TextureImporter.hpp"
 #include "Project/Project.hpp"
 
+#include "Scripting/Script.hpp"
+
 #include <imgui.h>
 #include <backends/imgui_impl_vulkan.h>
 
@@ -56,7 +58,15 @@ void ContentBrowser::Draw()
 				if (ImGui::MenuItem("Scene"))
 				{
 					Engine::Scene scene;
-					Engine::ResourceManager::Get().CreateResource<Engine::Scene>(currentDirectory / "untitled", scene);
+					Engine::ResourceManager::Get().CreateResource<Engine::Scene>(currentDirectory / "scene", scene);
+
+					RefreshResourceTree();
+				}
+
+				if (ImGui::MenuItem("Script"))
+				{
+					Engine::Script script;
+					Engine::ResourceManager::Get().CreateResource<Engine::Script>(currentDirectory / "script", script);
 
 					RefreshResourceTree();
 				}
@@ -186,7 +196,7 @@ bool ContentBrowser::ContentBrowserFile(std::filesystem::path path, ResourceTree
 		ImGui::EndPopup();
 	}
 
-	if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0) && onResourceDoubleClick)
+	if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && onResourceDoubleClick)
 	{
 		onResourceDoubleClick(node->id, node->metadata);
 	}

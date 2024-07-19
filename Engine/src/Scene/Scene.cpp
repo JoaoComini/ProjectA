@@ -9,6 +9,7 @@ namespace Engine
     {
         const auto entities = source.storage<entt::entity>();
         destination.storage<entt::entity>().push(entities->cbegin(), entities->cend());
+        destination.storage<entt::entity>().in_use(entities->in_use());
     }
 
     template<typename... T>
@@ -134,10 +135,25 @@ namespace Engine
         }
     }
 
-    void Scene::Update()
+    void Scene::Cleanup()
     {
         ForEachEntity<Component::Delete>([&](Entity entity) {
             registry.destroy(entity);
         });
+    }
+
+    void Scene::Pause()
+    {
+        paused = true;
+    }
+
+    void Scene::Resume()
+    {
+        paused = false;
+    }
+
+    bool Scene::IsPaused() const
+    {
+        return paused;
     }
 }

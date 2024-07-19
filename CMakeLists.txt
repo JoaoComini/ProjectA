@@ -18,8 +18,6 @@ add_subdirectory(Game)
 add_subdirectory(Editor)
 
 # ---------- COPY SHADERS ----------
-find_program(glslc_executable NAMES glslc HINTS Vulkan::glslc)
-
 set(SHADER_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/resources/shaders)
 set(SHADER_BINARY_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources/shaders)
 

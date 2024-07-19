@@ -12,6 +12,10 @@
 #include "Resource/Factory/MaterialFactory.hpp"
 #include "Resource/Factory/SceneFactory.hpp"
 
+#include "Scripting/Script.hpp"
+
+#include <random>
+
 namespace Engine
 {
     ResourceManager::ResourceManager(): device(Renderer::Get().GetRenderContext().GetDevice())
@@ -94,6 +98,14 @@ namespace Engine
 
         return factory.Load(path);
     }
+    template<>
+    std::shared_ptr<Script> ResourceManager::FactoryLoad(std::filesystem::path path)
+    {
+        auto code = FileSystem::ReadFile(path);
+
+        return std::make_shared<Script>(code);
+    }
+
 
     template<>
     void ResourceManager::FactoryCreate<Texture>(std::filesystem::path path, Texture& payload)
@@ -133,5 +145,11 @@ namespace Engine
         SceneFactory factory;
 
         factory.Create(path, payload);
+    }
+
+    template<>
+    void ResourceManager::FactoryCreate<Script>(std::filesystem::path path, Script& payload)
+    {
+        FileSystem::WriteFile(path, std::string{ payload.GetCode() });
     }
 };

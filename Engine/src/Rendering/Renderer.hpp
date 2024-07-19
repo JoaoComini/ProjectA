@@ -50,7 +50,7 @@ namespace Engine
 
 		Vulkan::CommandBuffer* activeCommandBuffer{ nullptr };
 
-		Camera* mainCamera{ nullptr };
+		Camera mainCamera{};
 		glm::mat4 mainTransform{};
 
 		RendererSettings settings;

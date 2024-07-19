@@ -46,6 +46,7 @@ void EntityInspector::Draw()
 		AddComponentMenuItem<Engine::Component::DirectionalLight>("Directional Light");
 		AddComponentMenuItem<Engine::Component::PointLight>("Point Light");
 		AddComponentMenuItem<Engine::Component::SkyLight>("Sky Light");
+		AddComponentMenuItem<Engine::Component::Script>("Script");
 		ImGui::EndPopup();
 	}
 
@@ -89,6 +90,13 @@ void EntityInspector::Draw()
 	if (skyLight)
 	{
 		ComponentControlNode<Engine::Component::SkyLight>("Sky Light", skyLight);
+	}
+
+	auto script = entity.TryGetComponent<Engine::Component::Script>();
+
+	if (script)
+	{
+		ComponentControlNode<Engine::Component::Script>("Script", script);
 	}
 
 	ImGui::End();

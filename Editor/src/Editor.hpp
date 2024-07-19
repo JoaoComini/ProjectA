@@ -9,10 +9,10 @@
 #include "Widget/ContentBrowser.hpp"
 #include "Widget/ViewportDragDrop.hpp"
 #include "Widget/EntityGizmo.hpp"
+#include "Widget/Toolbar.hpp"
 
 #include "EditorCamera.hpp"
-
-#include "Rendering/Subpass/GeometrySubpass.hpp"
+#include "Util/FileWatcher.hpp"
 
 namespace Engine
 {
@@ -46,6 +46,11 @@ namespace Engine
         std::unique_ptr<ContentBrowser> contentBrowser;
         std::unique_ptr<ViewportDragDrop> viewportDragDrop;
         std::unique_ptr<EntityGizmo> entityGizmo;
+        std::unique_ptr<Toolbar> toolbar;
+
+        std::unique_ptr<FileWatcher> fileWatcher;
+
+        Scene sceneCopy;
     };
 
     std::unique_ptr<Application> CreateApplication(ApplicationArgs args)

@@ -68,6 +68,11 @@ namespace Engine::Component
 		ResourceId cubemap{ 0 };
 	};
 
+	struct Script
+	{
+		ResourceId script{ 0 };
+	};
+
 	struct Delete {};
 
 	template <typename... Component>
@@ -81,7 +86,8 @@ namespace Engine::Component
 		Camera,
 		DirectionalLight,
 		PointLight,
-		SkyLight
+		SkyLight,
+		Script
 	>;
 
 };

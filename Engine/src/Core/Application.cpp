@@ -46,6 +46,8 @@ namespace Engine {
 		scene = std::make_unique<Scene>();
 		scene->OnComponentAdded<Component::Camera, &Application::SetCameraAspectRatio>(this);
 
+		scriptRunner = std::make_unique<ScriptRunner>(*scene);
+
 		Renderer::Create(*window, *scene);
 		Gui::Create(*window);
 		ResourceManager::Create();
@@ -67,7 +69,7 @@ namespace Engine {
 		while (running)
 		{
 			window->Update();
-			scene->Update();
+			scene->Cleanup();
 
 			auto currentTime = std::chrono::high_resolution_clock::now();
 			auto timestep = std::chrono::duration<float>(currentTime - lastTime);
@@ -102,7 +104,7 @@ namespace Engine {
 
 		auto& comp = entity.GetComponent<Component::Camera>();
 
-		auto camera = comp.camera;
+		auto& camera = comp.camera;
 
 		camera.SetAspectRatio((float)width / height);
 	}
@@ -125,5 +127,22 @@ namespace Engine {
 	Window& Application::GetWindow()
 	{
 		return *window;
+	}
+
+
+	void Application::StartScripts()
+	{
+		scriptRunner->Start();
+	}
+
+
+	void Application::UpdateScripts(float timestep)
+	{
+		scriptRunner->Update(timestep);
+	}
+
+	void Application::StopScripts()
+	{
+		scriptRunner->Stop();
 	}
 }

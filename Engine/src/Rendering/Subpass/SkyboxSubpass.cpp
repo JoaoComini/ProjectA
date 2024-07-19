@@ -26,9 +26,9 @@ namespace Engine
 
     void SkyboxSubpass::Draw(Vulkan::CommandBuffer& commandBuffer)
     {
-        auto [entity, found] = scene.FindFirstEntity<Component::SkyLight>();
+        auto entity = scene.FindFirstEntity<Component::SkyLight>();
 
-        if (!found)
+        if (!entity)
         {
             return;
         }
