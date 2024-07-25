@@ -73,6 +73,26 @@ namespace Engine::Component
 		ResourceId script{ 0 };
 	};
 
+	struct PhysicsBody
+	{
+		enum class MotionType : uint8_t { Static = 0, Kinematic,  Dynamic };
+
+		MotionType type{ MotionType::Static };
+		uint32_t id{ std::numeric_limits<uint32_t>::max() };
+	};
+
+	struct BoxShape
+	{
+		glm::vec3 size{ 1, 1, 1 };
+		glm::vec3 offset{ 0 };
+	};
+
+	struct SphereShape
+	{
+		float radius{ 1 };
+		glm::vec3 offset{ 0 };
+	};
+
 	struct Delete {};
 
 	template <typename... Component>
@@ -87,7 +107,10 @@ namespace Engine::Component
 		DirectionalLight,
 		PointLight,
 		SkyLight,
-		Script
+		Script,
+		PhysicsBody,
+		BoxShape,
+		SphereShape
 	>;
 
 };

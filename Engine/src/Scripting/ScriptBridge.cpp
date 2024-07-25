@@ -18,8 +18,7 @@ namespace Engine
 
         type["empty"] = sol::factories([]() -> Entity { return {}; });
 
-        type["transform"] = sol::property(&Entity::TryGetComponent<Component::Transform>);
-        type["add_transform"] = &Entity::AddComponent<Component::Transform>;
+        type["transform"] = sol::property(&Entity::GetComponent<Component::Transform>);
 
         type["name"] = sol::property(&Entity::GetName, &Entity::SetName);
         type["parent"] = sol::property(&Entity::GetParent, &Entity::SetParent);

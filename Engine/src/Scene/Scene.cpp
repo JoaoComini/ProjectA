@@ -119,6 +119,7 @@ namespace Engine
         Entity entity{ registry.create(), &registry };
 
         entity.AddComponent<Component::Name>();
+        entity.AddComponent<Component::Transform>();
         entity.AddComponent<Component::Relationship>();
 
         return entity;

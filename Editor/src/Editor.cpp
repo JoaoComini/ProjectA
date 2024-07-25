@@ -89,13 +89,11 @@ namespace Engine
 		toolbar->OnPlay([&]() {
 			entityGizmo->SetEntity({});
 			sceneCopy = GetScene();
-			GetScene().Resume();
-			StartScripts();
+			StartScene();
 		});
 
 		toolbar->OnStop([&]() {
-			GetScene().Pause();
-			StopScripts();
+			StopScene();
 			SetScene(sceneCopy);
 			entityInspector->SetEntity({});
 			entityGizmo->SetEntity({});
@@ -150,7 +148,7 @@ namespace Engine
 			Renderer::Get().SetMainCamera(camera, transform);
 		}
 
-		UpdateScripts(timestep);
+		UpdateScene(timestep);
 	}
 
     void Editor::OnGui()

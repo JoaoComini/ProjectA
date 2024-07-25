@@ -83,6 +83,26 @@ namespace Engine
 		{
 			ar(script.script);
 		}
+
+		template <class Archive>
+		void Serialize(Archive& ar, PhysicsBody& body)
+		{
+			ar(body.type);
+		}
+
+		template <class Archive>
+		void Serialize(Archive& ar, BoxShape& shape)
+		{
+			ar(shape.size);
+			ar(shape.offset);
+		}
+
+		template <class Archive>
+		void Serialize(Archive& ar, SphereShape& shape)
+		{
+			ar(shape.radius);
+			ar(shape.offset);
+		}
 	}
 
     void SceneFactory::Create(std::filesystem::path destination, Scene& scene)

@@ -111,7 +111,10 @@ namespace Engine
 				.get<Component::DirectionalLight>(ar)
 				.get<Component::PointLight>(ar)
 				.get<Component::SkyLight>(ar)
-				.get<Component::Script>(ar);
+				.get<Component::Script>(ar)
+				.get<Component::PhysicsBody>(ar)
+				.get<Component::BoxShape>(ar)
+				.get<Component::SphereShape>(ar);
 		}
 
 		template<class Archive>
@@ -129,7 +132,10 @@ namespace Engine
 				.get<Component::DirectionalLight>(ar)
 				.get<Component::PointLight>(ar)
 				.get<Component::SkyLight>(ar)
-				.get<Component::Script>(ar);
+				.get<Component::Script>(ar)
+				.get<Component::PhysicsBody>(ar)
+				.get<Component::BoxShape>(ar)
+				.get<Component::SphereShape>(ar);
 		}
 
 		static ResourceType GetStaticType()

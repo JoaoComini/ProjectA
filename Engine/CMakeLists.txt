@@ -155,7 +155,12 @@ set(SOL2_LUA_VERSION "5.4.7" CACHE STRING "The version of Lua used")
 set(SOL2_BUILD_LUA FALSE CACHE BOOL "")
 add_subdirectory(third_party/sol2)
 
-# ------------------------
+# -------- JOLT ---------
+
+set(OVERRIDE_CXX_FLAGS FALSE CACHE BOOL "")
+add_subdirectory(third_party/JoltPhysics/Build)
+
+# -----------------------
 
 set(ENGINE_SRC_FILES
     "src/Core/Application.cpp"
@@ -229,7 +234,7 @@ set(ENGINE_SRC_FILES
     "src/Scripting/Script.cpp"
     "src/Scripting/ScriptInstance.cpp"
     "src/Scripting/ScriptBridge.cpp"
-)
+ "src/Physics/PhysicsRunner.cpp")
 
 add_library(Engine STATIC ${ENGINE_SRC_FILES})
 
@@ -259,6 +264,7 @@ target_link_libraries(Engine
     cereal
     lua
     sol2
+    Jolt
 )
 
 target_compile_definitions(Engine PRIVATE

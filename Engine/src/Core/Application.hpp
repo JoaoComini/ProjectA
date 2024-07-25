@@ -6,6 +6,7 @@
 #include "Scene/Scene.hpp"
 #include "Window.hpp"
 #include "Scripting/ScriptRunner.hpp"
+#include "Physics/PhysicsRunner.hpp"
 
 namespace Engine {
 
@@ -44,9 +45,9 @@ namespace Engine {
 		virtual void OnGui() {}
 		virtual void OnWindowResize(int width, int height);
 
-		void StartScripts();
-		void UpdateScripts(float timestep);
-		void StopScripts();
+		void StartScene();
+		void UpdateScene(float timestep);
+		void StopScene();
 
 		Scene& GetScene();
 		void SetScene(Scene& scene);
@@ -58,6 +59,7 @@ namespace Engine {
 		std::unique_ptr<Window> window;
 		std::unique_ptr<Scene> scene;
 		std::unique_ptr<ScriptRunner> scriptRunner;
+		std::unique_ptr<PhysicsRunner> physicsRunner;
 
 		bool running = false;
 	};
