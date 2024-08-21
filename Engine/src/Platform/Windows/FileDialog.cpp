@@ -1,4 +1,4 @@
-#include "Platform/FileDialog.hpp"
+#include "../FileDialog.hpp"
 
 #ifdef PLATFORM_WINDOWS
 

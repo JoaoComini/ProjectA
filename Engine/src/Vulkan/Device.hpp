@@ -24,7 +24,6 @@ namespace Vulkan
 	class Device : public Resource<VkDevice>
 	{
 	public:
-		Device() = default;
 		Device(const Instance& instance, const PhysicalDevice& physicalDevice);
 		~Device();
 

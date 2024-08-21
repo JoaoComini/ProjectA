@@ -43,18 +43,18 @@ TEST_CASE("it should find the first entity", "[Scene]")
     auto b = scene.CreateEntity();
     b.AddComponent<FakeComponent>(5, 8);
 
-    auto [entity, found] = scene.FindFirstEntity<FakeComponent>();
-    REQUIRE(found);
+    auto entity = scene.FindFirstEntity<FakeComponent>();
+    REQUIRE(entity);
 
     SECTION("that matches the predicate")
     {
-        auto[entity, found] = scene.FindFirstEntity<FakeComponent>([](Entity e) {
+        auto entity = scene.FindFirstEntity<FakeComponent>([](Entity e) {
             auto c = e.GetComponent<FakeComponent>();
 
             return c.x == 10;
         });
 
-        REQUIRE(found);
+        REQUIRE(entity);
         REQUIRE(entity == a);
     }
 }

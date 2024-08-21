@@ -87,13 +87,13 @@ namespace Engine
 		template<typename T, auto FreeFunc>
 		void OnComponentAdded()
 		{
-			registry.on_construct<T>().connect<FreeFunc>();
+			registry.on_construct<T>().template connect<FreeFunc>();
 		}
 
 		template<typename T, auto MemberFunc, typename Type>
 		void OnComponentAdded(Type instance)
 		{
-			registry.on_construct<T>().connect<MemberFunc>(instance);
+			registry.on_construct<T>().template connect<MemberFunc>(instance);
 		}
 
 		template<class Archive>
@@ -103,15 +103,15 @@ namespace Engine
 
 			snapshot
 				.get<entt::entity>(ar)
-				.get<Component::Name>(ar)
-				.get<Component::Relationship>(ar)
-				.get<Component::Transform>(ar)
-				.get<Component::MeshRender>(ar)
-				.get<Component::Camera>(ar)
-				.get<Component::DirectionalLight>(ar)
-				.get<Component::PointLight>(ar)
-				.get<Component::SkyLight>(ar)
-				.get<Component::Script>(ar);
+				.template get<Component::Name>(ar)
+				.template get<Component::Relationship>(ar)
+				.template get<Component::Transform>(ar)
+				.template get<Component::MeshRender>(ar)
+				.template get<Component::Camera>(ar)
+				.template get<Component::DirectionalLight>(ar)
+				.template get<Component::PointLight>(ar)
+				.template get<Component::SkyLight>(ar)
+				.template get<Component::Script>(ar);
 		}
 
 		template<class Archive>
@@ -121,15 +121,15 @@ namespace Engine
 
 			loader
 				.get<entt::entity>(ar)
-				.get<Component::Name>(ar)
-				.get<Component::Relationship>(ar)
-				.get<Component::Transform>(ar)
-				.get<Component::MeshRender>(ar)
-				.get<Component::Camera>(ar)
-				.get<Component::DirectionalLight>(ar)
-				.get<Component::PointLight>(ar)
-				.get<Component::SkyLight>(ar)
-				.get<Component::Script>(ar);
+				.template get<Component::Name>(ar)
+				.template get<Component::Relationship>(ar)
+				.template get<Component::Transform>(ar)
+				.template get<Component::MeshRender>(ar)
+				.template get<Component::Camera>(ar)
+				.template get<Component::DirectionalLight>(ar)
+				.template get<Component::PointLight>(ar)
+				.template get<Component::SkyLight>(ar)
+				.template get<Component::Script>(ar);
 		}
 
 		static ResourceType GetStaticType()

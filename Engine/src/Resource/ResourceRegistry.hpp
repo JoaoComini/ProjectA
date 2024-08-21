@@ -5,6 +5,7 @@
 #include "Resource.hpp"
 
 #include <unordered_map>
+#include <vector>
 #include <filesystem>
 
 namespace Engine

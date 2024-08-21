@@ -22,7 +22,6 @@ namespace Vulkan
     class PhysicalDevice
     {
     public:
-        PhysicalDevice() = default;
         PhysicalDevice(VkPhysicalDevice handle, const Surface &surface);
 
         uint32_t FindQueueIndex(Queue::Type type) const;

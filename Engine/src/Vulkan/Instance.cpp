@@ -3,6 +3,7 @@
 #include <GLFW/glfw3.h>
 
 #include <stdexcept>
+#include <cstring>
 
 namespace Vulkan
 {
@@ -60,7 +61,7 @@ namespace Vulkan
 
         for (const auto &layerProperties : availableLayers)
         {
-            if (strcmp("VK_LAYER_KHRONOS_validation", layerProperties.layerName) == 0)
+            if (std::strcmp("VK_LAYER_KHRONOS_validation", layerProperties.layerName) == 0)
             {
                 return true;
             }

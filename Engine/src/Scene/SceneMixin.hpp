@@ -169,10 +169,9 @@ namespace Engine
         sigh_type destruction;
         sigh_type update;
     };
+};
 
-    template<typename Type, typename Entt>
-    struct entt::storage_type<Type, Entt> {
-        using type = Engine::SceneMixin<entt::basic_storage<Type, Entt>>;
-    };
-
+template<typename Type, typename Entt>
+struct entt::storage_type<Type, Entt> {
+    using type = Engine::SceneMixin<entt::basic_storage<Type, Entt>>;
 };

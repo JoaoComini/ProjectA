@@ -18,7 +18,7 @@ namespace Engine
 
 	void ScriptRunner::Start()
 	{
-		scene.ForEachEntity<Component::Script>([&](auto entity) {
+		scene.ForEachEntity<Component::Script>([&](Entity entity) {
 			auto id = entity.GetComponent<Component::Script>().script;
 
 			if (!id)

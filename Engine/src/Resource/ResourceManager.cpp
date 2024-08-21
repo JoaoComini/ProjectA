@@ -1,5 +1,3 @@
-#pragma once
-
 #include "ResourceManager.hpp"
 
 #include "Rendering/Cubemap.hpp"

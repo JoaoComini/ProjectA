@@ -4,6 +4,8 @@
 
 #include "Vulkan/CommandBuffer.hpp"
 
+#include <cmath>
+
 namespace Engine
 {
     Cubemap::Cubemap(std::vector<uint8_t>&& data, std::vector<Mipmap>&& mipmaps)

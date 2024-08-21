@@ -50,8 +50,9 @@ add_library(ImGui STATIC ${IMGUI_SRC_FILES})
 target_include_directories(ImGui
     PUBLIC
     third_party/imgui
-    ${Vulkan_INCLUDE_DIR}
 )
+
+target_compile_definitions(ImGui PUBLIC GLFW_INCLUDE_NONE)
 
 target_link_libraries(ImGui
     ${Vulkan_LIBRARIES}
@@ -223,6 +224,7 @@ set(ENGINE_SRC_FILES
     "src/Resource/Factory/SceneFactory.cpp"
     "src/Resource/Flatbuffers/NativeVertex.cpp"
     "src/Platform/Windows/FileDialog.cpp"
+    "src/Platform/Linux/FileDialog.cpp"
     "src/Rendering/Cubemap.cpp"
     "src/Rendering/Subpass/SkyboxSubpass.cpp"
     "src/Scripting/ScriptRunner.cpp"

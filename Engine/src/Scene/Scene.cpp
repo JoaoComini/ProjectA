@@ -12,16 +12,6 @@ namespace Engine
         destination.storage<entt::entity>().in_use(entities->in_use());
     }
 
-    template<typename... T>
-    void CopyComponents(Component::Group<T...>, entt::registry& destination, const entt::registry& source)
-    {
-        ([&]()
-            {
-                CopyComponent<T>(destination, source);
-            }(),
-        ...);
-    }
-
     template<typename T>
     void CopyComponent(entt::registry& destination, const entt::registry& source)
     {
@@ -33,6 +23,16 @@ namespace Engine
         }
 
         destination.insert<T>(components->entt::sparse_set::begin(), components->entt::sparse_set::end(), components->begin());
+    }
+
+    template<typename... T>
+    void CopyComponents(Component::Group<T...>, entt::registry& destination, const entt::registry& source)
+    {
+        ([&]()
+            {
+                CopyComponent<T>(destination, source);
+            }(),
+        ...);
     }
 
     Scene& Scene::operator=(const Scene& other)
