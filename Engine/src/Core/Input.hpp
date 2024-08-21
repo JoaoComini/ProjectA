@@ -6,8 +6,6 @@
 #include "MouseCode.hpp"
 #include "Window.hpp"
 
-#include <glm/glm.hpp>
-
 namespace Engine
 {
     class Input : public Singleton<Input>

@@ -3,9 +3,13 @@ project(Engine VERSION 0.0.1)
 
 include(FindVulkan)
 
-add_subdirectory(third_party/glm)
 add_subdirectory(third_party/vma)
 add_subdirectory(third_party/entt)
+
+# ------- GLM -------
+
+set(GLM_ENABLE_CXX_20 ON CACHE BOOL "")
+add_subdirectory(third_party/glm)
 
 # ----- YAML-CPP -----
 
@@ -50,9 +54,10 @@ add_library(ImGui STATIC ${IMGUI_SRC_FILES})
 target_include_directories(ImGui
     PUBLIC
     third_party/imgui
+    ${Vulkan_INCLUDE_DIR}
 )
 
-target_compile_definitions(ImGui PUBLIC GLFW_INCLUDE_NONE)
+target_compile_definitions(ImGui PRIVATE GLFW_INCLUDE_NONE)
 
 target_link_libraries(ImGui
     ${Vulkan_LIBRARIES}
@@ -156,82 +161,14 @@ set(SOL2_LUA_VERSION "5.4.7" CACHE STRING "The version of Lua used")
 set(SOL2_BUILD_LUA FALSE CACHE BOOL "")
 add_subdirectory(third_party/sol2)
 
-# ------------------------
+# -------- JOLT ---------
 
-set(ENGINE_SRC_FILES
-    "src/Core/Application.cpp"
-    "src/Core/Window.cpp"
-    "src/Core/WindowSurface.cpp"
-    "src/Core/WindowInput.cpp"
-    "src/Rendering/Camera.cpp"
-    "src/Rendering/Pool/DescriptorPool.cpp"
-    "src/Rendering/Pool/SemaphorePool.cpp"
-    "src/Rendering/Pool/BufferPool.cpp"
-    "src/Rendering/RenderFrame.cpp"
-    "src/Rendering/Material.cpp"
-    "src/Rendering/Mesh.cpp"
-    "src/Rendering/Renderer.cpp"
-    "src/Rendering/RenderContext.cpp"
-    "src/Rendering/RenderAttachment.cpp"
-    "src/Rendering/RenderTarget.cpp"
-    "src/Rendering/RenderPipeline.cpp"
-    "src/Rendering/Texture.cpp"
-    "src/Rendering/Gui.cpp"
-    "src/Rendering/Pass/Pass.cpp"
-    "src/Rendering/Subpass/Subpass.cpp"
-    "src/Rendering/Subpass/GeometrySubpass.cpp"
-    "src/Rendering/Subpass/ForwardSubpass.cpp"
-    "src/Rendering/Subpass/ShadowSubpass.cpp"
-    "src/Rendering/Subpass/CompositionSubpass.cpp"
-    "src/Common/FileSystem.cpp"
-    "src/Common/Uuid.cpp"
-    "src/Vulkan/Buffer.cpp"
-    "src/Vulkan/CommandBuffer.cpp"
-    "src/Vulkan/CommandPool.cpp"
-    "src/Vulkan/DebugMessenger.cpp"
-    "src/Vulkan/DescriptorPool.cpp"
-    "src/Vulkan/DescriptorSetLayout.cpp"
-    "src/Vulkan/Details.cpp"
-    "src/Vulkan/Device.cpp"
-    "src/Vulkan/Fence.cpp"
-    "src/Vulkan/Image.cpp"
-    "src/Vulkan/ImageView.cpp"
-    "src/Vulkan/Instance.cpp"
-    "src/Vulkan/PhysicalDevice.cpp"
-    "src/Vulkan/Pipeline.cpp"
-    "src/Vulkan/PipelineLayout.cpp"
-    "src/Vulkan/PipelineState.cpp"
-    "src/Vulkan/Queue.cpp"
-    "src/Vulkan/Sampler.cpp"
-    "src/Vulkan/Semaphore.cpp"
-    "src/Vulkan/ShaderModule.cpp"
-    "src/Vulkan/SpirvReflection.cpp"
-    "src/Vulkan/GlslCompiler.cpp"
-    "src/Vulkan/Surface.cpp"
-    "src/Vulkan/Swapchain.cpp"
-    "src/Vulkan/Caching/ResourceCache.cpp"
-    "src/Scene/Scene.cpp"
-    "src/Scene/Entity.cpp"
-    "src/Project/Project.cpp"
-    "src/Resource/ResourceManager.cpp"
-    "src/Resource/ResourceRegistry.cpp"
-    "src/Resource/Resource.cpp"
-    "src/Resource/Importer/GltfImporter.cpp"
-    "src/Resource/Importer/TextureImporter.cpp"
-    "src/Resource/Factory/TextureFactory.cpp"
-    "src/Resource/Factory/MaterialFactory.cpp"
-    "src/Resource/Factory/MeshFactory.cpp"
-    "src/Resource/Factory/SceneFactory.cpp"
-    "src/Resource/Flatbuffers/NativeVertex.cpp"
-    "src/Platform/Windows/FileDialog.cpp"
-    "src/Platform/Linux/FileDialog.cpp"
-    "src/Rendering/Cubemap.cpp"
-    "src/Rendering/Subpass/SkyboxSubpass.cpp"
-    "src/Scripting/ScriptRunner.cpp"
-    "src/Scripting/Script.cpp"
-    "src/Scripting/ScriptInstance.cpp"
-    "src/Scripting/ScriptBridge.cpp"
-)
+set(OVERRIDE_CXX_FLAGS FALSE CACHE BOOL "")
+add_subdirectory(third_party/JoltPhysics/Build)
+
+# -----------------------
+
+file(GLOB_RECURSE ENGINE_SRC_FILES CONFIGURE_DEPENDS src/*.cpp)
 
 add_library(Engine STATIC ${ENGINE_SRC_FILES})
 
@@ -242,6 +179,7 @@ target_include_directories(Engine
 )
 
 target_link_libraries(Engine
+    PUBLIC
     ${Vulkan_LIBRARIES}
     glfw
     glm
@@ -261,13 +199,12 @@ target_link_libraries(Engine
     cereal
     lua
     sol2
+    Jolt
 )
 
-target_compile_definitions(Engine PRIVATE
+target_compile_definitions(Engine 
+    PRIVATE
     GLFW_INCLUDE_VULKAN
-    GLM_ENABLE_EXPERIMENTAL
-    GLM_FORCE_DEPTH_ZERO_TO_ONE
-    GLM_FORCE_RADIANS
     TINYGLTF_USE_CPP14
     FLATBUFFERS_USE_STD_SPAN
     CEREAL_SERIALIZE_FUNCTION_NAME=Serialize
@@ -279,6 +216,11 @@ target_compile_definitions(Engine PRIVATE
     $<$<PLATFORM_ID:Linux>:PLATFORM_LINUX>
 )
 
+target_precompile_headers(Engine
+    PUBLIC
+    "src/Precompiled.hpp"
+)
+
 # - COMPILE FLATBUFFERS -
 
 set(
@@ -288,7 +230,7 @@ set(
     "src/Resource/Flatbuffers/Mesh.fbs"
 )
 
-add_custom_target(Engine_Flatbuffers)
+add_custom_target(Engine_Flatbuffers ALL)
 
 foreach(SCHEMA_SRC IN LISTS FLATBUFFERS_SCHEMAS)
     get_filename_component(SCHEMA_DIR ${SCHEMA_SRC} PATH)
@@ -300,14 +242,16 @@ foreach(SCHEMA_SRC IN LISTS FLATBUFFERS_SCHEMAS)
         -o ${CMAKE_CURRENT_SOURCE_DIR}/${SCHEMA_DIR}
         -I ${CMAKE_CURRENT_SOURCE_DIR}/${SCHEMA_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/${SCHEMA_SRC}
-        OUTPUT ${GEN_HEADER}
+        OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/${GEN_HEADER}
         DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${SCHEMA_SRC}
         COMMENT "flatc generation: ${SCHEMA_SRC}"
     )
     target_sources(Engine_Flatbuffers PRIVATE ${GEN_HEADER})
 endforeach()
 
-add_dependencies(Engine flatc Engine_Flatbuffers)
+add_dependencies(Engine_Flatbuffers flatc)
+
+add_dependencies(Engine Engine_Flatbuffers)
 
 # -------- TESTS --------
 

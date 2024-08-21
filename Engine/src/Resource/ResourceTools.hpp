@@ -2,8 +2,6 @@
 
 #include "Project/Project.hpp"
 
-#include <filesystem>
-
 namespace Engine::ResourceTools
 {
     static std::filesystem::path FindUniqueResourcePath(std::filesystem::path path, std::string extension)

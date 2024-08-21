@@ -1,7 +1,5 @@
 #pragma once
 
-#include <cstdint>
-
 namespace Engine
 {
 	enum KeyCode: uint32_t

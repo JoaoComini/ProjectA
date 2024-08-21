@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Application.hpp"
-#include <iostream>
 
 int main(int argc, char** argv)
 {

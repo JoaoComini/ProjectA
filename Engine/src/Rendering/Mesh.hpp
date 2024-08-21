@@ -1,11 +1,5 @@
 #pragma once
 
-#include <vulkan/vulkan.h>
-
-#include <string>
-#include <vector>
-#include <filesystem>
-
 #include "Vulkan/Device.hpp"
 #include "Vulkan/Buffer.hpp"
 #include "Vulkan/CommandBuffer.hpp"

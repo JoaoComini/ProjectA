@@ -5,8 +5,6 @@
 #include "Vulkan/Caching/ResourceCache.hpp"
 #include "Rendering/Renderer.hpp"
 
-#include <array>
-
 namespace Engine
 {
     struct GlobalUniform

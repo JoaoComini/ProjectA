@@ -13,7 +13,7 @@ static_assert(FLATBUFFERS_VERSION_MAJOR == 23 &&
               FLATBUFFERS_VERSION_REVISION == 26,
              "Non-compatible flatbuffers version included");
 
-#include "NativeVertex.h"
+#include "NativeVertex.hpp"
 
 namespace flatbuffers {
 

@@ -1,9 +1,5 @@
 #pragma once
 
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/quaternion.hpp>
-
 #include "Rendering/Mesh.hpp"
 #include "Rendering/Camera.hpp"
 
@@ -27,18 +23,27 @@ namespace Engine::Component
 		}
 	};
 
+	struct LocalToWorld
+	{
+		glm::mat4 value{ 1 };
+	};
+
 	struct Name
 	{
 		std::string name = "Empty Entity";
 	};
 
-	struct Relationship
+	struct Children
 	{
-		std::size_t children{ 0 };
-		entt::entity first{ entt::null };
-		entt::entity prev{ entt::null };
-		entt::entity next{ entt::null  };
-		entt::entity parent{ entt::null };
+		std::size_t size{ 0 };
+		Entity first{ };
+	};
+
+	struct Hierarchy
+	{
+		Entity prev{ };
+		Entity next{ };
+		Entity parent{ };
 	};
 
 	struct MeshRender
@@ -73,6 +78,39 @@ namespace Engine::Component
 		ResourceId script{ 0 };
 	};
 
+	struct PhysicsBody
+	{
+		enum class MotionType : uint8_t { Static = 0, Kinematic,  Dynamic };
+
+		MotionType type{ MotionType::Static };
+		uint32_t id{ std::numeric_limits<uint32_t>::max() };
+
+		glm::vec3 velocity{};
+		glm::vec3 force{};
+	};
+
+	struct PhysicsContactEnter
+	{
+		Entity other{ };
+	};
+
+	struct PhysicsContactExit
+	{
+		Entity other{ };
+	};
+
+	struct BoxShape
+	{
+		glm::vec3 size{ 1, 1, 1 };
+		glm::vec3 offset{ 0 };
+	};
+
+	struct SphereShape
+	{
+		float radius{ 1 };
+		glm::vec3 offset{ 0 };
+	};
+
 	struct Delete {};
 
 	template <typename... Component>
@@ -81,13 +119,17 @@ namespace Engine::Component
 	using Serializable = Group<
 		Transform,
 		Name,
-		Relationship,
+		Children,
+		Hierarchy,
 		MeshRender,
 		Camera,
 		DirectionalLight,
 		PointLight,
 		SkyLight,
-		Script
+		Script,
+		PhysicsBody,
+		BoxShape,
+		SphereShape
 	>;
 
 };

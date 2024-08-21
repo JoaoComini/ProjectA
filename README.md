@@ -17,7 +17,7 @@
 
 - CMake
 
-- GCC 10+ or Clang 14+ (others may be supported but were not tested)
+- GCC 11.4+ or Clang 11+ (others may be supported but were not tested)
 
 - Development libraries:
     - X11, Xcursor, Xinerama, Xi and XRandR.

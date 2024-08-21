@@ -11,8 +11,6 @@
 #include "RenderPipeline.hpp"
 #include "RenderContext.hpp"
 
-#include <array>
-
 namespace Engine
 {
 

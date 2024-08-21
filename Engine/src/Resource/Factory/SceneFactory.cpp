@@ -1,6 +1,5 @@
 #include "SceneFactory.hpp"
 
-#include <fstream>
 #include <cereal/archives/json.hpp>
 
 namespace glm
@@ -29,13 +28,18 @@ namespace Engine
 		}
 
 		template <class Archive>
-		void Serialize(Archive& ar, Relationship& relationship)
+		void Serialize(Archive& ar, Children& children)
 		{
-			ar(relationship.children);
-			ar(relationship.parent);
-			ar(relationship.first);
-			ar(relationship.next);
-			ar(relationship.prev);
+			ar(children.size);
+			ar(children.first);
+		}
+
+		template <class Archive>
+		void Serialize(Archive& ar, Hierarchy& hierarchy)
+		{
+			ar(hierarchy.parent);
+			ar(hierarchy.next);
+			ar(hierarchy.prev);
 		}
 
 		template <class Archive>
@@ -82,6 +86,26 @@ namespace Engine
 		void Serialize(Archive& ar, Script& script)
 		{
 			ar(script.script);
+		}
+
+		template <class Archive>
+		void Serialize(Archive& ar, PhysicsBody& body)
+		{
+			ar(body.type);
+		}
+
+		template <class Archive>
+		void Serialize(Archive& ar, BoxShape& shape)
+		{
+			ar(shape.size);
+			ar(shape.offset);
+		}
+
+		template <class Archive>
+		void Serialize(Archive& ar, SphereShape& shape)
+		{
+			ar(shape.radius);
+			ar(shape.offset);
 		}
 	}
 

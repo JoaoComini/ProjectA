@@ -1,10 +1,6 @@
 #pragma once
 
-#include <vulkan/vulkan.h>
-
 #include "PipelineLayout.hpp"
-
-#include <vector>
 
 namespace Vulkan
 {

@@ -2,8 +2,6 @@
 
 #include <tiny_gltf.h>
 
-#include <filesystem>
-
 #include "Vulkan/Device.hpp"
 
 #include "Rendering/Texture.hpp"

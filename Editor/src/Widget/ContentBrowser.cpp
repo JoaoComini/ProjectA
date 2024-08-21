@@ -163,7 +163,7 @@ void ContentBrowser::ContentBrowserDirectory(std::filesystem::path path)
 		currentDirectory /= path;
 	}
 
-	ImGui::TextWrapped(filename.c_str());
+	ImGui::TextWrapped("%s", filename.c_str());
 
 	ImGui::PopID();
 }
@@ -201,7 +201,7 @@ bool ContentBrowser::ContentBrowserFile(std::filesystem::path path, ResourceTree
 		onResourceDoubleClick(node->id, node->metadata);
 	}
 
-	ImGui::TextWrapped(filename.c_str());
+	ImGui::TextWrapped("%s", filename.c_str());
 
 	ImGui::PopID();
 

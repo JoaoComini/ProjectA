@@ -6,9 +6,6 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
 
-#include <glm/ext.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-
 #include "Resource/Factory/TextureFactory.hpp"
 #include "Resource/Factory/MaterialFactory.hpp"
 #include "Resource/Factory/MeshFactory.hpp"
@@ -16,9 +13,6 @@
 #include "Resource/ResourceManager.hpp"
 
 #include "Project/Project.hpp"
-
-#include <iostream>
-#include <queue>
 
 namespace Engine
 {
@@ -259,7 +253,7 @@ namespace Engine
                 entity.AddComponent<Component::MeshRender>(meshes[gltfNode.mesh]);
             }
 
-            auto transform = Component::Transform{};
+            auto& transform = entity.GetComponent<Component::Transform>();
 
             if (!gltfNode.translation.empty())
             {
@@ -270,8 +264,6 @@ namespace Engine
             {
                 std::transform(gltfNode.rotation.begin(), gltfNode.rotation.end(), glm::value_ptr(transform.rotation), [](auto value) { return static_cast<float>(value); });
             }
-
-            entity.AddComponent<Component::Transform>(transform);
 
             if (!gltfNode.name.empty())
             {
@@ -288,7 +280,6 @@ namespace Engine
     {
         auto root = scene.CreateEntity();
         root.SetName(name);
-        root.AddComponent<Component::Transform>();
 
         for (auto& gltfScene : gltfModel.scenes)
         {

@@ -19,27 +19,45 @@ namespace Engine
         type["empty"] = sol::factories([]() -> Entity { return {}; });
 
         type["transform"] = sol::property(&Entity::TryGetComponent<Component::Transform>);
-        type["add_transform"] = &Entity::AddComponent<Component::Transform>;
-
         type["name"] = sol::property(&Entity::GetName, &Entity::SetName);
         type["parent"] = sol::property(&Entity::GetParent, &Entity::SetParent);
 
-        type["script"] = sol::property([&runner](const Entity& self) -> sol::object {
+        type["physics"] = sol::property(&Entity::TryGetComponent<Component::PhysicsBody>);
+
+        type[sol::meta_function::index] = [&runner](const Entity& self, sol::stack_object key) -> sol::object {
             if (auto instance = runner.FindScriptInstance(self))
             {
-                return instance->GetEnv();
+                auto& env = instance->GetEnv();
+
+                return env[key];
             }
 
             return sol::nil;
-        });
+        };
+
+        type[sol::meta_function::new_index] = [&runner](const Entity& self, sol::stack_object key, sol::stack_object value) -> void {
+            if (auto instance = runner.FindScriptInstance(self))
+            {
+                auto& env = instance->GetEnv();
+
+                env[key] = value;
+            }
+        };
     }
 
     void RegisterComponents(ScriptRunner& runner)
     {
         auto lua = runner.GetState();
 
-        auto type = lua.new_usertype<Component::Transform>("Transform");
-        type["position"] = &Component::Transform::position;
+        {
+            auto type = lua.new_usertype<Component::Transform>("Transform");
+            type["position"] = &Component::Transform::position;
+        }
+
+        {
+            auto type = lua.new_usertype<Component::PhysicsBody>("PhysicsBody");
+            type["velocity"] = &Component::PhysicsBody::velocity;
+        }
     }
 
     void RegisterVec3(ScriptRunner& runner)
@@ -125,9 +143,11 @@ namespace Engine
         auto lua = runner.GetState();
         auto& scene = runner.GetScene();
 
-        auto type = lua.new_usertype<Scene>("Scene", sol::no_constructor);
+        auto table = lua.create_named_table("scene");
+           
+        auto metatable = lua.create_table();
 
-        lua.set_function("find_entity_by_name", [&scene](sol::this_state state, const std::string& name) -> sol::object {
+        metatable.set_function("find_entity_by_name", [&scene](sol::this_state state, const std::string& name) -> sol::object {
             auto entity = scene.FindFirstEntity<Component::Name>([&name](auto entity) {
                 return entity.GetName() == name;
             });
@@ -140,13 +160,25 @@ namespace Engine
             return sol::nil;
         });
 
-        lua.set_function("create_entity", [&scene]() -> Entity {
+        metatable.set_function("create_entity", [&scene]() -> Entity {
             return scene.CreateEntity();
         });
 
-        lua.set_function("add_scene", [&scene](const Scene& other) -> void {
-            return scene.Add(other);
+        metatable.set_function("destroy_entity", [&scene](Entity entity) -> void {
+            scene.DestroyEntity(entity);
         });
+
+        metatable.set_function("add", [&scene](const Scene& other) -> void {
+            scene.Add(other);
+        });
+
+        metatable[sol::meta_function::new_index] = [](lua_State* state) {
+            return luaL_error(state, "the scene can not be modified: use \"scene.add\" to add scenes");
+        };
+
+        metatable[sol::meta_function::index] = metatable;
+
+        table[sol::metatable_key] = metatable;
     }
 
     void ScriptBridge::Register(ScriptRunner& runner)

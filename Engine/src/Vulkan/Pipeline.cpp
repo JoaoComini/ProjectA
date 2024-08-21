@@ -2,8 +2,6 @@
 
 #include "ShaderModule.hpp"
 
-#include <array>
-
 namespace Vulkan
 {
 	Pipeline::Pipeline(const Device& device, PipelineState state) : device(device)

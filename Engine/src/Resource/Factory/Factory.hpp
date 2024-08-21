@@ -2,9 +2,6 @@
 
 #include "../Resource.hpp"
 
-#include <filesystem>
-#include <memory>
-
 namespace Engine
 {
     template<typename T, typename P>

@@ -3,9 +3,6 @@
 #include <Rendering/Camera.hpp>
 #include <Core/Input.hpp>
 
-#include <glm/glm.hpp>
-#include <glm/gtc/quaternion.hpp>
-
 class EditorCamera: public Engine::Camera
 {
 public:

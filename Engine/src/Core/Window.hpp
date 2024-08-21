@@ -2,10 +2,6 @@
 
 #include <GLFW/glfw3.h>
 
-#include <string>
-#include <functional>
-#include <memory>
-
 #include "Vulkan/Instance.hpp"
 #include "Vulkan/Surface.hpp"
 

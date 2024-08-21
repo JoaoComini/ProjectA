@@ -1,7 +1,5 @@
 #include "Pass.hpp"
 
-#include <array>
-
 #include "Rendering/Renderer.hpp"
 #include "Vulkan/Caching/ResourceCache.hpp"
 

@@ -5,6 +5,11 @@
 namespace Engine
 {
 
+    Scene::Scene()
+    {
+        registry.on_construct<Component::Transform>().connect<&entt::registry::emplace_or_replace<Component::LocalToWorld>>(&registry);
+    }
+
     void CopyEntities(entt::registry& destination, const entt::registry& source)
     {
         const auto entities = source.storage<entt::entity>();
@@ -22,7 +27,24 @@ namespace Engine
             return;
         }
 
-        destination.insert<T>(components->entt::sparse_set::begin(), components->entt::sparse_set::end(), components->begin());
+        for (auto [entity, component] : components->each())
+        {
+            auto copy = component;
+
+            if constexpr (std::is_same_v<T, Component::Hierarchy>)
+            {
+                copy.prev = { component.prev, &destination };
+                copy.next = { component.next, &destination };
+                copy.parent = { component.parent, &destination };
+            }
+
+            if constexpr (std::is_same_v<T, Component::Children>)
+            {
+                copy.first = { component.first, &destination };
+            }
+
+            destination.emplace<T>(entity, copy);
+        }
     }
 
     template<typename... T>
@@ -47,32 +69,32 @@ namespace Engine
         return *this;
     }
 
-    std::unordered_map<entt::entity, entt::entity> MapEntities(entt::registry& destination, const entt::registry& source)
+    std::unordered_map<entt::entity, Entity> MapEntities(entt::registry& destination, const entt::registry& source)
     {
-        std::unordered_map<entt::entity, entt::entity> map{};
+        std::unordered_map<entt::entity, Entity> map{};
 
         const auto entities = source.storage<entt::entity>();
 
         for (auto [entity]: entities->each())
         {
-            map[entity] = destination.create();
+            map[entity] = { destination.create(), &destination };
         }
 
         return map;
     }
 
-    entt::entity MapEntity(const entt::entity& source, const std::unordered_map<entt::entity, entt::entity>& map)
+    Entity MapEntity(const entt::entity& source, const std::unordered_map<entt::entity, Entity>& map)
     {
         if (const auto it = map.find(source); it != map.end())
         {
             return it->second;
         }
 
-        return entt::null;
+        return {};
     }
 
     template<typename T>
-    void MapComponent(entt::registry& destination, const entt::registry& source, const std::unordered_map<entt::entity, entt::entity>& map)
+    void MapComponent(entt::registry& destination, const entt::registry& source, const std::unordered_map<entt::entity, Entity>& map)
     {
         const auto components = source.storage<T>();
 
@@ -86,12 +108,16 @@ namespace Engine
             auto mapped = map.at(entity);
             auto copy = component;
 
-            if constexpr (std::is_same_v<T, Component::Relationship>)
+            if constexpr (std::is_same_v<T, Component::Hierarchy>)
             {
-                copy.first = MapEntity(component.first, map);
                 copy.prev = MapEntity(component.prev, map);
                 copy.next = MapEntity(component.next, map);
                 copy.parent = MapEntity(component.parent, map);
+            }
+
+            if constexpr (std::is_same_v<T, Component::Children>)
+            {
+                copy.first = MapEntity(component.first, map);
             }
 
             destination.emplace<T>(mapped, copy);
@@ -99,7 +125,7 @@ namespace Engine
     }
 
     template<typename... T>
-    void MapComponents(Component::Group<T...>, entt::registry& destination, const entt::registry& source, const std::unordered_map<entt::entity, entt::entity>& map)
+    void MapComponents(Component::Group<T...>, entt::registry& destination, const entt::registry& source, const std::unordered_map<entt::entity, Entity>& map)
     {
         ([&]()
             {
@@ -119,7 +145,7 @@ namespace Engine
         Entity entity{ registry.create(), &registry };
 
         entity.AddComponent<Component::Name>();
-        entity.AddComponent<Component::Relationship>();
+        entity.AddComponent<Component::Transform>();
 
         return entity;
     }
@@ -135,11 +161,53 @@ namespace Engine
         }
     }
 
-    void Scene::Cleanup()
+    Entity Scene::FindEntityByHandle(uint32_t handle)
     {
-        ForEachEntity<Component::Delete>([&](Entity entity) {
+        auto entity = static_cast<entt::entity>(handle);
+
+        if (! registry.valid(entity))
+        {
+            return {};
+        }
+
+        return { entity, &registry };
+    }
+
+    void Scene::Update()
+    {
+        ForEachEntity<Component::Delete>([&](auto entity) {
             registry.destroy(entity);
         });
+
+        ForEachEntity<Component::Transform>([&](Entity entity) {
+            ComputeEntityLocalToWorld({}, entity);
+        }, Exclusion<Component::Hierarchy>{});
+
+    }
+
+    void Scene::ComputeEntityLocalToWorld(const Component::LocalToWorld& parent, Entity entity)
+    {
+        auto& transform = entity.GetComponent<Component::Transform>();
+        auto& localToWorld = entity.GetComponent<Component::LocalToWorld>();
+
+        localToWorld.value = parent.value * transform.GetLocalMatrix();
+
+        if (!entity.HasComponent<Component::Children>())
+        {
+            return;
+        }
+
+        const auto& children = entity.GetComponent<Component::Children>();
+        auto current = children.first;
+
+        auto& storage = registry.storage<Component::Hierarchy>();
+
+        for (size_t i = 0; i < children.size; i++)
+        {
+            ComputeEntityLocalToWorld(localToWorld, { current, &registry });
+
+            current = storage.get(current).next;
+        }
     }
 
     void Scene::Pause()

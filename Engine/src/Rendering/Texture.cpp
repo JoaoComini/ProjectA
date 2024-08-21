@@ -1,8 +1,5 @@
 #include "Texture.hpp"
 
-#include <cmath>
-#include <vector>
-
 #include <stb_image.h>
 
 #define STB_IMAGE_RESIZE_IMPLEMENTATION

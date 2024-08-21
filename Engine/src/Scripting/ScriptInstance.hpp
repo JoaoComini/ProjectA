@@ -4,9 +4,6 @@
 
 #include <sol/sol.hpp>
 
-#include <memory>
-
-
 namespace Engine
 {
 	class Script;
@@ -18,6 +15,8 @@ namespace Engine
 
 		void Start();
 		void Update(float delta);
+		void OnContactEnter(Entity other);
+		void OnContactExit(Entity other);
 
 		sol::environment& GetEnv();
 
@@ -26,6 +25,8 @@ namespace Engine
 
 		sol::function startFn;
 		sol::function updateFn;
+		sol::function onContactEnterFn;
+		sol::function onContactExitFn;
 
 		Entity entity;
 	};

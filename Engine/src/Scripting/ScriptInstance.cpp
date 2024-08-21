@@ -21,6 +21,8 @@ namespace Engine
 
 		startFn = env["start"];
 		updateFn = env["update"];
+		onContactEnterFn = env["on_contact_enter"];
+		onContactExitFn = env["on_contact_exit"];
 	}
 
 	void ScriptInstance::Start()
@@ -57,6 +59,42 @@ namespace Engine
 
 		sol::error err = result;
 		std::cerr << "failed to update script: " << err.what() << std::endl;
+	}
+
+	void ScriptInstance::OnContactEnter(Entity other)
+	{
+		if (onContactEnterFn == sol::nil)
+		{
+			return;
+		}
+
+		auto result = onContactEnterFn(other);
+
+		if (result.valid())
+		{
+			return;
+		}
+
+		sol::error err = result;
+		std::cerr << "failed to send on_contact: " << err.what() << std::endl;
+	}
+
+	void ScriptInstance::OnContactExit(Entity other)
+	{
+		if (onContactExitFn == sol::nil)
+		{
+			return;
+		}
+
+		auto result = onContactExitFn(other);
+
+		if (result.valid())
+		{
+			return;
+		}
+
+		sol::error err = result;
+		std::cerr << "failed to send on_contact: " << err.what() << std::endl;
 	}
 
 	sol::environment& ScriptInstance::GetEnv()

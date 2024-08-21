@@ -12,22 +12,24 @@
 
 #include "Resource/Resource.hpp"
 
-#include <vector>
-#include <unordered_map>
-#include <functional>
-
 namespace Engine
 {
 	static auto Predicate = [] (Entity e) { return true; };
 
+	template<typename... Type>
+	struct Exclusion final {
+		explicit constexpr Exclusion() {}
+	};
+
 	class Scene : public Resource
 	{
 	public:
+		Scene();
 		Scene& operator=(const Scene& other);
 
 		Entity CreateEntity();
 		void DestroyEntity(Entity entity);
-		void Cleanup();
+		void Update();
 
 		void Add(const Scene& scene);
 
@@ -35,12 +37,14 @@ namespace Engine
 		void Resume();
 		bool IsPaused() const;
 
-		template<typename... Args, typename Func>
-		void ForEachEntity(Func func)
+		Entity FindEntityByHandle(uint32_t handle);
+
+		template<typename... Args, typename... Exclude, typename Func>
+		void ForEachEntity(Func func, Exclusion<Exclude...> = Exclusion{})
 		{
 			if constexpr (sizeof...(Args) == 0u)
 			{
-				auto view = registry.view<entt::entity>();
+				auto view = registry.view<entt::entity>(entt::exclude<Exclude...>);
 
 				for (auto entity : view)
 				{
@@ -54,7 +58,7 @@ namespace Engine
 			}
 			else
 			{
-				auto view = registry.view<Args...>();
+				auto view = registry.view<Args...>(entt::exclude<Exclude...>);
 
 				for (auto entity : view)
 				{
@@ -68,6 +72,11 @@ namespace Engine
 			}
 		}
 
+		template<typename... Args>
+		void Clear()
+		{
+			registry.clear<Args...>();
+		}
 
 		template<typename... Args, typename P = decltype(Predicate)>
 		Entity FindFirstEntity(P predicate = Predicate)
@@ -104,14 +113,18 @@ namespace Engine
 			snapshot
 				.get<entt::entity>(ar)
 				.template get<Component::Name>(ar)
-				.template get<Component::Relationship>(ar)
+				.template get<Component::Children>(ar)
+				.template get<Component::Hierarchy>(ar)
 				.template get<Component::Transform>(ar)
 				.template get<Component::MeshRender>(ar)
 				.template get<Component::Camera>(ar)
 				.template get<Component::DirectionalLight>(ar)
 				.template get<Component::PointLight>(ar)
 				.template get<Component::SkyLight>(ar)
-				.template get<Component::Script>(ar);
+				.template get<Component::Script>(ar)
+				.template get<Component::PhysicsBody>(ar)
+				.template get<Component::BoxShape>(ar)
+				.template get<Component::SphereShape>(ar);
 		}
 
 		template<class Archive>
@@ -122,14 +135,18 @@ namespace Engine
 			loader
 				.get<entt::entity>(ar)
 				.template get<Component::Name>(ar)
-				.template get<Component::Relationship>(ar)
+				.template get<Component::Children>(ar)
+				.template get<Component::Hierarchy>(ar)
 				.template get<Component::Transform>(ar)
 				.template get<Component::MeshRender>(ar)
 				.template get<Component::Camera>(ar)
 				.template get<Component::DirectionalLight>(ar)
 				.template get<Component::PointLight>(ar)
 				.template get<Component::SkyLight>(ar)
-				.template get<Component::Script>(ar);
+				.template get<Component::Script>(ar)
+				.template get<Component::PhysicsBody>(ar)
+				.template get<Component::BoxShape>(ar)
+				.template get<Component::SphereShape>(ar);
 		}
 
 		static ResourceType GetStaticType()
@@ -148,6 +165,8 @@ namespace Engine
 		}
 
 	private:
+		void ComputeEntityLocalToWorld(const Component::LocalToWorld& parent, Entity entity);
+
 		entt::registry registry;
 
 		bool paused = false;

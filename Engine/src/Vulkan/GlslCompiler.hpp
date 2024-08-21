@@ -2,9 +2,6 @@
 
 #include "ShaderModule.hpp"
 
-#include <string>
-#include <vector>
-
 namespace Vulkan
 {
     class GlslCompiler

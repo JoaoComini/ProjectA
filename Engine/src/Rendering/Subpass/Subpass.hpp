@@ -8,8 +8,6 @@
 #include "Vulkan/ShaderModule.hpp"
 #include "Vulkan/Sampler.hpp"
 
-#include <unordered_map>
-
 namespace Engine
 {
 	class Subpass

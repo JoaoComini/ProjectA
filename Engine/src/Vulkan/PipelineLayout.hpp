@@ -1,15 +1,8 @@
 #pragma once
 
-#include <vulkan/vulkan.h>
-
-#include <vector>
-
 #include "Resource.hpp"
 #include "DescriptorSetLayout.hpp"
 #include "ShaderModule.hpp"
-
-#include <unordered_map>
-#include <map>
 
 namespace Vulkan
 {

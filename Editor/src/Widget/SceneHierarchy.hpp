@@ -15,7 +15,7 @@ public:
 	void OnSelectEntity(std::function<void(Engine::Entity)> onSelectEntityFn);
 
 private:
-	void EntityNode(Engine::Entity entity, bool root);
+	void EntityNode(Engine::Entity entity);
 
 	Engine::Scene& scene;
 	Engine::Entity selectedEntity;

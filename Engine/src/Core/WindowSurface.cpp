@@ -1,8 +1,5 @@
 #include "WindowSurface.hpp"
 
-#include <stdexcept>
-
-
 namespace Engine {
 
     WindowSurface::WindowSurface(Vulkan::Instance& instance, GLFWwindow* window) : Vulkan::Surface(instance)

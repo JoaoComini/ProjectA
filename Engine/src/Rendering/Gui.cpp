@@ -16,8 +16,6 @@
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_vulkan.h>
 
-#include <memory>
-
 namespace Engine
 {
     Gui::Gui(Window& window)

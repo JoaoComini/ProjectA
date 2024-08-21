@@ -46,3 +46,6 @@
 [submodule "Engine/third_party/lua"]
 	path = Engine/third_party/lua
 	url = https://github.com/lua/lua.git
+[submodule "Engine/third_party/JoltPhysics"]
+	path = Engine/third_party/JoltPhysics
+	url = https://github.com/jrouwe/JoltPhysics.git

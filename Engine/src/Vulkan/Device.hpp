@@ -1,13 +1,6 @@
 #pragma once
 
-#include <vulkan/vulkan.h>
 #include <vk_mem_alloc.h>
-
-#include <vector>
-#include <mutex>
-#include <set>
-#include <stdexcept>
-#include <functional>
 
 #include "Resource.hpp"
 #include "PhysicalDevice.hpp"

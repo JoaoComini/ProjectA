@@ -5,10 +5,6 @@
 #include "../Flatbuffers/Material_generated.h"
 #include "flatbuffers/flatbuffers.h"
 
-#include <glm/gtc/type_ptr.hpp>
-
-#include <fstream>
-
 namespace Engine
 {
     void MaterialFactory::Create(std::filesystem::path destination, MaterialSpec& spec)

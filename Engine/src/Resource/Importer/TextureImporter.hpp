@@ -5,8 +5,6 @@
 #include "Rendering/Texture.hpp"
 #include "Rendering/Cubemap.hpp"
 
-#include <filesystem>
-
 namespace Engine
 {
 	class TextureImporter

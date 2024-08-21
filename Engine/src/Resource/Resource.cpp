@@ -1,7 +1,5 @@
 #include "Resource.hpp"
 
-#include <type_traits>
-#include <unordered_map>
 namespace Engine
 {
     std::string ResourceTypeToString(ResourceType type)

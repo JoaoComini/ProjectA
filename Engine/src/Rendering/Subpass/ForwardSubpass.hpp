@@ -2,8 +2,6 @@
 
 #include "GeometrySubpass.hpp"
 
-#include <glm/glm.hpp>
-
 namespace Engine
 {
 	struct Light

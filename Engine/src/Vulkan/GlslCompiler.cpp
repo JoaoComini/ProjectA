@@ -1,7 +1,8 @@
 #include "GlslCompiler.hpp"
 
-#include <SPIRV/GlslangToSpv.h>
+#include <glslang/Public/ShaderLang.h>
 #include <glslang/Public/ResourceLimits.h>
+#include <SPIRV/GlslangToSpv.h>
 
 namespace Vulkan
 {

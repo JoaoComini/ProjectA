@@ -5,9 +5,6 @@
 
 #include "Factory.hpp"
 
-#include <vector>
-#include <filesystem>
-
 namespace Engine
 {
 	class TextureFactory : Factory<Texture, Texture>

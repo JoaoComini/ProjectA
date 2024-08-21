@@ -12,8 +12,6 @@
 
 #include "Project/Project.hpp"
 
-#include <unordered_map>
-
 namespace Engine
 {
     class ResourceManager: public Singleton<ResourceManager>

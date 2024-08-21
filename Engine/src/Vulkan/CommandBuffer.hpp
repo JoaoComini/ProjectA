@@ -1,9 +1,6 @@
 #pragma once
 
-#include <vulkan/vulkan.h>
 
-#include <vector>
- 
 #include "Resource.hpp"
 
 #include "PipelineState.hpp"

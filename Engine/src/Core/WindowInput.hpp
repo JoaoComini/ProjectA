@@ -5,9 +5,6 @@
 
 #include "KeyCode.hpp"
 
-
-#include <unordered_map>
-
 namespace Engine
 {
     class WindowInput : public Input

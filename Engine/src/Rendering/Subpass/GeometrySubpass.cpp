@@ -75,15 +75,16 @@ namespace Engine
 	{
 		PreparePipelineState(commandBuffer);
 
-		scene.ForEachEntity<Component::Transform, Component::MeshRender>(
+		scene.ForEachEntity<Component::MeshRender>(
 			[&](Entity entity) {
-				glm::mat4 transform = GetEntityWorldMatrix(entity);
+
+				glm::mat4 transform = entity.GetComponent<Component::LocalToWorld>().value;
 
 				UpdateGlobalUniform(commandBuffer, transform);
 
 				auto mesh = GetMeshFromEntity(entity);
 
-				if (!mesh)
+				if (! mesh)
 				{
 					return;
 				}

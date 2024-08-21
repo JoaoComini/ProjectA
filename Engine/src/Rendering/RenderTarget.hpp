@@ -1,15 +1,11 @@
 #pragma once
 
-#include <vulkan/vulkan.h>
-
 #include "Vulkan/Device.hpp"
 #include "Vulkan/Image.hpp"
 #include "Vulkan/ImageView.hpp"
 #include "Vulkan/CommandBuffer.hpp"
 
 #include "RenderAttachment.hpp"
-
-#include <vector>
 
 namespace Engine
 {

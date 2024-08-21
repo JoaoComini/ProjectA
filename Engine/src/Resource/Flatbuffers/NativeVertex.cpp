@@ -2,8 +2,6 @@
 
 #include <flatbuffers/stl_emulation.h>
 
-#include <glm/gtc/type_ptr.hpp>
-
 namespace flatbuffers
 {
     Vertex Pack(const Engine::Vertex& obj)

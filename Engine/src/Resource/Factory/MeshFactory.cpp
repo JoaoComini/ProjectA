@@ -4,8 +4,6 @@
 
 #include "../Flatbuffers/Mesh_generated.h"
 
-#include <glm/gtc/type_ptr.hpp>
-
 namespace Engine
 {
     MeshFactory::MeshFactory(const Vulkan::Device& device)

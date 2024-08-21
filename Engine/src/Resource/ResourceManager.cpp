@@ -12,8 +12,6 @@
 
 #include "Scripting/Script.hpp"
 
-#include <random>
-
 namespace Engine
 {
     ResourceManager::ResourceManager(): device(Renderer::Get().GetRenderContext().GetDevice())

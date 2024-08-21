@@ -16,8 +16,6 @@
 
 #include "WindowInput.hpp"
 
-#include <iostream>
-
 namespace Engine {
 
 	Application::Application(ApplicationSpec &spec)
@@ -47,6 +45,7 @@ namespace Engine {
 		scene->OnComponentAdded<Component::Camera, &Application::SetCameraAspectRatio>(this);
 
 		scriptRunner = std::make_unique<ScriptRunner>(*scene);
+		physicsRunner = std::make_unique<PhysicsRunner>(*scene);
 
 		Renderer::Create(*window, *scene);
 		Gui::Create(*window);
@@ -69,13 +68,14 @@ namespace Engine {
 		while (running)
 		{
 			window->Update();
-			scene->Cleanup();
 
 			auto currentTime = std::chrono::high_resolution_clock::now();
 			auto timestep = std::chrono::duration<float>(currentTime - lastTime);
 			lastTime = currentTime;
 
 			OnUpdate(timestep.count());
+
+			scene->Update();
 
 			auto& commandBuffer = Renderer::Get().Begin();
 
@@ -129,20 +129,25 @@ namespace Engine {
 		return *window;
 	}
 
-
-	void Application::StartScripts()
+	void Application::StartScene()
 	{
+		scene->Resume();
+
+		physicsRunner->Start();
 		scriptRunner->Start();
 	}
 
-
-	void Application::UpdateScripts(float timestep)
+	void Application::UpdateScene(float timestep)
 	{
 		scriptRunner->Update(timestep);
+		physicsRunner->Update(timestep);
 	}
 
-	void Application::StopScripts()
+	void Application::StopScene()
 	{
 		scriptRunner->Stop();
+		physicsRunner->Stop();
+
+		scene->Pause();
 	}
 }

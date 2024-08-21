@@ -1,7 +1,6 @@
 #include "Controls.hpp"
 
 #include <imgui.h>
-#include <glm/glm.hpp>
 
 #include <Scene/Components.hpp>
 
@@ -56,7 +55,7 @@ namespace Controls
 
 			ImGui::TableNextColumn();
 
-			ImGui::Text(label.c_str());
+			ImGui::TextUnformatted(label.c_str());
 
 			ImGui::PopStyleVar();
 			ImGui::EndTable();
@@ -121,14 +120,14 @@ namespace Controls
 	template<>
 	void Component(Engine::Component::MeshRender* component)
 	{
-		ImGui::TextDisabled(component->mesh.ToString().c_str());
+		ImGui::TextDisabled("%s", component->mesh.ToString().c_str());
 	}
 
 	template<>
 	void Component(Engine::Component::DirectionalLight* component)
 	{
 		ImGui::ColorEdit4("Color", &component->color.r, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoAlpha);
-		ImGui::SliderFloat("Intensity", &component->intensity, 0.1f, 5.f);
+		ImGui::SliderFloat("Intensity", &component->intensity, 0.1f, 1000.f);
 	}
 
 	template<>
@@ -141,7 +140,7 @@ namespace Controls
 	template<>
 	void Component(Engine::Component::SkyLight* component)
 	{
-		ImGui::TextDisabled(component->cubemap.ToString().c_str());
+		ImGui::TextDisabled("%s", component->cubemap.ToString().c_str());
 	}
 
 	template<>
@@ -172,5 +171,49 @@ namespace Controls
 
 			ImGui::EndCombo();
 		}
+	}
+
+	template<>
+	void Component(Engine::Component::PhysicsBody* component)
+	{
+		const std::array<std::string, 3> strings { "Static", "Kinematic", "Dynamic"};
+
+		std::string current = strings[(int) component->type];
+
+		if (ImGui::BeginCombo("Body Type", current.c_str()))
+		{
+			for (size_t i = 0; i < strings.size(); i++)
+			{
+				auto& type = strings[i];
+
+				bool selected = i == (int) component->type;
+
+				if (ImGui::Selectable(type.c_str(), selected))
+				{
+					component->type = static_cast<Engine::Component::PhysicsBody::MotionType>(i);
+				}
+
+				if (selected)
+				{
+					ImGui::SetItemDefaultFocus();
+				}
+			}
+
+			ImGui::EndCombo();
+		}
+	}
+
+	template<>
+	void Component(Engine::Component::BoxShape* component)
+	{
+		Controls::Vec3("Size", component->size);
+		Controls::Vec3("Offset", component->offset);
+	}
+
+	template<>
+	void Component(Engine::Component::SphereShape* component)
+	{
+		Controls::Float("Radius", &component->radius);
+		Controls::Vec3("Offset", component->offset);
 	}
 };

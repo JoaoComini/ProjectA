@@ -2,10 +2,6 @@
 
 #include "Common/Uuid.hpp"
 
-#include <memory>
-#include <filesystem>
-#include <string_view>
-
 namespace Engine
 {
 	using ResourceId = Uuid;

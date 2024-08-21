@@ -11,7 +11,12 @@ namespace Engine
 
     void Entity::SetParent(Entity newParent)
     {
-        auto& comp = GetComponent<Component::Relationship>();
+        if (!newParent && !HasComponent<Component::Hierarchy>())
+        {
+            return;
+        }
+
+        auto& comp = GetOrAddComponent<Component::Hierarchy>();
 
         if (comp.parent == newParent)
         {
@@ -28,49 +33,57 @@ namespace Engine
         if (newParent)
         {
             newParent.AddChild(*this);
+            return;
         }
+
+        RemoveComponent<Component::Hierarchy>();
     }
 
     void Entity::AddChild(Entity entity)
     {
-        auto& thisComp = GetComponent<Component::Relationship>();
-        auto& childComp = entity.GetComponent<Component::Relationship>();
+        auto& children = GetOrAddComponent<Component::Children>();
+        auto& hierarchy = entity.GetComponent<Component::Hierarchy>();
 
-        childComp.parent = handle;
-        childComp.next = thisComp.first;
+        hierarchy.parent = *this;
+        hierarchy.next = children.first;
 
-        if (thisComp.first != entt::null)
+        if (children.first)
         {
-            registry->get<Component::Relationship>(thisComp.first).prev = entity;
+            registry->get<Component::Hierarchy>(children.first).prev = entity;
         }
 
-        thisComp.first = entity;
-        thisComp.children += 1;
+        children.first = entity;
+        children.size += 1;
     }
 
     void Entity::RemoveChild(Entity entity)
     {
-        auto& thisComp = GetComponent<Component::Relationship>();
-        auto& childComp = entity.GetComponent<Component::Relationship>();
+        auto& children = GetComponent<Component::Children>();
+        auto& hierarchy = entity.GetComponent<Component::Hierarchy>();
 
-        childComp.parent = {};
+        hierarchy.parent = {};
 
-        if (thisComp.first == entity)
+        if (children.first == entity)
         {
-            thisComp.first = childComp.next;
+            children.first = hierarchy.next;
         }
 
-        if (childComp.next != entt::null)
+        if (hierarchy.next)
         {
-            registry->get<Component::Relationship>(childComp.next).prev = childComp.prev;
+            registry->get<Component::Hierarchy>(hierarchy.next).prev = hierarchy.prev;
         }
 
-        if (childComp.prev != entt::null)
+        if (hierarchy.prev)
         {
-            registry->get<Component::Relationship>(childComp.next).next = childComp.next;
+            registry->get<Component::Hierarchy>(hierarchy.next).next = hierarchy.next;
         }
 
-        thisComp.children -= 1;
+        children.size -= 1;
+        
+        if (children.size <= 0)
+        {
+            RemoveComponent<Component::Children>();
+        }
     }
 
     void Entity::SetName(const std::string& name)
@@ -85,21 +98,31 @@ namespace Engine
 
     Entity Entity::GetParent() const
     {
-        return { GetComponent<Component::Relationship>().parent, registry };
+        if (auto hierarchy = TryGetComponent<Component::Hierarchy>())
+        {
+            return { hierarchy->parent, registry };
+        }
+
+        return {};
     }
 
     std::vector<Entity> Entity::GetChildren() const
     {
         std::vector<Entity> children;
 
-        const auto& comp = GetComponent<Component::Relationship>();
+        if(! HasComponent<Component::Children>())
+        {
+            return children;
+        }
+
+        const auto& comp = GetComponent<Component::Children>();
 
         auto current = comp.first;
-        for (size_t i = 0; i < comp.children; i++)
+        for (size_t i = 0; i < comp.size; i++)
         {
-            children.push_back({ current, registry });
+            children.push_back(current);
 
-            current = registry->get<Component::Relationship>(current).next;
+            current = registry->get<Component::Hierarchy>(current).next;
         }
 
         return children;

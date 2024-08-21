@@ -8,9 +8,6 @@
 #include "RenderPipeline.hpp"
 #include "RenderContext.hpp"
 
-#include <vulkan/vulkan.h>
-#include <glm/glm.hpp>
-
 namespace Engine
 {
 	class Camera;

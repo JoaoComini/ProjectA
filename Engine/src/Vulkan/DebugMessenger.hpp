@@ -1,9 +1,6 @@
 #ifndef NDEBUG
 #pragma once
 
-#include <vulkan/vulkan.h>
-#include <iostream>
-
 namespace Vulkan
 {
     class DebugMessenger

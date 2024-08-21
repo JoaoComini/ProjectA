@@ -1,7 +1,5 @@
 #pragma once
 
-#include <cstdint>
-
 namespace Engine
 {
 	enum MouseCode : uint32_t

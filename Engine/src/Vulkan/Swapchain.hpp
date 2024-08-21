@@ -1,10 +1,5 @@
 #pragma once
 
-#include <vulkan/vulkan.h>
-
-#include <limits>
-#include <vector>
-
 #include "Device.hpp"
 #include "Surface.hpp"
 #include "Details.hpp"

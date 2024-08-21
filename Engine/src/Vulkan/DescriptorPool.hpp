@@ -1,12 +1,8 @@
 #pragma once
 
-#include <vulkan/vulkan.h>
-
 #include "Resource.hpp"
 #include "Device.hpp"
 #include "DescriptorSetLayout.hpp"
-
-#include <vector>
 
 namespace Vulkan
 {

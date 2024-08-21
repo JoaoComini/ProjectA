@@ -4,9 +4,6 @@
 
 #include <sol/sol.hpp>
 
-#include <unordered_map>
-#include <memory>
-
 namespace Engine
 {
 	class Scene;

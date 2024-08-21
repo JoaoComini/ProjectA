@@ -1,8 +1,5 @@
 #include "RenderTarget.hpp"
 
-#include <set>
-#include <iterator>
-
 namespace Engine
 {
 	struct CompareExtent2D

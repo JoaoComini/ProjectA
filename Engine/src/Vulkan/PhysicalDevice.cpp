@@ -1,7 +1,5 @@
 #include "PhysicalDevice.hpp"
 
-#include <stdexcept>
-
 namespace Vulkan
 {
     PhysicalDevice::PhysicalDevice(VkPhysicalDevice handle, const Surface& surface) : handle(handle), surface(surface)

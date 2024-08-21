@@ -1,7 +1,5 @@
 #pragma once
 
-#include <glm/glm.hpp>
-
 #include "Texture.hpp"
 
 #include "Resource/Resource.hpp"

@@ -37,7 +37,7 @@ private:
 		ImGui::Separator();
 
 		ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_FramePadding | ImGuiTreeNodeFlags_Framed;
-		bool open = ImGui::TreeNodeEx(label.c_str(), flags, label.c_str());
+		bool open = ImGui::TreeNodeEx(label.c_str(), flags, "%s", label.c_str());
 
 		bool deleted = false;
 

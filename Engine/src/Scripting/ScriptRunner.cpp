@@ -46,6 +46,24 @@ namespace Engine
 
 	void ScriptRunner::Update(float delta)
 	{
+		scene.ForEachEntity<Component::Script, Component::PhysicsContactEnter>([&](Entity entity) {
+			if (auto instance = FindScriptInstance(entity))
+			{
+				auto& contact = entity.GetComponent<Component::PhysicsContactEnter>();
+
+				instance->OnContactEnter(contact.other);
+			}
+		});
+
+		scene.ForEachEntity<Component::Script, Component::PhysicsContactExit>([&](Entity entity) {
+			if (auto instance = FindScriptInstance(entity))
+			{
+				auto& contact = entity.GetComponent<Component::PhysicsContactExit>();
+
+				instance->OnContactExit(contact.other);
+			}
+		});
+
 		scene.ForEachEntity<Component::Script>([&](auto entity) {
 			if (auto instance = FindScriptInstance(entity))
 			{

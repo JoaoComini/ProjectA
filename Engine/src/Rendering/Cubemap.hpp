@@ -2,9 +2,6 @@
 
 #include "Texture.hpp"
 
-#include <vector>
-#include <array>
-
 namespace Engine
 {
 	class Cubemap : public Texture

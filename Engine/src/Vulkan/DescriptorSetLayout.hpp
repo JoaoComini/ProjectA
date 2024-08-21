@@ -1,7 +1,5 @@
 #pragma once
 
-#include <vulkan/vulkan.h>
-
 #include "Common/Hash.hpp"
 
 #include "Resource.hpp"

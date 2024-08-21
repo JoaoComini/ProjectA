@@ -4,8 +4,6 @@
 #include "Vulkan/Device.hpp"
 #include "Vulkan/DescriptorSetLayout.hpp"
 
-#include <vector>
-
 namespace Engine
 {
 	class DescriptorPoolEntry

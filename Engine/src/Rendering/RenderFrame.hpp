@@ -1,12 +1,5 @@
 #pragma once
 
-#include <vulkan/vulkan.h>
-
-#include <glm/glm.hpp>
-
-#include <unordered_map>
-#include <map>
-
 #include "Vulkan/Semaphore.hpp"
 #include "Vulkan/Fence.hpp"
 #include "Vulkan/CommandPool.hpp"

@@ -5,6 +5,10 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Debug" STRING FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
 
+if (MSVC)
+	set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF) 
@@ -51,7 +55,7 @@ foreach(FILE IN LISTS SHADER_SRC_FILES)
         ${SHADER_BINARY_DIR}/${FILENAME}
         OUTPUT ${SHADER_BINARY_DIR}/${FILENAME}
         DEPENDS ${FILE}
-        COMMENT "Compiling ${FILENAME}"
+        COMMENT "Copying ${FILENAME}"
     )
     target_sources(Shaders PRIVATE ${SHADER_BINARY_DIR}/${FILENAME})
 endforeach()

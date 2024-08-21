@@ -1,7 +1,5 @@
 #include "ShaderModule.hpp"
 
-#include <iostream>
-
 #include "SpirvReflection.hpp"
 #include "GlslCompiler.hpp"
 

@@ -6,11 +6,6 @@
 
 #include "Common/Hash.hpp"
 
-#include <iostream>
-#include <unordered_map>
-#include <stdexcept>
-#include <sstream>
-
 namespace Engine
 {
     Primitive::Primitive(const Vulkan::Device& device)

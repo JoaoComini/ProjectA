@@ -25,6 +25,18 @@ namespace Engine
 			return registry->emplace<T>(handle, std::forward<Args>(args)...);
 		}
 
+		template<typename T, typename... Args>
+		decltype(auto) AddOrReplaceComponent(Args&&... args)
+		{
+			return registry->emplace_or_replace<T>(handle, std::forward<Args>(args)...);
+		}
+
+		template<typename T, typename... Args>
+		decltype(auto) GetOrAddComponent(Args&&... args)
+		{
+			return registry->get_or_emplace<T>(handle, std::forward<Args>(args)...);
+		}
+
 		template<typename T>
 		auto TryGetComponent() const
 		{

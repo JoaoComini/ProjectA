@@ -49,7 +49,7 @@ TEST_CASE("it should find the first entity", "[Scene]")
     SECTION("that matches the predicate")
     {
         auto entity = scene.FindFirstEntity<FakeComponent>([](Entity e) {
-            auto c = e.GetComponent<FakeComponent>();
+            auto& c = e.GetComponent<FakeComponent>();
 
             return c.x == 10;
         });

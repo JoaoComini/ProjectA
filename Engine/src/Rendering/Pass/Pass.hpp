@@ -3,7 +3,6 @@
 #include "Rendering/Subpass/Subpass.hpp"
 #include "Rendering/RenderTarget.hpp"
 
-#include <vector>
 
 namespace Engine
 {

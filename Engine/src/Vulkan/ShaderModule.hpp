@@ -1,9 +1,5 @@
 #pragma once
 
-#include <string>
-#include <vector>
-#include <vulkan/vulkan.h>
-
 #include "Resource.hpp"
 
 #include "Common/FileSystem.hpp"

@@ -2,9 +2,6 @@
 
 #include <GLFW/glfw3.h>
 
-#include <stdexcept>
-#include <cstring>
-
 namespace Vulkan
 {
     Instance::Instance()

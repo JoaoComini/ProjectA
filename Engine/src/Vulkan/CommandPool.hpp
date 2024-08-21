@@ -1,10 +1,5 @@
 #pragma once
 
-#include <vulkan/vulkan.h>
-
-#include <vector>
-#include <memory>
-
 #include "Resource.hpp"
 
 namespace Vulkan

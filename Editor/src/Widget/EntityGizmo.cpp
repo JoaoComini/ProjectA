@@ -8,31 +8,6 @@ EntityGizmo::EntityGizmo(EditorCamera& camera) : camera(camera)
 {
 }
 
-glm::mat4 GetEntityWorldMatrix(Engine::Entity entity)
-{
-	if (!entity)
-	{
-		return glm::mat4{ 1.0f };
-	}
-
-	auto parent = entity.GetParent();
-	auto& transform = entity.GetComponent<Engine::Component::Transform>();
-
-	if (!parent)
-	{
-		return transform.GetLocalMatrix();
-	}
-
-	auto parentTransform = parent.TryGetComponent<Engine::Component::Transform>();
-
-	if (!parentTransform)
-	{
-		return transform.GetLocalMatrix();
-	}
-
-	return GetEntityWorldMatrix(parent) * transform.GetLocalMatrix();
-}
-
 void EntityGizmo::Draw()
 {
 	if (!entity)
@@ -66,7 +41,8 @@ void EntityGizmo::Draw()
 	auto projection = camera.GetProjection();
 	projection[1][1] *= -1;
 
-	auto matrix = GetEntityWorldMatrix(entity);
+	auto matrix = entity.GetComponent<Engine::Component::LocalToWorld>().value;
+	glm::mat4 delta{ 0.f };
 
 	ImGuiIO& io = ImGui::GetIO();
 	ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
@@ -77,7 +53,14 @@ void EntityGizmo::Draw()
 		return;
 	}
 
-	auto local = glm::inverse(GetEntityWorldMatrix(entity.GetParent())) * matrix;
+	auto local = matrix;
+
+	if (auto parent = entity.GetParent())
+	{
+		auto parentMatrix = parent.GetComponent<Engine::Component::LocalToWorld>().value;
+
+		local = glm::inverse(parentMatrix) * local;
+	}
 
 	glm::vec3 position{};
 	glm::vec3 rotation{};
@@ -86,8 +69,8 @@ void EntityGizmo::Draw()
 	ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(local), glm::value_ptr(position), glm::value_ptr(rotation), glm::value_ptr(scale));
 
 	transform->position = position;
-	transform->scale = scale;
 	transform->rotation = glm::quat(glm::radians(rotation));
+	transform->scale = scale;
 }
 
 void EntityGizmo::SetEntity(Engine::Entity entity)

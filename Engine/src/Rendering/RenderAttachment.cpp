@@ -1,7 +1,5 @@
 #include "RenderAttachment.hpp"
 
-#include <memory>
-
 namespace Engine
 {
 	RenderAttachment::RenderAttachment(Vulkan::Device& device, std::unique_ptr<Vulkan::Image>&& image, VkClearValue clearValue, Vulkan::LoadStoreInfo loadStore)

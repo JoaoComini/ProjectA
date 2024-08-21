@@ -1,7 +1,5 @@
 #pragma once
 
-#include <vulkan/vulkan.h>
-
 #include "Image.hpp"
 #include "Resource.hpp"
 

@@ -10,8 +10,8 @@ void SceneHierarchy::Draw()
 	ImGui::Begin("Scene");
 
 	scene.ForEachEntity([&](Engine::Entity entity) {
-		EntityNode(entity, true);
-	});
+		EntityNode(entity);
+	}, Engine::Exclusion<Engine::Component::Hierarchy>{});
 
 	if (ImGui::BeginPopupContextWindow("EntityMenu", ImGuiPopupFlags_NoOpenOverItems | ImGuiPopupFlags_MouseButtonRight))
 	{
@@ -26,13 +26,8 @@ void SceneHierarchy::Draw()
 	ImGui::End();
 }
 
-void SceneHierarchy::EntityNode(Engine::Entity entity, bool root)
+void SceneHierarchy::EntityNode(Engine::Entity entity)
 {
-	if (entity.GetParent() && root)
-	{
-		return;
-	}
-
 	ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
 
 	std::vector<Engine::Entity> children = entity.GetChildren();
@@ -51,7 +46,7 @@ void SceneHierarchy::EntityNode(Engine::Entity entity, bool root)
 
 	auto id = (void*)(uint64_t)entity.GetHandle();
 
-	bool open = ImGui::TreeNodeEx(id, flags, name.name.c_str());
+	bool open = ImGui::TreeNodeEx(id, flags, "%s", name.name.c_str());
 
 	if (ImGui::IsItemClicked())
 	{
@@ -64,6 +59,7 @@ void SceneHierarchy::EntityNode(Engine::Entity entity, bool root)
 	}
 
 	ImGui::PushID(id);
+
 	if (ImGui::BeginPopupContextItem())
 	{
 		if (ImGui::MenuItem("Create Empty Entity"))
@@ -92,7 +88,7 @@ void SceneHierarchy::EntityNode(Engine::Entity entity, bool root)
 	{
 		for (auto& child : children)
 		{
-			EntityNode(child, false);
+			EntityNode(child);
 		}
 
 		ImGui::TreePop();
