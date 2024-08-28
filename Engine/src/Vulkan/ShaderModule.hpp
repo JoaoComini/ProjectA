@@ -13,6 +13,7 @@ namespace Vulkan
     {
     public:
         ShaderSource(const std::filesystem::path& path);
+        ShaderSource(const std::vector<uint8_t>& bytes);
 
         const std::string& GetSource() const;
 

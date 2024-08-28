@@ -17,47 +17,11 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Embed")
+
+include(EmbedStatic)
+
 add_subdirectory(Engine)
 add_subdirectory(Game)
 add_subdirectory(Editor)
-
-# ---------- COPY SHADERS ----------
-set(SHADER_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/resources/shaders)
-set(SHADER_BINARY_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources/shaders)
-
-set(
-    SHADER_SRC_FILES
-    "${SHADER_SOURCE_DIR}/forward.vert"
-    "${SHADER_SOURCE_DIR}/forward.frag"
-    "${SHADER_SOURCE_DIR}/skybox.vert"
-    "${SHADER_SOURCE_DIR}/skybox.frag"
-    "${SHADER_SOURCE_DIR}/composition.vert"
-    "${SHADER_SOURCE_DIR}/composition.frag"
-    "${SHADER_SOURCE_DIR}/shadowmap.vert"
-    "${SHADER_SOURCE_DIR}/shadowmap.frag"
-)
-
-add_custom_command(
-    COMMAND
-    ${CMAKE_COMMAND} -E make_directory ${SHADER_BINARY_DIR}
-    OUTPUT ${SHADER_BINARY_DIR}
-    COMMENT "Creating ${SHADER_BINARY_DIR}"
-)
-
-add_custom_target(Shaders)
-
-foreach(FILE IN LISTS SHADER_SRC_FILES)
-    get_filename_component(FILENAME ${FILE} NAME)
-    add_custom_command(
-        COMMAND
-        ${CMAKE_COMMAND} -E copy
-        ${FILE}
-        ${SHADER_BINARY_DIR}/${FILENAME}
-        OUTPUT ${SHADER_BINARY_DIR}/${FILENAME}
-        DEPENDS ${FILE}
-        COMMENT "Copying ${FILENAME}"
-    )
-    target_sources(Shaders PRIVATE ${SHADER_BINARY_DIR}/${FILENAME})
-endforeach()
-
-add_dependencies(Engine Shaders)

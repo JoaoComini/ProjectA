@@ -9,6 +9,8 @@
 
 #include "Vulkan/Swapchain.hpp"
 
+#include <Shaders/embed.gen.hpp>
+
 namespace Engine
 {
     RenderPipeline::RenderPipeline(RenderContext& renderContext, Scene& scene)
@@ -27,19 +29,25 @@ namespace Engine
 	{
 		gBufferTarget = CreateGBufferPassTarget();
 
+		auto forwardVert = embed::Shaders::get("forward.vert.glsl");
+		auto forwardFrag = embed::Shaders::get("forward.frag.glsl");
+
 		auto forwardSubpass = std::make_unique<ForwardSubpass>(
 			renderContext,
-			Vulkan::ShaderSource{ "resources/shaders/forward.vert" },
-			Vulkan::ShaderSource{ "resources/shaders/forward.frag" },
+			Vulkan::ShaderSource{ std::vector<uint8_t>{ forwardVert.begin(), forwardVert.end() }},
+			Vulkan::ShaderSource{ std::vector<uint8_t>{ forwardFrag.begin(), forwardFrag.end() } },
 			scene,
 			*shadowCamera,
 			shadowTarget.get()
 		);
 
+		auto skyboxVert = embed::Shaders::get("skybox.vert.glsl");
+		auto skyboxFrag = embed::Shaders::get("skybox.frag.glsl");
+
 		auto skyboxSubpass = std::make_unique<SkyboxSubpass>(
 			renderContext,
-			Vulkan::ShaderSource{ "resources/shaders/skybox.vert" },
-			Vulkan::ShaderSource{ "resources/shaders/skybox.frag" },
+			Vulkan::ShaderSource{ std::vector<uint8_t>{ skyboxVert.begin(), skyboxVert.end() }},
+			Vulkan::ShaderSource{ std::vector<uint8_t>{ skyboxFrag.begin(), skyboxFrag.end() } },
 			scene
 		);
 
@@ -91,8 +99,11 @@ namespace Engine
 	{
 		shadowTarget = CreateShadowPassTarget();
 
-		auto vertexSource = Vulkan::ShaderSource{ "resources/shaders/shadowmap.vert" };
-		auto fragmentSource = Vulkan::ShaderSource{ "resources/shaders/shadowmap.frag" };
+		auto shadowmapVert = embed::Shaders::get("shadowmap.vert.glsl");
+		auto shadowmapFrag = embed::Shaders::get("shadowmap.frag.glsl");
+
+		auto vertexSource = Vulkan::ShaderSource{ std::vector<uint8_t>{ shadowmapVert.begin(), shadowmapVert.end() }};
+		auto fragmentSource = Vulkan::ShaderSource{ std::vector<uint8_t>{ shadowmapFrag.begin(), shadowmapFrag.end() }};
 
 		auto subpass = std::make_unique<ShadowSubpass>(
 			renderContext,
@@ -126,8 +137,11 @@ namespace Engine
 
 	void RenderPipeline::SetupCompositionPass()
 	{
-		auto vertexSource = Vulkan::ShaderSource{ "resources/shaders/composition.vert" };
-		auto fragmentSource = Vulkan::ShaderSource{ "resources/shaders/composition.frag" };
+		auto compositionVert = embed::Shaders::get("composition.vert.glsl");
+		auto compositionFrag = embed::Shaders::get("composition.frag.glsl");
+
+		auto vertexSource = Vulkan::ShaderSource{ std::vector<uint8_t>{ compositionVert.begin(), compositionVert.end() } };
+		auto fragmentSource = Vulkan::ShaderSource{ std::vector<uint8_t>{ compositionFrag.begin(), compositionFrag.end() } };
 
 		auto subpass = std::make_unique<CompositionSubpass>(
 			renderContext,

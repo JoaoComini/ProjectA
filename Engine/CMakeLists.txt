@@ -166,7 +166,25 @@ add_subdirectory(third_party/sol2)
 set(OVERRIDE_CXX_FLAGS FALSE CACHE BOOL "")
 add_subdirectory(third_party/JoltPhysics/Build)
 
-# -----------------------
+# ----- EMBED SHADERS ------
+
+set(SHADER_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/static/shaders)
+
+set(
+    SHADER_SRC_FILES
+    "${SHADER_SOURCE_DIR}/forward.vert.glsl"
+    "${SHADER_SOURCE_DIR}/forward.frag.glsl"
+    "${SHADER_SOURCE_DIR}/skybox.vert.glsl"
+    "${SHADER_SOURCE_DIR}/skybox.frag.glsl"
+    "${SHADER_SOURCE_DIR}/composition.vert.glsl"
+    "${SHADER_SOURCE_DIR}/composition.frag.glsl"
+    "${SHADER_SOURCE_DIR}/shadowmap.vert.glsl"
+    "${SHADER_SOURCE_DIR}/shadowmap.frag.glsl"
+)
+
+embed_static(Shaders ${SHADER_SRC_FILES})
+
+# ---------------------------
 
 file(GLOB_RECURSE ENGINE_SRC_FILES CONFIGURE_DEPENDS src/*.cpp)
 
@@ -200,6 +218,7 @@ target_link_libraries(Engine
     lua
     sol2
     Jolt
+    Shaders
 )
 
 target_compile_definitions(Engine 
@@ -257,7 +276,6 @@ add_dependencies(Engine Engine_Flatbuffers)
 
 add_subdirectory(third_party/catch2)
 
-include(CTest)
 include(Catch)
 
 set(ENGINE_TEST_FILES

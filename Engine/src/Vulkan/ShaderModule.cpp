@@ -16,6 +16,13 @@ namespace Vulkan
         Hash(hash, reinterpret_cast<const char*>(source.data()), reinterpret_cast<const char*>(source.data() + source.size()));
     }
 
+    ShaderSource::ShaderSource(const std::vector<uint8_t>& bytes)
+    {
+        source = { bytes.begin(), bytes.end() };
+
+        Hash(hash, reinterpret_cast<const char*>(source.data()), reinterpret_cast<const char*>(source.data() + source.size()));
+    }
+
     const std::string& ShaderSource::GetSource() const
     {
         return source;

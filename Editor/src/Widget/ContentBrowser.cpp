@@ -6,6 +6,8 @@
 
 #include "Scripting/Script.hpp"
 
+#include <Icons/embed.gen.hpp>
+
 #include <imgui.h>
 #include <backends/imgui_impl_vulkan.h>
 
@@ -19,12 +21,16 @@ ContentBrowser::ContentBrowser(Vulkan::Device& device, Engine::Scene& scene)
 
 	Engine::TextureImporter importer{ device };
 
-	fileIconTexture = importer.LoadDefault("resources/icons/file.png");
+	auto fileIcon = embed::Icons::get("file.png");
+
+	fileIconTexture = importer.LoadDefault(std::vector<uint8_t>{ fileIcon.begin(), fileIcon.end() });
 	fileIconTexture->CreateVulkanResources(device);
 	fileIconTexture->UploadDataToGpu(device);
 	fileIconDescriptor = ImGui_ImplVulkan_AddTexture(fileIconTexture->GetSampler().GetHandle(), fileIconTexture->GetImageView().GetHandle(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-	directoryIconTexture = importer.LoadDefault("resources/icons/directory.png");
+	auto directoryIcon = embed::Icons::get("directory.png");
+
+	directoryIconTexture = importer.LoadDefault(std::vector<uint8_t>{ directoryIcon.begin(), directoryIcon.end() });
 	directoryIconTexture->CreateVulkanResources(device);
 	directoryIconTexture->UploadDataToGpu(device);
 	directoryIconDescriptor = ImGui_ImplVulkan_AddTexture(directoryIconTexture->GetSampler().GetHandle(), directoryIconTexture->GetImageView().GetHandle(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);

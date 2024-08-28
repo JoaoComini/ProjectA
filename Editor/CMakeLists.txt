@@ -15,7 +15,7 @@ set(EDITOR_SRC_FILES
     "src/Util/ResourceTree.cpp"
     "src/Util/FileWatcher.cpp"
 )
-    
+
 add_executable(Editor ${EDITOR_SRC_FILES})
 
 target_include_directories(Editor
@@ -23,4 +23,6 @@ target_include_directories(Editor
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-target_link_libraries(Editor Engine)
+embed_static(Icons "static/icons/directory.png" "static/icons/file.png")
+
+target_link_libraries(Editor PUBLIC Icons Engine)

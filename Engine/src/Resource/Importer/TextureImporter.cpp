@@ -49,6 +49,34 @@ namespace Engine
         return texture;
     }
 
+    std::shared_ptr<Texture> TextureImporter::LoadDefault(const std::vector<uint8_t>& bytes)
+    {
+        int width, height, channels;
+
+        auto pixels = stbi_load_from_memory(bytes.data(), bytes.size(), & width, &height, &channels, STBI_rgb_alpha);
+        uint32_t size = width * height * 4;
+
+        std::vector<uint8_t> data{ pixels, pixels + size };
+        std::vector<Mipmap> mipmaps{
+            Mipmap{
+                0,
+                0,
+                {
+                    static_cast<uint32_t>(width),
+                    static_cast<uint32_t>(height),
+                    1
+                }
+            }
+        };
+
+        stbi_image_free(pixels);
+
+        auto texture = std::make_shared<Texture>(std::move(data), std::move(mipmaps));
+        texture->GenerateMipmaps();
+
+        return texture;
+    }
+
     void TextureImporter::ImportCubemap(std::filesystem::path path)
     {
         auto cubemap = LoadCubemap(path);
