@@ -11,12 +11,12 @@ string(CONFIGURE [[
 
     namespace embed {
         namespace ${NAMESPACE} {
-            static constexpr const unsigned char ${SYMBOL}_array[] = {
+            static constexpr const char ${SYMBOL}_array[] = {
                 ${content}
             }\;
 
-            extern const unsigned char* const ${SYMBOL}_begin = ${SYMBOL}_array\;
-            extern const unsigned char* const ${SYMBOL}_end = ${SYMBOL}_array + sizeof(${SYMBOL}_array)\;
+            extern const char* const ${SYMBOL}_begin = ${SYMBOL}_array\;
+            extern const char* const ${SYMBOL}_end = ${SYMBOL}_array + sizeof(${SYMBOL}_array)\;
         }
     }
 ]] code)
