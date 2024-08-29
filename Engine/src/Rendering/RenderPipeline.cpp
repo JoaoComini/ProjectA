@@ -228,26 +228,14 @@ namespace Engine
 			barrier.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 			barrier.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 
-			commandBuffer.ImageMemoryBarrier(colorAttachments[0]->GetView(), barrier);
-
 			if (auto& resolve = colorAttachments[0]->GetResolve())
 			{
 				commandBuffer.ImageMemoryBarrier(resolve->GetView(), barrier);
 			}
-		}
-
-		auto& depthAttachment = gBufferTarget->GetDepthAttachment();
-
-		{
-			Vulkan::ImageMemoryBarrierInfo barrier{};
-			barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-			barrier.newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-			barrier.srcAccessMask = 0;
-			barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-			barrier.srcStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-			barrier.dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-
-			commandBuffer.ImageMemoryBarrier(depthAttachment->GetView(), barrier);
+			else
+			{
+				commandBuffer.ImageMemoryBarrier(colorAttachments[0]->GetView(), barrier);
+			}
 		}
 
 		mainPass->Draw(commandBuffer, *gBufferTarget);
@@ -266,11 +254,11 @@ namespace Engine
 			if (auto& resolve = colorAttachments[0]->GetResolve())
 			{
 				commandBuffer.ImageMemoryBarrier(resolve->GetView(), barrier);
-
-				return;
 			}
-
-			commandBuffer.ImageMemoryBarrier(colorAttachments[0]->GetView(), barrier);
+			else
+			{
+				commandBuffer.ImageMemoryBarrier(colorAttachments[0]->GetView(), barrier);
+			}
 		}
 	}
 

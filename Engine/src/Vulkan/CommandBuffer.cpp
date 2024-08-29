@@ -289,7 +289,6 @@ namespace Vulkan
 		auto& image = imageView.GetImage();
 
 		auto subresourceRange = imageView.GetSubresourceRange();
-		auto format = image.GetFormat();
 
 		VkImageMemoryBarrier barrier{};
 		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
