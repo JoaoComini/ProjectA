@@ -59,8 +59,8 @@ function(_embed_static_add_source name source)
     set_property(
         TARGET ${name}
         APPEND PROPERTY EMBED_EXTERNS
-        "extern const char* const ${symbol}_begin\;"
-        "extern const char* const ${symbol}_end\;"
+        "extern const unsigned char* const ${symbol}_begin\;"
+        "extern const unsigned char* const ${symbol}_end\;"
     )
 
     set_property(
