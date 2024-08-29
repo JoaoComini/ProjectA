@@ -67,7 +67,7 @@ namespace Engine
 	{
 		auto& previousFrame = GetCurrentFrame();
 
-		acquireSemaphore = &previousFrame.RequestSemaphore();
+		acquireSemaphore = previousFrame.RequestOwnedSemaphore();
 
 		auto result = swapchain->AcquireNextImageIndex(currentFrameIndex, *acquireSemaphore);
 
@@ -124,6 +124,7 @@ namespace Engine
 
 		Present(waitSemaphore);
 
+		frame.ReleaseOwnedSemaphore(acquireSemaphore);
 		acquireSemaphore = nullptr;
 	}
 

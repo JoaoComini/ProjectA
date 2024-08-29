@@ -20,8 +20,36 @@ namespace Engine
 		return *semaphores.back();
 	}
 
+	Vulkan::Semaphore* SemaphorePool::RequestOwnedSemaphore()
+	{
+		if (activeSemaphoresCount < semaphores.size())
+		{
+			auto& semaphore = semaphores.back();
+
+			auto owned = semaphore.release();
+
+			semaphores.pop_back();
+
+			return owned;
+		}
+
+		return new Vulkan::Semaphore(device);
+	}
+
+	void SemaphorePool::ReleaseOwnedSemaphore(Vulkan::Semaphore* semaphore)
+	{
+		released.push_back(semaphore);
+	}
+
 	void SemaphorePool::Reset()
 	{
 		activeSemaphoresCount = 0;
+
+		for (auto semaphore : released)
+		{
+			semaphores.emplace_back(std::unique_ptr<Vulkan::Semaphore>(semaphore));
+		}
+
+		released.clear();
 	}
 }

@@ -33,6 +33,8 @@ namespace Engine
 
 		Vulkan::CommandBuffer& RequestCommandBuffer();
 		Vulkan::Semaphore& RequestSemaphore();
+		Vulkan::Semaphore* RequestOwnedSemaphore();
+		void ReleaseOwnedSemaphore(Vulkan::Semaphore* semaphore);
 		Vulkan::Fence& GetRenderFence() const;
 
 		VkDescriptorSet RequestDescriptorSet(Vulkan::DescriptorSetLayout& descriptorSetLayout, const BindingMap<VkDescriptorBufferInfo>& bufferInfos, const BindingMap<VkDescriptorImageInfo>& imageInfos);

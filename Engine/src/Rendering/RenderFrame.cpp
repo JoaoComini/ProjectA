@@ -42,6 +42,16 @@ namespace Engine
 		return semaphorePool->RequestSemaphore();
 	}
 
+	Vulkan::Semaphore* RenderFrame::RequestOwnedSemaphore()
+	{
+		return semaphorePool->RequestOwnedSemaphore();
+	}
+
+	void RenderFrame::ReleaseOwnedSemaphore(Vulkan::Semaphore* semaphore)
+	{
+		semaphorePool->ReleaseOwnedSemaphore(semaphore);
+	}
+
 	Vulkan::Fence& RenderFrame::GetRenderFence() const
 	{
 		return *renderFence;
