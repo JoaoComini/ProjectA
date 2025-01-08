@@ -13,9 +13,8 @@ namespace Engine
         RenderContext& renderContext,
         Vulkan::ShaderSource&& vertexSource,
         Vulkan::ShaderSource&& fragmentSource,
-        Scene& scene,
-		Camera& shadowCamera
-    ) : Subpass{renderContext, std::move(vertexSource), std::move(fragmentSource)}, scene(scene), shadowCamera(shadowCamera)
+        Scene& scene
+    ) : Subpass{renderContext, std::move(vertexSource), std::move(fragmentSource)}, scene(scene)
     {
     }
 
@@ -63,7 +62,8 @@ namespace Engine
 		commandBuffer.SetVertexInputState(vertexInputState);
 
 		Vulkan::RasterizationState rasterizationState{
-			.cullMode = VK_CULL_MODE_NONE,
+			.cullMode{ VK_CULL_MODE_NONE },
+			.frontFace{ VK_FRONT_FACE_COUNTER_CLOCKWISE }
 		};
 
 		commandBuffer.SetRasterizationState(rasterizationState);
@@ -75,7 +75,7 @@ namespace Engine
 		LightPushConstant pushConstant
 		{
 			.direction = -glm::normalize(glm::vec3(view[2])),
-			.depthBias = -settings.shadow.depthBias * 50.f/2048.f,
+			.depthBias = -settings.shadow.depthBias * 50.f / 2048.f,
 			.normalBias = -settings.shadow.normalBias * 50.f / 2048.f,
 		};
 
@@ -140,8 +140,10 @@ namespace Engine
 
 		const auto& transform = entity.GetComponent<Component::Transform>();
 
-		auto projection = shadowCamera.GetProjection();
-		auto view = glm::inverse(transform.GetLocalMatrix());
+		auto direction = glm::normalize(transform.rotation * glm::vec3{ 0, 0, 1 });
+		auto view = glm::lookAt(direction, glm::vec3{ 0 }, glm::vec3{0, 1, 0});
+
+		auto projection = glm::ortho(-25.f, 25.f, -25.f, 25.f, -25.f, 25.f);
 
 		return { view, projection };
     }

@@ -16,10 +16,6 @@ namespace Engine
     RenderPipeline::RenderPipeline(RenderContext& renderContext, Scene& scene)
 		: renderContext(renderContext), scene(scene)
     {
-		shadowCamera = std::make_unique<Camera>();
-		shadowCamera->SetOrthographic(50.f, 20.f, -20.f);
-		shadowCamera->SetAspectRatio(1.f);
-
 		SetupShadowPass();
 		SetupGBufferPass();
 		SetupCompositionPass();
@@ -37,7 +33,6 @@ namespace Engine
 			Vulkan::ShaderSource{ std::vector<uint8_t>{ forwardVert.begin(), forwardVert.end() }},
 			Vulkan::ShaderSource{ std::vector<uint8_t>{ forwardFrag.begin(), forwardFrag.end() } },
 			scene,
-			*shadowCamera,
 			shadowTarget.get()
 		);
 
@@ -113,8 +108,7 @@ namespace Engine
 			renderContext,
 			std::move(vertexSource),
 			std::move(fragmentSource),
-			scene,
-			*shadowCamera
+			scene
 		);
 
 		std::vector<std::unique_ptr<Subpass>> subpasses;

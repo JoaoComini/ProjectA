@@ -13,8 +13,7 @@ namespace Engine
 			RenderContext& renderContext,
 			Vulkan::ShaderSource&& vertexSource,
 			Vulkan::ShaderSource&& fragmentSource,
-			Scene& scene,
-			Camera& shadowCamera
+			Scene& scene
 		);
 
 		virtual void Draw(Vulkan::CommandBuffer& commandBuffer) override;
@@ -26,6 +25,5 @@ namespace Engine
 
 	private:
 		Scene& scene;
-		Camera& shadowCamera;
 	};
 }

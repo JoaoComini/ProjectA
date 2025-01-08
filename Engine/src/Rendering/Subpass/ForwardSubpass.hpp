@@ -29,7 +29,6 @@ namespace Engine
 			Vulkan::ShaderSource&& vertexSource,
 			Vulkan::ShaderSource&& fragmentSource,
 			Scene& scene,
-			Camera& shadowCamera,
 			RenderTarget* shadowTarget
 		);
 
@@ -43,7 +42,6 @@ namespace Engine
 
 		void UpdateShadowUniform(Vulkan::CommandBuffer& commandBuffer, ShadowUniform uniform);
 	private:
-		Camera& shadowCamera;
 		RenderTarget* shadowTarget;
 		std::unique_ptr<Vulkan::Sampler> shadowMapSampler;
 

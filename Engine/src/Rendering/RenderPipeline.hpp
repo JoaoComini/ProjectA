@@ -30,8 +30,6 @@ namespace Engine
 		std::unique_ptr<Pass> shadowPass;
 		std::unique_ptr<Pass> compositionPass;
 
-		std::unique_ptr<Camera> shadowCamera;
-
 		std::unique_ptr<RenderTarget> shadowTarget;
 		std::unique_ptr<RenderTarget> gBufferTarget;
 

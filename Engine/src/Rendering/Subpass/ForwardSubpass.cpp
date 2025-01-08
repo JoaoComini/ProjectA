@@ -9,11 +9,8 @@ namespace Engine
         Vulkan::ShaderSource&& vertexSource,
         Vulkan::ShaderSource&& fragmentSource,
         Scene& scene,
-        Camera& shadowCamera,
         RenderTarget* shadowTarget
-    ) : GeometrySubpass { renderContext, std::move(vertexSource), std::move(fragmentSource), scene },
-        shadowCamera{ shadowCamera },
-        shadowTarget{ shadowTarget }
+    ) : GeometrySubpass{ renderContext, std::move(vertexSource), std::move(fragmentSource), scene }, shadowTarget{ shadowTarget }
     {
         CreateShadowMapSampler();
     }
@@ -45,15 +42,17 @@ namespace Engine
         {
             const auto& transform = entity.GetComponent<Component::Transform>();
 
-            auto projection = shadowCamera.GetProjection();
-            auto view = glm::inverse(transform.GetLocalMatrix());
+            auto direction = transform.rotation * glm::vec3{ 0, 0, 1 };
+            auto view = glm::lookAt(direction, glm::vec3{ 0, 0, 0 }, glm::vec3{ 0, 1, 0 });
+
+            auto projection = glm::ortho(-25.f, 25.f, -25.f, 25.f, -25.f, 25.f);
 
             shadowUniform.viewProjection = projection * view;
 
             const auto& light = entity.GetComponent<Component::DirectionalLight>();
 
             lightsUniform.lights[count].color = { light.color, light.intensity };
-            lightsUniform.lights[count].vector = glm::vec4{ transform.rotation * glm::vec3{0.f, 0.f, 1.f}, 1.f };
+            lightsUniform.lights[count].vector = glm::vec4{ direction, 1.f };
 
             count++;
         }

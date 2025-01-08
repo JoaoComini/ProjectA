@@ -107,6 +107,7 @@ namespace std
 
 			HashCombine(hash, state.GetPipelineLayout());
 			HashCombine(hash, state.GetPipelineRenderingState());
+			HashCombine(hash, state.GetRasterizationState());
 
 			return hash;
 		}
@@ -121,6 +122,20 @@ namespace std
 			
 			HashCombine(hash, state.colorAttachmentFormats);
 			HashCombine(hash, state.depthAttachmentFormat);
+
+			return hash;
+		}
+	};
+
+	template <>
+	struct hash<Vulkan::RasterizationState>
+	{
+		size_t operator()(const Vulkan::RasterizationState& state) const
+		{
+			size_t hash{ 0 };
+
+			HashCombine(hash, state.cullMode);
+			HashCombine(hash, state.frontFace);
 
 			return hash;
 		}
