@@ -17,7 +17,7 @@ namespace Engine
 		: renderContext(renderContext), scene(scene)
     {
 		shadowCamera = std::make_unique<Camera>();
-		shadowCamera->SetOrthographic(200.f, 120.f, -120.f);
+		shadowCamera->SetOrthographic(50.f, 20.f, -20.f);
 		shadowCamera->SetAspectRatio(1.f);
 
 		SetupShadowPass();
@@ -73,6 +73,10 @@ namespace Engine
 			.Extent(extent)
 			.SampleCount(renderContext.GetDevice().GetMaxSampleCount())
 			.ClearValue({ .color = {0.f, 0.f , 0.f, 1.f} })
+			.LoadStoreInfo({
+				.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+				.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+			})
 			.Resolve(std::move(colorResolveAttachment))
 			.Build();
 

@@ -19,9 +19,16 @@ namespace Engine
 		float exposure{ 1.0 };
 	};
 
+	struct ShadowSettings
+	{
+		float depthBias{ 0.05 };
+		float normalBias{ 0.4 };
+	};
+
 	struct RendererSettings
 	{
 		HdrSettings hdr;
+		ShadowSettings shadow;
 	};
 
 	class Renderer : public Singleton<Renderer>

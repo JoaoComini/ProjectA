@@ -44,26 +44,6 @@ namespace Engine
 		commandBuffer.SetVertexInputState(vertexInputState);
 	}
 
-	glm::mat4 GetEntityWorldMatrix(Entity entity)
-	{
-		auto parent = entity.GetParent();
-		auto& transform = entity.GetComponent<Component::Transform>();
-
-		if (!parent)
-		{
-			return transform.GetLocalMatrix();
-		}
-
-		auto parentTransform = parent.TryGetComponent<Component::Transform>();
-
-		if (!parentTransform)
-		{
-			return transform.GetLocalMatrix();
-		}
-
-		return GetEntityWorldMatrix(parent) * transform.GetLocalMatrix();
-	}
-
 	std::shared_ptr<Mesh> GetMeshFromEntity(Entity entity)
 	{
 		auto& meshRender = entity.GetComponent<Component::MeshRender>();
@@ -77,17 +57,16 @@ namespace Engine
 
 		scene.ForEachEntity<Component::MeshRender>(
 			[&](Entity entity) {
-
-				glm::mat4 transform = entity.GetComponent<Component::LocalToWorld>().value;
-
-				UpdateGlobalUniform(commandBuffer, transform);
-
 				auto mesh = GetMeshFromEntity(entity);
 
 				if (! mesh)
 				{
 					return;
 				}
+
+				glm::mat4 transform = entity.GetComponent<Component::LocalToWorld>().value;
+
+				UpdateGlobalUniform(commandBuffer, transform);
 
 				for (auto& primitive : mesh->GetPrimitives())
 				{

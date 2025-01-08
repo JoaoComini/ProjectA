@@ -1,5 +1,8 @@
 #version 450
 
+precision highp float;
+precision highp sampler2DShadow;
+
 #define GAMMA 2.2
 
 #define MAX_LIGHT_COUNT 32
@@ -56,7 +59,7 @@ layout(push_constant, std430) uniform PbrPushConstant
 
 // Shadow -----------------------------------------------------------
 
-float CalculateShadow(vec2 offset)
+float CalculateShadow()
 {
     vec4 projected = shadow.viewProjection * vec4(inPosition, 1.0);
 
@@ -64,24 +67,7 @@ float CalculateShadow(vec2 offset)
 
     projected.xy = 0.5 * projected.xy + 0.5;
 
-    return texture(shadowMap, vec3(projected.xy + offset, projected.z));
-}
-
-float PCFShadow()
-{
-	vec2 size = 1.5 / textureSize(shadowMap, 0);
-
-	float shadow = 0.0;
-	
-	for (int x = -1; x <= 1; x++)
-	{
-		for (int y = -1; y <= 1; y++)
-		{
-			shadow += CalculateShadow(vec2(x, y) * size);
-		}
-	}
-
-	return shadow / 9.0;
+    return texture(shadowMap, vec3(projected.xy, projected.z));
 }
 
 // Lightning --------------------------------------------------------
@@ -284,7 +270,7 @@ void main()
 
 			if (i == 0)
 			{
-				Lo *= PCFShadow();
+				Lo *= CalculateShadow();
 			}
 		}
 		else
@@ -293,13 +279,9 @@ void main()
 		}
 	}
 
-    vec3 ambientColor = vec3(0.1) * albedo.rgb;
+    vec3 ambientColor = vec3(0.0) * albedo.rgb;
 
-	#ifdef HAS_ALBEDO_TEXTURE
-	vec3 finalColor = pow(ambientColor + Lo, vec3(1.0 / GAMMA));
-	#else
 	vec3 finalColor = ambientColor + Lo;
-	#endif
 
 	outColor = vec4(finalColor, albedo.a);
 }

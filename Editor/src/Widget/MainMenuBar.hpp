@@ -25,5 +25,6 @@ private:
 
 	bool openMetrics = false;
 	bool openEnvironment = false;
+	bool openShadows = false;
 };
 

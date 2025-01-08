@@ -3,8 +3,6 @@
 #include "Subpass.hpp"
 #include "Scene/Scene.hpp"
 
-#include "Rendering/Mesh.hpp"
-
 namespace Engine
 {
 	struct alignas(16) GlobalUniform

@@ -37,6 +37,10 @@ void MainMenuBar::Draw()
 			openEnvironment = true;
 		});
 
+		MainMenuItem("Shadows", [&]() {
+			openShadows = true;
+		});
+
 		ImGui::EndMenu();
 	}
 
@@ -62,6 +66,20 @@ void MainMenuBar::Draw()
 
 		ImGui::DragFloat("Exposure", &settings.hdr.exposure, 0.1);
 			
+		Engine::Renderer::Get().SetSettings(settings);
+
+		ImGui::End();
+	}
+
+	if (openShadows)
+	{
+		ImGui::Begin("Shadows", &openShadows);
+
+		auto settings = Engine::Renderer::Get().GetSettings();
+
+		ImGui::DragFloat("Depth Bias", &settings.shadow.depthBias, 0.01);
+		ImGui::DragFloat("Normal Bias", &settings.shadow.normalBias, 0.01);
+
 		Engine::Renderer::Get().SetSettings(settings);
 
 		ImGui::End();
