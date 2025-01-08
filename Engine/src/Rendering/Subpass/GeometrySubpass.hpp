@@ -5,16 +5,15 @@
 
 namespace Engine
 {
-	struct alignas(16) GlobalUniform
+	struct CameraUniform
 	{
-		glm::mat4 model;
-		glm::mat4 viewProjection;
-		glm::vec3 cameraPosition;
+		glm::mat4 viewProjectionMatrix;
+		glm::vec3 position;
 	};
 
 	struct ModelUniform
 	{
-		glm::vec4 color;
+		glm::mat4 localToWorldMatrix;
 	};
 
 	struct PbrPushConstant
@@ -43,9 +42,9 @@ namespace Engine
 
 		Scene& scene;
 	private:
-		void UpdateGlobalUniform(Vulkan::CommandBuffer& commandBuffer, const glm::mat4& transform);
+		void UpdateCameraUniform(Vulkan::CommandBuffer& commandBuffer);
 		std::shared_ptr<Material> GetMaterialFromPrimitive(const Primitive& primitive);
-		void UpdateModelUniform(Vulkan::CommandBuffer& commandBuffer, const Material& material);
+		void UpdateModelUniform(Vulkan::CommandBuffer& commandBuffer, const glm::mat4& matrix, const Material& material);
 
 		std::vector<Vulkan::ShaderModule*> shaders;
 	};

@@ -55,6 +55,8 @@ namespace Engine
 	{
 		PreparePipelineState(commandBuffer);
 
+		UpdateCameraUniform(commandBuffer);
+
 		scene.ForEachEntity<Component::MeshRender>(
 			[&](Entity entity) {
 				auto mesh = GetMeshFromEntity(entity);
@@ -66,8 +68,6 @@ namespace Engine
 
 				glm::mat4 transform = entity.GetComponent<Component::LocalToWorld>().value;
 
-				UpdateGlobalUniform(commandBuffer, transform);
-
 				for (auto& primitive : mesh->GetPrimitives())
 				{
 					auto material = GetMaterialFromPrimitive(*primitive);
@@ -77,7 +77,7 @@ namespace Engine
 						continue;
 					}
 
-					UpdateModelUniform(commandBuffer, *material);
+					UpdateModelUniform(commandBuffer, transform, *material);
 
 					primitive->Draw(commandBuffer);
 				}
@@ -85,18 +85,17 @@ namespace Engine
 		);
 	}
 
-	void GeometrySubpass::UpdateGlobalUniform(Vulkan::CommandBuffer& commandBuffer, const glm::mat4& transform)
+	void GeometrySubpass::UpdateCameraUniform(Vulkan::CommandBuffer& commandBuffer)
 	{
 		auto [view, projection] = GetViewProjection();
 
-		GlobalUniform uniform{};
-		uniform.model = transform;
-		uniform.viewProjection = projection * view;
-		uniform.cameraPosition = glm::inverse(view)[3];
+		CameraUniform uniform{};
+		uniform.viewProjectionMatrix = projection * view;
+		uniform.position = glm::inverse(view)[3];
 
 		auto& frame = GetRenderContext().GetCurrentFrame();
 
-		auto allocation = frame.RequestBufferAllocation(Vulkan::BufferUsageFlags::UNIFORM, sizeof(GlobalUniform));
+		auto allocation = frame.RequestBufferAllocation(Vulkan::BufferUsageFlags::UNIFORM, sizeof(CameraUniform));
 
 		allocation.SetData(&uniform);
 
@@ -117,23 +116,31 @@ namespace Engine
 		return ResourceManager::Get().LoadResource<Material>(materialId);
 	}
 
-	void GeometrySubpass::UpdateModelUniform(Vulkan::CommandBuffer& commandBuffer, const Material& material)
+	void GeometrySubpass::UpdateModelUniform(Vulkan::CommandBuffer& commandBuffer, const glm::mat4& matrix, const Material& material)
 	{
 		auto& frame = GetRenderContext().GetCurrentFrame();
 
+		ModelUniform uniform{};
+		uniform.localToWorldMatrix = matrix;
+
+		auto allocation = frame.RequestBufferAllocation(Vulkan::BufferUsageFlags::UNIFORM, sizeof(ModelUniform));
+		allocation.SetData(&uniform);
+
+		BindBuffer(allocation.GetBuffer(), allocation.GetOffset(), allocation.GetSize(), 0, 1, 0);
+
 		if (auto albedo = ResourceManager::Get().LoadResource<Texture>(material.GetAlbedoTexture()))
 		{
-			BindImage(albedo->GetImageView(), albedo->GetSampler(), 0, 1, 0);
+			BindImage(albedo->GetImageView(), albedo->GetSampler(), 0, 2, 0);
 		}
 
 		if (auto normal = ResourceManager::Get().LoadResource<Texture>(material.GetNormalTexture()))
 		{
-			BindImage(normal->GetImageView(), normal->GetSampler(), 0, 2, 0);
+			BindImage(normal->GetImageView(), normal->GetSampler(), 0, 3, 0);
 		}
 
 		if (auto metallicRoughness = ResourceManager::Get().LoadResource<Texture>(material.GetMetallicRoughnessTexture()))
 		{
-			BindImage(metallicRoughness->GetImageView(), metallicRoughness->GetSampler(), 0, 3, 0);
+			BindImage(metallicRoughness->GetImageView(), metallicRoughness->GetSampler(), 0, 4, 0);
 		}
 
 		auto& resourceCache = GetRenderContext().GetDevice().GetResourceCache();

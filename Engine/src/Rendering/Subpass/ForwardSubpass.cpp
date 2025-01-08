@@ -86,14 +86,14 @@ namespace Engine
 
         allocation.SetData(&uniform);
 
-        BindBuffer(allocation.GetBuffer(), allocation.GetOffset(), allocation.GetSize(), 0, 4, 0);
+        BindBuffer(allocation.GetBuffer(), allocation.GetOffset(), allocation.GetSize(), 0, 5, 0);
     }
 
     void ForwardSubpass::BindShadowMap()
     {
         auto& shadowMap = shadowTarget->GetDepthAttachment()->GetView();
 
-        BindImage(shadowMap, *shadowMapSampler, 0, 5, 0);
+        BindImage(shadowMap, *shadowMapSampler, 0, 6, 0);
     }
 
     void ForwardSubpass::UpdateShadowUniform(Vulkan::CommandBuffer& commandBuffer, ShadowUniform uniform)
@@ -104,6 +104,6 @@ namespace Engine
 
         allocation.SetData(&uniform);
 
-        BindBuffer(allocation.GetBuffer(), allocation.GetOffset(), allocation.GetSize(), 0, 6, 0);
+        BindBuffer(allocation.GetBuffer(), allocation.GetOffset(), allocation.GetSize(), 0, 7, 0);
     }
 };

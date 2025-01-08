@@ -15,22 +15,25 @@ layout(location = 2) in vec2 inUV;
 
 layout(location = 0) out vec4 outColor;
 
-layout(set = 0, binding = 0) uniform GlobalUniform {
-    mat4 model;
-    mat4 viewProjection;
-    vec3 cameraPosition;
-} global;
+layout(set = 0, binding = 0) uniform CameraUniform {
+    mat4 viewProjectionMatrix;
+    vec3 position;
+} camera;
+
+layout(set = 0, binding = 1) uniform ModelUniform {
+	mat4 localToWorldMatrix;
+} model;
 
 #ifdef HAS_ALBEDO_TEXTURE
-layout(set = 0, binding = 1) uniform sampler2D albedoTexture;
+layout(set = 0, binding = 2) uniform sampler2D albedoTexture;
 #endif
 
 #ifdef HAS_NORMAL_TEXTURE
-layout(set = 0, binding = 2) uniform sampler2D normalTexture;
+layout(set = 0, binding = 3) uniform sampler2D normalTexture;
 #endif
 
 #ifdef HAS_METALLIC_ROUGHNESS_TEXTURE
-layout(set = 0, binding = 3) uniform sampler2D metallicRoughnessTexture;
+layout(set = 0, binding = 4) uniform sampler2D metallicRoughnessTexture;
 #endif
 
 struct Light
@@ -39,14 +42,14 @@ struct Light
     vec4 color;
 };
 
-layout(set = 0, binding = 4) uniform LightUniform {
+layout(set = 0, binding = 5) uniform LightUniform {
     Light array[MAX_LIGHT_COUNT];
 	int count;
 } lights;
 
-layout(set = 0, binding = 5) uniform sampler2DShadow shadowMap;
+layout(set = 0, binding = 6) uniform sampler2DShadow shadowMap;
 
-layout(set = 0, binding = 6) uniform ShadowUniform {
+layout(set = 0, binding = 7) uniform ShadowUniform {
     mat4 viewProjection;
 } shadow;
 
@@ -232,7 +235,7 @@ void main()
 	float F90 = Saturate(50.0 * F0.r);
 
 	vec3 N = Normal();
-	vec3 V = normalize(global.cameraPosition - inPosition);
+	vec3 V = normalize(camera.position - inPosition);
 	float NdotV = Saturate(dot(N, V));
 
 	vec3 diffuse = albedo.rgb * (1.0 - metallic);
