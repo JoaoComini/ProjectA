@@ -8,9 +8,11 @@ namespace Engine
 		ResourceId metallicRoughnessTexture,
 		glm::vec4 albedoColor,
 		float metallicFactor,
-		float roughnessFactor
+		float roughnessFactor,
+		AlphaMode alphaMode,
+		float alphaCutoff
 	) : albedoTexture(albedoTexture), normalTexture(normalTexture), metallicRoughnessTexture(metallicRoughnessTexture),
-		albedoColor(albedoColor), metallicFactor(metallicFactor), roughnessFactor(roughnessFactor)
+		albedoColor(albedoColor), metallicFactor(metallicFactor), roughnessFactor(roughnessFactor), alphaMode(alphaMode), alphaCutoff(alphaCutoff)
 	{
 		PrepareShaderVariant();
 	}
@@ -30,6 +32,11 @@ namespace Engine
 		if (metallicRoughnessTexture)
 		{
 			shaderVariant.AddDefine("HAS_METALLIC_ROUGHNESS_TEXTURE");
+		}
+
+		if (alphaMode == AlphaMode::Mask)
+		{
+			shaderVariant.AddDefine("ALPHA_MASK");
 		}
 	}
 
@@ -61,6 +68,16 @@ namespace Engine
 	float Material::GetRoughnessFactor() const
 	{
 		return roughnessFactor;
+	}
+
+	AlphaMode Material::GetAlphaMode() const
+	{
+		return alphaMode;
+	}
+
+	float Material::GetAlphaCutoff() const
+	{
+		return alphaCutoff;
 	}
 
 	const Vulkan::ShaderVariant& Material::GetShaderVariant() const

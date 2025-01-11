@@ -15,6 +15,8 @@ namespace Engine
     {
         flatbuffers::MeshT mesh;
 
+        glm::vec3 min{ std::numeric_limits<float>::max() }, max{ std::numeric_limits<float>::min() };
+
         for (auto& primitiveSpec: spec.primitives)
         {
             auto primitive = std::make_unique<flatbuffers::PrimitiveT>();
@@ -24,8 +26,16 @@ namespace Engine
             primitive->indices = primitiveSpec.indices;
             primitive->index_type = primitiveSpec.indexType;
 
+            for (auto& vertex : primitive->vertices)
+            {
+                min = glm::min(vertex.position, min);
+                max = glm::max(vertex.position, max);
+            }
+
             mesh.primitives.push_back(std::move(primitive));
         }
+
+        mesh.bounds = std::make_unique<flatbuffers::AABB>(std::span<float, 3>(min), std::span<float, 3>(max));
 
         flatbuffers::FlatBufferBuilder builder(1024);
 
@@ -66,6 +76,8 @@ namespace Engine
 
             mesh->AddPrimitive(std::move(primitive));
         }
+
+        mesh->SetBounds(AABB{ glm::make_vec3(buffer.bounds->min()->data()), glm::make_vec3(buffer.bounds->max()->data())});
 
         return mesh;
     }

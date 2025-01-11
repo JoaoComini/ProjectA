@@ -35,6 +35,9 @@ namespace Engine
         uint32_t typeSize{};
         switch (type)
         {
+        case VK_INDEX_TYPE_UINT8_KHR:
+            typeSize = sizeof(uint8_t);
+            break;
         case VK_INDEX_TYPE_UINT16:
             typeSize = sizeof(uint16_t);
             break;
@@ -89,6 +92,16 @@ namespace Engine
     void Mesh::AddPrimitive(std::unique_ptr<Primitive> primitive)
     {
         primitives.push_back(std::move(primitive));
+    }
+
+    void Mesh::SetBounds(AABB bounds)
+    {
+        this->bounds = bounds;
+    }
+
+    AABB Mesh::GetBounds() const
+    {
+        return bounds;
     }
 
     std::vector<std::unique_ptr<Primitive>> const& Mesh::GetPrimitives() const

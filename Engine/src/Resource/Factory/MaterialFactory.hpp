@@ -18,6 +18,8 @@ namespace Engine
 		glm::vec4 albedoColor{ 1.f };
 		float metallicFactor{ 0.f };
 		float roughnessFactor{ 0.f };
+		AlphaMode alphaMode{ AlphaMode::Opaque };
+		float alphaCutoff{ 0.f };
 	};
 
 	class MaterialFactory : Factory<Material, MaterialSpec>

@@ -136,6 +136,24 @@ namespace Engine
             spec.metallicFactor = pbr.metallicFactor;
             spec.roughnessFactor = pbr.roughnessFactor;
 
+            std::unordered_map<std::string, AlphaMode> alphaModes{
+                { "OPAQUE", AlphaMode::Opaque },
+                { "BLEND", AlphaMode::Blend },
+                { "MASK", AlphaMode::Mask }
+            };
+
+            auto alphaModeIt = alphaModes.find(material.alphaMode);
+
+            if (alphaModeIt != alphaModes.end())
+            {
+                spec.alphaMode = alphaModeIt->second;
+            }
+
+            if (spec.alphaMode == AlphaMode::Mask)
+            {
+                spec.alphaCutoff = material.alphaCutoff;
+            }
+
             auto id = ResourceManager::Get().CreateResource<Material>(parent.stem() / "material", spec);
 
             materials.push_back(id);
@@ -210,6 +228,9 @@ namespace Engine
 
                     switch (accessor.componentType)
                     {
+                    case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE:
+                        indexType = VK_INDEX_TYPE_UINT8_KHR;
+                        break;
                     case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT:
                         indexType = VK_INDEX_TYPE_UINT16;
                         break;

@@ -18,6 +18,8 @@ namespace Engine
         material.albedo_color = std::make_unique<flatbuffers::Color>(color);
         material.metallic_factor = spec.metallicFactor;
         material.roughness_factor = spec.roughnessFactor;
+        material.alpha_mode = static_cast<flatbuffers::AlphaMode>(spec.alphaMode);
+        material.alpha_cutoff = spec.alphaCutoff;
 
         flatbuffers::FlatBufferBuilder builder(128);
         auto offset = flatbuffers::Material::Pack(builder, &material);
@@ -43,7 +45,9 @@ namespace Engine
             material->metallic_roughness_texture(),
             color,
             material->metallic_factor(),
-            material->roughness_factor()
+            material->roughness_factor(),
+            static_cast<AlphaMode>(material->alpha_mode()),
+            material->alpha_cutoff()
         );
     }
 };

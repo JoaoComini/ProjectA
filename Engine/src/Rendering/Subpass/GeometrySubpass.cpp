@@ -55,48 +55,28 @@ namespace Engine
 	{
 		PreparePipelineState(commandBuffer);
 
-		scene.ForEachEntity<Component::MeshRender>(
-			[&](Entity entity) {
-				auto mesh = GetMeshFromEntity(entity);
-
-				if (! mesh)
-				{
-					return;
-				}
-
-				glm::mat4 transform = entity.GetComponent<Component::LocalToWorld>().value;
-
-				UpdateGlobalUniform(commandBuffer, transform);
-
-				for (auto& primitive : mesh->GetPrimitives())
-				{
-					auto material = GetMaterialFromPrimitive(*primitive);
-
-					if (!material)
-					{
-						continue;
-					}
-
-					UpdateModelUniform(commandBuffer, *material);
-
-					primitive->Draw(commandBuffer);
-				}
-			}
-		);
-	}
-
-	void GeometrySubpass::UpdateGlobalUniform(Vulkan::CommandBuffer& commandBuffer, const glm::mat4& transform)
-	{
 		auto [view, projection] = GetViewProjection();
 
-		GlobalUniform uniform{};
-		uniform.model = transform;
-		uniform.viewProjection = projection * view;
-		uniform.cameraPosition = glm::inverse(view)[3];
+		CameraUniform uniform{};
+		uniform.viewProjectionMatrix = projection * view;
+		uniform.position = glm::inverse(view)[3];
 
+		UpdateCameraUniform(commandBuffer, uniform);
+
+		std::vector<SelectedPrimitive> opaques;
+		std::multimap<float, SelectedPrimitive> transparents;
+
+		SelectPrimitivesToRender(opaques, transparents, uniform.position);
+
+		DrawOpaques(commandBuffer, opaques);
+		DrawTransparents(commandBuffer, transparents);
+	}
+
+	void GeometrySubpass::UpdateCameraUniform(Vulkan::CommandBuffer& commandBuffer, CameraUniform& uniform)
+	{
 		auto& frame = GetRenderContext().GetCurrentFrame();
 
-		auto allocation = frame.RequestBufferAllocation(Vulkan::BufferUsageFlags::UNIFORM, sizeof(GlobalUniform));
+		auto allocation = frame.RequestBufferAllocation(Vulkan::BufferUsageFlags::UNIFORM, sizeof(CameraUniform));
 
 		allocation.SetData(&uniform);
 
@@ -110,6 +90,97 @@ namespace Engine
 		return { glm::inverse(transform), camera.GetProjection() };
 	}
 
+	void GeometrySubpass::SelectPrimitivesToRender(std::vector<SelectedPrimitive>& opaques, std::multimap<float, SelectedPrimitive>& transparents, glm::vec3& cameraPosition)
+	{
+		scene.ForEachEntity<Component::MeshRender>(
+			[&](Entity entity) {
+				auto mesh = GetMeshFromEntity(entity);
+
+				if (!mesh)
+				{
+					return;
+				}
+
+				glm::mat4 transform = entity.GetComponent<Component::LocalToWorld>().value;
+
+				for (auto& primitive : mesh->GetPrimitives())
+				{
+					auto material = GetMaterialFromPrimitive(*primitive);
+
+					if (!material)
+					{
+						continue;
+					}
+
+					auto bounds = mesh->GetBounds();
+					bounds.Transform(transform);
+
+					auto distance = glm::length2(bounds.GetCenter() - cameraPosition);
+
+					if (material->GetAlphaMode() == AlphaMode::Blend)
+					{
+						transparents.emplace(distance, SelectedPrimitive{
+							.transform = transform,
+							.primitive = *primitive,
+						});
+						
+						continue;
+					}
+
+					opaques.emplace_back(transform, *primitive);
+				}
+
+			}
+		);
+	}
+
+	void GeometrySubpass::DrawOpaques(Vulkan::CommandBuffer& commandBuffer, std::vector<SelectedPrimitive>& opaques)
+	{
+
+		for (const auto& opaque : opaques)
+		{
+
+			auto material = GetMaterialFromPrimitive(opaque.primitive);
+
+			if (!material)
+			{
+				continue;
+			}
+
+			UpdateModelUniform(commandBuffer, opaque.transform, *material);
+
+			opaque.primitive.Draw(commandBuffer);
+		}
+	}
+
+	void GeometrySubpass::DrawTransparents(Vulkan::CommandBuffer& commandBuffer, std::multimap<float, SelectedPrimitive>& transparents)
+	{
+		Vulkan::ColorBlendAttachmentState colorBlendAttachment{};
+		colorBlendAttachment.blendEnable = VK_TRUE;
+
+		Vulkan::ColorBlendState colorBlendState{};
+		colorBlendState.attachments.push_back(colorBlendAttachment);
+
+		commandBuffer.SetColorBlendState(colorBlendState);
+
+		// Draw transparent objects back to front
+		for (auto transparent = transparents.rbegin(); transparent != transparents.rend(); transparent++)
+		{
+			auto& sorted = transparent->second;
+
+			auto material = GetMaterialFromPrimitive(sorted.primitive);
+
+			if (!material)
+			{
+				continue;
+			}
+
+			UpdateModelUniform(commandBuffer, sorted.transform, *material);
+
+			sorted.primitive.Draw(commandBuffer);
+		}
+	}
+
 	std::shared_ptr<Material> GeometrySubpass::GetMaterialFromPrimitive(const Primitive& primitive)
 	{
 		ResourceId materialId = primitive.GetMaterial();
@@ -117,23 +188,31 @@ namespace Engine
 		return ResourceManager::Get().LoadResource<Material>(materialId);
 	}
 
-	void GeometrySubpass::UpdateModelUniform(Vulkan::CommandBuffer& commandBuffer, const Material& material)
+	void GeometrySubpass::UpdateModelUniform(Vulkan::CommandBuffer& commandBuffer, const glm::mat4& matrix, const Material& material)
 	{
 		auto& frame = GetRenderContext().GetCurrentFrame();
 
+		ModelUniform uniform{};
+		uniform.localToWorldMatrix = matrix;
+
+		auto allocation = frame.RequestBufferAllocation(Vulkan::BufferUsageFlags::UNIFORM, sizeof(ModelUniform));
+		allocation.SetData(&uniform);
+
+		BindBuffer(allocation.GetBuffer(), allocation.GetOffset(), allocation.GetSize(), 0, 1, 0);
+
 		if (auto albedo = ResourceManager::Get().LoadResource<Texture>(material.GetAlbedoTexture()))
 		{
-			BindImage(albedo->GetImageView(), albedo->GetSampler(), 0, 1, 0);
+			BindImage(albedo->GetImageView(), albedo->GetSampler(), 0, 2, 0);
 		}
 
 		if (auto normal = ResourceManager::Get().LoadResource<Texture>(material.GetNormalTexture()))
 		{
-			BindImage(normal->GetImageView(), normal->GetSampler(), 0, 2, 0);
+			BindImage(normal->GetImageView(), normal->GetSampler(), 0, 3, 0);
 		}
 
 		if (auto metallicRoughness = ResourceManager::Get().LoadResource<Texture>(material.GetMetallicRoughnessTexture()))
 		{
-			BindImage(metallicRoughness->GetImageView(), metallicRoughness->GetSampler(), 0, 3, 0);
+			BindImage(metallicRoughness->GetImageView(), metallicRoughness->GetSampler(), 0, 4, 0);
 		}
 
 		auto& resourceCache = GetRenderContext().GetDevice().GetResourceCache();
@@ -159,6 +238,7 @@ namespace Engine
 				.albedoColor = material.GetAlbedoColor(),
 				.metallicFactor = material.GetMetallicFactor(),
 				.roughnessFactor = material.GetRoughnessFactor(),
+				.alphaCutoff = material.GetAlphaCutoff(),
 			};
 
 			commandBuffer.PushConstants(VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PbrPushConstant), &pushConstant);

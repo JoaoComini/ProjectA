@@ -17,9 +17,16 @@ table Primitive
     index_type:int;
 }
 
+struct AABB
+{
+    min:[float:3];
+    max:[float:3];
+}
+
 table Mesh
 {
     primitives:[Primitive];
+    bounds:AABB;
 }
 
 root_type Mesh;

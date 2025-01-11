@@ -5,16 +5,15 @@
 
 namespace Engine
 {
-	struct alignas(16) GlobalUniform
+	struct CameraUniform
 	{
-		glm::mat4 model;
-		glm::mat4 viewProjection;
-		glm::vec3 cameraPosition;
+		glm::mat4 viewProjectionMatrix;
+		glm::vec3 position;
 	};
 
 	struct ModelUniform
 	{
-		glm::vec4 color;
+		glm::mat4 localToWorldMatrix;
 	};
 
 	struct PbrPushConstant
@@ -22,6 +21,13 @@ namespace Engine
 		glm::vec4 albedoColor;
 		float metallicFactor;
 		float roughnessFactor;
+		float alphaCutoff;
+	};
+
+	struct SelectedPrimitive
+	{
+		glm::mat4 transform;
+		Primitive& primitive;
 	};
 
 	class GeometrySubpass : public Subpass
@@ -38,14 +44,19 @@ namespace Engine
 
 	protected:
 		virtual void PreparePipelineState(Vulkan::CommandBuffer& commandBuffer);
-
 		virtual std::pair<glm::mat4, glm::mat4> GetViewProjection() const;
 
 		Scene& scene;
 	private:
-		void UpdateGlobalUniform(Vulkan::CommandBuffer& commandBuffer, const glm::mat4& transform);
+		void UpdateCameraUniform(Vulkan::CommandBuffer& commandBuffer, CameraUniform& uniform);
+		void UpdateModelUniform(Vulkan::CommandBuffer& commandBuffer, const glm::mat4& matrix, const Material& material);
+
+		void SelectPrimitivesToRender(std::vector<SelectedPrimitive>& opaques, std::multimap<float, SelectedPrimitive>& transparents, glm::vec3& cameraPosition);
+
+		void DrawOpaques(Vulkan::CommandBuffer& commandBuffer, std::vector<SelectedPrimitive>& opaques);
+		void DrawTransparents(Vulkan::CommandBuffer& commandBuffer, std::multimap<float, SelectedPrimitive>& opaques);
+
 		std::shared_ptr<Material> GetMaterialFromPrimitive(const Primitive& primitive);
-		void UpdateModelUniform(Vulkan::CommandBuffer& commandBuffer, const Material& material);
 
 		std::vector<Vulkan::ShaderModule*> shaders;
 	};

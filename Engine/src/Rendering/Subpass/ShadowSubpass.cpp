@@ -102,6 +102,15 @@ namespace Engine
 
 				for (auto& primitive : mesh->GetPrimitives())
 				{
+					ResourceId materialId = primitive->GetMaterial();
+
+					auto material = ResourceManager::Get().LoadResource<Material>(materialId);
+
+					if (material && material->GetAlphaMode() == AlphaMode::Blend)
+					{
+						continue;
+					}
+
 					primitive->Draw(commandBuffer);
 				}
 			}

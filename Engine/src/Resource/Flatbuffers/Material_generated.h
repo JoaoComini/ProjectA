@@ -21,6 +21,39 @@ struct Material;
 struct MaterialBuilder;
 struct MaterialT;
 
+enum AlphaMode : int8_t {
+  AlphaMode_Opaque = 0,
+  AlphaMode_Mask = 1,
+  AlphaMode_Blend = 2,
+  AlphaMode_MIN = AlphaMode_Opaque,
+  AlphaMode_MAX = AlphaMode_Blend
+};
+
+inline const AlphaMode (&EnumValuesAlphaMode())[3] {
+  static const AlphaMode values[] = {
+    AlphaMode_Opaque,
+    AlphaMode_Mask,
+    AlphaMode_Blend
+  };
+  return values;
+}
+
+inline const char * const *EnumNamesAlphaMode() {
+  static const char * const names[4] = {
+    "Opaque",
+    "Mask",
+    "Blend",
+    nullptr
+  };
+  return names;
+}
+
+inline const char *EnumNameAlphaMode(AlphaMode e) {
+  if (::flatbuffers::IsOutRange(e, AlphaMode_Opaque, AlphaMode_Blend)) return "";
+  const size_t index = static_cast<size_t>(e);
+  return EnumNamesAlphaMode()[index];
+}
+
 FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Color FLATBUFFERS_FINAL_CLASS {
  private:
   float value_[4];
@@ -46,6 +79,8 @@ struct MaterialT : public ::flatbuffers::NativeTable {
   std::unique_ptr<flatbuffers::Color> albedo_color{};
   float metallic_factor = 0.0f;
   float roughness_factor = 0.0f;
+  flatbuffers::AlphaMode alpha_mode = flatbuffers::AlphaMode_Opaque;
+  float alpha_cutoff = 0.0f;
   MaterialT() = default;
   MaterialT(const MaterialT &o);
   MaterialT(MaterialT&&) FLATBUFFERS_NOEXCEPT = default;
@@ -61,7 +96,9 @@ struct Material FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
     VT_METALLIC_ROUGHNESS_TEXTURE = 8,
     VT_ALBEDO_COLOR = 10,
     VT_METALLIC_FACTOR = 12,
-    VT_ROUGHNESS_FACTOR = 14
+    VT_ROUGHNESS_FACTOR = 14,
+    VT_ALPHA_MODE = 16,
+    VT_ALPHA_CUTOFF = 18
   };
   uint64_t albedo_texture() const {
     return GetField<uint64_t>(VT_ALBEDO_TEXTURE, 0);
@@ -81,6 +118,12 @@ struct Material FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   float roughness_factor() const {
     return GetField<float>(VT_ROUGHNESS_FACTOR, 0.0f);
   }
+  flatbuffers::AlphaMode alpha_mode() const {
+    return static_cast<flatbuffers::AlphaMode>(GetField<int8_t>(VT_ALPHA_MODE, 0));
+  }
+  float alpha_cutoff() const {
+    return GetField<float>(VT_ALPHA_CUTOFF, 0.0f);
+  }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint64_t>(verifier, VT_ALBEDO_TEXTURE, 8) &&
@@ -89,6 +132,8 @@ struct Material FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
            VerifyField<flatbuffers::Color>(verifier, VT_ALBEDO_COLOR, 4) &&
            VerifyField<float>(verifier, VT_METALLIC_FACTOR, 4) &&
            VerifyField<float>(verifier, VT_ROUGHNESS_FACTOR, 4) &&
+           VerifyField<int8_t>(verifier, VT_ALPHA_MODE, 1) &&
+           VerifyField<float>(verifier, VT_ALPHA_CUTOFF, 4) &&
            verifier.EndTable();
   }
   MaterialT *UnPack(const ::flatbuffers::resolver_function_t *_resolver = nullptr) const;
@@ -118,6 +163,12 @@ struct MaterialBuilder {
   void add_roughness_factor(float roughness_factor) {
     fbb_.AddElement<float>(Material::VT_ROUGHNESS_FACTOR, roughness_factor, 0.0f);
   }
+  void add_alpha_mode(flatbuffers::AlphaMode alpha_mode) {
+    fbb_.AddElement<int8_t>(Material::VT_ALPHA_MODE, static_cast<int8_t>(alpha_mode), 0);
+  }
+  void add_alpha_cutoff(float alpha_cutoff) {
+    fbb_.AddElement<float>(Material::VT_ALPHA_CUTOFF, alpha_cutoff, 0.0f);
+  }
   explicit MaterialBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
@@ -136,14 +187,18 @@ inline ::flatbuffers::Offset<Material> CreateMaterial(
     uint64_t metallic_roughness_texture = 0,
     const flatbuffers::Color *albedo_color = nullptr,
     float metallic_factor = 0.0f,
-    float roughness_factor = 0.0f) {
+    float roughness_factor = 0.0f,
+    flatbuffers::AlphaMode alpha_mode = flatbuffers::AlphaMode_Opaque,
+    float alpha_cutoff = 0.0f) {
   MaterialBuilder builder_(_fbb);
   builder_.add_metallic_roughness_texture(metallic_roughness_texture);
   builder_.add_normal_texture(normal_texture);
   builder_.add_albedo_texture(albedo_texture);
+  builder_.add_alpha_cutoff(alpha_cutoff);
   builder_.add_roughness_factor(roughness_factor);
   builder_.add_metallic_factor(metallic_factor);
   builder_.add_albedo_color(albedo_color);
+  builder_.add_alpha_mode(alpha_mode);
   return builder_.Finish();
 }
 
@@ -155,7 +210,9 @@ inline MaterialT::MaterialT(const MaterialT &o)
         metallic_roughness_texture(o.metallic_roughness_texture),
         albedo_color((o.albedo_color) ? new flatbuffers::Color(*o.albedo_color) : nullptr),
         metallic_factor(o.metallic_factor),
-        roughness_factor(o.roughness_factor) {
+        roughness_factor(o.roughness_factor),
+        alpha_mode(o.alpha_mode),
+        alpha_cutoff(o.alpha_cutoff) {
 }
 
 inline MaterialT &MaterialT::operator=(MaterialT o) FLATBUFFERS_NOEXCEPT {
@@ -165,6 +222,8 @@ inline MaterialT &MaterialT::operator=(MaterialT o) FLATBUFFERS_NOEXCEPT {
   std::swap(albedo_color, o.albedo_color);
   std::swap(metallic_factor, o.metallic_factor);
   std::swap(roughness_factor, o.roughness_factor);
+  std::swap(alpha_mode, o.alpha_mode);
+  std::swap(alpha_cutoff, o.alpha_cutoff);
   return *this;
 }
 
@@ -183,6 +242,8 @@ inline void Material::UnPackTo(MaterialT *_o, const ::flatbuffers::resolver_func
   { auto _e = albedo_color(); if (_e) _o->albedo_color = std::unique_ptr<flatbuffers::Color>(new flatbuffers::Color(*_e)); }
   { auto _e = metallic_factor(); _o->metallic_factor = _e; }
   { auto _e = roughness_factor(); _o->roughness_factor = _e; }
+  { auto _e = alpha_mode(); _o->alpha_mode = _e; }
+  { auto _e = alpha_cutoff(); _o->alpha_cutoff = _e; }
 }
 
 inline ::flatbuffers::Offset<Material> Material::Pack(::flatbuffers::FlatBufferBuilder &_fbb, const MaterialT* _o, const ::flatbuffers::rehasher_function_t *_rehasher) {
@@ -199,6 +260,8 @@ inline ::flatbuffers::Offset<Material> CreateMaterial(::flatbuffers::FlatBufferB
   auto _albedo_color = _o->albedo_color ? _o->albedo_color.get() : nullptr;
   auto _metallic_factor = _o->metallic_factor;
   auto _roughness_factor = _o->roughness_factor;
+  auto _alpha_mode = _o->alpha_mode;
+  auto _alpha_cutoff = _o->alpha_cutoff;
   return flatbuffers::CreateMaterial(
       _fbb,
       _albedo_texture,
@@ -206,7 +269,9 @@ inline ::flatbuffers::Offset<Material> CreateMaterial(::flatbuffers::FlatBufferB
       _metallic_roughness_texture,
       _albedo_color,
       _metallic_factor,
-      _roughness_factor);
+      _roughness_factor,
+      _alpha_mode,
+      _alpha_cutoff);
 }
 
 inline const flatbuffers::Material *GetMaterial(const void *buf) {

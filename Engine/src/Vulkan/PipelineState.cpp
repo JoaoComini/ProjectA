@@ -82,6 +82,16 @@ namespace Vulkan
         }
     }
 
+    void PipelineState::SetColorBlendState(const ColorBlendState& state)
+    {
+        if (colorBlend != state)
+        {
+            colorBlend = state;
+
+            dirty = true;
+        }
+    }
+
     void PipelineState::ClearDirty()
     {
         dirty = false;
@@ -100,6 +110,8 @@ namespace Vulkan
         inputAssembly = {};
         rasterization = {};
         depthStencil = {};
+        pipelineRendering = {};
+        colorBlend = {};
     }
 
     const PipelineLayout* PipelineState::GetPipelineLayout() const
@@ -135,6 +147,11 @@ namespace Vulkan
     const PipelineRenderingState& PipelineState::GetPipelineRenderingState() const
     {
         return pipelineRendering;
+    }
+
+    const ColorBlendState& PipelineState::GetColorBlendState() const
+    {
+        return colorBlend;
     }
 
     bool PipelineState::IsDirty() const

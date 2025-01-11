@@ -75,6 +75,7 @@ namespace Vulkan
 		void SetRasterizationState(const RasterizationState& state);
 		void SetDepthStencilState(const DepthStencilState& state);
 		void SetPipelineRenderingState(const PipelineRenderingState& state);
+		void SetColorBlendState(const ColorBlendState& state);
 
 		void BindPipelineLayout(PipelineLayout& pipelineLayout);
 		void BindDescriptorSet(VkDescriptorSet descriptorSet);

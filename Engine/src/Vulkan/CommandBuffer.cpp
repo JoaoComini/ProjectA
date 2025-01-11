@@ -104,6 +104,11 @@ namespace Vulkan
 		pipelineState.SetPipelineRenderingState(state);
 	}
 
+	void CommandBuffer::SetColorBlendState(const ColorBlendState& state)
+	{
+		pipelineState.SetColorBlendState(state);
+	}
+
 	void CommandBuffer::BindPipelineLayout(PipelineLayout& pipelineLayout)
 	{
 		pipelineState.SetPipelineLayout(pipelineLayout);

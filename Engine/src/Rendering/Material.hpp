@@ -8,6 +8,13 @@
 
 namespace Engine
 {
+	enum class AlphaMode
+	{
+		Opaque,
+		Mask,
+		Blend
+	};
+
 	class Material : public Resource
 	{
 	public:
@@ -17,7 +24,9 @@ namespace Engine
 			ResourceId metallicRoughnessTexture,
 			glm::vec4 albedoColor = glm::vec4{ 1.f },
 			float metallicFactor = 0.f,
-			float roughnessFactor = 0.f
+			float roughnessFactor = 0.f,
+			AlphaMode alphaMode = AlphaMode::Opaque,
+			float alphaCutoff = 0.5f
 		);
 
 		~Material() = default;
@@ -33,6 +42,10 @@ namespace Engine
 		float GetMetallicFactor() const;
 
 		float GetRoughnessFactor() const;
+
+		AlphaMode GetAlphaMode() const;
+
+		float GetAlphaCutoff() const;
 
 		static ResourceType GetStaticType()
 		{
@@ -61,6 +74,9 @@ namespace Engine
 		glm::vec4 albedoColor{ 1.f };
 		float metallicFactor{ 0.f };
 		float roughnessFactor{ 0.f };
+
+		AlphaMode alphaMode{ AlphaMode::Opaque };
+		float alphaCutoff{ 0.5f };
 
 		Vulkan::ShaderVariant shaderVariant;
 	};

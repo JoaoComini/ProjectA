@@ -50,6 +50,20 @@ namespace Vulkan
 		bool operator==(PipelineRenderingState const&) const = default;
 	};
 
+	struct ColorBlendAttachmentState
+	{
+		VkBool32 blendEnable{ VK_FALSE };
+
+		bool operator==(ColorBlendAttachmentState const&) const = default;
+	};
+
+	struct ColorBlendState
+	{
+		std::vector<ColorBlendAttachmentState> attachments;
+
+		bool operator==(ColorBlendState const&) const = default;
+	};
+
 	class PipelineState
 	{
 	public:
@@ -61,6 +75,7 @@ namespace Vulkan
 		void SetRasterizationState(const RasterizationState& state);
 		void SetDepthStencilState(const DepthStencilState& state);
 		void SetPipelineRenderingState(const PipelineRenderingState& state);
+		void SetColorBlendState(const ColorBlendState& state);
 
 		void SetSubpassIndex(uint32_t index);
 
@@ -75,6 +90,7 @@ namespace Vulkan
 		const RasterizationState& GetRasterizationState() const;
 		const DepthStencilState& GetDepthStencilState() const;
 		const PipelineRenderingState& GetPipelineRenderingState() const;
+		const ColorBlendState& GetColorBlendState() const;
 
 		uint32_t GetSubpassIndex() const;
 
@@ -91,6 +107,7 @@ namespace Vulkan
 		RasterizationState rasterization{};
 		DepthStencilState depthStencil{};
 		PipelineRenderingState pipelineRendering{};
+		ColorBlendState colorBlend{};
 
 		uint32_t subpassIndex{ 0 };
 	};
@@ -108,6 +125,7 @@ namespace std
 			HashCombine(hash, state.GetPipelineLayout());
 			HashCombine(hash, state.GetPipelineRenderingState());
 			HashCombine(hash, state.GetRasterizationState());
+			HashCombine(hash, state.GetColorBlendState());
 
 			return hash;
 		}
@@ -136,6 +154,32 @@ namespace std
 
 			HashCombine(hash, state.cullMode);
 			HashCombine(hash, state.frontFace);
+
+			return hash;
+		}
+	};
+
+	template <>
+	struct hash<Vulkan::ColorBlendAttachmentState>
+	{
+		size_t operator()(const Vulkan::ColorBlendAttachmentState& state) const
+		{
+			size_t hash{ 0 };
+
+			HashCombine(hash, state.blendEnable);
+
+			return hash;
+		}
+	};
+
+	template <>
+	struct hash<Vulkan::ColorBlendState>
+	{
+		size_t operator()(const Vulkan::ColorBlendState& state) const
+		{
+			size_t hash{ 0 };
+
+			HashCombine(hash, state.attachments);
 
 			return hash;
 		}

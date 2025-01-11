@@ -23,6 +23,8 @@ struct Primitive;
 struct PrimitiveBuilder;
 struct PrimitiveT;
 
+struct AABB;
+
 struct Mesh;
 struct MeshBuilder;
 struct MeshT;
@@ -55,6 +57,29 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Vertex FLATBUFFERS_FINAL_CLASS {
   }
 };
 FLATBUFFERS_STRUCT_END(Vertex, 32);
+
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) AABB FLATBUFFERS_FINAL_CLASS {
+ private:
+  float min_[3];
+  float max_[3];
+
+ public:
+  AABB()
+      : min_(),
+        max_() {
+  }
+  AABB(::flatbuffers::span<const float, 3> _min, ::flatbuffers::span<const float, 3> _max) {
+    ::flatbuffers::CastToArray(min_).CopyFromSpan(_min);
+    ::flatbuffers::CastToArray(max_).CopyFromSpan(_max);
+  }
+  const ::flatbuffers::Array<float, 3> *min() const {
+    return &::flatbuffers::CastToArray(min_);
+  }
+  const ::flatbuffers::Array<float, 3> *max() const {
+    return &::flatbuffers::CastToArray(max_);
+  }
+};
+FLATBUFFERS_STRUCT_END(AABB, 24);
 
 struct PrimitiveT : public ::flatbuffers::NativeTable {
   typedef Primitive TableType;
@@ -162,6 +187,7 @@ inline ::flatbuffers::Offset<Primitive> CreatePrimitiveDirect(
 struct MeshT : public ::flatbuffers::NativeTable {
   typedef Mesh TableType;
   std::vector<std::unique_ptr<flatbuffers::PrimitiveT>> primitives{};
+  std::unique_ptr<flatbuffers::AABB> bounds{};
   MeshT() = default;
   MeshT(const MeshT &o);
   MeshT(MeshT&&) FLATBUFFERS_NOEXCEPT = default;
@@ -172,16 +198,21 @@ struct Mesh FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef MeshT NativeTableType;
   typedef MeshBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_PRIMITIVES = 4
+    VT_PRIMITIVES = 4,
+    VT_BOUNDS = 6
   };
   const ::flatbuffers::Vector<::flatbuffers::Offset<flatbuffers::Primitive>> *primitives() const {
     return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<flatbuffers::Primitive>> *>(VT_PRIMITIVES);
+  }
+  const flatbuffers::AABB *bounds() const {
+    return GetStruct<const flatbuffers::AABB *>(VT_BOUNDS);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyOffset(verifier, VT_PRIMITIVES) &&
            verifier.VerifyVector(primitives()) &&
            verifier.VerifyVectorOfTables(primitives()) &&
+           VerifyField<flatbuffers::AABB>(verifier, VT_BOUNDS, 4) &&
            verifier.EndTable();
   }
   MeshT *UnPack(const ::flatbuffers::resolver_function_t *_resolver = nullptr) const;
@@ -196,6 +227,9 @@ struct MeshBuilder {
   void add_primitives(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<flatbuffers::Primitive>>> primitives) {
     fbb_.AddOffset(Mesh::VT_PRIMITIVES, primitives);
   }
+  void add_bounds(const flatbuffers::AABB *bounds) {
+    fbb_.AddStruct(Mesh::VT_BOUNDS, bounds);
+  }
   explicit MeshBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
@@ -209,19 +243,23 @@ struct MeshBuilder {
 
 inline ::flatbuffers::Offset<Mesh> CreateMesh(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<flatbuffers::Primitive>>> primitives = 0) {
+    ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<flatbuffers::Primitive>>> primitives = 0,
+    const flatbuffers::AABB *bounds = nullptr) {
   MeshBuilder builder_(_fbb);
+  builder_.add_bounds(bounds);
   builder_.add_primitives(primitives);
   return builder_.Finish();
 }
 
 inline ::flatbuffers::Offset<Mesh> CreateMeshDirect(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    const std::vector<::flatbuffers::Offset<flatbuffers::Primitive>> *primitives = nullptr) {
+    const std::vector<::flatbuffers::Offset<flatbuffers::Primitive>> *primitives = nullptr,
+    const flatbuffers::AABB *bounds = nullptr) {
   auto primitives__ = primitives ? _fbb.CreateVector<::flatbuffers::Offset<flatbuffers::Primitive>>(*primitives) : 0;
   return flatbuffers::CreateMesh(
       _fbb,
-      primitives__);
+      primitives__,
+      bounds);
 }
 
 ::flatbuffers::Offset<Mesh> CreateMesh(::flatbuffers::FlatBufferBuilder &_fbb, const MeshT *_o, const ::flatbuffers::rehasher_function_t *_rehasher = nullptr);
@@ -261,13 +299,15 @@ inline ::flatbuffers::Offset<Primitive> CreatePrimitive(::flatbuffers::FlatBuffe
       _index_type);
 }
 
-inline MeshT::MeshT(const MeshT &o) {
+inline MeshT::MeshT(const MeshT &o)
+      : bounds((o.bounds) ? new flatbuffers::AABB(*o.bounds) : nullptr) {
   primitives.reserve(o.primitives.size());
   for (const auto &primitives_ : o.primitives) { primitives.emplace_back((primitives_) ? new flatbuffers::PrimitiveT(*primitives_) : nullptr); }
 }
 
 inline MeshT &MeshT::operator=(MeshT o) FLATBUFFERS_NOEXCEPT {
   std::swap(primitives, o.primitives);
+  std::swap(bounds, o.bounds);
   return *this;
 }
 
@@ -281,6 +321,7 @@ inline void Mesh::UnPackTo(MeshT *_o, const ::flatbuffers::resolver_function_t *
   (void)_o;
   (void)_resolver;
   { auto _e = primitives(); if (_e) { _o->primitives.resize(_e->size()); for (::flatbuffers::uoffset_t _i = 0; _i < _e->size(); _i++) { if(_o->primitives[_i]) { _e->Get(_i)->UnPackTo(_o->primitives[_i].get(), _resolver); } else { _o->primitives[_i] = std::unique_ptr<flatbuffers::PrimitiveT>(_e->Get(_i)->UnPack(_resolver)); }; } } else { _o->primitives.resize(0); } }
+  { auto _e = bounds(); if (_e) _o->bounds = std::unique_ptr<flatbuffers::AABB>(new flatbuffers::AABB(*_e)); }
 }
 
 inline ::flatbuffers::Offset<Mesh> Mesh::Pack(::flatbuffers::FlatBufferBuilder &_fbb, const MeshT* _o, const ::flatbuffers::rehasher_function_t *_rehasher) {
@@ -292,9 +333,11 @@ inline ::flatbuffers::Offset<Mesh> CreateMesh(::flatbuffers::FlatBufferBuilder &
   (void)_o;
   struct _VectorArgs { ::flatbuffers::FlatBufferBuilder *__fbb; const MeshT* __o; const ::flatbuffers::rehasher_function_t *__rehasher; } _va = { &_fbb, _o, _rehasher}; (void)_va;
   auto _primitives = _o->primitives.size() ? _fbb.CreateVector<::flatbuffers::Offset<flatbuffers::Primitive>> (_o->primitives.size(), [](size_t i, _VectorArgs *__va) { return CreatePrimitive(*__va->__fbb, __va->__o->primitives[i].get(), __va->__rehasher); }, &_va ) : 0;
+  auto _bounds = _o->bounds ? _o->bounds.get() : nullptr;
   return flatbuffers::CreateMesh(
       _fbb,
-      _primitives);
+      _primitives,
+      _bounds);
 }
 
 inline const flatbuffers::Mesh *GetMesh(const void *buf) {

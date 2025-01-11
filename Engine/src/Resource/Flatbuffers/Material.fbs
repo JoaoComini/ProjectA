@@ -7,6 +7,13 @@ struct Color
     value:[float:4];
 }
 
+enum AlphaMode : byte
+{
+    Opaque,
+    Mask,
+    Blend
+}
+
 table Material
 {
     albedo_texture:uint64 = 0;
@@ -15,6 +22,8 @@ table Material
     albedo_color:Color;
     metallic_factor:float = 0;
     roughness_factor:float = 0;
+    alpha_mode:AlphaMode = Opaque;
+    alpha_cutoff:float = 0;
 }
 
 root_type Material;
