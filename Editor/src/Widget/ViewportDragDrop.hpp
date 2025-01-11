@@ -4,8 +4,6 @@
 
 #include <Resource/Resource.hpp>
 
-#include <functional>
-
 using OnDropResourceFn = std::function<void(Engine::ResourceId, Engine::ResourceMetadata)>;
 
 class ViewportDragDrop : public Widget

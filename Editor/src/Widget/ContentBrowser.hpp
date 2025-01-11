@@ -8,9 +8,12 @@
 
 #include "Rendering/Texture.hpp"
 
-#include "Scene/Scene.hpp"
-
 #include <filesystem>
+
+namespace Engine
+{
+	class Scene;
+};
 
 class ContentBrowser : public Widget
 {

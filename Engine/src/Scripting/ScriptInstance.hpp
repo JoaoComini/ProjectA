@@ -1,22 +1,23 @@
 #pragma once
 
-#include "Scene/Entity.hpp"
+#include "ScriptEntity.hpp"
 
 #include <sol/sol.hpp>
 
 namespace Engine
 {
 	class Script;
+	class ScriptEntity;
 
 	class ScriptInstance
 	{
 	public:
-		ScriptInstance(sol::state& lua, Script& script, Entity entity);
+		ScriptInstance(sol::state& lua, Script& script, ScriptEntity entity);
 
 		void Start();
 		void Update(float delta);
-		void OnContactEnter(Entity other);
-		void OnContactExit(Entity other);
+		void OnContactEnter(ScriptEntity other);
+		void OnContactExit(ScriptEntity other);
 
 		sol::environment& GetEnv();
 
@@ -28,6 +29,6 @@ namespace Engine
 		sol::function onContactEnterFn;
 		sol::function onContactExitFn;
 
-		Entity entity;
+		ScriptEntity entity;
 	};
 }

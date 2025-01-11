@@ -17,16 +17,16 @@ namespace Engine
 
         JPH::EstimateCollisionResponse(body1, body2, manifold, result, settings.mCombinedFriction, settings.mCombinedRestitution);
 
-        auto entity1 = scene.FindEntityByHandle(static_cast<uint32_t>(body1.GetUserData()));
-        auto entity2 = scene.FindEntityByHandle(static_cast<uint32_t>(body2.GetUserData()));
+        auto entity1 = static_cast<Entity::Id>(body1.GetUserData());
+        auto entity2 = static_cast<Entity::Id>(body2.GetUserData());
 
-        if (! entity1 || ! entity2)
+        if (! scene.Valid(entity1) || ! scene.Valid(entity2))
         {
             return;
         }
 
-        entity1.AddOrReplaceComponent<Component::PhysicsContactEnter>(entity2);
-        entity2.AddOrReplaceComponent<Component::PhysicsContactEnter>(entity1);
+        scene.AddOrReplaceComponent<Component::PhysicsContactEnter>(entity1, entity2);
+        scene.AddOrReplaceComponent<Component::PhysicsContactEnter>(entity2, entity1);
     }
 
     void JoltContactListener::OnContactRemoved(const JPH::SubShapeIDPair& pair)
@@ -38,15 +38,15 @@ namespace Engine
         auto handle1 = bodyInterface.GetUserData(pair.GetBody1ID());
         auto handle2 = bodyInterface.GetUserData(pair.GetBody2ID());
 
-        auto entity1 = scene.FindEntityByHandle(static_cast<uint32_t>(handle1));
-        auto entity2 = scene.FindEntityByHandle(static_cast<uint32_t>(handle2));
+        auto entity1 = static_cast<Entity::Id>(handle1);
+        auto entity2 = static_cast<Entity::Id>(handle2);
 
-        if (! entity1 || ! entity2)
+        if (!scene.Valid(entity1) || !scene.Valid(entity2))
         {
             return;
         }
 
-        entity1.AddOrReplaceComponent<Component::PhysicsContactExit>(entity2);
-        entity2.AddOrReplaceComponent<Component::PhysicsContactExit>(entity1);
+        scene.AddOrReplaceComponent<Component::PhysicsContactExit>(entity1, entity2);
+        scene.AddOrReplaceComponent<Component::PhysicsContactExit>(entity2, entity1);
     }
 }

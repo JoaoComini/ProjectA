@@ -44,13 +44,6 @@ namespace Engine
 		commandBuffer.SetVertexInputState(vertexInputState);
 	}
 
-	std::shared_ptr<Mesh> GetMeshFromEntity(Entity entity)
-	{
-		auto& meshRender = entity.GetComponent<Component::MeshRender>();
-
-		return ResourceManager::Get().LoadResource<Mesh>(meshRender.mesh);
-	}
-
 	void GeometrySubpass::Draw(Vulkan::CommandBuffer& commandBuffer)
 	{
 		PreparePipelineState(commandBuffer);
@@ -92,60 +85,44 @@ namespace Engine
 
 	void GeometrySubpass::SelectPrimitivesToRender(std::vector<SelectedPrimitive>& opaques, std::multimap<float, SelectedPrimitive>& transparents, glm::vec3& cameraPosition)
 	{
-		scene.ForEachEntity<Component::MeshRender>(
-			[&](Entity entity) {
-				auto mesh = GetMeshFromEntity(entity);
+		auto query = scene.Query<Component::MeshRender, Component::LocalToWorld>();
 
-				if (!mesh)
+		for (auto entity : query)
+		{
+			auto [meshRender, localToWorld] = query.GetComponent(entity);
+
+			auto mesh = ResourceManager::Get().LoadResource<Mesh>(meshRender.mesh);
+
+			for (auto& primitive : mesh->GetPrimitives())
+			{
+				auto material = GetMaterialFromPrimitive(*primitive);
+
+				auto bounds = mesh->GetBounds();
+				bounds.Transform(localToWorld.value);
+
+				auto distance = glm::length2(bounds.GetCenter() - cameraPosition);
+
+				if (material->GetAlphaMode() == AlphaMode::Blend)
 				{
-					return;
-				}
-
-				glm::mat4 transform = entity.GetComponent<Component::LocalToWorld>().value;
-
-				for (auto& primitive : mesh->GetPrimitives())
-				{
-					auto material = GetMaterialFromPrimitive(*primitive);
-
-					if (!material)
-					{
-						continue;
-					}
-
-					auto bounds = mesh->GetBounds();
-					bounds.Transform(transform);
-
-					auto distance = glm::length2(bounds.GetCenter() - cameraPosition);
-
-					if (material->GetAlphaMode() == AlphaMode::Blend)
-					{
-						transparents.emplace(distance, SelectedPrimitive{
-							.transform = transform,
-							.primitive = *primitive,
+					transparents.emplace(distance, SelectedPrimitive{
+						.transform = localToWorld.value,
+						.primitive = *primitive,
 						});
-						
-						continue;
-					}
 
-					opaques.emplace_back(transform, *primitive);
+					continue;
 				}
 
+				opaques.emplace_back(localToWorld.value, *primitive);
 			}
-		);
+
+		}
 	}
 
 	void GeometrySubpass::DrawOpaques(Vulkan::CommandBuffer& commandBuffer, std::vector<SelectedPrimitive>& opaques)
 	{
-
 		for (const auto& opaque : opaques)
 		{
-
 			auto material = GetMaterialFromPrimitive(opaque.primitive);
-
-			if (!material)
-			{
-				continue;
-			}
 
 			UpdateModelUniform(commandBuffer, opaque.transform, *material);
 
@@ -169,11 +146,6 @@ namespace Engine
 			auto& sorted = transparent->second;
 
 			auto material = GetMaterialFromPrimitive(sorted.primitive);
-
-			if (!material)
-			{
-				continue;
-			}
 
 			UpdateModelUniform(commandBuffer, sorted.transform, *material);
 

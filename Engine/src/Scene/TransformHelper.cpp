@@ -1,32 +1,29 @@
 #include "TransformHelper.hpp"
 
-#include "Entity.hpp"
-#include "Components.hpp"
-
 namespace Engine
 {
-    glm::mat4 TransformHelper::ComputeEntityWorldMatrix(Entity entity)
+    glm::mat4 TransformHelper::ComputeEntityWorldMatrix(Scene& scene, Entity::Id entity)
     {
         glm::mat4 matrix{ 1.f };
 
-        if (! entity)
+        if (! scene.Valid(entity))
         {
             return matrix;
         }
 
-        Entity current = entity;
+        auto current = entity;
 
-        while (auto hierarchy = current.TryGetComponent<Component::Hierarchy>())
-        {
-            auto parent = hierarchy->parent;
+		while (auto hierarchy = scene.TryGetComponent<Component::Hierarchy>(current))
+		{
+			auto parent = hierarchy->parent;
 
-            auto& transform = parent.GetComponent<Component::Transform>();
-            matrix *= transform.GetLocalMatrix();
+			auto& transform = scene.GetComponent<Component::Transform>(parent);
+			matrix *= transform.GetLocalMatrix();
 
-            current = parent;
-        }
+			current = parent;
+		}
 
-        auto& transform = entity.GetComponent<Component::Transform>();
+		const auto& transform = scene.GetComponent<Component::Transform>(entity);
 
         return matrix * transform.GetLocalMatrix();
     }

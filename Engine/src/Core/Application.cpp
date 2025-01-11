@@ -93,16 +93,19 @@ namespace Engine {
 
 	void Application::OnWindowResize(int width, int height)
 	{
-		scene->ForEachEntity<Component::Camera>([&](auto entity) {
+		auto query = scene->Query<Component::Camera>();
+
+		for (auto entity : query)
+		{
 			SetCameraAspectRatio(entity);
-		});
+		}
 	}
 
-	void Application::SetCameraAspectRatio(Entity entity)
+	void Application::SetCameraAspectRatio(Entity::Id entity)
 	{
 		auto [height, width] = window->GetFramebufferSize();
 
-		auto& comp = entity.GetComponent<Component::Camera>();
+		auto& comp = scene->GetComponent<Component::Camera>(entity);
 
 		auto& camera = comp.camera;
 

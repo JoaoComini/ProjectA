@@ -51,7 +51,7 @@ namespace Engine {
 
 		Window& GetWindow();
 
-		void SetCameraAspectRatio(Entity entity);
+		void SetCameraAspectRatio(Entity::Id entity);
 	private:
 		std::unique_ptr<Window> window;
 		std::unique_ptr<Scene> scene;

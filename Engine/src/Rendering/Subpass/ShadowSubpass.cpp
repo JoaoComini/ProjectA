@@ -61,13 +61,6 @@ namespace Engine
 
 		commandBuffer.SetVertexInputState(vertexInputState);
 
-		Vulkan::RasterizationState rasterizationState{
-			.cullMode{ VK_CULL_MODE_NONE },
-			.frontFace{ VK_FRONT_FACE_COUNTER_CLOCKWISE }
-		};
-
-		commandBuffer.SetRasterizationState(rasterizationState);
-
 		auto settings = Renderer::Get().GetSettings();
 
 		auto [view, projection] = GetViewProjection();
@@ -83,38 +76,34 @@ namespace Engine
 
 		glm::mat4 viewProjection = projection * view;
 
-		scene.ForEachEntity<Component::MeshRender>(
-			[&](Entity entity) {
-				auto& meshRender = entity.GetComponent<Component::MeshRender>();
+		auto query = scene.Query<Component::MeshRender, Component::LocalToWorld>();
 
-				auto mesh = ResourceManager::Get().LoadResource<Mesh>(meshRender.mesh);
+		for (auto entity : query)
+		{
+			auto& meshRender = query.GetComponent<Component::MeshRender>(entity);
 
-				if (!mesh)
+			auto mesh = ResourceManager::Get().LoadResource<Mesh>(meshRender.mesh);
+
+			glm::mat4 transform = query.GetComponent<Component::LocalToWorld>(entity).value;
+
+			UpdateGlobalUniform(commandBuffer, transform, viewProjection);
+
+			FlushDescriptorSet(commandBuffer, pipelineLayout, 0);
+
+			for (auto& primitive : mesh->GetPrimitives())
+			{
+				ResourceId materialId = primitive->GetMaterial();
+
+				auto material = ResourceManager::Get().LoadResource<Material>(materialId);
+
+				if (material->GetAlphaMode() == AlphaMode::Blend)
 				{
-					return;
+					continue;
 				}
 
-				glm::mat4 transform = entity.GetComponent<Component::LocalToWorld>().value;
-
-				UpdateGlobalUniform(commandBuffer, transform, viewProjection);
-
-				FlushDescriptorSet(commandBuffer, pipelineLayout, 0);
-
-				for (auto& primitive : mesh->GetPrimitives())
-				{
-					ResourceId materialId = primitive->GetMaterial();
-
-					auto material = ResourceManager::Get().LoadResource<Material>(materialId);
-
-					if (material && material->GetAlphaMode() == AlphaMode::Blend)
-					{
-						continue;
-					}
-
-					primitive->Draw(commandBuffer);
-				}
+				primitive->Draw(commandBuffer);
 			}
-		);
+		}
 	}
 
 	struct GlobalUniform
@@ -140,14 +129,16 @@ namespace Engine
 
 	std::pair<glm::mat4, glm::mat4> ShadowSubpass::GetViewProjection() const
     {
-		auto entity = scene.FindFirstEntity<Component::Transform, Component::DirectionalLight>();
+		auto query = scene.Query<Component::Transform, Component::DirectionalLight>();
 
-		if (!entity)
+		auto entity = query.First();
+
+		if (! scene.Valid(entity))
 		{
 			return {};
 		}
 
-		const auto& transform = entity.GetComponent<Component::Transform>();
+		const auto& transform = scene.GetComponent<Component::Transform>(entity);
 
 		auto direction = glm::normalize(transform.rotation * glm::vec3{ 0, 0, 1 });
 		auto view = glm::lookAt(direction, glm::vec3{ 0 }, glm::vec3{0, 1, 0});

@@ -13,12 +13,11 @@
 #include "JoltContactListener.hpp"
 #include "JoltLayerMapper.hpp"
 
+#include "Scene/Scene.hpp"
+
 namespace Engine
 {
 	using namespace std::literals;
-
-	class Scene;
-	class Entity;
 
 	namespace Component
 	{
@@ -38,13 +37,13 @@ namespace Engine
 
 	private:
 
-		void CreateAndAddBody(JPH::ShapeRefC shape, Entity entity);
-		void CreateAndAddBody(JPH::ShapeRefC shape, Entity entity, Entity parent);
+		void CreateAndAddBody(JPH::ShapeRefC shape, Entity::Id entity);
+		void CreateAndAddBody(JPH::ShapeRefC shape, Entity::Id entity, Entity::Id parent);
 
-		void PrepareStaticBody(JPH::BodyID id, Entity entity);
+		void PrepareStaticBody(JPH::BodyID id, Entity::Id entity);
 		void PrepareKinematicBody(JPH::BodyID id, Component::PhysicsBody& body);
 
-		void UpdateDynamicBody(JPH::BodyID id, Entity entity);
+		void UpdateDynamicBody(JPH::BodyID id, Entity::Id entity);
 
 		JoltLayerMapper layerMapper;
 

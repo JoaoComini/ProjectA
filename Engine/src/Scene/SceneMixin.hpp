@@ -4,15 +4,13 @@
 
 namespace Engine
 {
-    class Entity;
-
     template<typename Type>
     class SceneMixin final : public Type {
         using underlying_type = Type;
         using basic_registry_type = entt::basic_registry<typename underlying_type::entity_type, typename underlying_type::base_type::allocator_type>;
         using underlying_iterator = typename underlying_type::base_type::basic_iterator;
 
-        using sigh_type = entt::sigh<void(Entity), typename underlying_type::allocator_type>;
+        using sigh_type = entt::sigh<void(typename underlying_type::entity_type), typename underlying_type::allocator_type>;
 
         basic_registry_type& owner_or_assert() const noexcept {
             ENTT_ASSERT(owner != nullptr, "Invalid pointer to registry");
@@ -26,7 +24,7 @@ namespace Engine
             else {
                 for (; first != last; ++first) {
                     const auto entt = *first;
-                    destruction.publish({entt, &reg});
+                    destruction.publish(entt);
                     const auto it = underlying_type::find(entt);
                     underlying_type::pop(it, it + 1u);
                 }
@@ -38,11 +36,11 @@ namespace Engine
                 for (auto pos = underlying_type::each().begin().base().index(); !(pos < 0); --pos) {
                     if constexpr (underlying_type::traits_type::in_place_delete) {
                         if (const auto entt = underlying_type::operator[](static_cast<typename underlying_type::size_type>(pos)); entt != entt::tombstone) {
-                            destruction.publish({ entt, &reg });
+                            destruction.publish(entt);
                         }
                     }
                     else {
-                        destruction.publish({ underlying_type::operator[](static_cast<typename underlying_type::size_type>(pos)), &reg });
+                        destruction.publish(underlying_type::operator[](static_cast<typename underlying_type::size_type>(pos)));
                     }
                 }
             }
@@ -54,7 +52,7 @@ namespace Engine
             const auto it = underlying_type::try_emplace(entt, force_back, value);
 
             if (auto& reg = owner_or_assert(); it != underlying_type::base_type::end()) {
-                construction.publish({ *it, &reg });
+                construction.publish(*it);
             }
 
             return it;
@@ -121,7 +119,7 @@ namespace Engine
 
         auto emplace() {
             const auto entt = underlying_type::emplace();
-            construction.publish({ entt, &owner_or_assert() });
+            construction.publish(entt);
             return entt;
         }
 
@@ -129,12 +127,12 @@ namespace Engine
         decltype(auto) emplace(const entity_type hint, Args &&...args) {
             if constexpr (std::is_same_v<typename underlying_type::value_type, typename underlying_type::entity_type>) {
                 const auto entt = underlying_type::emplace(hint, std::forward<Args>(args)...);
-                construction.publish({ entt, &owner_or_assert() });
+                construction.publish(entt);
                 return entt;
             }
             else {
                 underlying_type::emplace(hint, std::forward<Args>(args)...);
-                construction.publish({ hint, &owner_or_assert() });
+                construction.publish(hint);
                 return this->get(hint);
             }
         }
@@ -142,7 +140,7 @@ namespace Engine
         template<typename... Func>
         decltype(auto) patch(const entity_type entt, Func &&...func) {
             underlying_type::patch(entt, std::forward<Func>(func)...);
-            update.publish({ entt, &owner_or_assert() });
+            update.publish(entt);
             return this->get(entt);
         }
 
@@ -152,7 +150,7 @@ namespace Engine
 
             if (auto& reg = owner_or_assert(); !construction.empty()) {
                 for (; first != last; ++first) {
-                    construction.publish({ *first, &owner_or_assert() });
+                    construction.publish(*first);
                 }
             }
         }

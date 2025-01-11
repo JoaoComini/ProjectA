@@ -36,14 +36,14 @@ namespace Engine::Component
 	struct Children
 	{
 		std::size_t size{ 0 };
-		Entity first{ };
+		Entity::Id first{ Entity::Null };
 	};
 
 	struct Hierarchy
 	{
-		Entity prev{ };
-		Entity next{ };
-		Entity parent{ };
+		Entity::Id prev{ Entity::Null };
+		Entity::Id next{ Entity::Null };
+		Entity::Id parent{ Entity::Null };
 	};
 
 	struct MeshRender
@@ -91,12 +91,12 @@ namespace Engine::Component
 
 	struct PhysicsContactEnter
 	{
-		Entity other{ };
+		Entity::Id other{ Entity::Null };
 	};
 
 	struct PhysicsContactExit
 	{
-		Entity other{ };
+		Entity::Id other{ Entity::Null };
 	};
 
 	struct BoxShape

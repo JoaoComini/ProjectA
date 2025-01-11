@@ -24,14 +24,16 @@ namespace Engine
 
     void SkyboxSubpass::Draw(Vulkan::CommandBuffer& commandBuffer)
     {
-        auto entity = scene.FindFirstEntity<Component::SkyLight>();
+        auto query = scene.Query<Component::SkyLight>();
 
-        if (!entity)
+        auto entity = query.First();
+
+        if (! scene.Valid(entity))
         {
             return;
         }
 
-        auto& skyLight = entity.GetComponent<Component::SkyLight>();
+        auto& skyLight = query.GetComponent<Component::SkyLight>(entity);
 
         if (!skyLight.cubemap)
         {

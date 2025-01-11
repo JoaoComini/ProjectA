@@ -2,12 +2,12 @@
 
 #include "ScriptInstance.hpp"
 
+#include "Scene/Scene.hpp"
+
 #include <sol/sol.hpp>
 
 namespace Engine
 {
-	class Scene;
-
 	class ScriptRunner
 	{
 	public:
@@ -17,7 +17,7 @@ namespace Engine
 		void Update(float delta);
 		void Stop();
 
-		ScriptInstance* FindScriptInstance(Entity entity);
+		ScriptInstance* FindScriptInstance(Entity::Id entity);
 
 		Scene& GetScene() const;
 		sol::state_view GetState() const;
@@ -26,6 +26,6 @@ namespace Engine
 		Scene& scene;
 		sol::state lua;
 
-		std::unordered_map<uint32_t, ScriptInstance> instances;
+		std::unordered_map<Entity::Id, ScriptInstance> instances;
 	};
 }

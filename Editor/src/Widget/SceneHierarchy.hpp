@@ -1,8 +1,13 @@
 #pragma once
 
-#include <Scene/Scene.hpp>
+#include <Scene/Entity.hpp>
 
 #include "Widget.hpp"
+
+namespace Engine
+{
+	class Scene;
+}
 
 class SceneHierarchy: public Widget
 {
@@ -12,12 +17,12 @@ public:
 
 	void Draw() override;
 
-	void OnSelectEntity(std::function<void(Engine::Entity)> onSelectEntityFn);
+	void OnSelectEntity(std::function<void(Engine::Entity::Id)> onSelectEntityFn);
 
 private:
-	void EntityNode(Engine::Entity entity);
+	void EntityNode(Engine::Entity::Id entity);
 
 	Engine::Scene& scene;
-	Engine::Entity selectedEntity;
-	std::function<void(Engine::Entity)> onSelectEntityFn;
+	Engine::Entity::Id selectedEntity{ Engine::Entity::Null };
+	std::function<void(Engine::Entity::Id)> onSelectEntityFn;
 };

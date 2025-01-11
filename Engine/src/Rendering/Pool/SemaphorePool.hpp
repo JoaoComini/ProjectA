@@ -9,7 +9,7 @@ namespace Engine
 	{
 	public:
 		SemaphorePool(const Vulkan::Device &device);
-		~SemaphorePool() = default;
+		~SemaphorePool();
 
 		Vulkan::Semaphore& RequestSemaphore();
 		Vulkan::Semaphore* RequestOwnedSemaphore();

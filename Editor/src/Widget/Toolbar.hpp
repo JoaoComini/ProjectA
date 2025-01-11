@@ -2,12 +2,13 @@
 
 #include "Widget.hpp"
 
-#include "Scene/Scene.hpp"
-
 #include "Vulkan/Device.hpp"
 #include "Rendering/Texture.hpp"
 
-#include <functional>
+namespace Engine
+{
+	class Scene;
+};
 
 class Toolbar : public Widget
 {

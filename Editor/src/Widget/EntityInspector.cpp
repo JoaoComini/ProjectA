@@ -2,9 +2,16 @@
 
 #include <misc/cpp/imgui_stdlib.h>
 
+#include <Scene/Scene.hpp>
+
 #include "Controls.hpp"
 
-void EntityInspector::SetEntity(Engine::Entity entity)
+EntityInspector::EntityInspector(Engine::Scene& scene)
+	: scene(scene)
+{
+}
+
+void EntityInspector::SetEntity(Engine::Entity::Id entity)
 {
 	this->entity = entity;
 }
@@ -16,13 +23,13 @@ void EntityInspector::Draw()
 
 	ImGui::Begin("Inspector");
 
-	if (!entity)
+	if (!scene.Valid(entity))
 	{
 		ImGui::End();
 		return;
 	}
 
-	auto name = entity.TryGetComponent<Engine::Component::Name>();
+	auto name = scene.TryGetComponent<Engine::Component::Name>(entity);
 
 	if (name)
 	{
@@ -51,52 +58,52 @@ void EntityInspector::Draw()
 		ImGui::EndPopup();
 	}
 
-	if (auto transform = entity.TryGetComponent<Engine::Component::Transform>())
+	if (auto transform = scene.TryGetComponent<Engine::Component::Transform>(entity))
 	{
 		ComponentControlNode<Engine::Component::Transform>("Transform", transform);
 	}
 
-	if (auto camera = entity.TryGetComponent<Engine::Component::Camera>())
+	if (auto camera = scene.TryGetComponent<Engine::Component::Camera>(entity))
 	{
 		ComponentControlNode<Engine::Component::Camera>("Camera", camera);
 	}
 
-	if (auto meshRender = entity.TryGetComponent<Engine::Component::MeshRender>())
+	if (auto meshRender = scene.TryGetComponent<Engine::Component::MeshRender>(entity))
 	{
 		ComponentControlNode<Engine::Component::MeshRender>("Mesh Render", meshRender);
 	}
 
-	if (auto directionalLight = entity.TryGetComponent<Engine::Component::DirectionalLight>())
+	if (auto directionalLight = scene.TryGetComponent<Engine::Component::DirectionalLight>(entity))
 	{
 		ComponentControlNode<Engine::Component::DirectionalLight>("Directional Light", directionalLight);
 	}
 
-	if (auto pointLight = entity.TryGetComponent<Engine::Component::PointLight>())
+	if (auto pointLight = scene.TryGetComponent<Engine::Component::PointLight>(entity))
 	{
 		ComponentControlNode<Engine::Component::PointLight>("Point Light", pointLight);
 	}
 
-	if (auto skyLight = entity.TryGetComponent<Engine::Component::SkyLight>())
+	if (auto skyLight = scene.TryGetComponent<Engine::Component::SkyLight>(entity))
 	{
 		ComponentControlNode<Engine::Component::SkyLight>("Sky Light", skyLight);
 	}
 
-	if (auto script = entity.TryGetComponent<Engine::Component::Script>())
+	if (auto script = scene.TryGetComponent<Engine::Component::Script>(entity))
 	{
 		ComponentControlNode<Engine::Component::Script>("Script", script);
 	}
 
-	if (auto body = entity.TryGetComponent<Engine::Component::PhysicsBody>())
+	if (auto body = scene.TryGetComponent<Engine::Component::PhysicsBody>(entity))
 	{
 		ComponentControlNode<Engine::Component::PhysicsBody>("Physics Body", body);
 	}
 
-	if (auto shape = entity.TryGetComponent<Engine::Component::BoxShape>())
+	if (auto shape = scene.TryGetComponent<Engine::Component::BoxShape>(entity))
 	{
 		ComponentControlNode<Engine::Component::BoxShape>("Box Shape", shape);
 	}
 
-	if (auto shape = entity.TryGetComponent<Engine::Component::SphereShape>())
+	if (auto shape = scene.TryGetComponent<Engine::Component::SphereShape>(entity))
 	{
 		ComponentControlNode<Engine::Component::SphereShape>("Sphere Shape", shape);
 	}

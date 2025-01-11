@@ -29,21 +29,7 @@ namespace Engine
 
         for (auto [entity, component] : components->each())
         {
-            auto copy = component;
-
-            if constexpr (std::is_same_v<T, Component::Hierarchy>)
-            {
-                copy.prev = { component.prev, &destination };
-                copy.next = { component.next, &destination };
-                copy.parent = { component.parent, &destination };
-            }
-
-            if constexpr (std::is_same_v<T, Component::Children>)
-            {
-                copy.first = { component.first, &destination };
-            }
-
-            destination.emplace<T>(entity, copy);
+            destination.emplace<T>(entity, component);
         }
     }
 
@@ -69,32 +55,32 @@ namespace Engine
         return *this;
     }
 
-    std::unordered_map<entt::entity, Entity> MapEntities(entt::registry& destination, const entt::registry& source)
+    std::unordered_map<entt::entity, Entity::Id> MapEntities(entt::registry& destination, const entt::registry& source)
     {
-        std::unordered_map<entt::entity, Entity> map{};
+        std::unordered_map<entt::entity, Entity::Id> map{};
 
         const auto entities = source.storage<entt::entity>();
 
         for (auto [entity]: entities->each())
         {
-            map[entity] = { destination.create(), &destination };
+            map[entity] = destination.create();
         }
 
         return map;
     }
 
-    Entity MapEntity(const entt::entity& source, const std::unordered_map<entt::entity, Entity>& map)
+    Entity::Id MapEntity(const entt::entity& source, const std::unordered_map<entt::entity, Entity::Id>& map)
     {
         if (const auto it = map.find(source); it != map.end())
         {
             return it->second;
         }
 
-        return {};
+        return Entity::Null;
     }
 
     template<typename T>
-    void MapComponent(entt::registry& destination, const entt::registry& source, const std::unordered_map<entt::entity, Entity>& map)
+    void MapComponent(entt::registry& destination, const entt::registry& source, const std::unordered_map<entt::entity, Entity::Id>& map)
     {
         const auto components = source.storage<T>();
 
@@ -125,7 +111,7 @@ namespace Engine
     }
 
     template<typename... T>
-    void MapComponents(Component::Group<T...>, entt::registry& destination, const entt::registry& source, const std::unordered_map<entt::entity, Entity>& map)
+    void MapComponents(Component::Group<T...>, entt::registry& destination, const entt::registry& source, const std::unordered_map<entt::entity, Entity::Id>& map)
     {
         ([&]()
             {
@@ -140,71 +126,172 @@ namespace Engine
         MapComponents(Component::Serializable{}, registry, scene.registry, map);
     }
 
-    Entity Scene::CreateEntity()
+    Entity::Id Scene::CreateEntity()
     {
-        Entity entity{ registry.create(), &registry };
+        auto entity = registry.create();
 
-        entity.AddComponent<Component::Name>();
-        entity.AddComponent<Component::Transform>();
+        AddComponent<Component::Name>(entity);
+        AddComponent<Component::Transform>(entity);
 
         return entity;
     }
 
-    void Scene::DestroyEntity(Entity entity)
+    void Scene::DestroyEntity(Entity::Id entity)
     {
-        entity.SetParent({});
-        entity.AddComponent<Component::Delete>();
-
-        for (auto& child : entity.GetChildren())
+        if (auto hierarchy = TryGetComponent<Component::Hierarchy>(entity))
         {
-            DestroyEntity(child);
-        }
-    }
-
-    Entity Scene::FindEntityByHandle(uint32_t handle)
-    {
-        auto entity = static_cast<entt::entity>(handle);
-
-        if (! registry.valid(entity))
-        {
-            return {};
+            RemoveChild(hierarchy->parent, entity);
         }
 
-        return { entity, &registry };
+        if (auto children = TryGetComponent<Component::Children>(entity))
+        {
+            auto curr = children->first;
+
+            while (Valid(curr))
+            {
+                auto& hierarchy = GetComponent<Component::Hierarchy>(curr);
+
+                DestroyEntity(curr);
+
+                curr = hierarchy.next;
+            }
+        }
+
+        AddComponent<Component::Delete>(entity);
     }
 
-    void Scene::Update()
+    bool Scene::Valid(Entity::Id entity) const
     {
-        ForEachEntity<Component::Delete>([&](auto entity) {
-            registry.destroy(entity);
-        });
-
-        ForEachEntity<Component::Transform>([&](Entity entity) {
-            ComputeEntityLocalToWorld({}, entity);
-        }, Exclusion<Component::Hierarchy>{});
-
+        return registry.valid(entity);
     }
 
-    void Scene::ComputeEntityLocalToWorld(const Component::LocalToWorld& parent, Entity entity)
+    void Scene::SetParent(Entity::Id entity, Entity::Id parent)
     {
-        auto& transform = entity.GetComponent<Component::Transform>();
-        auto& localToWorld = entity.GetComponent<Component::LocalToWorld>();
+        if (! Valid(parent))
+        {
+            if (auto hierarchy = TryGetComponent<Component::Hierarchy>(entity))
+            {
+                RemoveChild(hierarchy->parent, entity);
+                RemoveComponent<Component::Hierarchy>(entity);
+            }
 
-        localToWorld.value = parent.value * transform.GetLocalMatrix();
+            return;
+        }
 
-        if (!entity.HasComponent<Component::Children>())
+        auto& comp = GetOrAddComponent<Component::Hierarchy>(entity);
+
+        if (comp.parent == parent)
         {
             return;
         }
 
-        const auto& children = entity.GetComponent<Component::Children>();
+        if (Valid(comp.parent))
+        {
+            RemoveChild(comp.parent, entity);
+        }
+
+        AddChild(parent, entity);
+    }
+
+    void Scene::AddChild(Entity::Id parent, Entity::Id child)
+    {
+        auto& children = GetOrAddComponent<Component::Children>(parent);
+        auto& hierarchy = GetComponent<Component::Hierarchy>(child);
+
+        hierarchy.parent = parent;
+        hierarchy.next = children.first;
+
+        if (Valid(children.first))
+        {
+            GetComponent<Component::Hierarchy>(children.first).prev = child;
+        }
+
+        children.first = child;
+        children.size += 1;
+    }
+
+    void Scene::RemoveChild(Entity::Id parent, Entity::Id child)
+    {
+        auto& children = GetComponent<Component::Children>(parent);
+        auto& hierarchy = GetComponent<Component::Hierarchy>(child);
+
+        hierarchy.parent = Entity::Null;
+
+        if (children.first == child)
+        {
+            children.first = hierarchy.next;
+        }
+
+        if (Valid(hierarchy.next))
+        {
+            GetComponent<Component::Hierarchy>(hierarchy.next).prev = hierarchy.prev;
+        }
+
+        if (Valid(hierarchy.prev))
+        {
+            GetComponent<Component::Hierarchy>(hierarchy.prev).next = hierarchy.next;
+        }
+
+        children.size -= 1;
+
+        if (children.size <= 0)
+        {
+            RemoveComponent<Component::Children>(parent);
+        }
+    }
+
+
+    Entity::Id Scene::GetParent(Entity::Id entity)
+    {
+        if (auto hierarchy = TryGetComponent<Component::Hierarchy>(entity))
+        {
+            return hierarchy->parent;
+        }
+
+        return Entity::Null;
+    }
+
+    void Scene::Update()
+    {
+        {
+            auto query = Query<Component::Delete>();
+
+            for (auto entity : query)
+            {
+                registry.destroy(entity);
+            }
+        }
+
+        {
+            auto query = Query<Component::Transform>(Exclusion<Component::Hierarchy>{});
+
+            for (auto entity : query)
+            {
+                ComputeEntityLocalToWorld({}, entity);
+            }
+        }
+    }
+
+    void Scene::ComputeEntityLocalToWorld(const Component::LocalToWorld& parent, Entity::Id entity)
+    {
+        auto& transform = GetComponent<Component::Transform>(entity);
+        auto& localToWorld = GetComponent<Component::LocalToWorld>(entity);
+
+        localToWorld.value = parent.value * transform.GetLocalMatrix();
+
+        if (! HasComponent<Component::Children>(entity))
+        {
+            return;
+        }
+
+        const auto& children = GetComponent<Component::Children>(entity);
         auto current = children.first;
 
         auto& storage = registry.storage<Component::Hierarchy>();
 
         for (size_t i = 0; i < children.size; i++)
         {
-            ComputeEntityLocalToWorld(localToWorld, { current, &registry });
+            ComputeEntityLocalToWorld(localToWorld, current);
 
             current = storage.get(current).next;
         }

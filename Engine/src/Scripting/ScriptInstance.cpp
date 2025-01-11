@@ -5,7 +5,7 @@
 
 namespace Engine
 {
-	ScriptInstance::ScriptInstance(sol::state& lua, Script& script, Entity entity)
+	ScriptInstance::ScriptInstance(sol::state& lua, Script& script, ScriptEntity entity)
 		: env(lua, sol::create, lua.globals()), entity(entity)
 	{
 		env["entity"] = entity;
@@ -61,7 +61,7 @@ namespace Engine
 		std::cerr << "failed to update script: " << err.what() << std::endl;
 	}
 
-	void ScriptInstance::OnContactEnter(Entity other)
+	void ScriptInstance::OnContactEnter(ScriptEntity other)
 	{
 		if (onContactEnterFn == sol::nil)
 		{
@@ -79,7 +79,7 @@ namespace Engine
 		std::cerr << "failed to send on_contact: " << err.what() << std::endl;
 	}
 
-	void ScriptInstance::OnContactExit(Entity other)
+	void ScriptInstance::OnContactExit(ScriptEntity other)
 	{
 		if (onContactExitFn == sol::nil)
 		{

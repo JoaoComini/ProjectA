@@ -6,9 +6,6 @@
 
 namespace Engine
 {
-    class Entity;
-    class Scene;
-
     class ScriptBridge
     {
 

@@ -35,39 +35,8 @@ namespace Engine
         LightsUniform lightsUniform{};
         ShadowUniform shadowUniform{};
 
-        auto entity = scene.FindFirstEntity<Component::Transform, Component::DirectionalLight>();
-
-        size_t count = 0;
-        if (entity)
-        {
-            const auto& transform = entity.GetComponent<Component::Transform>();
-
-            auto direction = transform.rotation * glm::vec3{ 0, 0, 1 };
-            auto view = glm::lookAt(direction, glm::vec3{ 0, 0, 0 }, glm::vec3{ 0, 1, 0 });
-
-            auto projection = glm::ortho(-25.f, 25.f, -25.f, 25.f, -25.f, 25.f);
-
-            shadowUniform.viewProjection = projection * view;
-
-            const auto& light = entity.GetComponent<Component::DirectionalLight>();
-
-            lightsUniform.lights[count].color = { light.color, light.intensity };
-            lightsUniform.lights[count].vector = glm::vec4{ direction, 1.f };
-
-            count++;
-        }
-
-        scene.ForEachEntity<Component::Transform, Component::PointLight>([&](Entity entity) {
-            const auto& transform = entity.GetComponent<Component::Transform>();
-            const auto& light = entity.GetComponent<Component::PointLight>();
-
-            lightsUniform.lights[count].color = { light.color, light.range };
-            lightsUniform.lights[count].vector = { transform.position, 0.f };
-
-            count++;
-        });
-
-        lightsUniform.count = count;
+        GetMainLightData(lightsUniform, shadowUniform);
+        GetAdditionalLightsData(lightsUniform);
 
         UpdateLightUniform(commandBuffer, lightsUniform);
 
@@ -76,6 +45,50 @@ namespace Engine
         UpdateShadowUniform(commandBuffer, shadowUniform);
 
         GeometrySubpass::Draw(commandBuffer);
+    }
+
+
+    void ForwardSubpass::GetMainLightData(LightsUniform& lights, ShadowUniform& shadow)
+    {
+        auto query = scene.Query<Component::Transform, Component::DirectionalLight>();
+
+        auto entity = query.First();
+
+        if (entity == Entity::Null)
+        {
+            return;
+        }
+
+        const auto& [transform, light] = query.GetComponent(entity);
+
+        auto direction = transform.rotation * glm::vec3{ 0, 0, 1 };
+        auto view = glm::lookAt(direction, glm::vec3{ 0, 0, 0 }, glm::vec3{ 0, 1, 0 });
+
+        auto projection = glm::ortho(-25.f, 25.f, -25.f, 25.f, -25.f, 25.f);
+
+        shadow.viewProjection = projection * view;
+
+        lights.lights[0].color = { light.color, light.intensity };
+        lights.lights[0].vector = glm::vec4{ direction, 1.f };
+
+        lights.count++;
+    }
+
+    void ForwardSubpass::GetAdditionalLightsData(LightsUniform& uniform)
+    {
+        auto query = scene.Query<Component::Transform, Component::PointLight>();
+        
+        for (auto entity : query)
+        {
+            auto count = uniform.count;
+
+            const auto& [transform, light] = query.GetComponent(entity);
+            
+            uniform.lights[count].color = { light.color, light.range };
+            uniform.lights[count].vector = { transform.position, 0.f };
+
+            uniform.count++;
+        }
     }
 
     void ForwardSubpass::UpdateLightUniform(Vulkan::CommandBuffer& commandBuffer, LightsUniform uniform)

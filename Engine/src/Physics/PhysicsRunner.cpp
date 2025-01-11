@@ -88,14 +88,14 @@ namespace Engine
 		return result.Get();
 	}
 
-	void GetShapes(Entity entity, glm::mat4 parent, std::vector<ShapeConfig>& configs)
+	void GetShapes(Scene& scene, Entity::Id entity, glm::mat4 parent, std::vector<ShapeConfig>& configs)
 	{
-		auto& transform = entity.GetComponent<Component::Transform>();
+		auto& transform = scene.GetComponent<Component::Transform>(entity);
 
 		glm::vec3 position = parent * glm::vec4{ transform.position, 1 };
 		glm::quat rotation = parent * glm::mat4_cast(transform.rotation);
 
-		if (auto box = entity.TryGetComponent<Component::BoxShape>())
+		if (auto box = scene.TryGetComponent<Component::BoxShape>(entity))
 		{
 			configs.push_back({
 				.shape = new JPH::BoxShape(ToJolt(box->size)),
@@ -104,7 +104,7 @@ namespace Engine
 			});
 		}
 
-		if (auto sphere = entity.TryGetComponent<Component::SphereShape>())
+		if (auto sphere = scene.TryGetComponent<Component::SphereShape>(entity))
 		{
 			configs.push_back({
 				.shape = new JPH::SphereShape(sphere->radius),
@@ -113,26 +113,26 @@ namespace Engine
 			});
 		}
 
-		if (auto children = entity.TryGetComponent<Component::Children>())
+		if (auto children = scene.TryGetComponent<Component::Children>(entity))
 		{
 			auto current = children->first;
 
-			auto matrix = TransformHelper::ComputeEntityWorldMatrix(entity);
+			auto matrix = TransformHelper::ComputeEntityWorldMatrix(scene, entity);
 
 			for (size_t i = 0; i < children->size; i++)
 			{
-				GetShapes(current, matrix, configs);
+				GetShapes(scene, current, matrix, configs);
 
-				current = current.GetComponent<Component::Hierarchy>().next;
+				current = scene.GetComponent<Component::Hierarchy>(current).next;
 			}
 		}
 	}
 
-	JPH::ShapeRefC BuildShapeForEntity(Entity entity)
+	JPH::ShapeRefC BuildShapeForEntity(Scene& scene, Entity::Id entity)
 	{
 		std::vector<ShapeConfig> configs;
 
-		GetShapes(entity, glm::mat4{ 1.f }, configs);
+		GetShapes(scene, entity, glm::mat4{ 1.f }, configs);
 
 		return configs.size() == 1
 			? configs[0].shape
@@ -152,28 +152,31 @@ namespace Engine
 
 		system->SetContactListener(contactListener.get());
 
-		scene.ForEachEntity<Component::PhysicsBody>([&](auto entity) {
-			auto shape = BuildShapeForEntity(entity);
+		auto query = scene.Query<Component::PhysicsBody>();
+
+		for (auto entity : query)
+		{
+			auto shape = BuildShapeForEntity(scene, entity);
 
 			CreateAndAddBody(shape, entity);
-		});
+		}
 
 		system->OptimizeBroadPhase();
 	}
 
-	void PhysicsRunner::CreateAndAddBody(JPH::ShapeRefC shape, Entity entity)
+	void PhysicsRunner::CreateAndAddBody(JPH::ShapeRefC shape, Entity::Id entity)
 	{
 		JPH::BodyInterface& bodyInterface = system->GetBodyInterface();
 
-		auto& body = entity.GetComponent<Component::PhysicsBody>();
-		auto& transform = entity.GetComponent<Component::Transform>();
+		auto& body = scene.GetComponent<Component::PhysicsBody>(entity);
+		auto& transform = scene.GetComponent<Component::Transform>(entity);
 
 		auto position = transform.position;
 		auto rotation = transform.rotation;
 
-		if (auto hierarchy = entity.TryGetComponent<Component::Hierarchy>())
+		if (auto hierarchy = scene.TryGetComponent<Component::Hierarchy>(entity))
 		{
-			auto matrix = TransformHelper::ComputeEntityWorldMatrix(hierarchy->parent);
+			auto matrix = TransformHelper::ComputeEntityWorldMatrix(scene, hierarchy->parent);
 
 			position = matrix * glm::vec4{ position, 1.f };
 			rotation = matrix * glm::mat4_cast(rotation);
@@ -189,7 +192,7 @@ namespace Engine
 				: Layer::MOVING
 		);
 
-		bodySettings.mUserData = entity.GetHandle();
+		bodySettings.mUserData = static_cast<uint64_t>(entity);
 		
 		body.id = bodyInterface.CreateAndAddBody(bodySettings, JPH::EActivation::Activate).GetIndexAndSequenceNumber();
 	}
@@ -201,31 +204,36 @@ namespace Engine
 		scene.Clear<Component::PhysicsContactEnter>();
 		scene.Clear<Component::PhysicsContactExit>();
 
-		scene.ForEachEntity<Component::PhysicsBody>([&](Entity entity) {
-			auto& body = entity.GetComponent<Component::PhysicsBody>();
+		{
+			auto query = scene.Query<Component::PhysicsBody>();
 
-			auto id = JPH::BodyID(body.id);
-
-			if (id.IsInvalid())
+			for (auto entity : query)
 			{
-				return;
-			}
+				auto& body = query.GetComponent<Component::PhysicsBody>(entity);
 
-			if (body.type == Component::PhysicsBody::MotionType::Dynamic)
-			{
-				return;
-			}
+				auto id = JPH::BodyID(body.id);
 
-			switch (body.type)
-			{
-			case Component::PhysicsBody::MotionType::Static:
-				PrepareStaticBody(id, entity);
-				break;
-			case Component::PhysicsBody::MotionType::Kinematic:
-				PrepareKinematicBody(id, body);
-				break;
+				if (id.IsInvalid())
+				{
+					continue;
+				}
+
+				if (body.type == Component::PhysicsBody::MotionType::Dynamic)
+				{
+					continue;
+				}
+
+				switch (body.type)
+				{
+				case Component::PhysicsBody::MotionType::Static:
+					PrepareStaticBody(id, entity);
+					break;
+				case Component::PhysicsBody::MotionType::Kinematic:
+					PrepareKinematicBody(id, body);
+					break;
+				}
 			}
-		});
+		}
 
 		while (accumulator >= this->timestep)
 		{
@@ -233,40 +241,45 @@ namespace Engine
 
 			system->Update(this->timestep.count(), 1, allocator.get(), jobSystem.get());
 		}
-		
-		scene.ForEachEntity<Component::PhysicsBody>([&](Entity entity) {
-			auto& body = entity.GetComponent<Component::PhysicsBody>();
 
-			auto id = JPH::BodyID(body.id);
+		{
+			auto query = scene.Query<Component::PhysicsBody>();
 
-			if (id.IsInvalid())
+			for (auto entity : query)
 			{
-				return;
-			}
+				auto& body = query.GetComponent<Component::PhysicsBody>(entity);
 
-			if (body.type == Component::PhysicsBody::MotionType::Static)
-			{
-				return;
-			}
+				auto id = JPH::BodyID(body.id);
 
-			UpdateDynamicBody(id, entity);
-		});
+				if (id.IsInvalid())
+				{
+					continue;
+				}
+
+				if (body.type == Component::PhysicsBody::MotionType::Static)
+				{
+					continue;
+				}
+
+				UpdateDynamicBody(id, entity);
+			}
+		}
 
 		alpha = accumulator / this->timestep;
 	}
 
-	void PhysicsRunner::PrepareStaticBody(JPH::BodyID id, Entity entity)
+	void PhysicsRunner::PrepareStaticBody(JPH::BodyID id, Entity::Id entity)
 	{
 		JPH::BodyInterface& bodyInterface = system->GetBodyInterface();
 
-		auto& transform = entity.GetComponent<Component::Transform>();
+		auto& transform = scene.GetComponent<Component::Transform>(entity);
 
 		auto position = transform.position;
 		auto rotation = transform.rotation;
 
-		if (auto hierarchy = entity.TryGetComponent<Component::Hierarchy>())
+		if (auto hierarchy = scene.TryGetComponent<Component::Hierarchy>(entity))
 		{
-			auto matrix = TransformHelper::ComputeEntityWorldMatrix(hierarchy->parent);
+			auto matrix = TransformHelper::ComputeEntityWorldMatrix(scene, hierarchy->parent);
 
 			position = matrix * glm::vec4{ position, 1.f };
 			rotation = matrix * glm::mat4_cast(rotation);
@@ -287,23 +300,23 @@ namespace Engine
 		bodyInterface.SetLinearVelocity(id, ToJolt(body.velocity));
 	}
 
-	void PhysicsRunner::UpdateDynamicBody(JPH::BodyID id, Entity entity)
+	void PhysicsRunner::UpdateDynamicBody(JPH::BodyID id, Entity::Id entity)
 	{
 		JPH::BodyInterface& bodyInterface = system->GetBodyInterface();
 
 		auto position = ToGlm(bodyInterface.GetPosition(id));
 		auto rotation = ToGlm(bodyInterface.GetRotation(id));
 
-		if (auto hierarchy = entity.TryGetComponent<Component::Hierarchy>())
+		if (auto hierarchy = scene.TryGetComponent<Component::Hierarchy>(entity))
 		{
-			auto matrix = TransformHelper::ComputeEntityWorldMatrix(hierarchy->parent);
+			auto matrix = TransformHelper::ComputeEntityWorldMatrix(scene, hierarchy->parent);
 
 			auto inverse = glm::inverse(matrix);
 			position = inverse * glm::vec4{ position, 1.f };
 			rotation = inverse * glm::mat4_cast(rotation);
 		}
 
-		auto& transform = entity.GetComponent<Component::Transform>();
+		auto& transform = scene.GetComponent<Component::Transform>(entity);
 
 		transform.position = position;
 		transform.rotation = rotation;
