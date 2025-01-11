@@ -11,12 +11,12 @@ namespace Engine
 	class ScriptInstance
 	{
 	public:
-		ScriptInstance(sol::state& lua, Script& script, Entity entity);
+		ScriptInstance(sol::state& lua, Script& script, Entity::Id entity);
 
 		void Start();
 		void Update(float delta);
-		void OnContactEnter(Entity other);
-		void OnContactExit(Entity other);
+		void OnContactEnter(Entity::Id other);
+		void OnContactExit(Entity::Id other);
 
 		sol::environment& GetEnv();
 
@@ -28,6 +28,6 @@ namespace Engine
 		sol::function onContactEnterFn;
 		sol::function onContactExitFn;
 
-		Entity entity;
+		Entity::Id entity;
 	};
 }

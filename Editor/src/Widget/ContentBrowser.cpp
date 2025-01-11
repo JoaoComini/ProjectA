@@ -3,6 +3,7 @@
 #include "Resource/ResourceManager.hpp"
 #include "Resource/Importer/TextureImporter.hpp"
 #include "Project/Project.hpp"
+#include "Scene/Scene.hpp"
 
 #include "Scripting/Script.hpp"
 

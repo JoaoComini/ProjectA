@@ -261,9 +261,9 @@ namespace Engine
         return meshes;
     }
 
-    std::vector<Entity> GltfImporter::ImportEntities(tinygltf::Model& gltfModel, std::vector<ResourceId>& meshes, Scene& scene)
+    std::vector<Entity::Id> GltfImporter::ImportEntities(tinygltf::Model& gltfModel, std::vector<ResourceId>& meshes, Scene& scene)
     {
-        std::vector<Entity> entities;
+        std::vector<Entity::Id> entities;
 
         for (auto& gltfNode : gltfModel.nodes)
         {
@@ -271,10 +271,10 @@ namespace Engine
 
             if (gltfNode.mesh >= 0)
             {
-                entity.AddComponent<Component::MeshRender>(meshes[gltfNode.mesh]);
+                scene.AddComponent<Component::MeshRender>(entity, meshes[gltfNode.mesh]);
             }
 
-            auto& transform = entity.GetComponent<Component::Transform>();
+            auto& transform = scene.GetComponent<Component::Transform>(entity);
 
             if (!gltfNode.translation.empty())
             {
@@ -288,7 +288,7 @@ namespace Engine
 
             if (!gltfNode.name.empty())
             {
-                entity.SetName(gltfNode.name);
+                scene.GetComponent<Component::Name>(entity).name = gltfNode.name;
             }
 
             entities.push_back(entity);
@@ -297,14 +297,14 @@ namespace Engine
         return entities;
     }
 
-    void GltfImporter::SetupRelationship(const std::string& name, tinygltf::Model& gltfModel, Scene& scene, std::vector<Entity>& entities)
+    void GltfImporter::SetupRelationship(const std::string& name, tinygltf::Model& gltfModel, Scene& scene, std::vector<Entity::Id>& entities)
     {
         auto root = scene.CreateEntity();
-        root.SetName(name);
+        scene.GetComponent<Component::Name>(root).name = name;
 
         for (auto& gltfScene : gltfModel.scenes)
         {
-            std::queue<std::pair<Entity, int>> traverseNodes;
+            std::queue<std::pair<Entity::Id, int>> traverseNodes;
 
             for (auto index : gltfScene.nodes)
             {
@@ -319,7 +319,7 @@ namespace Engine
                 auto& current = entities[it.second];
                 auto& parent = it.first;
 
-                current.SetParent(parent);
+                scene.SetParent(current, parent);
 
                 for (auto index: gltfModel.nodes[it.second].children)
                 {

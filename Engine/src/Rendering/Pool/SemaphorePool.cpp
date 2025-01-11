@@ -6,6 +6,14 @@ namespace Engine
 	{
 	}
 
+	SemaphorePool::~SemaphorePool()
+	{
+		for (auto semaphore : released)
+		{
+			delete semaphore;
+		}
+	}
+
 	Vulkan::Semaphore& SemaphorePool::RequestSemaphore()
 	{
 		if (activeSemaphoresCount < semaphores.size())

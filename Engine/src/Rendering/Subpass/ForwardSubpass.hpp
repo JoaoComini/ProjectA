@@ -36,6 +36,9 @@ namespace Engine
 	private:
 		void CreateShadowMapSampler();
 
+		void GetMainLightData(LightsUniform& lights, ShadowUniform& shadow);
+		void GetAdditionalLightsData(LightsUniform& lights);
+
 		void UpdateLightUniform(Vulkan::CommandBuffer& commandBuffer, LightsUniform uniform);
 
 		void BindShadowMap();

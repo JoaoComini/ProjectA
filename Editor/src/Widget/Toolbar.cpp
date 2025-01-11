@@ -1,5 +1,7 @@
 #include "Toolbar.hpp"
 
+#include <Scene/Scene.hpp>
+
 #include <imgui.h>
 #include <imgui_internal.h>
 

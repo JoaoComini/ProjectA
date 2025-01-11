@@ -2,7 +2,6 @@
 
 #include <entt/entt.hpp>
 
-#include "SceneMixin.hpp"
 #include "Entity.hpp"
 #include "Components.hpp"
 
@@ -12,13 +11,62 @@
 
 #include "Resource/Resource.hpp"
 
+#include "SceneMixin.hpp"
+
 namespace Engine
 {
-	static auto Predicate = [] (Entity e) { return true; };
-
 	template<typename... Type>
 	struct Exclusion final {
 		explicit constexpr Exclusion() {}
+	};
+
+	template<typename, typename>
+	struct SceneQuery;
+
+	template<typename... Get, typename... Exclude>
+	struct SceneQuery<entt::type_list<Get...>, entt::type_list<Exclude...>>
+	{
+	public:
+		using Iterator = entt::view<entt::get_t<Get...>, entt::exclude_t<Exclude...>>::iterator;
+
+		SceneQuery(entt::registry& registry)
+		{
+			view = registry.view<Get...>(entt::exclude<Exclude...>);
+		}
+
+		template<typename T>
+		auto TryGetComponent(Entity::Id id) const
+		{
+			return view.try_get<T>(id);
+		}
+
+		template<typename T>
+		bool HasComponent(Entity::Id id) const
+		{
+			return view.any_of<T>(id);
+		}
+
+		template<typename... T>
+		decltype(auto) GetComponent(Entity::Id id) const
+		{
+			return view.get<T...>(id);
+		}
+
+		Entity::Id First() const
+		{
+			return view.front();
+		}
+
+		Iterator begin() const noexcept {
+			return view.begin();
+		}
+
+		Iterator end() const noexcept {
+			return view.end();
+		}
+
+	private:
+		entt::view<entt::get_t<Get...>, entt::exclude_t<Exclude...>> view;
 	};
 
 	class Scene : public Resource
@@ -27,8 +75,14 @@ namespace Engine
 		Scene();
 		Scene& operator=(const Scene& other);
 
-		Entity CreateEntity();
-		void DestroyEntity(Entity entity);
+		Entity::Id CreateEntity();
+		void DestroyEntity(Entity::Id entity);
+
+		bool Valid(Entity::Id entity) const;
+
+		void SetParent(Entity::Id entity, Entity::Id parent);
+		Entity::Id GetParent(Entity::Id entity);
+
 		void Update();
 
 		void Add(const Scene& scene);
@@ -37,39 +91,10 @@ namespace Engine
 		void Resume();
 		bool IsPaused() const;
 
-		Entity FindEntityByHandle(uint32_t handle);
-
-		template<typename... Args, typename... Exclude, typename Func>
-		void ForEachEntity(Func func, Exclusion<Exclude...> = Exclusion{})
+		template<typename... Get, typename... Exclude>
+		decltype(auto) Query(Exclusion<Exclude...> = Exclusion{})
 		{
-			if constexpr (sizeof...(Args) == 0u)
-			{
-				auto view = registry.view<entt::entity>(entt::exclude<Exclude...>);
-
-				for (auto entity : view)
-				{
-					if (!registry.valid(entity))
-					{
-						continue;
-					}
-
-					func(Entity { entity, &registry });
-				}
-			}
-			else
-			{
-				auto view = registry.view<Args...>(entt::exclude<Exclude...>);
-
-				for (auto entity : view)
-				{
-					if (! registry.valid(entity))
-					{
-						continue;
-					}
-
-					func(Entity { entity, &registry });
-				}
-			}
+			return SceneQuery<entt::type_list<Get...>, entt::type_list<Component::Delete, Exclude...>>(registry);
 		}
 
 		template<typename... Args>
@@ -78,19 +103,46 @@ namespace Engine
 			registry.clear<Args...>();
 		}
 
-		template<typename... Args, typename P = decltype(Predicate)>
-		Entity FindFirstEntity(P predicate = Predicate)
+		template<typename T, typename... Args>
+		decltype(auto) AddComponent(Entity::Id entity, Args&&... args)
 		{
-			auto view = registry.view<Args...>();
+			return registry.emplace<T>(entity, std::forward<Args>(args)...);
+		}
 
-			for (auto entity : view) {
-				if (predicate(Entity{ entity, &registry }))
-				{
-					return { entity, &registry };
-				}
-			}
+		template<typename T, typename... Args>
+		decltype(auto) AddOrReplaceComponent(Entity::Id entity, Args&&... args)
+		{
+			return registry.emplace_or_replace<T>(entity, std::forward<Args>(args)...);
+		}
 
-			return {};
+		template<typename... T>
+		decltype(auto) GetComponent(Entity::Id id)
+		{
+			return registry.get<T...>(id);
+		}
+
+		template<typename T, typename... Args>
+		decltype(auto) GetOrAddComponent(Entity::Id id, Args&&... args)
+		{
+			return registry.get_or_emplace<T>(id, std::forward<Args>(args)...);
+		}
+
+		template<typename... T>
+		auto TryGetComponent(Entity::Id id)
+		{
+			return registry.try_get<T...>(id);
+		}
+
+		template<typename T>
+		bool HasComponent(Entity::Id id) const
+		{
+			return registry.any_of<T>(id);
+		}
+
+		template<typename... T>
+		void RemoveComponent(Entity::Id id)
+		{
+			registry.remove<T...>(id);
 		}
 		
 		template<typename T, auto FreeFunc>
@@ -165,7 +217,10 @@ namespace Engine
 		}
 
 	private:
-		void ComputeEntityLocalToWorld(const Component::LocalToWorld& parent, Entity entity);
+		void ComputeEntityLocalToWorld(const Component::LocalToWorld& parent, Entity::Id entity);
+
+		void AddChild(Entity::Id parent, Entity::Id child);
+		void RemoveChild(Entity::Id parent, Entity::Id child);
 
 		entt::registry registry;
 

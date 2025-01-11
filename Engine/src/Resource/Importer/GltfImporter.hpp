@@ -24,9 +24,9 @@ namespace Engine
 		std::vector<ResourceId> ImportTextures(std::filesystem::path parent, tinygltf::Model& model);
 		std::vector<ResourceId> ImportMaterials(std::filesystem::path parent, tinygltf::Model& model, std::vector<ResourceId>& textures);
 		std::vector<ResourceId> ImportMeshes(std::filesystem::path parent, tinygltf::Model& model, std::vector<ResourceId>& materials);
-		std::vector<Entity> ImportEntities(tinygltf::Model& model, std::vector<ResourceId>& meshes, Scene &scene);
+		std::vector<Entity::Id> ImportEntities(tinygltf::Model& model, std::vector<ResourceId>& meshes, Scene &scene);
 
-		void SetupRelationship(const std::string& name, tinygltf::Model& gltfModel, Scene& scene, std::vector<Entity>& entities);
+		void SetupRelationship(const std::string& name, tinygltf::Model& gltfModel, Scene& scene, std::vector<Entity::Id>& entities);
 
 		std::filesystem::path GetPrefabDirectory(std::filesystem::path path);
 

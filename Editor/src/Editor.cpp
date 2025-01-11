@@ -32,12 +32,12 @@ namespace Engine
 		camera = std::make_unique<EditorCamera>(glm::radians(60.f), (float)width / height, 0.1f, 2000.f);
 
 		sceneHierarchy = std::make_unique<SceneHierarchy>(GetScene());
-		entityInspector = std::make_unique<EntityInspector>();
+		entityInspector = std::make_unique<EntityInspector>(GetScene());
 		mainMenuBar = std::make_unique<MainMenuBar>();
 		contentBrowser = std::make_unique<ContentBrowser>(Renderer::Get().GetRenderContext().GetDevice(), GetScene());
 		toolbar = std::make_unique<Toolbar>(GetScene());
 		viewportDragDrop = std::make_unique<ViewportDragDrop>();
-		entityGizmo = std::make_unique<EntityGizmo>(*camera);
+		entityGizmo = std::make_unique<EntityGizmo>(GetScene(), *camera);
 
 		sceneHierarchy->OnSelectEntity([&](auto entity) {
 			entityInspector->SetEntity(entity);
@@ -129,7 +129,9 @@ namespace Engine
 
 	void Editor::OnUpdate(float timestep)
 	{
-		if (GetScene().IsPaused())
+		auto& scene = GetScene();
+
+		if (scene.IsPaused())
 		{
 			camera->Update(timestep);
 			auto transform = camera->GetTransform();
@@ -138,12 +140,13 @@ namespace Engine
 			return;
 		}
 
-		auto entity = GetScene().FindFirstEntity<Component::Transform, Component::Camera>();
+		auto query = scene.Query<Component::Transform, Component::Camera>();
+		auto entity = query.First();
 
-		if (entity)
+		if (scene.Valid(entity))
 		{
-			auto camera = entity.GetComponent<Component::Camera>().camera;
-			auto transform = entity.GetComponent<Component::Transform>().GetLocalMatrix();
+			auto camera = scene.GetComponent<Component::Camera>(entity).camera;
+			auto transform = scene.GetComponent<Component::Transform>(entity).GetLocalMatrix();
 
 			Renderer::Get().SetMainCamera(camera, transform);
 		}
@@ -236,7 +239,7 @@ namespace Engine
 	void Editor::AddSkyLightToScene(ResourceId id)
 	{
 		auto entity = GetScene().CreateEntity();
-		entity.AddComponent<Component::SkyLight>(id);
+		GetScene().AddComponent<Component::SkyLight>(entity, id);
 	}
 
 	void Editor::ImportFile()

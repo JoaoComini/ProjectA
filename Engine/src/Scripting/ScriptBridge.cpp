@@ -14,35 +14,35 @@ namespace Engine
     {
         auto lua = runner.GetState();
 
-        auto type = lua.new_usertype<Entity>("Entity", sol::no_constructor);
+        //auto type = lua.new_usertype<Entity>("Entity", sol::no_constructor);
 
-        type["empty"] = sol::factories([]() -> Entity { return {}; });
+        //type["empty"] = sol::factories([]() -> Entity { return {}; });
 
-        type["transform"] = sol::property(&Entity::TryGetComponent<Component::Transform>);
-        type["name"] = sol::property(&Entity::GetName, &Entity::SetName);
-        type["parent"] = sol::property(&Entity::GetParent, &Entity::SetParent);
+        //type["transform"] = sol::property(&Entity::TryGetComponent<Component::Transform>);
+        //type["name"] = sol::property(&Entity::GetName, &Entity::SetName);
+        //type["parent"] = sol::property(&Entity::GetParent, &Entity::SetParent);
 
-        type["physics"] = sol::property(&Entity::TryGetComponent<Component::PhysicsBody>);
+        //type["physics"] = sol::property(&Entity::TryGetComponent<Component::PhysicsBody>);
 
-        type[sol::meta_function::index] = [&runner](const Entity& self, sol::stack_object key) -> sol::object {
-            if (auto instance = runner.FindScriptInstance(self))
-            {
-                auto& env = instance->GetEnv();
+        //type[sol::meta_function::index] = [&runner](const Entity& self, sol::stack_object key) -> sol::object {
+        //    if (auto instance = runner.FindScriptInstance(self))
+        //    {
+        //        auto& env = instance->GetEnv();
 
-                return env[key];
-            }
+        //        return env[key];
+        //    }
 
-            return sol::nil;
-        };
+        //    return sol::nil;
+        //};
 
-        type[sol::meta_function::new_index] = [&runner](const Entity& self, sol::stack_object key, sol::stack_object value) -> void {
-            if (auto instance = runner.FindScriptInstance(self))
-            {
-                auto& env = instance->GetEnv();
+        //type[sol::meta_function::new_index] = [&runner](const Entity& self, sol::stack_object key, sol::stack_object value) -> void {
+        //    if (auto instance = runner.FindScriptInstance(self))
+        //    {
+        //        auto& env = instance->GetEnv();
 
-                env[key] = value;
-            }
-        };
+        //        env[key] = value;
+        //    }
+        //};
     }
 
     void RegisterComponents(ScriptRunner& runner)
@@ -147,7 +147,7 @@ namespace Engine
            
         auto metatable = lua.create_table();
 
-        metatable.set_function("find_entity_by_name", [&scene](sol::this_state state, const std::string& name) -> sol::object {
+        /*metatable.set_function("find_entity_by_name", [&scene](sol::this_state state, const std::string& name) -> sol::object {
             auto entity = scene.FindFirstEntity<Component::Name>([&name](auto entity) {
                 return entity.GetName() == name;
             });
@@ -166,7 +166,7 @@ namespace Engine
 
         metatable.set_function("destroy_entity", [&scene](Entity entity) -> void {
             scene.DestroyEntity(entity);
-        });
+        });*/
 
         metatable.set_function("add", [&scene](const Scene& other) -> void {
             scene.Add(other);

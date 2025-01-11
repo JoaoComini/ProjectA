@@ -2,22 +2,22 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
-#include <Scene/Components.hpp>
+#include <Scene/Scene.hpp>
 
-EntityGizmo::EntityGizmo(EditorCamera& camera) : camera(camera)
+EntityGizmo::EntityGizmo(Engine::Scene& scene, EditorCamera& camera) : scene(scene), camera(camera)
 {
 }
 
 void EntityGizmo::Draw()
 {
-	if (!entity)
+	if (!scene.Valid(entity))
 	{
 		return;
 	}
 
-	auto transform = entity.TryGetComponent<Engine::Component::Transform>();
+	auto transform = scene.TryGetComponent<Engine::Component::Transform>(entity);
 
-	if (!transform)
+	if (! transform)
 	{
 		return;
 	}
@@ -41,7 +41,7 @@ void EntityGizmo::Draw()
 	auto projection = camera.GetProjection();
 	projection[1][1] *= -1;
 
-	auto matrix = entity.GetComponent<Engine::Component::LocalToWorld>().value;
+	auto matrix = scene.GetComponent<Engine::Component::LocalToWorld>(entity).value;
 	glm::mat4 delta{ 0.f };
 
 	ImGuiIO& io = ImGui::GetIO();
@@ -55,12 +55,13 @@ void EntityGizmo::Draw()
 
 	auto local = matrix;
 
-	if (auto parent = entity.GetParent())
+	if (auto hierarchy = scene.TryGetComponent<Engine::Component::Hierarchy>(entity))
 	{
-		auto parentMatrix = parent.GetComponent<Engine::Component::LocalToWorld>().value;
+		auto matrix = scene.GetComponent<Engine::Component::LocalToWorld>(hierarchy->parent).value;
 
-		local = glm::inverse(parentMatrix) * local;
+		local = glm::inverse(matrix) * local;
 	}
+
 
 	glm::vec3 position{};
 	glm::vec3 rotation{};
@@ -73,7 +74,7 @@ void EntityGizmo::Draw()
 	transform->scale = scale;
 }
 
-void EntityGizmo::SetEntity(Engine::Entity entity)
+void EntityGizmo::SetEntity(Engine::Entity::Id entity)
 {
 	this->entity = entity;
 }

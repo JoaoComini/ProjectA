@@ -2,7 +2,6 @@
 
 #include "Script.hpp"
 
-#include "Scene/Scene.hpp"
 #include "Resource/ResourceManager.hpp"
 
 #include "ScriptBridge.hpp"
@@ -18,25 +17,28 @@ namespace Engine
 
 	void ScriptRunner::Start()
 	{
-		scene.ForEachEntity<Component::Script>([&](Entity entity) {
-			auto id = entity.GetComponent<Component::Script>().script;
+		auto query = scene.Query<Component::Script>();
+
+		for (auto entity : query)
+		{
+			auto id = query.GetComponent<Component::Script>(entity).script;
 
 			if (!id)
 			{
-				return;
+				continue;
 			}
 
 			auto script = ResourceManager::Get().LoadResource<Script>(id);
 
 			if (!script)
 			{
-				return;
+				continue;
 			}
 
 			auto instance = ScriptInstance(lua, *script, entity);
 
-			instances.emplace(entity.GetHandle(), std::move(instance));
-		});
+			instances.emplace(static_cast<Entity::Id>(entity), std::move(instance));
+		}
 
 		for (auto& [_, instance] : instances)
 		{
@@ -46,30 +48,45 @@ namespace Engine
 
 	void ScriptRunner::Update(float delta)
 	{
-		scene.ForEachEntity<Component::Script, Component::PhysicsContactEnter>([&](Entity entity) {
-			if (auto instance = FindScriptInstance(entity))
+		{
+			auto query = scene.Query<Component::Script, Component::PhysicsContactEnter>();
+
+			for (auto entity : query)
 			{
-				auto& contact = entity.GetComponent<Component::PhysicsContactEnter>();
+				if (auto instance = FindScriptInstance(entity))
+				{
+					auto& contact = query.GetComponent<Component::PhysicsContactEnter>(entity);
 
-				instance->OnContactEnter(contact.other);
+					instance->OnContactEnter(contact.other);
+				}
 			}
-		});
+		}
 
-		scene.ForEachEntity<Component::Script, Component::PhysicsContactExit>([&](Entity entity) {
-			if (auto instance = FindScriptInstance(entity))
+		{
+			auto query = scene.Query<Component::Script, Component::PhysicsContactExit>();
+
+			for (auto entity : query)
 			{
-				auto& contact = entity.GetComponent<Component::PhysicsContactExit>();
+				if (auto instance = FindScriptInstance(entity))
+				{
+					auto& contact = query.GetComponent<Component::PhysicsContactExit>(entity);
 
-				instance->OnContactExit(contact.other);
+					instance->OnContactExit(contact.other);
+				}
 			}
-		});
+		}
 
-		scene.ForEachEntity<Component::Script>([&](auto entity) {
-			if (auto instance = FindScriptInstance(entity))
+		{
+			auto query = scene.Query<Component::Script>();
+
+			for (auto entity : query)
 			{
-				instance->Update(delta);
+				if (auto instance = FindScriptInstance(entity))
+				{
+					instance->Update(delta);
+				}
 			}
-		});
+		}
 	}
 
 	void ScriptRunner::Stop()
@@ -77,9 +94,9 @@ namespace Engine
 		instances.clear();
 	}
 
-	ScriptInstance* ScriptRunner::FindScriptInstance(Entity entity)
+	ScriptInstance* ScriptRunner::FindScriptInstance(Entity::Id entity)
 	{
-		if (auto it = instances.find(entity.GetHandle()); it != instances.end())
+		if (auto it = instances.find(entity); it != instances.end())
 		{
 			return &it->second;
 		}

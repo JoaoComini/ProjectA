@@ -2,8 +2,7 @@
 
 #include <imgui.h>
 
-#include <Scene/Entity.hpp>
-#include <Scene/Components.hpp>
+#include <Scene/Scene.hpp>
 
 #include "Widget.hpp"
 #include "Controls.hpp"
@@ -11,21 +10,23 @@
 class EntityInspector: public Widget
 {
 public:
+	EntityInspector(Engine::Scene& scene);
 
-    void SetEntity(Engine::Entity entity);
+    void SetEntity(Engine::Entity::Id entity);
     void Draw() override;
 
 private:
-    Engine::Entity entity;
+	Engine::Scene& scene;
+    Engine::Entity::Id entity;
 
     template<typename T>
     void AddComponentMenuItem(std::string label)
     {
-        if (!entity.HasComponent<T>())
+        if (!scene.HasComponent<T>(entity))
         {
             if (ImGui::MenuItem(label.c_str()))
             {
-                entity.AddComponent<T>();
+                scene.AddComponent<T>(entity);
                 ImGui::CloseCurrentPopup();
             }
         }
@@ -71,7 +72,7 @@ private:
 
 		if (deleted)
 		{
-			entity.RemoveComponent<T>();
+			scene.RemoveComponent<T>(entity);
 		}
 	}
 };

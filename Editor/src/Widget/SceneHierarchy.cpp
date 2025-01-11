@@ -1,5 +1,7 @@
 #include "SceneHierarchy.hpp"
 
+#include <Scene/Scene.hpp>
+
 #include <imgui.h>
 
 SceneHierarchy::SceneHierarchy(Engine::Scene& scene)
@@ -9,9 +11,14 @@ void SceneHierarchy::Draw()
 {
 	ImGui::Begin("Scene");
 
-	scene.ForEachEntity([&](Engine::Entity entity) {
-		EntityNode(entity);
-	}, Engine::Exclusion<Engine::Component::Hierarchy>{});
+	{
+		auto query = scene.Query<Engine::Entity::Id>(Engine::Exclusion<Engine::Component::Hierarchy>{});
+
+		for (auto entity : query)
+		{
+			EntityNode(entity);
+		}
+	}
 
 	if (ImGui::BeginPopupContextWindow("EntityMenu", ImGuiPopupFlags_NoOpenOverItems | ImGuiPopupFlags_MouseButtonRight))
 	{
@@ -26,13 +33,13 @@ void SceneHierarchy::Draw()
 	ImGui::End();
 }
 
-void SceneHierarchy::EntityNode(Engine::Entity entity)
+void SceneHierarchy::EntityNode(Engine::Entity::Id entity)
 {
 	ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
 
-	std::vector<Engine::Entity> children = entity.GetChildren();
+	auto children = scene.TryGetComponent<Engine::Component::Children>(entity);
 
-	if (children.size() == 0)
+	if (! children)
 	{
 		flags |= ImGuiTreeNodeFlags_Leaf;
 	}
@@ -42,9 +49,9 @@ void SceneHierarchy::EntityNode(Engine::Entity entity)
 		flags |= ImGuiTreeNodeFlags_Selected;
 	}
 
-	auto name = entity.GetComponent<Engine::Component::Name>();
+	const auto& name = scene.GetComponent<Engine::Component::Name>(entity);
 
-	auto id = (void*)(uint64_t)entity.GetHandle();
+	auto id = (void*)(uint64_t)entity;
 
 	bool open = ImGui::TreeNodeEx(id, flags, "%s", name.name.c_str());
 
@@ -66,7 +73,7 @@ void SceneHierarchy::EntityNode(Engine::Entity entity)
 		{
 			auto empty = scene.CreateEntity();
 
-			empty.SetParent(entity);
+			scene.SetParent(empty, entity);
 		}
 
 		if (ImGui::MenuItem("Destroy Entity"))
@@ -75,7 +82,7 @@ void SceneHierarchy::EntityNode(Engine::Entity entity)
 
 			if (onSelectEntityFn != nullptr)
 			{
-				onSelectEntityFn(Engine::Entity{});
+				onSelectEntityFn(Engine::Entity::Null);
 			}
 		}
 
@@ -84,18 +91,27 @@ void SceneHierarchy::EntityNode(Engine::Entity entity)
 
 	ImGui::PopID();
 
-	if (open)
+	if (! open)
 	{
-		for (auto& child : children)
-		{
-			EntityNode(child);
-		}
-
-		ImGui::TreePop();
+		return;
 	}
+
+	if (children)
+	{
+		auto current = children->first;
+
+		while (scene.Valid(current))
+		{
+			EntityNode(current);
+
+			current = scene.GetComponent<Engine::Component::Hierarchy>(current).next;
+		}
+	}
+
+	ImGui::TreePop();
 }
 
-void SceneHierarchy::OnSelectEntity(std::function<void(Engine::Entity)> onSelectEntityFn)
+void SceneHierarchy::OnSelectEntity(std::function<void(Engine::Entity::Id)> onSelectEntityFn)
 {
 	this->onSelectEntityFn = onSelectEntityFn;
 }
