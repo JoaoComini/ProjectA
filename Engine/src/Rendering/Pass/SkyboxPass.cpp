@@ -1,9 +1,13 @@
-#include "SkyboxSubpass.hpp"
+#include "SkyboxPass.hpp"
 
+
+#include "Scene/Scene.hpp"
 #include "Resource/ResourceManager.hpp"
+#include "Rendering/Renderer.hpp"
+#include "Rendering/Cubemap.hpp"
+#include "Rendering/Mesh.hpp"
 
 #include "Vulkan/Caching/ResourceCache.hpp"
-#include "Rendering/Renderer.hpp"
 
 namespace Engine
 {
@@ -12,17 +16,17 @@ namespace Engine
         glm::mat4 viewProjection;
     };
 
-    SkyboxSubpass::SkyboxSubpass(
+    SkyboxPass::SkyboxPass(
         RenderContext& renderContext,
         Vulkan::ShaderSource&& vertexSource,
         Vulkan::ShaderSource&& fragmentSource,
         Scene& scene
-    ) : Subpass {renderContext, std::move(vertexSource), std::move(fragmentSource)}, scene(scene)
+    ) : Pass {renderContext, std::move(vertexSource), std::move(fragmentSource)}, scene(scene)
     {
         cube = Mesh::BuiltIn::Cube(renderContext.GetDevice());
     }
 
-    void SkyboxSubpass::Draw(Vulkan::CommandBuffer& commandBuffer)
+    void SkyboxPass::Draw(Vulkan::CommandBuffer& commandBuffer)
     {
         auto query = scene.Query<Component::SkyLight>();
 

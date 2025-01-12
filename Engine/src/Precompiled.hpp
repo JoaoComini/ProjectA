@@ -43,6 +43,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include "glm/ext/matrix_clip_space.hpp"
 #include <glm/gtx/matrix_decompose.hpp>
+#include <glm/gtx/hash.hpp>
 
 #include <vulkan/vulkan.h>
 

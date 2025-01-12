@@ -1,17 +1,16 @@
 #pragma once
 
-#include "Subpass.hpp"
-
-#include "Scene/Scene.hpp"
-#include "Rendering/Cubemap.hpp"
-#include "Rendering/Mesh.hpp"
+#include "Pass.hpp"
 
 namespace Engine
 {
-	class SkyboxSubpass : public Subpass
+	class Scene;
+	class Mesh;
+
+	class SkyboxPass : public Pass
 	{
 	public:
-		SkyboxSubpass(
+		SkyboxPass(
 			RenderContext& renderContext,
 			Vulkan::ShaderSource&& vertexSource,
 			Vulkan::ShaderSource&& fragmentSource,

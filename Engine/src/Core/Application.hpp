@@ -1,9 +1,10 @@
 #pragma once
 
-#include "Scene/Scene.hpp"
 #include "Window.hpp"
+#include "Scene/Scene.hpp"
 #include "Scripting/ScriptRunner.hpp"
 #include "Physics/PhysicsRunner.hpp"
+#include "Rendering/Renderer.hpp"
 
 namespace Engine {
 

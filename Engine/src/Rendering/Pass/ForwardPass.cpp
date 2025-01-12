@@ -1,21 +1,21 @@
-#include "ForwardSubpass.hpp"
+#include "ForwardPass.hpp"
 
 #include "Rendering/Renderer.hpp"
 
 namespace Engine
 {
-    ForwardSubpass::ForwardSubpass(
+    ForwardPass::ForwardPass(
         RenderContext& renderContext,
         Vulkan::ShaderSource&& vertexSource,
         Vulkan::ShaderSource&& fragmentSource,
         Scene& scene,
         RenderTarget* shadowTarget
-    ) : GeometrySubpass{ renderContext, std::move(vertexSource), std::move(fragmentSource), scene }, shadowTarget{ shadowTarget }
+    ) : GeometryPass{ renderContext, std::move(vertexSource), std::move(fragmentSource), scene }, shadowTarget{ shadowTarget }
     {
         CreateShadowMapSampler();
     }
 
-    void ForwardSubpass::CreateShadowMapSampler()
+    void ForwardPass::CreateShadowMapSampler()
     {
         VkSamplerCreateInfo samplerCreateInfo{ VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
         samplerCreateInfo.minFilter = VK_FILTER_LINEAR;
@@ -30,7 +30,7 @@ namespace Engine
         shadowMapSampler = std::make_unique<Vulkan::Sampler>(GetRenderContext().GetDevice(), samplerCreateInfo);
     }
 
-    void ForwardSubpass::Draw(Vulkan::CommandBuffer& commandBuffer)
+    void ForwardPass::Draw(Vulkan::CommandBuffer& commandBuffer)
     {
         LightsUniform lightsUniform{};
         ShadowUniform shadowUniform{};
@@ -44,11 +44,11 @@ namespace Engine
 
         UpdateShadowUniform(commandBuffer, shadowUniform);
 
-        GeometrySubpass::Draw(commandBuffer);
+        GeometryPass::Draw(commandBuffer);
     }
 
 
-    void ForwardSubpass::GetMainLightData(LightsUniform& lights, ShadowUniform& shadow)
+    void ForwardPass::GetMainLightData(LightsUniform& lights, ShadowUniform& shadow)
     {
         auto query = scene.Query<Component::Transform, Component::DirectionalLight>();
 
@@ -74,7 +74,7 @@ namespace Engine
         lights.count++;
     }
 
-    void ForwardSubpass::GetAdditionalLightsData(LightsUniform& uniform)
+    void ForwardPass::GetAdditionalLightsData(LightsUniform& uniform)
     {
         auto query = scene.Query<Component::Transform, Component::PointLight>();
         
@@ -91,7 +91,7 @@ namespace Engine
         }
     }
 
-    void ForwardSubpass::UpdateLightUniform(Vulkan::CommandBuffer& commandBuffer, LightsUniform uniform)
+    void ForwardPass::UpdateLightUniform(Vulkan::CommandBuffer& commandBuffer, LightsUniform uniform)
     {
         auto& frame = GetRenderContext().GetCurrentFrame();
 
@@ -102,14 +102,14 @@ namespace Engine
         BindBuffer(allocation.GetBuffer(), allocation.GetOffset(), allocation.GetSize(), 0, 5, 0);
     }
 
-    void ForwardSubpass::BindShadowMap()
+    void ForwardPass::BindShadowMap()
     {
-        auto& shadowMap = shadowTarget->GetDepthAttachment()->GetView();
+        auto& shadowMap = shadowTarget->GetDepthAttachment().GetView();
 
         BindImage(shadowMap, *shadowMapSampler, 0, 6, 0);
     }
 
-    void ForwardSubpass::UpdateShadowUniform(Vulkan::CommandBuffer& commandBuffer, ShadowUniform uniform)
+    void ForwardPass::UpdateShadowUniform(Vulkan::CommandBuffer& commandBuffer, ShadowUniform uniform)
     {
         auto& frame = GetRenderContext().GetCurrentFrame();
 

@@ -2,8 +2,8 @@
 
 #include "Texture.hpp"
 
+#include "Common/Hash.hpp"
 #include "Resource/Resource.hpp"
-
 #include "Vulkan/ShaderModule.hpp"
 
 namespace Engine
@@ -79,5 +79,28 @@ namespace Engine
 		float alphaCutoff{ 0.5f };
 
 		Vulkan::ShaderVariant shaderVariant;
+	};
+};
+
+namespace std
+{
+	template <>
+	struct hash<Engine::Material>
+	{
+		size_t operator()(const Engine::Material& material) const
+		{
+			size_t hash{ 0 };
+
+			HashCombine(hash, material.GetAlbedoTexture());
+			HashCombine(hash, material.GetNormalTexture());
+			HashCombine(hash, material.GetMetallicRoughnessTexture());
+			HashCombine(hash, material.GetAlbedoColor());
+			HashCombine(hash, material.GetMetallicFactor());
+			HashCombine(hash, material.GetRoughnessFactor());
+			HashCombine(hash, material.GetAlphaMode());
+			HashCombine(hash, material.GetAlphaCutoff());
+
+			return hash;
+		}
 	};
 };

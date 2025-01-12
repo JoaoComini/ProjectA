@@ -1,6 +1,6 @@
 #pragma once
 
-#include "GeometrySubpass.hpp"
+#include "GeometryPass.hpp"
 
 namespace Engine
 {
@@ -21,10 +21,10 @@ namespace Engine
 		glm::mat4 viewProjection;
 	};
 
-	class ForwardSubpass : public GeometrySubpass
+	class ForwardPass : public GeometryPass
 	{
 	public:
-		ForwardSubpass(
+		ForwardPass(
 			RenderContext& renderContext,
 			Vulkan::ShaderSource&& vertexSource,
 			Vulkan::ShaderSource&& fragmentSource,
@@ -47,6 +47,5 @@ namespace Engine
 	private:
 		RenderTarget* shadowTarget;
 		std::unique_ptr<Vulkan::Sampler> shadowMapSampler;
-
 	};
 }

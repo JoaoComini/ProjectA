@@ -5,10 +5,6 @@
 #include "Entity.hpp"
 #include "Components.hpp"
 
-#include "Rendering/Renderer.hpp"
-#include "Rendering/Texture.hpp"
-#include "Rendering/Mesh.hpp"
-
 #include "Resource/Resource.hpp"
 
 #include "SceneMixin.hpp"

@@ -104,7 +104,7 @@ namespace Engine
 		commandBuffer.EndRendering();
 
 		auto& frame = GetCurrentFrame();
-		auto& attachments = frame.GetTarget().GetColorAttachments();
+		auto& attachment = frame.GetTarget().GetColorAttachment(0);
 
 		{
 			Vulkan::ImageMemoryBarrierInfo barrier{};
@@ -115,7 +115,7 @@ namespace Engine
 			barrier.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 			barrier.dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
 
-			commandBuffer.ImageMemoryBarrier(attachments[0]->GetView(), barrier);
+			commandBuffer.ImageMemoryBarrier(attachment.GetView(), barrier);
 		}
 
 		commandBuffer.End();

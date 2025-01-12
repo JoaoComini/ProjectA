@@ -1,13 +1,13 @@
 #pragma once
 
-#include "Subpass.hpp"
+#include "Pass.hpp"
 
 namespace Engine
 {
-	class CompositionSubpass : public Subpass
+	class CompositionPass : public Pass
 	{
 	public:
-		CompositionSubpass(
+		CompositionPass(
 			RenderContext& renderContext,
 			Vulkan::ShaderSource&& vertexSource,
 			Vulkan::ShaderSource&& fragmentSource,
@@ -21,5 +21,4 @@ namespace Engine
 
 		std::unique_ptr<Vulkan::Sampler> gBufferSampler;
 	};
-
 }

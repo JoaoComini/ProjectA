@@ -1,15 +1,15 @@
 #pragma once
 
-#include "Subpass.hpp"
+#include "Pass.hpp"
 
 #include "Scene/Scene.hpp"
 
 namespace Engine
 {
-	class ShadowSubpass : public Subpass
+	class ShadowPass : public Pass
 	{
 	public:
-		ShadowSubpass(
+		ShadowPass(
 			RenderContext& renderContext,
 			Vulkan::ShaderSource&& vertexSource,
 			Vulkan::ShaderSource&& fragmentSource,

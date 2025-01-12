@@ -1,7 +1,7 @@
 #include "ResourceManager.hpp"
 
 #include "Rendering/Cubemap.hpp"
-#include "Rendering/RenderContext.hpp"
+#include "Rendering/Renderer.hpp"
 
 #include "Importer/GltfImporter.hpp"
 #include "Importer/TextureImporter.hpp"

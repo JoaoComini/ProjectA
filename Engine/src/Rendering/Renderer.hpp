@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include "Common/Singleton.hpp"
 #include "Resource/Resource.hpp"
 #include "Vulkan/CommandBuffer.hpp"

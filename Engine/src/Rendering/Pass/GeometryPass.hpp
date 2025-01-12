@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Subpass.hpp"
+#include "Pass.hpp"
 #include "Scene/Scene.hpp"
 
 namespace Engine
@@ -28,12 +28,13 @@ namespace Engine
 	{
 		glm::mat4 transform;
 		Primitive& primitive;
+		Material& material;
 	};
 
-	class GeometrySubpass : public Subpass
+	class GeometryPass : public Pass
 	{
 	public:
-		GeometrySubpass(
+		GeometryPass(
 			RenderContext& renderContext,
 			Vulkan::ShaderSource&& vertexSource,
 			Vulkan::ShaderSource&& fragmentSource,
@@ -51,9 +52,9 @@ namespace Engine
 		void UpdateCameraUniform(Vulkan::CommandBuffer& commandBuffer, CameraUniform& uniform);
 		void UpdateModelUniform(Vulkan::CommandBuffer& commandBuffer, const glm::mat4& matrix, const Material& material);
 
-		void SelectPrimitivesToRender(std::vector<SelectedPrimitive>& opaques, std::multimap<float, SelectedPrimitive>& transparents, glm::vec3& cameraPosition);
+		void SelectPrimitivesToRender(std::multimap<std::size_t, SelectedPrimitive>& opaques, std::multimap<float, SelectedPrimitive>& transparents, glm::vec3& cameraPosition);
 
-		void DrawOpaques(Vulkan::CommandBuffer& commandBuffer, std::vector<SelectedPrimitive>& opaques);
+		void DrawOpaques(Vulkan::CommandBuffer& commandBuffer, std::multimap<uint64_t, SelectedPrimitive>& opaques);
 		void DrawTransparents(Vulkan::CommandBuffer& commandBuffer, std::multimap<float, SelectedPrimitive>& opaques);
 
 		std::shared_ptr<Material> GetMaterialFromPrimitive(const Primitive& primitive);

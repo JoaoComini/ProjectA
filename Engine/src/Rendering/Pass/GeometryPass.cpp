@@ -1,22 +1,22 @@
-#include "GeometrySubpass.hpp"
+#include "GeometryPass.hpp"
 
 #include "Resource/ResourceManager.hpp"
+#include "Rendering/Renderer.hpp"
 
 #include "Vulkan/Caching/ResourceCache.hpp"
-#include "Rendering/Renderer.hpp"
 
 namespace Engine
 {
-	GeometrySubpass::GeometrySubpass(
+	GeometryPass::GeometryPass(
 		RenderContext& renderContext,
 		Vulkan::ShaderSource&& vertexSource,
 		Vulkan::ShaderSource&& fragmentSource,
 		Scene& scene
-	) : Subpass{ renderContext, std::move(vertexSource), std::move(fragmentSource) }, scene(scene)
+	) : Pass{ renderContext, std::move(vertexSource), std::move(fragmentSource) }, scene(scene)
 	{
 	}
 
-	void GeometrySubpass::PreparePipelineState(Vulkan::CommandBuffer& commandBuffer)
+	void GeometryPass::PreparePipelineState(Vulkan::CommandBuffer& commandBuffer)
 	{
 		Vulkan::VertexInputState vertexInputState{};
 
@@ -44,7 +44,7 @@ namespace Engine
 		commandBuffer.SetVertexInputState(vertexInputState);
 	}
 
-	void GeometrySubpass::Draw(Vulkan::CommandBuffer& commandBuffer)
+	void GeometryPass::Draw(Vulkan::CommandBuffer& commandBuffer)
 	{
 		PreparePipelineState(commandBuffer);
 
@@ -56,7 +56,7 @@ namespace Engine
 
 		UpdateCameraUniform(commandBuffer, uniform);
 
-		std::vector<SelectedPrimitive> opaques;
+		std::multimap<uint64_t, SelectedPrimitive> opaques;
 		std::multimap<float, SelectedPrimitive> transparents;
 
 		SelectPrimitivesToRender(opaques, transparents, uniform.position);
@@ -65,7 +65,7 @@ namespace Engine
 		DrawTransparents(commandBuffer, transparents);
 	}
 
-	void GeometrySubpass::UpdateCameraUniform(Vulkan::CommandBuffer& commandBuffer, CameraUniform& uniform)
+	void GeometryPass::UpdateCameraUniform(Vulkan::CommandBuffer& commandBuffer, CameraUniform& uniform)
 	{
 		auto& frame = GetRenderContext().GetCurrentFrame();
 
@@ -76,14 +76,14 @@ namespace Engine
 		BindBuffer(allocation.GetBuffer(), allocation.GetOffset(), allocation.GetSize(), 0, 0, 0);
 	}
 
-	std::pair<glm::mat4, glm::mat4> GeometrySubpass::GetViewProjection() const
+	std::pair<glm::mat4, glm::mat4> GeometryPass::GetViewProjection() const
 	{
 		auto [camera, transform] = Renderer::Get().GetMainCamera();
 
 		return { glm::inverse(transform), camera.GetProjection() };
 	}
 
-	void GeometrySubpass::SelectPrimitivesToRender(std::vector<SelectedPrimitive>& opaques, std::multimap<float, SelectedPrimitive>& transparents, glm::vec3& cameraPosition)
+	void GeometryPass::SelectPrimitivesToRender(std::multimap<std::size_t, SelectedPrimitive>& opaques, std::multimap<float, SelectedPrimitive>& transparents, glm::vec3& cameraPosition)
 	{
 		auto query = scene.Query<Component::MeshRender, Component::LocalToWorld>();
 
@@ -107,30 +107,38 @@ namespace Engine
 					transparents.emplace(distance, SelectedPrimitive{
 						.transform = localToWorld.value,
 						.primitive = *primitive,
-						});
+						.material = *material,
+					});
 
 					continue;
 				}
-
-				opaques.emplace_back(localToWorld.value, *primitive);
+				
+				std::size_t hash{ 0 };
+				Hash(hash, *material);
+				opaques.emplace(hash, SelectedPrimitive{
+					.transform = localToWorld.value,
+					.primitive = *primitive,
+					.material = *material,
+				});
 			}
-
 		}
 	}
 
-	void GeometrySubpass::DrawOpaques(Vulkan::CommandBuffer& commandBuffer, std::vector<SelectedPrimitive>& opaques)
+	void GeometryPass::DrawOpaques(Vulkan::CommandBuffer& commandBuffer, std::multimap<uint64_t, SelectedPrimitive>& opaques)
 	{
-		for (const auto& opaque : opaques)
+		for (auto opaque = opaques.begin(); opaque != opaques.end(); opaque++)
 		{
-			auto material = GetMaterialFromPrimitive(opaque.primitive);
+			auto& sorted = opaque->second;
 
-			UpdateModelUniform(commandBuffer, opaque.transform, *material);
+			auto material = GetMaterialFromPrimitive(sorted.primitive);
 
-			opaque.primitive.Draw(commandBuffer);
+			UpdateModelUniform(commandBuffer, sorted.transform, *material);
+
+			sorted.primitive.Draw(commandBuffer);
 		}
 	}
 
-	void GeometrySubpass::DrawTransparents(Vulkan::CommandBuffer& commandBuffer, std::multimap<float, SelectedPrimitive>& transparents)
+	void GeometryPass::DrawTransparents(Vulkan::CommandBuffer& commandBuffer, std::multimap<float, SelectedPrimitive>& transparents)
 	{
 		Vulkan::ColorBlendAttachmentState colorBlendAttachment{};
 		colorBlendAttachment.blendEnable = VK_TRUE;
@@ -153,14 +161,14 @@ namespace Engine
 		}
 	}
 
-	std::shared_ptr<Material> GeometrySubpass::GetMaterialFromPrimitive(const Primitive& primitive)
+	std::shared_ptr<Material> GeometryPass::GetMaterialFromPrimitive(const Primitive& primitive)
 	{
 		ResourceId materialId = primitive.GetMaterial();
 
 		return ResourceManager::Get().LoadResource<Material>(materialId);
 	}
 
-	void GeometrySubpass::UpdateModelUniform(Vulkan::CommandBuffer& commandBuffer, const glm::mat4& matrix, const Material& material)
+	void GeometryPass::UpdateModelUniform(Vulkan::CommandBuffer& commandBuffer, const glm::mat4& matrix, const Material& material)
 	{
 		auto& frame = GetRenderContext().GetCurrentFrame();
 

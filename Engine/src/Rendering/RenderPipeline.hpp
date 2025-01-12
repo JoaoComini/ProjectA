@@ -1,6 +1,10 @@
 #pragma once
 
-#include "Pass/Pass.hpp"
+#include "RenderContext.hpp"
+
+#include "Pass/ForwardPass.hpp"
+#include "Pass/ShadowPass.hpp"
+#include "Pass/CompositionPass.hpp"
 
 namespace Engine
 {
@@ -26,9 +30,9 @@ namespace Engine
 
 		void SetViewportAndScissor(Vulkan::CommandBuffer& commandBuffer, VkExtent2D extent);
 
-		std::unique_ptr<Pass> mainPass;
-		std::unique_ptr<Pass> shadowPass;
-		std::unique_ptr<Pass> compositionPass;
+		std::unique_ptr<ForwardPass> mainPass;
+		std::unique_ptr<ShadowPass> shadowPass;
+		std::unique_ptr<CompositionPass> compositionPass;
 
 		std::unique_ptr<RenderTarget> shadowTarget;
 		std::unique_ptr<RenderTarget> gBufferTarget;

@@ -1,16 +1,16 @@
-#include "CompositionSubpass.hpp"
+#include "CompositionPass.hpp"
 
 #include "Vulkan/Caching/ResourceCache.hpp"
 #include "Rendering/Renderer.hpp"
 
 namespace Engine
 {
-    CompositionSubpass::CompositionSubpass(
+    CompositionPass::CompositionPass(
         RenderContext& renderContext,
         Vulkan::ShaderSource&& vertexSource,
         Vulkan::ShaderSource&& fragmentSource,
         RenderTarget* gBufferTarget
-    ) : Subpass{ renderContext, std::move(vertexSource), std::move(fragmentSource) }, gBufferTarget(gBufferTarget)
+    ) : Pass{ renderContext, std::move(vertexSource), std::move(fragmentSource) }, gBufferTarget(gBufferTarget)
     {
         auto properties = GetRenderContext().GetDevice().GetPhysicalDeviceProperties();
 
@@ -30,13 +30,13 @@ namespace Engine
         gBufferSampler = std::make_unique<Vulkan::Sampler>(GetRenderContext().GetDevice(), sampler);
     }
 
-    void CompositionSubpass::Draw(Vulkan::CommandBuffer& commandBuffer)
+    void CompositionPass::Draw(Vulkan::CommandBuffer& commandBuffer)
     {
         commandBuffer.SetRasterizationState({ VK_CULL_MODE_FRONT_BIT });
 
-        auto& attachment = gBufferTarget->GetColorAttachments()[0];
+        auto& attachment = gBufferTarget->GetColorAttachment(0);
 
-        auto& view = attachment->GetResolve() ? attachment->GetResolve()->GetView() : attachment->GetView();
+        auto& view = attachment.GetResolve() ? attachment.GetResolve()->GetView() : attachment.GetView();
 
         BindImage(view, *gBufferSampler, 0, 0, 0);
 

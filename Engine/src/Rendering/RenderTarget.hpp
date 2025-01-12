@@ -33,14 +33,24 @@ namespace Engine
 			depth = std::move(attachment);
 		}
 
-		const std::vector<std::unique_ptr<RenderAttachment>>& GetColorAttachments() const
+		int GetColorAttachmentCount() const
 		{
-			return colors;
+			return colors.size();
 		}
 
-		const std::unique_ptr<RenderAttachment>& GetDepthAttachment() const
+		const RenderAttachment& GetColorAttachment(int index) const
 		{
-			return depth;
+			return *colors[index];
+		}
+		
+		bool HasDepthAttachment() const
+		{
+			return depth != nullptr;
+		}
+
+		const RenderAttachment& GetDepthAttachment() const
+		{
+			return *depth;
 		}
 
 	private:

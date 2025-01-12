@@ -1,4 +1,4 @@
-#include "ShadowSubpass.hpp"
+#include "ShadowPass.hpp"
 
 #include "Vulkan/Caching/ResourceCache.hpp"
 
@@ -9,16 +9,16 @@
 
 namespace Engine
 {
-    ShadowSubpass::ShadowSubpass(
+    ShadowPass::ShadowPass(
         RenderContext& renderContext,
         Vulkan::ShaderSource&& vertexSource,
         Vulkan::ShaderSource&& fragmentSource,
         Scene& scene
-    ) : Subpass{renderContext, std::move(vertexSource), std::move(fragmentSource)}, scene(scene)
+    ) : Pass{renderContext, std::move(vertexSource), std::move(fragmentSource)}, scene(scene)
     {
     }
 
-	Vulkan::PipelineLayout& ShadowSubpass::GetPipelineLayout(const std::vector<Vulkan::ShaderModule*>& shaders)
+	Vulkan::PipelineLayout& ShadowPass::GetPipelineLayout(const std::vector<Vulkan::ShaderModule*>& shaders)
 	{
 		return GetRenderContext().GetDevice().GetResourceCache().RequestPipelineLayout({ shaders[0] });
 	}
@@ -30,7 +30,7 @@ namespace Engine
 		float normalBias;
 	};
 
-	void ShadowSubpass::Draw(Vulkan::CommandBuffer& commandBuffer)
+	void ShadowPass::Draw(Vulkan::CommandBuffer& commandBuffer)
 	{
 		auto& resourceCache = GetRenderContext().GetDevice().GetResourceCache();
 
@@ -112,7 +112,7 @@ namespace Engine
 		glm::mat4 viewProjection;
 	};
 
-	void ShadowSubpass::UpdateGlobalUniform(Vulkan::CommandBuffer& commandBuffer, const glm::mat4& transform, const glm::mat4& viewProjection)
+	void ShadowPass::UpdateGlobalUniform(Vulkan::CommandBuffer& commandBuffer, const glm::mat4& transform, const glm::mat4& viewProjection)
 	{
 		GlobalUniform uniform{};
 		uniform.model = transform;
@@ -127,7 +127,7 @@ namespace Engine
 		BindBuffer(allocation.GetBuffer(), allocation.GetOffset(), allocation.GetSize(), 0, 0, 0);
 	}
 
-	std::pair<glm::mat4, glm::mat4> ShadowSubpass::GetViewProjection() const
+	std::pair<glm::mat4, glm::mat4> ShadowPass::GetViewProjection() const
     {
 		auto query = scene.Query<Component::Transform, Component::DirectionalLight>();
 

@@ -9,7 +9,6 @@
 #include "Scene/Components.hpp"
 
 #include "Rendering/Gui.hpp"
-#include "Rendering/Renderer.hpp"
 
 #include "Resource/ResourceManager.hpp"
 #include "Resource/ResourceRegistry.hpp"

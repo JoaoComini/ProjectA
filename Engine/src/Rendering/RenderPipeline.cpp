@@ -2,11 +2,6 @@
 
 #include "Scene/Scene.hpp"
 
-#include "Subpass/ForwardSubpass.hpp"
-#include "Subpass/SkyboxSubpass.hpp"
-#include "Subpass/ShadowSubpass.hpp"
-#include "Subpass/CompositionSubpass.hpp"
-
 #include "Vulkan/Swapchain.hpp"
 
 #include <Shaders/embed.gen.hpp>
@@ -28,7 +23,7 @@ namespace Engine
 		auto forwardVert = embed::Shaders::get("forward.vert.glsl");
 		auto forwardFrag = embed::Shaders::get("forward.frag.glsl");
 
-		auto forwardSubpass = std::make_unique<ForwardSubpass>(
+		auto forwardSubpass = std::make_unique<ForwardPass>(
 			renderContext,
 			Vulkan::ShaderSource{ std::vector<uint8_t>{ forwardVert.begin(), forwardVert.end() }},
 			Vulkan::ShaderSource{ std::vector<uint8_t>{ forwardFrag.begin(), forwardFrag.end() } },
@@ -36,21 +31,23 @@ namespace Engine
 			shadowTarget.get()
 		);
 
-		auto skyboxVert = embed::Shaders::get("skybox.vert.glsl");
-		auto skyboxFrag = embed::Shaders::get("skybox.frag.glsl");
+		//auto skyboxVert = embed::Shaders::get("skybox.vert.glsl");
+		//auto skyboxFrag = embed::Shaders::get("skybox.frag.glsl");
 
-		auto skyboxSubpass = std::make_unique<SkyboxSubpass>(
+		//auto skyboxSubpass = std::make_unique<SkyboxPass>(
+		//	renderContext,
+		//	Vulkan::ShaderSource{ std::vector<uint8_t>{ skyboxVert.begin(), skyboxVert.end() }},
+		//	Vulkan::ShaderSource{ std::vector<uint8_t>{ skyboxFrag.begin(), skyboxFrag.end() } },
+		//	scene
+		//);
+
+		mainPass = std::make_unique<ForwardPass>(
 			renderContext,
-			Vulkan::ShaderSource{ std::vector<uint8_t>{ skyboxVert.begin(), skyboxVert.end() }},
-			Vulkan::ShaderSource{ std::vector<uint8_t>{ skyboxFrag.begin(), skyboxFrag.end() } },
-			scene
+			Vulkan::ShaderSource{ std::vector<uint8_t>{ forwardVert.begin(), forwardVert.end() } },
+			Vulkan::ShaderSource{ std::vector<uint8_t>{ forwardFrag.begin(), forwardFrag.end() } },
+			scene,
+			shadowTarget.get()
 		);
-
-		std::vector<std::unique_ptr<Subpass>> subpasses;
-		subpasses.push_back(std::move(forwardSubpass));
-		subpasses.push_back(std::move(skyboxSubpass));
-
-		mainPass = std::make_unique<Pass>(renderContext.GetDevice(), std::move(subpasses));
 	}
 
 	std::unique_ptr<RenderTarget> RenderPipeline::CreateGBufferPassTarget()
@@ -104,17 +101,11 @@ namespace Engine
 		auto vertexSource = Vulkan::ShaderSource{ std::vector<uint8_t>{ shadowmapVert.begin(), shadowmapVert.end() }};
 		auto fragmentSource = Vulkan::ShaderSource{ std::vector<uint8_t>{ shadowmapFrag.begin(), shadowmapFrag.end() }};
 
-		auto subpass = std::make_unique<ShadowSubpass>(
-			renderContext,
+		shadowPass = std::make_unique<ShadowPass>(renderContext,
 			std::move(vertexSource),
 			std::move(fragmentSource),
 			scene
 		);
-
-		std::vector<std::unique_ptr<Subpass>> subpasses;
-		subpasses.push_back(std::move(subpass));
-
-		shadowPass = std::make_unique<Pass>(renderContext.GetDevice(), std::move(subpasses));
 	}
 
 	std::unique_ptr<RenderTarget> RenderPipeline::CreateShadowPassTarget()
@@ -141,17 +132,12 @@ namespace Engine
 		auto vertexSource = Vulkan::ShaderSource{ std::vector<uint8_t>{ compositionVert.begin(), compositionVert.end() } };
 		auto fragmentSource = Vulkan::ShaderSource{ std::vector<uint8_t>{ compositionFrag.begin(), compositionFrag.end() } };
 
-		auto subpass = std::make_unique<CompositionSubpass>(
+		compositionPass = std::make_unique<CompositionPass>(
 			renderContext,
 			std::move(vertexSource),
 			std::move(fragmentSource),
 			gBufferTarget.get()
 		);
-
-		std::vector<std::unique_ptr<Subpass>> subpasses;
-		subpasses.push_back(std::move(subpass));
-
-		compositionPass = std::make_unique<Pass>(renderContext.GetDevice(), std::move(subpasses));
 	}
 
 	void RenderPipeline::Draw(Vulkan::CommandBuffer& commandBuffer)
@@ -178,10 +164,10 @@ namespace Engine
 			barrier.srcStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 			barrier.dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 
-			commandBuffer.ImageMemoryBarrier(depthAttachment->GetView(), barrier);
+			commandBuffer.ImageMemoryBarrier(depthAttachment.GetView(), barrier);
 		}
 
-		shadowPass->Draw(commandBuffer, *shadowTarget);
+		shadowPass->Execute(commandBuffer, *shadowTarget);
 
 		commandBuffer.EndRendering();
 
@@ -194,7 +180,7 @@ namespace Engine
 			barrier.srcStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 			barrier.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 
-			commandBuffer.ImageMemoryBarrier(depthAttachment->GetView(), barrier);
+			commandBuffer.ImageMemoryBarrier(depthAttachment.GetView(), barrier);
 		}
 	}
 
@@ -214,7 +200,7 @@ namespace Engine
 
 		SetViewportAndScissor(commandBuffer, extent);
 
-		auto& colorAttachments = gBufferTarget->GetColorAttachments();
+		auto& colorAttachment = gBufferTarget->GetColorAttachment(0);
 
 		{
 			Vulkan::ImageMemoryBarrierInfo barrier{};
@@ -226,17 +212,17 @@ namespace Engine
 			barrier.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 			barrier.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 
-			if (auto& resolve = colorAttachments[0]->GetResolve())
+			if (auto& resolve = colorAttachment.GetResolve())
 			{
 				commandBuffer.ImageMemoryBarrier(resolve->GetView(), barrier);
 			}
 			else
 			{
-				commandBuffer.ImageMemoryBarrier(colorAttachments[0]->GetView(), barrier);
+				commandBuffer.ImageMemoryBarrier(colorAttachment.GetView(), barrier);
 			}
 		}
 
-		mainPass->Draw(commandBuffer, *gBufferTarget);
+		mainPass->Execute(commandBuffer, *gBufferTarget);
 
 		commandBuffer.EndRendering();
 
@@ -249,13 +235,13 @@ namespace Engine
 			barrier.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 			barrier.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 
-			if (auto& resolve = colorAttachments[0]->GetResolve())
+			if (auto& resolve = colorAttachment.GetResolve())
 			{
 				commandBuffer.ImageMemoryBarrier(resolve->GetView(), barrier);
 			}
 			else
 			{
-				commandBuffer.ImageMemoryBarrier(colorAttachments[0]->GetView(), barrier);
+				commandBuffer.ImageMemoryBarrier(colorAttachment.GetView(), barrier);
 			}
 		}
 	}
@@ -268,7 +254,7 @@ namespace Engine
 
 		SetViewportAndScissor(commandBuffer, extent);
 
-		auto& attachments = target.GetColorAttachments();
+		auto& attachments = target.GetColorAttachment(0);
 
 		{
 			Vulkan::ImageMemoryBarrierInfo barrier{};
@@ -280,10 +266,10 @@ namespace Engine
 			barrier.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 			barrier.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 
-			commandBuffer.ImageMemoryBarrier(attachments[0]->GetView(), barrier);
+			commandBuffer.ImageMemoryBarrier(attachments.GetView(), barrier);
 		}
 
-		compositionPass->Draw(commandBuffer, target);
+		compositionPass->Execute(commandBuffer, target);
 	}
 
 	void RenderPipeline::SetViewportAndScissor(Vulkan::CommandBuffer& commandBuffer, VkExtent2D extent)

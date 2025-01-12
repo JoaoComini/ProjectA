@@ -29,6 +29,7 @@ namespace Engine
 	class Resource
 	{
 	public:
+		Resource() = default;
 		virtual ~Resource() {}
 		ResourceId id{ 0 };
 		virtual ResourceType GetType() const = 0;
