@@ -5,8 +5,8 @@
 namespace Vulkan
 {
 
-	PipelineLayout::PipelineLayout(const Device& device, const std::vector<ShaderModule*>& shaderModules)
-		: device(device), shaderModules(shaderModules)
+	PipelineLayout::PipelineLayout(const Device& device, const std::vector<Engine::Shader*>& shaders)
+		: device(device), shaders(shaders)
 	{
 		PrepareSetResources();
 		PrepareShaderSets();
@@ -16,12 +16,25 @@ namespace Vulkan
 		std::transform(descriptorSetLayouts.begin(), descriptorSetLayouts.end(), handles.begin(), [](auto& layout) { return layout->GetHandle(); });
 
 		std::vector<VkPushConstantRange> pushConstantRanges;
-		auto it = shaderResourceLookUp.find(ShaderResourceType::PushConstant);
+		auto it = shaderResourceLookUp.find(Engine::ShaderResourceType::PushConstant);
 		if (it != shaderResourceLookUp.end())
 		{
+
 			for (auto& shaderResource : it->second)
 			{
-				pushConstantRanges.push_back({ shaderResource.stages, 0, shaderResource.size });
+				VkShaderStageFlags stageFlags{};
+
+				if (bool(shaderResource.stages & Engine::ShaderStage::Vertex))
+				{
+					stageFlags |= VK_SHADER_STAGE_VERTEX_BIT;
+				}
+
+				if (bool(shaderResource.stages & Engine::ShaderStage::Fragment))
+				{
+					stageFlags |= VK_SHADER_STAGE_FRAGMENT_BIT;
+				}
+
+				pushConstantRanges.push_back({ stageFlags, 0, shaderResource.size });
 			}
 		}
 
@@ -40,14 +53,14 @@ namespace Vulkan
 
 	void PipelineLayout::PrepareSetResources()
 	{
-		for (auto& shaderModule : shaderModules)
+		for (auto& shader : shaders)
 		{
-			for (auto& shaderResource : shaderModule->GetResources())
+			for (auto& shaderResource : shader->GetResources())
 			{
 				// Ignore inputs, outputs and push constants since they don't belong to a descriptor set
-				if (shaderResource.type == ShaderResourceType::Input
-					|| shaderResource.type == ShaderResourceType::Output
-					|| shaderResource.type == ShaderResourceType::PushConstant)
+				if (shaderResource.type == Engine::ShaderResourceType::Input
+					|| shaderResource.type == Engine::ShaderResourceType::Output
+					|| shaderResource.type == Engine::ShaderResourceType::PushConstant)
 				{
 					shaderResourceLookUp[shaderResource.type].push_back(shaderResource);
 
@@ -63,7 +76,7 @@ namespace Vulkan
 				// multiple shader stages, hence merge then.
 				if (it != setResources.end())
 				{
-					it->second.stages |= shaderModule->GetStage();
+					it->second.stages |= shader->GetStage();
 				}
 				else
 				{
@@ -107,7 +120,7 @@ namespace Vulkan
 		}
 	}
 
-	DescriptorSetLayout& PipelineLayout::GetDescriptorSetLayout(uint32_t set)
+	DescriptorSetLayout& PipelineLayout::GetDescriptorSetLayout(uint32_t set) const
 	{
 		for (auto& layout : descriptorSetLayouts)
 		{
@@ -120,12 +133,12 @@ namespace Vulkan
 		throw std::runtime_error("couldn't find descriptor set layout at set " + std::to_string(set));
 	}
 
-	const std::vector<ShaderModule*>& PipelineLayout::GetShaderModules() const
+	const std::vector<Engine::Shader*>& PipelineLayout::GetShaders() const
 	{
-		return shaderModules;
+		return shaders;
 	}
 
-	bool PipelineLayout::HasShaderResource(ShaderResourceType type) const
+	bool PipelineLayout::HasShaderResource(Engine::ShaderResourceType type) const
 	{
 		return shaderResourceLookUp.find(type) != shaderResourceLookUp.end();
 	}

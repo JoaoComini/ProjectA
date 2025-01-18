@@ -2,7 +2,7 @@
 
 #include <iterator>
 #include <unordered_map>
-#include <string>
+#include <string_view>
 
 namespace embed
 {

@@ -5,10 +5,10 @@
 namespace Engine
 {
 
-	RenderFrame::RenderFrame(const Vulkan::Device& device, std::unique_ptr<RenderTarget> target)
+	RenderFrame::RenderFrame(Vulkan::Device& device, std::unique_ptr<RenderTarget> target)
 		: device(device), target(std::move(target))
 	{
-		commandPool = std::make_unique<Vulkan::CommandPool>(device);
+		commandPool = std::make_unique<Vulkan::CommandPool>(device, this);
 		semaphorePool = std::make_unique<SemaphorePool>(device);
 
 		renderFence = std::make_unique<Vulkan::Fence>(device);

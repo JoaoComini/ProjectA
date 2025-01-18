@@ -1,18 +1,27 @@
 #pragma once
 
 #include "Pass.hpp"
+#include "../RenderGraph/RenderGraphPass.hpp"
 
 namespace Engine
 {
-	class CompositionPass : public Pass
+	struct CompositionPassData
+	{
+
+	};
+
+	class CompositionPass : public Pass, public RenderGraphPass<CompositionPassData>
 	{
 	public:
 		CompositionPass(
 			RenderContext& renderContext,
-			Vulkan::ShaderSource&& vertexSource,
-			Vulkan::ShaderSource&& fragmentSource,
+			ShaderSource&& vertexSource,
+			ShaderSource&& fragmentSource,
 			RenderTarget* gBufferTarget
 		);
+
+		void RecordRenderGraph(RenderGraphBuilder& builder, RenderGraphContext& context, CompositionPassData& data) override;
+		void Render(RenderGraphCommand& command, const CompositionPassData& data) override;
 
 		void Draw(Vulkan::CommandBuffer& commandBuffer) override;
 

@@ -12,8 +12,8 @@ namespace Engine
 	public:
 		SkyboxPass(
 			RenderContext& renderContext,
-			Vulkan::ShaderSource&& vertexSource,
-			Vulkan::ShaderSource&& fragmentSource,
+			ShaderSource&& vertexSource,
+			ShaderSource&& fragmentSource,
 			Scene &scene
 		);
 

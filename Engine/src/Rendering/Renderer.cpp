@@ -1,7 +1,6 @@
 #include "Renderer.hpp"
 
 #include "Vulkan/CommandBuffer.hpp"
-#include "Vulkan/ShaderModule.hpp"
 
 #include "Core/Window.hpp"
 
@@ -41,7 +40,7 @@ namespace Engine
 		mainTransform = std::move(transform);
 	}
 
-	std::pair<Camera&, glm::mat4&> Renderer::GetMainCamera()
+	std::pair<Camera&, glm::mat4> Renderer::GetMainCamera()
 	{
 		return { mainCamera, mainTransform };
 	}

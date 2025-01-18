@@ -7,7 +7,7 @@
 #include "Rendering/Cubemap.hpp"
 #include "Rendering/Mesh.hpp"
 
-#include "Vulkan/Caching/ResourceCache.hpp"
+#include "Vulkan/ResourceCache.hpp"
 
 namespace Engine
 {
@@ -18,8 +18,8 @@ namespace Engine
 
     SkyboxPass::SkyboxPass(
         RenderContext& renderContext,
-        Vulkan::ShaderSource&& vertexSource,
-        Vulkan::ShaderSource&& fragmentSource,
+        ShaderSource&& vertexSource,
+        ShaderSource&& fragmentSource,
         Scene& scene
     ) : Pass {renderContext, std::move(vertexSource), std::move(fragmentSource)}, scene(scene)
     {
@@ -48,8 +48,8 @@ namespace Engine
 
         auto& resourceCache = GetRenderContext().GetDevice().GetResourceCache();
 
-        auto& vertexShader = resourceCache.RequestShaderModule(VK_SHADER_STAGE_VERTEX_BIT, GetVertexShader(), {});
-        auto& fragmentShader = resourceCache.RequestShaderModule(VK_SHADER_STAGE_FRAGMENT_BIT, GetFragmentShader(), {});
+        auto& vertexShader = resourceCache.RequestShader(ShaderStage::Vertex, GetVertexShader(), {});
+        auto& fragmentShader = resourceCache.RequestShader(ShaderStage::Fragment, GetFragmentShader(), {});
 
         auto& pipelineLayout = GetPipelineLayout({ &vertexShader, &fragmentShader });
 
@@ -83,11 +83,11 @@ namespace Engine
 
         allocation.SetData(&uniform);
 
-        BindBuffer(allocation.GetBuffer(), allocation.GetOffset(), allocation.GetSize(), 0, 0, 0);
+        commandBuffer.BindBuffer(allocation.GetBuffer(), allocation.GetOffset(), allocation.GetSize(), 0, 0, 0);
 
-        BindImage(skybox->GetImageView(), skybox->GetSampler(), 0, 1, 0);
+        commandBuffer.BindImage(skybox->GetImageView(), skybox->GetSampler(), 0, 1, 0);
 
-        FlushDescriptorSet(commandBuffer, pipelineLayout, 0);
+        commandBuffer.FlushDescriptorSet(0);
 
         for (auto& primitive : cube->GetPrimitives())
         {

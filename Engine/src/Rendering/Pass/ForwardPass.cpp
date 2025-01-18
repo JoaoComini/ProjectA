@@ -2,17 +2,56 @@
 
 #include "Rendering/Renderer.hpp"
 
+#include "Rendering/RenderGraph/RenderGraphCommand.hpp"
+
 namespace Engine
 {
     ForwardPass::ForwardPass(
         RenderContext& renderContext,
-        Vulkan::ShaderSource&& vertexSource,
-        Vulkan::ShaderSource&& fragmentSource,
+        ShaderSource&& vertexSource,
+        ShaderSource&& fragmentSource,
         Scene& scene,
         RenderTarget* shadowTarget
     ) : GeometryPass{ renderContext, std::move(vertexSource), std::move(fragmentSource), scene }, shadowTarget{ shadowTarget }
     {
         CreateShadowMapSampler();
+    }
+
+    void ForwardPass::RecordRenderGraph(RenderGraphBuilder& builder, RenderGraphContext& context, ForwardPassData& data)
+    {
+        const auto& shadow = context.Get<ShadowPassData>();
+
+        builder.Read(shadow.shadowmap, {
+            .type = RenderTextureAccessType::Binding,
+            .binding = {
+                .set = 0,
+                .location = 6,
+                .sampler = RenderTextureSampler::Shadow
+            }
+        });
+
+        auto extent = GetRenderContext().GetCurrentFrame().GetTarget().GetExtent();
+
+        data.gbuffer = builder.Allocate({
+                extent.width,
+                extent.height,
+                RenderTextureFormat::HDR,
+                RenderTextureUsage::RenderTarget | RenderTextureUsage::Sampled,
+        });
+
+        builder.Write(data.gbuffer, {
+            .type = RenderTextureAccessType::Attachment,
+            .attachment = {
+                .aspect = RenderTextureAspect::Color,
+            }
+        });
+
+        context.Add<ForwardPassData>(data);
+    }
+
+    void ForwardPass::Render(RenderGraphCommand& command, const ForwardPassData& data)
+    {
+        command.DrawGeometry(RenderGeometryType::Opaque, "forward");
     }
 
     void ForwardPass::CreateShadowMapSampler()
@@ -40,7 +79,7 @@ namespace Engine
 
         UpdateLightUniform(commandBuffer, lightsUniform);
 
-        BindShadowMap();
+        BindShadowMap(commandBuffer);
 
         UpdateShadowUniform(commandBuffer, shadowUniform);
 
@@ -99,14 +138,14 @@ namespace Engine
 
         allocation.SetData(&uniform);
 
-        BindBuffer(allocation.GetBuffer(), allocation.GetOffset(), allocation.GetSize(), 0, 5, 0);
+        commandBuffer.BindBuffer(allocation.GetBuffer(), allocation.GetOffset(), allocation.GetSize(), 0, 5, 0);
     }
 
-    void ForwardPass::BindShadowMap()
+    void ForwardPass::BindShadowMap(Vulkan::CommandBuffer& commandBuffer)
     {
         auto& shadowMap = shadowTarget->GetDepthAttachment().GetView();
 
-        BindImage(shadowMap, *shadowMapSampler, 0, 6, 0);
+        commandBuffer.BindImage(shadowMap, *shadowMapSampler, 0, 6, 0);
     }
 
     void ForwardPass::UpdateShadowUniform(Vulkan::CommandBuffer& commandBuffer, ShadowUniform uniform)
@@ -117,6 +156,6 @@ namespace Engine
 
         allocation.SetData(&uniform);
 
-        BindBuffer(allocation.GetBuffer(), allocation.GetOffset(), allocation.GetSize(), 0, 7, 0);
+        commandBuffer.BindBuffer(allocation.GetBuffer(), allocation.GetOffset(), allocation.GetSize(), 0, 7, 0);
     }
 };

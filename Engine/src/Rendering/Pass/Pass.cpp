@@ -1,11 +1,11 @@
 #include "Pass.hpp"
 
 #include "Rendering/Renderer.hpp"
-#include "Vulkan/Caching/ResourceCache.hpp"
+#include "Vulkan/ResourceCache.hpp"
 
 namespace Engine
 {
-    Pass::Pass(RenderContext& renderContext, Vulkan::ShaderSource&& vertexSource, Vulkan::ShaderSource&& fragmentSource)
+    Pass::Pass(RenderContext& renderContext, ShaderSource&& vertexSource, ShaderSource&& fragmentSource)
         : renderContext(renderContext), vertexShader(vertexSource), fragmentShader(fragmentSource)
     {
     }
@@ -86,43 +86,22 @@ namespace Engine
         Draw(commandBuffer);
     }
 
-    void Pass::BindBuffer(const Vulkan::Buffer& buffer, uint32_t offset, uint32_t size, uint32_t set, uint32_t binding, uint32_t arrayElement)
-    {
-        bufferBindings[set][binding][arrayElement] = { buffer.GetHandle(), offset, size };
-    }
-
-    void Pass::BindImage(const Vulkan::ImageView& imageView, const Vulkan::Sampler& sampler, uint32_t set, uint32_t binding, uint32_t arrayElement)
-    {
-        imageBindings[set][binding][arrayElement] = { sampler.GetHandle(), imageView.GetHandle(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
-    }
-
-    void Pass::FlushDescriptorSet(Vulkan::CommandBuffer& commandBuffer, Vulkan::PipelineLayout& pipelineLayout, uint32_t set)
-    {
-        auto& frame = renderContext.GetCurrentFrame();
-
-        auto& descritorSetLayout = pipelineLayout.GetDescriptorSetLayout(set);
-
-        auto descriptorSet = frame.RequestDescriptorSet(descritorSetLayout, bufferBindings[set], imageBindings[set]);
-
-        commandBuffer.BindDescriptorSet(descriptorSet);
-    }
-
     RenderContext& Pass::GetRenderContext()
     {
         return renderContext;
     }
 
-    Vulkan::PipelineLayout& Pass::GetPipelineLayout(const std::vector<Vulkan::ShaderModule*>& shaders)
+    Vulkan::PipelineLayout& Pass::GetPipelineLayout(const std::vector<Shader*>& shaders)
     {
         return renderContext.GetDevice().GetResourceCache().RequestPipelineLayout(shaders);
     }
 
-    const Vulkan::ShaderSource& Pass::GetVertexShader() const
+    const ShaderSource& Pass::GetVertexShader() const
     {
         return vertexShader;
     }
 
-    const Vulkan::ShaderSource& Pass::GetFragmentShader() const
+    const ShaderSource& Pass::GetFragmentShader() const
     {
         return fragmentShader;
     }

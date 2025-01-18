@@ -4,11 +4,13 @@
 #include "CommandPool.hpp"
 #include "Pipeline.hpp"
 #include "ImageView.hpp"
-#include "Caching/ResourceCache.hpp"
+#include "Sampler.hpp"
+#include "ResourceCache.hpp"
+#include "Rendering/RenderFrame.hpp"
 
 namespace Vulkan
 {
-	CommandBuffer::CommandBuffer(const Device& device, const CommandPool& commandPool, const Level level) : device(device), commandPool(commandPool)
+	CommandBuffer::CommandBuffer(Device& device, CommandPool& commandPool, Level level) : device(device), commandPool(commandPool)
 	{
 		VkCommandBufferAllocateInfo allocateInfo{};
 		allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -54,14 +56,16 @@ namespace Vulkan
 
 	void CommandBuffer::BeginRendering(const VkRenderingInfo& renderingInfo)
 	{
-		pipelineState.Reset();
-
 		vkCmdBeginRendering(handle, &renderingInfo);
 	}
 
 	void CommandBuffer::EndRendering()
 	{
 		vkCmdEndRendering(handle);
+
+		imageBindings.clear();
+		bufferBindings.clear();
+		pipelineState.Reset();
 	}
 
 	void CommandBuffer::SetViewport(const std::vector<VkViewport>& viewports)
@@ -114,6 +118,20 @@ namespace Vulkan
 		pipelineState.SetPipelineLayout(pipelineLayout);
 	}
 
+	void CommandBuffer::Flush()
+	{
+		if (!pipelineState.IsDirty())
+		{
+			return;
+		}
+
+		pipelineState.ClearDirty();
+
+		auto& pipeline = device.GetResourceCache().RequestPipeline(pipelineState);
+
+		vkCmdBindPipeline(handle, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.GetHandle());
+	}
+
 	void CommandBuffer::BindDescriptorSet(VkDescriptorSet descriptorSet)
 	{
 		vkCmdBindDescriptorSets(handle, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineState.GetPipelineLayout()->GetHandle(), 0, 1, &descriptorSet, 0, nullptr);
@@ -122,6 +140,30 @@ namespace Vulkan
 	void CommandBuffer::PushConstants(VkShaderStageFlags stages, uint32_t offset, uint32_t size, void* data)
 	{
 		vkCmdPushConstants(handle, pipelineState.GetPipelineLayout()->GetHandle(), stages, offset, size, data);
+	}
+
+	void CommandBuffer::BindBuffer(const Buffer& buffer, uint32_t offset, uint32_t size, uint32_t set, uint32_t binding, uint32_t arrayElement)
+	{
+		bufferBindings[set][binding][arrayElement] = { buffer.GetHandle(), offset, size };
+
+	}
+
+	void CommandBuffer::BindImage(const ImageView& imageView, const Sampler& sampler, uint32_t set, uint32_t binding, uint32_t arrayElement)
+	{
+		imageBindings[set][binding][arrayElement] = { sampler.GetHandle(), imageView.GetHandle(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
+	}
+
+	void CommandBuffer::FlushDescriptorSet(uint32_t set)
+	{
+		assert(pipelineState.GetPipelineLayout());
+
+		auto* layout = pipelineState.GetPipelineLayout();
+		auto& descritorSetLayout = layout->GetDescriptorSetLayout(set);
+
+		auto* frame = commandPool.GetRenderFrame();
+		auto descriptorSet = frame->RequestDescriptorSet(descritorSetLayout, bufferBindings[set], imageBindings[set]);
+
+		BindDescriptorSet(descriptorSet);
 	}
 
 	void CommandBuffer::Draw(uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance)
@@ -301,25 +343,11 @@ namespace Vulkan
 		barrier.dstAccessMask = barrierInfo.dstAccessMask;
 		barrier.oldLayout = barrierInfo.oldLayout;
 		barrier.newLayout = barrierInfo.newLayout;
-		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		barrier.srcQueueFamilyIndex = barrierInfo.oldQueueFamily;
+		barrier.dstQueueFamilyIndex = barrierInfo.newQueueFamily;
 		barrier.image = image.GetHandle();
 		barrier.subresourceRange = subresourceRange;
 
 		vkCmdPipelineBarrier(handle, barrierInfo.srcStageMask, barrierInfo.dstStageMask, 0, 0, nullptr, 0, nullptr, 1, &barrier);
-	}
-
-	void CommandBuffer::Flush()
-	{
-		if (!pipelineState.IsDirty())
-		{
-			return;
-		}
-
-		pipelineState.ClearDirty();
-
-		auto& pipeline = device.GetResourceCache().RequestPipeline(pipelineState);
-
-		vkCmdBindPipeline(handle, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.GetHandle());
 	}
 }

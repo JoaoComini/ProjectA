@@ -2,6 +2,8 @@
 
 #include "GeometryPass.hpp"
 
+#include "../RenderGraph/RenderGraphPass.hpp"
+
 namespace Engine
 {
 	struct Light
@@ -21,16 +23,24 @@ namespace Engine
 		glm::mat4 viewProjection;
 	};
 
-	class ForwardPass : public GeometryPass
+	struct ForwardPassData
+	{
+		RenderGraphResourceHandle gbuffer;
+	};
+
+	class ForwardPass : public GeometryPass, public RenderGraphPass<ForwardPassData>
 	{
 	public:
 		ForwardPass(
 			RenderContext& renderContext,
-			Vulkan::ShaderSource&& vertexSource,
-			Vulkan::ShaderSource&& fragmentSource,
+			ShaderSource&& vertexSource,
+			ShaderSource&& fragmentSource,
 			Scene& scene,
 			RenderTarget* shadowTarget
 		);
+
+		void RecordRenderGraph(RenderGraphBuilder& builder, RenderGraphContext& context, ForwardPassData& data) override;
+		void Render(RenderGraphCommand& command, const ForwardPassData& data) override;
 
 		void Draw(Vulkan::CommandBuffer& commandBuffer) override;
 	private:
@@ -41,7 +51,7 @@ namespace Engine
 
 		void UpdateLightUniform(Vulkan::CommandBuffer& commandBuffer, LightsUniform uniform);
 
-		void BindShadowMap();
+		void BindShadowMap(Vulkan::CommandBuffer& commandBuffer);
 
 		void UpdateShadowUniform(Vulkan::CommandBuffer& commandBuffer, ShadowUniform uniform);
 	private:

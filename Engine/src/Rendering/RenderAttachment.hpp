@@ -6,6 +6,12 @@
 
 namespace Engine
 {
+	struct BarrierScope
+	{
+		VkAccessFlags access{ 0 };
+		VkPipelineStageFlags stage{ VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT };
+	};
+
 	class RenderAttachment
 	{
 	public:
@@ -24,6 +30,9 @@ namespace Engine
 
 		Vulkan::LoadStoreInfo GetLoadStoreInfo() const;
 
+		BarrierScope& GetScope();
+		VkImageLayout& GetLayout();
+
 		void SetResolve(std::unique_ptr<RenderAttachment>&& resolve);
 		const std::unique_ptr<RenderAttachment>& GetResolve() const;
 
@@ -35,6 +44,8 @@ namespace Engine
 		Vulkan::LoadStoreInfo loadStore;
 
 		VkExtent2D extent;
+		BarrierScope scope;
+		VkImageLayout layout{ VK_IMAGE_LAYOUT_UNDEFINED };
 
 		std::unique_ptr<RenderAttachment> resolve;
 

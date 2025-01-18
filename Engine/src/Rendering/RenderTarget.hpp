@@ -38,9 +38,14 @@ namespace Engine
 			return colors.size();
 		}
 
-		const RenderAttachment& GetColorAttachment(int index) const
+		RenderAttachment& GetColorAttachment(int index) const
 		{
 			return *colors[index];
+		}
+
+		RenderAttachment* GetColorAttachmentPtr(int index) const
+		{
+			return colors[index].get();
 		}
 		
 		bool HasDepthAttachment() const

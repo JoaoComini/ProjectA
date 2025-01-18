@@ -80,11 +80,11 @@ namespace Engine {
 
 			Renderer::Get().Draw();
 
-			Gui::Get().Begin();
+			//Gui::Get().Begin();
 
-			OnGui();
+			//OnGui();
 
-			Gui::Get().End(commandBuffer);
+			//Gui::Get().End(commandBuffer);
 
 			Renderer::Get().End();
 		}

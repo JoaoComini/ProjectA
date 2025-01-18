@@ -36,8 +36,8 @@ namespace Engine
 	public:
 		GeometryPass(
 			RenderContext& renderContext,
-			Vulkan::ShaderSource&& vertexSource,
-			Vulkan::ShaderSource&& fragmentSource,
+			ShaderSource&& vertexSource,
+			ShaderSource&& fragmentSource,
 			Scene& scene
 		);
 
@@ -59,7 +59,7 @@ namespace Engine
 
 		std::shared_ptr<Material> GetMaterialFromPrimitive(const Primitive& primitive);
 
-		std::vector<Vulkan::ShaderModule*> shaders;
+		std::vector<Shader*> shaders;
 	};
 
 }

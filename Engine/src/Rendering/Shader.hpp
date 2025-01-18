@@ -1,29 +1,10 @@
 #pragma once
 
-#include "Resource.hpp"
-
-#include "Common/FileSystem.hpp"
 #include "Common/Hash.hpp"
+#include "Common/ScopedEnum.hpp"
 
-namespace Vulkan
+namespace Engine
 {
-    class Device;
-
-    class ShaderSource
-    {
-    public:
-        ShaderSource(const std::filesystem::path& path);
-        ShaderSource(const std::vector<uint8_t>& bytes);
-
-        const std::string& GetSource() const;
-
-        size_t GetHash() const;
-    private:
-        std::string source;
-
-        size_t hash{ 0 };
-    };
-
     enum class ShaderResourceType
     {
         Input,
@@ -33,10 +14,17 @@ namespace Vulkan
         PushConstant
     };
 
+    enum class ShaderStage
+    {
+        Vertex = 1 << 0,
+        Fragment = 1 << 1,
+    };
+    template <> struct has_flags<ShaderStage> : std::true_type {};
+
     struct ShaderResource
     {
         ShaderResourceType type;
-        VkShaderStageFlags stages;
+        ShaderStage stages;
         std::string name;
 
         uint32_t set;
@@ -46,6 +34,20 @@ namespace Vulkan
         uint32_t columns;
         uint32_t arraySize;
         uint32_t size;
+    };
+
+    class ShaderSource
+    {
+    public:
+        ShaderSource(const std::vector<uint8_t>& bytes);
+
+        const std::string& GetSource() const;
+
+        size_t GetHash() const;
+    private:
+        std::string source;
+
+        size_t hash{ 0 };
     };
 
     class ShaderVariant
@@ -63,13 +65,12 @@ namespace Vulkan
         size_t hash{ 0 };
     };
 
-
-    class ShaderModule
+    class Shader
     {
     public:
-        ShaderModule(Device& device, VkShaderStageFlagBits stage, const ShaderSource& source, const ShaderVariant& variant);
+        Shader(ShaderStage stage, const ShaderSource& source, const ShaderVariant& variant);
 
-        VkShaderStageFlagBits GetStage() const;
+        ShaderStage GetStage() const;
 
         const std::vector<ShaderResource>& GetResources() const;
 
@@ -78,22 +79,21 @@ namespace Vulkan
         size_t GetHash() const;
 
     private:
-        VkShaderStageFlagBits stage{};
+        ShaderStage stage{};
 
         std::vector<ShaderResource> shaderResources;
         std::vector<uint32_t> spirv;
 
         size_t hash{ 0 };
     };
-
 }
 
 namespace std
 {
     template <>
-    struct hash<Vulkan::ShaderSource>
+    struct hash<Engine::ShaderSource>
     {
-        size_t operator()(const Vulkan::ShaderSource& source) const
+        size_t operator()(const Engine::ShaderSource& source) const
         {
             return source.GetHash();
         }
@@ -103,9 +103,9 @@ namespace std
 namespace std
 {
     template <>
-    struct hash<Vulkan::ShaderVariant>
+    struct hash<Engine::ShaderVariant>
     {
-        size_t operator()(const Vulkan::ShaderVariant& variant) const
+        size_t operator()(const Engine::ShaderVariant& variant) const
         {
             return variant.GetHash();
         }
@@ -115,9 +115,9 @@ namespace std
 namespace std
 {
     template <>
-    struct hash<std::vector<Vulkan::ShaderModule*>>
+    struct hash<std::vector<Engine::Shader*>>
     {
-        size_t operator()(const std::vector<Vulkan::ShaderModule*>& modules) const
+        size_t operator()(const std::vector<Engine::Shader*>& modules) const
         {
             size_t hash{ 0 };
 

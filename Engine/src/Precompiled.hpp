@@ -1,5 +1,7 @@
 #pragma once
 
+#include <typeindex>
+#include <any>
 #include <type_traits>
 #include <memory>
 #include <algorithm>

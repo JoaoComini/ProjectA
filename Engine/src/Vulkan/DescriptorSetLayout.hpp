@@ -3,7 +3,7 @@
 #include "Common/Hash.hpp"
 
 #include "Resource.hpp"
-#include "ShaderModule.hpp"
+#include "Rendering/Shader.hpp"
 
 namespace Vulkan
 {
@@ -12,7 +12,7 @@ namespace Vulkan
 	class DescriptorSetLayout : public Resource<VkDescriptorSetLayout>
 	{
 	public:
-		DescriptorSetLayout(const Device& device, uint32_t set, const std::vector<ShaderResource>& setResources);
+		DescriptorSetLayout(const Device& device, uint32_t set, const std::vector<Engine::ShaderResource>& setResources);
 		~DescriptorSetLayout();
 
 		const std::vector<VkDescriptorSetLayoutBinding>& GetBindings() const;

@@ -284,7 +284,7 @@ set(ENGINE_TEST_FILES
     "test/Resource/ResourceTest.cpp"
     "test/Resource/Factory/TextureFactoryTest.cpp"
     "test/Resource/Factory/MeshFactoryTest.cpp"
- )
+  "test/Rendering/RenderGraph/RenderGraphTest.cpp")
 
 add_executable(Engine_Test ${ENGINE_TEST_FILES})
 

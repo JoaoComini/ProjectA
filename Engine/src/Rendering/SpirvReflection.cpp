@@ -1,10 +1,10 @@
 #include "SpirvReflection.hpp"
 
 
-namespace Vulkan
+namespace Engine
 {
 
-    SpirvReflection::SpirvReflection(VkShaderStageFlagBits stage, std::vector<uint32_t>& spirv)
+    SpirvReflection::SpirvReflection(ShaderStage stage, std::vector<uint32_t>& spirv)
         : stage(stage), compiler(spirv)
     {
     }
@@ -136,7 +136,7 @@ namespace Vulkan
         }
     }
 
-    void Vulkan::SpirvReflection::ReflectShaderResources(std::vector<ShaderResource>& shaderResources)
+    void SpirvReflection::ReflectShaderResources(std::vector<ShaderResource>& shaderResources)
     {
         ParseShaderResource<ShaderResourceType::Input>(shaderResources);
         ParseShaderResource<ShaderResourceType::Output>(shaderResources);

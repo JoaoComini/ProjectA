@@ -1,6 +1,6 @@
 #include "ShadowPass.hpp"
 
-#include "Vulkan/Caching/ResourceCache.hpp"
+#include "Vulkan/ResourceCache.hpp"
 
 #include "Resource/ResourceManager.hpp"
 
@@ -11,14 +11,38 @@ namespace Engine
 {
     ShadowPass::ShadowPass(
         RenderContext& renderContext,
-        Vulkan::ShaderSource&& vertexSource,
-        Vulkan::ShaderSource&& fragmentSource,
+        ShaderSource&& vertexSource,
+        ShaderSource&& fragmentSource,
         Scene& scene
     ) : Pass{renderContext, std::move(vertexSource), std::move(fragmentSource)}, scene(scene)
     {
     }
 
-	Vulkan::PipelineLayout& ShadowPass::GetPipelineLayout(const std::vector<Vulkan::ShaderModule*>& shaders)
+	void ShadowPass::RecordRenderGraph(RenderGraphBuilder& builder, RenderGraphContext& context, ShadowPassData& data)
+	{
+		data.shadowmap = builder.Allocate({
+			.width = 2048,
+			.height = 2048,
+			.format = RenderTextureFormat::Depth,
+			.usage = RenderTextureUsage::RenderTarget | RenderTextureUsage::Sampled
+		});
+
+		builder.Write(data.shadowmap, {
+			.type = RenderTextureAccessType::Attachment,
+			.attachment = {
+				.aspect = RenderTextureAspect::Depth,
+			}
+		});
+
+		context.Add<ShadowPassData>(data);
+	}
+
+	void ShadowPass::Render(RenderGraphCommand& command, const ShadowPassData& data)
+	{
+
+	}
+
+	Vulkan::PipelineLayout& ShadowPass::GetPipelineLayout(const std::vector<Shader*>& shaders)
 	{
 		return GetRenderContext().GetDevice().GetResourceCache().RequestPipelineLayout({ shaders[0] });
 	}
@@ -34,8 +58,8 @@ namespace Engine
 	{
 		auto& resourceCache = GetRenderContext().GetDevice().GetResourceCache();
 
-		auto& vertexShader = resourceCache.RequestShaderModule(VK_SHADER_STAGE_VERTEX_BIT, GetVertexShader(), {});
-		auto& fragmentShader = resourceCache.RequestShaderModule(VK_SHADER_STAGE_FRAGMENT_BIT, GetFragmentShader(), {});
+		auto& vertexShader = resourceCache.RequestShader(ShaderStage::Vertex, GetVertexShader(), {});
+		auto& fragmentShader = resourceCache.RequestShader(ShaderStage::Fragment, GetFragmentShader(), {});
 
 		auto& pipelineLayout = GetPipelineLayout({ &vertexShader, &fragmentShader });
 
@@ -88,7 +112,7 @@ namespace Engine
 
 			UpdateGlobalUniform(commandBuffer, transform, viewProjection);
 
-			FlushDescriptorSet(commandBuffer, pipelineLayout, 0);
+			commandBuffer.FlushDescriptorSet(0);
 
 			for (auto& primitive : mesh->GetPrimitives())
 			{
@@ -124,7 +148,7 @@ namespace Engine
 
 		allocation.SetData(&uniform);
 
-		BindBuffer(allocation.GetBuffer(), allocation.GetOffset(), allocation.GetSize(), 0, 0, 0);
+		commandBuffer.BindBuffer(allocation.GetBuffer(), allocation.GetOffset(), allocation.GetSize(), 0, 0, 0);
 	}
 
 	std::pair<glm::mat4, glm::mat4> ShadowPass::GetViewProjection() const

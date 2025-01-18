@@ -12,6 +12,8 @@
 
 #include "Scripting/Script.hpp"
 
+#include "Common/FileSystem.hpp"
+
 namespace Engine
 {
     ResourceManager::ResourceManager(): device(Renderer::Get().GetRenderContext().GetDevice())

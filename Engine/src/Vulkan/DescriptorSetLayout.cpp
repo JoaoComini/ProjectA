@@ -4,14 +4,14 @@
 
 namespace Vulkan
 {
-	VkDescriptorType DescriptorTypeFromShaderResourceType(ShaderResourceType type)
+	VkDescriptorType DescriptorTypeFromShaderResourceType(Engine::ShaderResourceType type)
 	{
 		switch (type)
 		{
-		case ShaderResourceType::ImageSampler:
+		case Engine::ShaderResourceType::ImageSampler:
 			return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 			break;
-		case ShaderResourceType::BufferUniform:
+		case Engine::ShaderResourceType::BufferUniform:
 			return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 			break;
 		default:
@@ -20,16 +20,28 @@ namespace Vulkan
 		}
 	}
 
-	DescriptorSetLayout::DescriptorSetLayout(const Device& device, uint32_t set, const std::vector<ShaderResource>& setResources)
+	DescriptorSetLayout::DescriptorSetLayout(const Device& device, uint32_t set, const std::vector<Engine::ShaderResource>& setResources)
 		: device(device), set(set)
 	{
 		for (auto& shaderResource : setResources)
 		{
+			VkShaderStageFlags stageFlags{};
+			
+			if (bool(shaderResource.stages & Engine::ShaderStage::Vertex))
+			{
+				stageFlags |= VK_SHADER_STAGE_VERTEX_BIT;
+			}
+
+			if (bool(shaderResource.stages & Engine::ShaderStage::Fragment))
+			{
+				stageFlags |= VK_SHADER_STAGE_FRAGMENT_BIT;
+			}
+
 			VkDescriptorSetLayoutBinding binding = {
 				.binding = shaderResource.binding,
 				.descriptorType = DescriptorTypeFromShaderResourceType(shaderResource.type),
 				.descriptorCount = shaderResource.arraySize,
-				.stageFlags = shaderResource.stages
+				.stageFlags = stageFlags
 			};
 
 			bindings.push_back(binding);

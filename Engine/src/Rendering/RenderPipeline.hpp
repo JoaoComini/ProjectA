@@ -6,9 +6,18 @@
 #include "Pass/ShadowPass.hpp"
 #include "Pass/CompositionPass.hpp"
 
+#include "RenderGraph/RenderGraphAllocator.hpp"
+
+#include "ShaderCache.hpp"
+
 namespace Engine
 {
 	class Scene;
+
+	struct BackbufferData
+	{
+		RenderGraphResourceHandle backbuffer;
+	};
 
 	class RenderPipeline
 	{
@@ -34,8 +43,13 @@ namespace Engine
 		std::unique_ptr<ShadowPass> shadowPass;
 		std::unique_ptr<CompositionPass> compositionPass;
 
+		std::unordered_map<RenderTextureSampler, std::unique_ptr<Vulkan::Sampler>> samplers;
+		std::unique_ptr<RenderGraphAllocator> allocator;
+
 		std::unique_ptr<RenderTarget> shadowTarget;
 		std::unique_ptr<RenderTarget> gBufferTarget;
+
+		ShaderCache shaderCache;
 
 		RenderContext& renderContext;
 		Scene& scene;

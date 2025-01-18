@@ -59,8 +59,8 @@ namespace Vulkan
 		std::unique_ptr<Swapchain> Build(const Device& device, const Surface& surface);
 
 	private:
-		int desiredWidth;
-		int desiredHeight;
-		int minImageCount = 2;
+		int desiredWidth{ 0 };
+		int desiredHeight{ 0 };
+		int minImageCount{ 2 };
 	};
 } // namespace Vulkan

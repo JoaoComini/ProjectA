@@ -3,14 +3,14 @@
 #include "Resource/ResourceManager.hpp"
 #include "Rendering/Renderer.hpp"
 
-#include "Vulkan/Caching/ResourceCache.hpp"
+#include "Vulkan/ResourceCache.hpp"
 
 namespace Engine
 {
 	GeometryPass::GeometryPass(
 		RenderContext& renderContext,
-		Vulkan::ShaderSource&& vertexSource,
-		Vulkan::ShaderSource&& fragmentSource,
+		ShaderSource&& vertexSource,
+		ShaderSource&& fragmentSource,
 		Scene& scene
 	) : Pass{ renderContext, std::move(vertexSource), std::move(fragmentSource) }, scene(scene)
 	{
@@ -73,7 +73,7 @@ namespace Engine
 
 		allocation.SetData(&uniform);
 
-		BindBuffer(allocation.GetBuffer(), allocation.GetOffset(), allocation.GetSize(), 0, 0, 0);
+		commandBuffer.BindBuffer(allocation.GetBuffer(), allocation.GetOffset(), allocation.GetSize(), 0, 0, 0);
 	}
 
 	std::pair<glm::mat4, glm::mat4> GeometryPass::GetViewProjection() const
@@ -178,21 +178,21 @@ namespace Engine
 		auto allocation = frame.RequestBufferAllocation(Vulkan::BufferUsageFlags::UNIFORM, sizeof(ModelUniform));
 		allocation.SetData(&uniform);
 
-		BindBuffer(allocation.GetBuffer(), allocation.GetOffset(), allocation.GetSize(), 0, 1, 0);
+		commandBuffer.BindBuffer(allocation.GetBuffer(), allocation.GetOffset(), allocation.GetSize(), 0, 1, 0);
 
 		if (auto albedo = ResourceManager::Get().LoadResource<Texture>(material.GetAlbedoTexture()))
 		{
-			BindImage(albedo->GetImageView(), albedo->GetSampler(), 0, 2, 0);
+			commandBuffer.BindImage(albedo->GetImageView(), albedo->GetSampler(), 0, 2, 0);
 		}
 
 		if (auto normal = ResourceManager::Get().LoadResource<Texture>(material.GetNormalTexture()))
 		{
-			BindImage(normal->GetImageView(), normal->GetSampler(), 0, 3, 0);
+			commandBuffer.BindImage(normal->GetImageView(), normal->GetSampler(), 0, 3, 0);
 		}
 
 		if (auto metallicRoughness = ResourceManager::Get().LoadResource<Texture>(material.GetMetallicRoughnessTexture()))
 		{
-			BindImage(metallicRoughness->GetImageView(), metallicRoughness->GetSampler(), 0, 4, 0);
+			commandBuffer.BindImage(metallicRoughness->GetImageView(), metallicRoughness->GetSampler(), 0, 4, 0);
 		}
 
 		auto& resourceCache = GetRenderContext().GetDevice().GetResourceCache();
@@ -201,8 +201,8 @@ namespace Engine
 
 		shaders.clear();
 
-		auto& vertexShader = resourceCache.RequestShaderModule(VK_SHADER_STAGE_VERTEX_BIT, GetVertexShader(), variant);
-		auto& fragmentShader = resourceCache.RequestShaderModule(VK_SHADER_STAGE_FRAGMENT_BIT, GetFragmentShader(), variant);
+		auto& vertexShader = resourceCache.RequestShader(ShaderStage::Vertex , GetVertexShader(), variant);
+		auto& fragmentShader = resourceCache.RequestShader(ShaderStage::Fragment, GetFragmentShader(), variant);
 
 		shaders.push_back(&vertexShader);
 		shaders.push_back(&fragmentShader);
@@ -211,7 +211,7 @@ namespace Engine
 
 		commandBuffer.BindPipelineLayout(pipelineLayout);
 
-		if (pipelineLayout.HasShaderResource(Vulkan::ShaderResourceType::PushConstant))
+		if (pipelineLayout.HasShaderResource(ShaderResourceType::PushConstant))
 		{
 			PbrPushConstant pushConstant
 			{
@@ -224,6 +224,6 @@ namespace Engine
 			commandBuffer.PushConstants(VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PbrPushConstant), &pushConstant);
 		}
 
-		FlushDescriptorSet(commandBuffer, pipelineLayout, 0);
+		commandBuffer.FlushDescriptorSet(0);
 	}
 }

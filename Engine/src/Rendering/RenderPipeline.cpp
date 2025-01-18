@@ -1,19 +1,51 @@
 #include "RenderPipeline.hpp"
 
+#include <Shaders/embed.gen.hpp>
+
 #include "Scene/Scene.hpp"
 
 #include "Vulkan/Swapchain.hpp"
+#include "RenderGraph/RenderGraph.hpp"
+#include "RenderGraph/VulkanRenderGraphAllocator.hpp"
+#include "RenderGraph/VulkanRenderGraphCommand.hpp"
 
-#include <Shaders/embed.gen.hpp>
+#include "RenderBatcher.hpp"
 
 namespace Engine
 {
     RenderPipeline::RenderPipeline(RenderContext& renderContext, Scene& scene)
 		: renderContext(renderContext), scene(scene)
     {
+		allocator = std::make_unique<VulkanRenderGraphAllocator>(renderContext.GetDevice());
+
 		SetupShadowPass();
 		SetupGBufferPass();
 		SetupCompositionPass();
+
+		VkSamplerCreateInfo point{ VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
+		point.magFilter = VK_FILTER_NEAREST;
+		point.minFilter = VK_FILTER_NEAREST;
+		point.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+		point.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		point.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		point.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		point.mipLodBias = 0.0f;
+		point.minLod = 0.0f;
+		point.maxLod = 1.0f;
+		point.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+
+		VkSamplerCreateInfo shadow{ VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
+		shadow.minFilter = VK_FILTER_LINEAR;
+		shadow.magFilter = VK_FILTER_LINEAR;
+		point.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+		shadow.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+		shadow.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+		shadow.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+		shadow.compareEnable = VK_TRUE;
+		shadow.compareOp = VK_COMPARE_OP_GREATER_OR_EQUAL;
+
+		samplers.emplace(RenderTextureSampler::Point, std::make_unique<Vulkan::Sampler>(renderContext.GetDevice(), point));
+		samplers.emplace(RenderTextureSampler::Shadow, std::make_unique<Vulkan::Sampler>(renderContext.GetDevice(), shadow));
     }
 
 	void RenderPipeline::SetupGBufferPass()
@@ -25,8 +57,8 @@ namespace Engine
 
 		auto forwardSubpass = std::make_unique<ForwardPass>(
 			renderContext,
-			Vulkan::ShaderSource{ std::vector<uint8_t>{ forwardVert.begin(), forwardVert.end() }},
-			Vulkan::ShaderSource{ std::vector<uint8_t>{ forwardFrag.begin(), forwardFrag.end() } },
+			ShaderSource{ std::vector<uint8_t>{ forwardVert.begin(), forwardVert.end() }},
+			ShaderSource{ std::vector<uint8_t>{ forwardFrag.begin(), forwardFrag.end() } },
 			scene,
 			shadowTarget.get()
 		);
@@ -36,15 +68,15 @@ namespace Engine
 
 		//auto skyboxSubpass = std::make_unique<SkyboxPass>(
 		//	renderContext,
-		//	Vulkan::ShaderSource{ std::vector<uint8_t>{ skyboxVert.begin(), skyboxVert.end() }},
-		//	Vulkan::ShaderSource{ std::vector<uint8_t>{ skyboxFrag.begin(), skyboxFrag.end() } },
+		//	ShaderSource{ std::vector<uint8_t>{ skyboxVert.begin(), skyboxVert.end() }},
+		//	ShaderSource{ std::vector<uint8_t>{ skyboxFrag.begin(), skyboxFrag.end() } },
 		//	scene
 		//);
 
 		mainPass = std::make_unique<ForwardPass>(
 			renderContext,
-			Vulkan::ShaderSource{ std::vector<uint8_t>{ forwardVert.begin(), forwardVert.end() } },
-			Vulkan::ShaderSource{ std::vector<uint8_t>{ forwardFrag.begin(), forwardFrag.end() } },
+			ShaderSource{ std::vector<uint8_t>{ forwardVert.begin(), forwardVert.end() } },
+			ShaderSource{ std::vector<uint8_t>{ forwardFrag.begin(), forwardFrag.end() } },
 			scene,
 			shadowTarget.get()
 		);
@@ -54,30 +86,20 @@ namespace Engine
 	{
 		auto extent = renderContext.GetSwapchain().GetImageExtent();
 
-		auto colorResolveAttachment = RenderAttachment::Builder(renderContext.GetDevice())
+		auto colorAttachment = RenderAttachment::Builder(renderContext.GetDevice())
 			.Usage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT)
 			.Format(VK_FORMAT_R16G16B16A16_SFLOAT)
 			.Extent(extent)
-			.Build();
-
-		auto colorAttachment = RenderAttachment::Builder(renderContext.GetDevice())
-			.Format(VK_FORMAT_R16G16B16A16_SFLOAT)
-			.Extent(extent)
-			.SampleCount(renderContext.GetDevice().GetMaxSampleCount())
-			.ClearValue({ .color = {0.f, 0.f , 0.f, 1.f} })
 			.LoadStoreInfo({
 				.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-				.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+				.storeOp = VK_ATTACHMENT_STORE_OP_STORE,
 			})
-			.Resolve(std::move(colorResolveAttachment))
 			.Build();
 
 		auto depthAttachment = RenderAttachment::Builder(renderContext.GetDevice())
 			.Usage(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
 			.Format(renderContext.GetPhysicalDevice().GetSupportedDepthFormat())
-			.SampleCount(renderContext.GetDevice().GetMaxSampleCount())
 			.Extent(extent)
-			.ClearValue({ .depthStencil = {0.f, 0} })
 			.LoadStoreInfo({
 				.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
 				.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
@@ -98,8 +120,8 @@ namespace Engine
 		auto shadowmapVert = embed::Shaders::get("shadowmap.vert.glsl");
 		auto shadowmapFrag = embed::Shaders::get("shadowmap.frag.glsl");
 
-		auto vertexSource = Vulkan::ShaderSource{ std::vector<uint8_t>{ shadowmapVert.begin(), shadowmapVert.end() }};
-		auto fragmentSource = Vulkan::ShaderSource{ std::vector<uint8_t>{ shadowmapFrag.begin(), shadowmapFrag.end() }};
+		auto vertexSource = ShaderSource{ std::vector<uint8_t>{ shadowmapVert.begin(), shadowmapVert.end() }};
+		auto fragmentSource = ShaderSource{ std::vector<uint8_t>{ shadowmapFrag.begin(), shadowmapFrag.end() }};
 
 		shadowPass = std::make_unique<ShadowPass>(renderContext,
 			std::move(vertexSource),
@@ -113,7 +135,6 @@ namespace Engine
 		auto attachment = RenderAttachment::Builder(renderContext.GetDevice())
 			.Usage(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT)
 			.Extent({ 2048, 2048 })
-			.ClearValue({ .depthStencil { 0.f, 0} })
 			.Format(renderContext.GetPhysicalDevice().GetSupportedDepthFormat(true))
 			.Build();
 
@@ -129,8 +150,8 @@ namespace Engine
 		auto compositionVert = embed::Shaders::get("composition.vert.glsl");
 		auto compositionFrag = embed::Shaders::get("composition.frag.glsl");
 
-		auto vertexSource = Vulkan::ShaderSource{ std::vector<uint8_t>{ compositionVert.begin(), compositionVert.end() } };
-		auto fragmentSource = Vulkan::ShaderSource{ std::vector<uint8_t>{ compositionFrag.begin(), compositionFrag.end() } };
+		auto vertexSource = ShaderSource{ std::vector<uint8_t>{ compositionVert.begin(), compositionVert.end() } };
+		auto fragmentSource = ShaderSource{ std::vector<uint8_t>{ compositionFrag.begin(), compositionFrag.end() } };
 
 		compositionPass = std::make_unique<CompositionPass>(
 			renderContext,
@@ -142,9 +163,34 @@ namespace Engine
 
 	void RenderPipeline::Draw(Vulkan::CommandBuffer& commandBuffer)
 	{
-		DrawShadowPass(commandBuffer);
-		DrawMainPass(commandBuffer);
-		DrawCompositionPass(commandBuffer);
+		auto& target = renderContext.GetCurrentFrame().GetTarget();
+
+		RenderGraph graph;
+		RenderBatcher batcher{ scene };
+		batcher.BuildBatches();
+
+		auto& context = graph.GetContext();
+		auto& data = context.Add<BackbufferData>();
+
+		data.backbuffer = graph.Import({
+			.width = target.GetExtent().width,
+			.height = target.GetExtent().height,
+			.format = RenderTextureFormat::Linear,
+			.usage = RenderTextureUsage::RenderTarget | RenderTextureUsage::Sampled
+		}, { target.GetColorAttachmentPtr(0) });
+
+		graph.AddPass(*shadowPass);
+		graph.AddPass(*mainPass);
+		graph.AddPass(*compositionPass);
+
+		graph.Compile();
+
+		VulkanRenderGraphCommand command{ renderContext, batcher, shaderCache, commandBuffer, samplers };
+		graph.Execute(command, *allocator);
+
+		//DrawShadowPass(commandBuffer);
+		//DrawMainPass(commandBuffer);
+		//DrawCompositionPass(commandBuffer);
 	}
 
 	void RenderPipeline::DrawShadowPass(Vulkan::CommandBuffer& commandBuffer)

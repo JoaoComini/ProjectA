@@ -40,7 +40,7 @@ namespace Engine
 		void End();
 
 		void SetMainCamera(Camera& camera, glm::mat4 transform);
-		std::pair<Camera&, glm::mat4&> GetMainCamera();
+		std::pair<Camera&, glm::mat4> GetMainCamera();
 
 		void SetSettings(RendererSettings settings);
 		RendererSettings GetSettings() const;

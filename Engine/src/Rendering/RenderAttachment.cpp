@@ -42,6 +42,16 @@ namespace Engine
 		return loadStore;
 	}
 
+	BarrierScope& RenderAttachment::GetScope()
+	{
+		return scope;
+	}
+
+	VkImageLayout& RenderAttachment::GetLayout()
+	{
+		return layout;
+	}
+
 	void RenderAttachment::SetResolve(std::unique_ptr<RenderAttachment>&& resolve)
 	{
 		this->resolve = std::move(resolve);
