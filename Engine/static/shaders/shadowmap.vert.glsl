@@ -3,16 +3,16 @@
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec3 inNormal;
 
-layout(set = 0, binding = 0) uniform GlobalUniform {
-    mat4 model;
-    mat4 viewProjection;
-} global;
+layout(set = 0, binding = 0) uniform ModelUniform {
+    mat4 localToWorldMatrix;
+} model;
 
 layout(push_constant, std430) uniform LightPushConstant
 {
     vec3 direction;
     float depthBias;
     float normalBias;
+    mat4 viewProjection;
 } light;
 
 float Saturate(float t)
@@ -35,10 +35,10 @@ vec3 ApplyShadowBias(vec3 position, vec3 normal)
 
 void main()
 {
-    vec4 position = global.model * vec4(inPosition, 1.0);
-    vec3 normal = mat3(global.model) * inNormal;
+    vec4 position = model.localToWorldMatrix * vec4(inPosition, 1.0);
+    vec3 normal = mat3(model.localToWorldMatrix) * inNormal;
 
     vec3 biased = ApplyShadowBias(position.xyz, normal);
 
-    gl_Position = global.viewProjection * vec4(biased, 1.0);
+    gl_Position = light.viewProjection * vec4(biased, 1.0);
 }

@@ -157,6 +157,15 @@ namespace Engine
         depthFormat = VK_FORMAT_UNDEFINED;
     }
 
+    void VulkanRenderGraphCommand::BindUniformBuffer(void* data, uint32_t size, uint32_t set, uint32_t binding)
+    {
+        auto& frame = renderContext.GetCurrentFrame();
+
+        auto allocation = frame.RequestBufferAllocation(Vulkan::BufferUsageFlags::UNIFORM, size);
+        allocation.SetData(data);
+
+        commandBuffer.BindBuffer(allocation.GetBuffer(), allocation.GetOffset(), allocation.GetSize(), set, binding, 0);
+    }
 
     std::pair<glm::mat4, glm::mat4> GetViewProjection()
     {
@@ -209,6 +218,85 @@ namespace Engine
         }
     }
 
+    struct LightPushConstant
+    {
+        glm::vec3 direction;
+        float depthBias;
+        float normalBias;
+        glm::mat4 viewProjection;
+    };
+
+    struct ModelUniform
+    {
+        glm::mat4 localToWorldMatrix;
+    };
+
+    struct PbrPushConstant
+    {
+        glm::vec4 albedoColor;
+        float metallicFactor;
+        float roughnessFactor;
+        float alphaCutoff;
+    };
+
+    void VulkanRenderGraphCommand::DrawShadow(glm::vec3 lightDirection)
+    {
+        auto shaders = shaderCache.Get("shadowmap", {}, ShaderStage::Vertex);
+
+        auto& layout = renderContext.GetDevice().GetResourceCache().RequestPipelineLayout({ &std::get<0>(shaders) });
+
+        commandBuffer.BindPipelineLayout(layout);
+
+        Vulkan::VertexInputState vertexInputState{};
+
+        vertexInputState.attributes.resize(2);
+        vertexInputState.attributes[0].location = 0;
+        vertexInputState.attributes[0].binding = 0;
+        vertexInputState.attributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+        vertexInputState.attributes[0].offset = offsetof(Vertex, position);
+
+        vertexInputState.attributes[1].location = 1;
+        vertexInputState.attributes[1].binding = 0;
+        vertexInputState.attributes[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+        vertexInputState.attributes[1].offset = offsetof(Vertex, normal);
+
+        vertexInputState.bindings.resize(1);
+        vertexInputState.bindings[0].binding = 0;
+        vertexInputState.bindings[0].stride = sizeof(Vertex);
+        vertexInputState.bindings[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+        commandBuffer.SetVertexInputState(vertexInputState);
+
+        auto settings = Renderer::Get().GetSettings();
+
+        auto view = glm::lookAt(lightDirection, glm::vec3{ 0 }, glm::vec3{ 0, 1, 0 });
+        auto projection = glm::ortho(-25.f, 25.f, -25.f, 25.f, -25.f, 25.f);
+
+        LightPushConstant pushConstant
+        {
+            .direction = -glm::normalize(glm::vec3(view[2])),
+            .depthBias = -settings.shadow.depthBias * 50.f / 2048.f,
+            .normalBias = -settings.shadow.normalBias * 50.f / 2048.f,
+            .viewProjection = projection * view,
+        };
+
+        commandBuffer.PushConstants(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(LightPushConstant), &pushConstant);
+
+        auto& frame = renderContext.GetCurrentFrame();
+
+        for (const auto& opaque : batcher.GetOpaques())
+        {
+            ModelUniform uniform{
+                .localToWorldMatrix = opaque.transform
+            };
+
+            auto allocation = frame.RequestBufferAllocation(Vulkan::BufferUsageFlags::UNIFORM, sizeof(ModelUniform));
+            allocation.SetData(&uniform);
+
+            opaque.primitive->Draw(commandBuffer);
+        }
+    }
+
     void VulkanRenderGraphCommand::DrawOpaques(std::string_view shader)
     {
         for (const auto& opaque : batcher.GetOpaques())
@@ -223,11 +311,10 @@ namespace Engine
 
     void VulkanRenderGraphCommand::DrawTransparents()
     {
-        Vulkan::ColorBlendAttachmentState colorBlendAttachment{};
-        colorBlendAttachment.blendEnable = VK_TRUE;
-
         Vulkan::ColorBlendState colorBlendState{};
-        colorBlendState.attachments.push_back(colorBlendAttachment);
+        colorBlendState.attachments.push_back({
+            .blendEnable = VK_TRUE,
+        });
 
         commandBuffer.SetColorBlendState(colorBlendState);
 

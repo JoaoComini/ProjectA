@@ -33,7 +33,10 @@ namespace Engine
         void BeginPass() override;
         void EndPass() override;
 
+        void BindUniformBuffer(void* data, uint32_t size, uint32_t set, uint32_t binding) override;
+
         void DrawGeometry(RenderGeometryType type, std::string_view shader) override;
+        void DrawShadow(glm::vec3 lightDirection) override;
         void Blit(std::string_view shader);
 
     private:

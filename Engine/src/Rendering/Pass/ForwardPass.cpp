@@ -6,16 +6,7 @@
 
 namespace Engine
 {
-    ForwardPass::ForwardPass(
-        RenderContext& renderContext,
-        ShaderSource&& vertexSource,
-        ShaderSource&& fragmentSource,
-        Scene& scene,
-        RenderTarget* shadowTarget
-    ) : GeometryPass{ renderContext, std::move(vertexSource), std::move(fragmentSource), scene }, shadowTarget{ shadowTarget }
-    {
-        CreateShadowMapSampler();
-    }
+    ForwardPass::ForwardPass(Scene& scene) : scene(scene) { }
 
     void ForwardPass::RecordRenderGraph(RenderGraphBuilder& builder, RenderGraphContext& context, ForwardPassData& data)
     {
@@ -30,11 +21,9 @@ namespace Engine
             }
         });
 
-        auto extent = GetRenderContext().GetCurrentFrame().GetTarget().GetExtent();
-
         data.gbuffer = builder.Allocate({
-                extent.width,
-                extent.height,
+                1600,
+                900,
                 RenderTextureFormat::HDR,
                 RenderTextureUsage::RenderTarget | RenderTextureUsage::Sampled,
         });
@@ -49,43 +38,36 @@ namespace Engine
         context.Add<ForwardPassData>(data);
     }
 
+    struct Light
+    {
+        glm::vec4 vector;
+        glm::vec4 color;
+    };
+
+    struct alignas(16) LightsUniform
+    {
+        Light lights[32];
+        int count;
+    };
+
+    struct ShadowUniform
+    {
+        glm::mat4 viewProjection;
+    };
+
     void ForwardPass::Render(RenderGraphCommand& command, const ForwardPassData& data)
     {
+        LightsUniform lights{};
+        ShadowUniform shadow{};
+
+        GetMainLightData(lights, shadow);
+        GetAdditionalLightsData(lights);
+
+        command.BindUniformBuffer(&lights, sizeof(LightsUniform), 0, 5);
+        command.BindUniformBuffer(&lights, sizeof(ShadowUniform), 0, 7);
+
         command.DrawGeometry(RenderGeometryType::Opaque, "forward");
     }
-
-    void ForwardPass::CreateShadowMapSampler()
-    {
-        VkSamplerCreateInfo samplerCreateInfo{ VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
-        samplerCreateInfo.minFilter = VK_FILTER_LINEAR;
-        samplerCreateInfo.magFilter = VK_FILTER_LINEAR;
-        samplerCreateInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
-        samplerCreateInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
-        samplerCreateInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
-        samplerCreateInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-        samplerCreateInfo.compareEnable = VK_TRUE;
-        samplerCreateInfo.compareOp = VK_COMPARE_OP_GREATER_OR_EQUAL;
-
-        shadowMapSampler = std::make_unique<Vulkan::Sampler>(GetRenderContext().GetDevice(), samplerCreateInfo);
-    }
-
-    void ForwardPass::Draw(Vulkan::CommandBuffer& commandBuffer)
-    {
-        LightsUniform lightsUniform{};
-        ShadowUniform shadowUniform{};
-
-        GetMainLightData(lightsUniform, shadowUniform);
-        GetAdditionalLightsData(lightsUniform);
-
-        UpdateLightUniform(commandBuffer, lightsUniform);
-
-        BindShadowMap(commandBuffer);
-
-        UpdateShadowUniform(commandBuffer, shadowUniform);
-
-        GeometryPass::Draw(commandBuffer);
-    }
-
 
     void ForwardPass::GetMainLightData(LightsUniform& lights, ShadowUniform& shadow)
     {
@@ -128,34 +110,5 @@ namespace Engine
 
             uniform.count++;
         }
-    }
-
-    void ForwardPass::UpdateLightUniform(Vulkan::CommandBuffer& commandBuffer, LightsUniform uniform)
-    {
-        auto& frame = GetRenderContext().GetCurrentFrame();
-
-        auto allocation = frame.RequestBufferAllocation(Vulkan::BufferUsageFlags::UNIFORM, sizeof(LightsUniform));
-
-        allocation.SetData(&uniform);
-
-        commandBuffer.BindBuffer(allocation.GetBuffer(), allocation.GetOffset(), allocation.GetSize(), 0, 5, 0);
-    }
-
-    void ForwardPass::BindShadowMap(Vulkan::CommandBuffer& commandBuffer)
-    {
-        auto& shadowMap = shadowTarget->GetDepthAttachment().GetView();
-
-        commandBuffer.BindImage(shadowMap, *shadowMapSampler, 0, 6, 0);
-    }
-
-    void ForwardPass::UpdateShadowUniform(Vulkan::CommandBuffer& commandBuffer, ShadowUniform uniform)
-    {
-        auto& frame = GetRenderContext().GetCurrentFrame();
-
-        auto allocation = frame.RequestBufferAllocation(Vulkan::BufferUsageFlags::UNIFORM, sizeof(ShadowUniform));
-
-        allocation.SetData(&uniform);
-
-        commandBuffer.BindBuffer(allocation.GetBuffer(), allocation.GetOffset(), allocation.GetSize(), 0, 7, 0);
     }
 };

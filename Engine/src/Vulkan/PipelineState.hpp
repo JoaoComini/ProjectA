@@ -30,6 +30,7 @@ namespace Vulkan
 	{
 		VkCullModeFlags cullMode{ VK_CULL_MODE_BACK_BIT };
 		VkFrontFace frontFace{ VK_FRONT_FACE_COUNTER_CLOCKWISE };
+		VkBool32 depthClampEnable{ VK_FALSE };
 
 		bool operator==(RasterizationState const&) const = default;
 	};
@@ -154,6 +155,7 @@ namespace std
 
 			HashCombine(hash, state.cullMode);
 			HashCombine(hash, state.frontFace);
+			HashCombine(hash, state.depthClampEnable);
 
 			return hash;
 		}

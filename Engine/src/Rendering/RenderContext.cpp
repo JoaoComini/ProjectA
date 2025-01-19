@@ -212,7 +212,7 @@ namespace Engine
 			*device,
 			std::move(swapchainImage),
 			VkClearValue{
-				.color = { 1.f, 0.f, 0.f, 1.f },
+				.color = { 1.f, 1.f, 0.f, 1.f },
 			},
 			Vulkan::LoadStoreInfo{}
 		);
