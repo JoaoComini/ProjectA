@@ -28,6 +28,13 @@ namespace Engine
                 RenderTextureUsage::RenderTarget | RenderTextureUsage::Sampled,
         });
 
+        data.depth = builder.Allocate({
+                1600,
+                900,
+                RenderTextureFormat::Depth,
+                RenderTextureUsage::RenderTarget,
+        });
+
         builder.Write(data.gbuffer, {
             .type = RenderTextureAccessType::Attachment,
             .attachment = {
@@ -35,8 +42,21 @@ namespace Engine
             }
         });
 
+        builder.Write(data.depth, {
+            .type = RenderTextureAccessType::Attachment,
+            .attachment = {
+                .aspect = RenderTextureAspect::Depth,
+            }
+        });
+
         context.Add<ForwardPassData>(data);
     }
+
+    struct CameraUniform
+    {
+        glm::mat4 viewProjectionMatrix;
+        glm::vec3 position;
+    };
 
     struct Light
     {
@@ -57,16 +77,25 @@ namespace Engine
 
     void ForwardPass::Render(RenderGraphCommand& command, const ForwardPassData& data)
     {
+        auto [camera, transform] = Renderer::Get().GetMainCamera();
+
+        CameraUniform cameraUniform {
+            .viewProjectionMatrix = camera.GetProjection() * glm::inverse(transform),
+            .position = transform[3],
+        };
+
         LightsUniform lights{};
         ShadowUniform shadow{};
 
         GetMainLightData(lights, shadow);
         GetAdditionalLightsData(lights);
 
+        command.BindUniformBuffer(&cameraUniform, sizeof(CameraUniform), 0, 0);
         command.BindUniformBuffer(&lights, sizeof(LightsUniform), 0, 5);
-        command.BindUniformBuffer(&lights, sizeof(ShadowUniform), 0, 7);
+        command.BindUniformBuffer(&shadow, sizeof(ShadowUniform), 0, 7);
 
         command.DrawGeometry(RenderGeometryType::Opaque, "forward");
+        command.DrawGeometry(RenderGeometryType::Transparent, "forward");
     }
 
     void ForwardPass::GetMainLightData(LightsUniform& lights, ShadowUniform& shadow)
@@ -82,10 +111,13 @@ namespace Engine
 
         const auto& [transform, light] = query.GetComponent(entity);
 
-        auto direction = transform.rotation * glm::vec3{ 0, 0, 1 };
-        auto view = glm::lookAt(direction, glm::vec3{ 0, 0, 0 }, glm::vec3{ 0, 1, 0 });
+        auto direction = glm::normalize(transform.rotation * glm::vec3{ 0, 0, 1 });
+        auto view = glm::lookAt(-direction, glm::vec3{ 0, 0, 0 }, glm::vec3{ 0, 1, 0 });
 
-        auto projection = glm::ortho(-25.f, 25.f, -25.f, 25.f, -25.f, 25.f);
+        Camera camera;
+        camera.SetOrthographic(50, -25.f, 25.f);
+
+        auto projection = camera.GetProjection();
 
         shadow.viewProjection = projection * view;
 

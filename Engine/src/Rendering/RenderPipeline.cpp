@@ -33,14 +33,15 @@ namespace Engine
 		point.mipLodBias = 0.0f;
 		point.minLod = 0.0f;
 		point.maxLod = 1.0f;
-		point.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+		point.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
 
 		VkSamplerCreateInfo shadow{ VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
 		shadow.minFilter = VK_FILTER_LINEAR;
 		shadow.magFilter = VK_FILTER_LINEAR;
-		point.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+		shadow.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
 		shadow.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
 		shadow.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+		shadow.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
 		shadow.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 		shadow.compareEnable = VK_TRUE;
 		shadow.compareOp = VK_COMPARE_OP_GREATER_OR_EQUAL;

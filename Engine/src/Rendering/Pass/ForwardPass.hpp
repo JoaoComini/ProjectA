@@ -12,6 +12,7 @@ namespace Engine
 	struct ForwardPassData
 	{
 		RenderGraphResourceHandle gbuffer;
+		RenderGraphResourceHandle depth;
 	};
 
 	class ForwardPass : public RenderGraphPass<ForwardPassData>

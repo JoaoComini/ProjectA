@@ -41,7 +41,7 @@ namespace Engine
 
     private:
         void DrawOpaques(std::string_view shader);
-        void DrawTransparents();
+        void DrawTransparents(std::string_view shader);
 
         void UpdateModelUniform(Vulkan::CommandBuffer& commandBuffer, const glm::mat4& matrix, const Material& material);
 

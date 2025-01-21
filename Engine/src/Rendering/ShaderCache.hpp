@@ -22,11 +22,11 @@ namespace Engine
 
     private:
 
-        Shader GetOrCreateShader(std::string_view name, const ShaderVariant& variant, ShaderStage stage)
+        Shader* GetOrCreateShader(std::string_view name, const ShaderVariant& variant, ShaderStage stage)
         {
             auto& source = GetOrCreateSource(name, stage);
 
-            return shaders.Get(stage, source, variant);
+            return &shaders.Get(stage, source, variant);
         }
 
         ShaderSource& GetOrCreateSource(std::string_view name, ShaderStage stage)

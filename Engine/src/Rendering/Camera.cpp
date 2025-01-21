@@ -81,6 +81,11 @@ namespace Engine
 		dirty = true;
 	}
 
+	float Camera::GetSize() const
+	{
+		return size;
+	}
+
 	void Camera::UpdateProjection()
 	{
 		if (! dirty)

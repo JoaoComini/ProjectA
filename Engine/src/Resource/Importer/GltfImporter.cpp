@@ -186,26 +186,27 @@ namespace Engine
                 {
                     const auto& accessor = model.accessors[attribute.second];
                     const auto& view = model.bufferViews[accessor.bufferView];
+                    const auto& buffer = model.buffers[view.buffer];
 
-                    auto buffer = reinterpret_cast<const float*>(&(model.buffers[view.buffer].data[accessor.byteOffset + view.byteOffset]));
-                    auto count = static_cast<uint32_t>(accessor.count);
                     auto stride = accessor.ByteStride(view) / sizeof(float);
+                    auto data = reinterpret_cast<const float*>(buffer.data.data() + accessor.byteOffset + view.byteOffset);
+                    auto count = static_cast<uint32_t>(accessor.count);
 
-                    for (size_t j = 0; j < vertices.size(); j++)
+                    for (size_t j = 0; j < count; j++)
                     {
                         auto& vertex = vertices[j];
 
                         if (attribute.first == "POSITION")
                         {
-                            vertex.position = glm::make_vec3(&buffer[j * stride]);
+                            vertex.position = glm::make_vec3(&data[j * stride]);
                         }
                         else if (attribute.first == "NORMAL")
                         {
-                            vertex.normal = glm::make_vec3(&buffer[j * stride]);
+                            vertex.normal = glm::make_vec3(&data[j * stride]);
                         }
                         else if (attribute.first == "TEXCOORD_0")
                         {
-                            vertex.uv = glm::make_vec2(&buffer[j * stride]);
+                            vertex.uv = glm::make_vec2(&data[j * stride]);
                         }
                     }
                 }
@@ -219,12 +220,11 @@ namespace Engine
                 {
                     const auto& accessor = model.accessors[primitive.indices];
                     const auto& view = model.bufferViews[accessor.bufferView];
-                    auto buffer = model.buffers[view.buffer];
+                    const auto& buffer = model.buffers[view.buffer];
 
-                    void* data = &(buffer.data[accessor.byteOffset + view.byteOffset]);
+                    const uint8_t* data = buffer.data.data() + accessor.byteOffset + view.byteOffset;
 
-                    auto count = accessor.count;
-                    auto size = accessor.ByteStride(view) * count;
+                    auto size = accessor.ByteStride(view) * accessor.count;
 
                     switch (accessor.componentType)
                     {
@@ -239,7 +239,7 @@ namespace Engine
                         break;
                     }
 
-                    indices.insert(indices.end(), static_cast<uint8_t*>(data), static_cast<uint8_t*>(data) + size);
+                    indices.insert(indices.end(), data, data + size);
 
                     primitiveSpec.indices = indices;
                     primitiveSpec.indexType = indexType;

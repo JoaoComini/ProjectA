@@ -83,7 +83,7 @@ namespace Engine
                 .imageLayout = barrier.newLayout,
                 .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
                 .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-                .clearValue = attachment->GetClearValue(),
+                .clearValue = {.color = {0.2f, 0.2f, 0.2f, 1.f}},
             });
 
             colorFormats.push_back(attachment->GetFormat());
@@ -100,7 +100,7 @@ namespace Engine
                 .imageLayout = barrier.newLayout,
                 .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
                 .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-                .clearValue = attachment->GetClearValue(),
+                .clearValue = {.depthStencil = {.depth = 0.f, .stencil = 0}},
             });
 
             depthFormat = attachment->GetFormat();
@@ -198,7 +198,7 @@ namespace Engine
 
         vertexInputState.attributes[2].location = 2;
         vertexInputState.attributes[2].binding = 0;
-        vertexInputState.attributes[2].format = VK_FORMAT_R32G32B32_SFLOAT;
+        vertexInputState.attributes[2].format = VK_FORMAT_R32G32_SFLOAT;
         vertexInputState.attributes[2].offset = offsetof(Vertex, uv);
 
         vertexInputState.bindings.resize(1);
@@ -213,7 +213,7 @@ namespace Engine
             DrawOpaques(shader);
             break;
         case RenderGeometryType::Transparent:
-            DrawTransparents();
+            DrawTransparents(shader);
             break;
         }
     }
@@ -223,12 +223,12 @@ namespace Engine
         glm::vec3 direction;
         float depthBias;
         float normalBias;
-        glm::mat4 viewProjection;
     };
 
     struct ModelUniform
     {
         glm::mat4 localToWorldMatrix;
+        glm::mat4 viewProjection;
     };
 
     struct PbrPushConstant
@@ -243,7 +243,7 @@ namespace Engine
     {
         auto shaders = shaderCache.Get("shadowmap", {}, ShaderStage::Vertex);
 
-        auto& layout = renderContext.GetDevice().GetResourceCache().RequestPipelineLayout({ &std::get<0>(shaders) });
+        auto& layout = renderContext.GetDevice().GetResourceCache().RequestPipelineLayout({ std::get<0>(shaders) });
 
         commandBuffer.BindPipelineLayout(layout);
 
@@ -269,15 +269,19 @@ namespace Engine
 
         auto settings = Renderer::Get().GetSettings();
 
-        auto view = glm::lookAt(lightDirection, glm::vec3{ 0 }, glm::vec3{ 0, 1, 0 });
-        auto projection = glm::ortho(-25.f, 25.f, -25.f, 25.f, -25.f, 25.f);
+        auto view = glm::lookAt(-lightDirection, glm::vec3{ 0 }, glm::vec3{ 0, 1, 0 });
+
+        Camera camera;
+        camera.SetOrthographic(50, -25.f, 25.f);
+
+        auto projection = camera.GetProjection();
+
 
         LightPushConstant pushConstant
         {
-            .direction = -glm::normalize(glm::vec3(view[2])),
-            .depthBias = -settings.shadow.depthBias * 50.f / 2048.f,
-            .normalBias = -settings.shadow.normalBias * 50.f / 2048.f,
-            .viewProjection = projection * view,
+            .direction = lightDirection,
+            .depthBias = settings.shadow.depthBias * camera.GetSize() / 2048.f,
+            .normalBias = settings.shadow.normalBias * camera.GetSize() / 2048.f,
         };
 
         commandBuffer.PushConstants(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(LightPushConstant), &pushConstant);
@@ -287,11 +291,11 @@ namespace Engine
         for (const auto& opaque : batcher.GetOpaques())
         {
             ModelUniform uniform{
-                .localToWorldMatrix = opaque.transform
+                .localToWorldMatrix = opaque.transform,
+                .viewProjection = projection * view,
             };
 
-            auto allocation = frame.RequestBufferAllocation(Vulkan::BufferUsageFlags::UNIFORM, sizeof(ModelUniform));
-            allocation.SetData(&uniform);
+            BindUniformBuffer(&uniform, sizeof(ModelUniform), 0, 0);
 
             opaque.primitive->Draw(commandBuffer);
         }
@@ -301,15 +305,15 @@ namespace Engine
     {
         for (const auto& opaque : batcher.GetOpaques())
         {
-            UpdateModelUniform(commandBuffer, opaque.transform, *opaque.material);
-
             SetupShader(shader, *opaque.material);
+
+            UpdateModelUniform(commandBuffer, opaque.transform, *opaque.material);
 
             opaque.primitive->Draw(commandBuffer);
         }
     }
 
-    void VulkanRenderGraphCommand::DrawTransparents()
+    void VulkanRenderGraphCommand::DrawTransparents(std::string_view shader)
     {
         Vulkan::ColorBlendState colorBlendState{};
         colorBlendState.attachments.push_back({
@@ -318,30 +322,22 @@ namespace Engine
 
         commandBuffer.SetColorBlendState(colorBlendState);
 
-        auto& transparents = batcher.GetTransparents();
-
-        // Draw transparent objects back to front
-        for (auto transparent = transparents.rbegin(); transparent != transparents.rend(); transparent++)
+        for (const auto& transparent : batcher.GetTransparents())
         {
-            auto material = GetMaterialFromPrimitive(*transparent->primitive);
+            SetupShader(shader, *transparent.material);
 
-            UpdateModelUniform(commandBuffer, transparent->transform, *transparent->material);
+            UpdateModelUniform(commandBuffer, transparent.transform, *transparent.material);
 
-            transparent->primitive->Draw(commandBuffer);
+            transparent.primitive->Draw(commandBuffer);
         }
     }
 
     void VulkanRenderGraphCommand::UpdateModelUniform(Vulkan::CommandBuffer& commandBuffer, const glm::mat4& matrix, const Material& material)
     {
-        auto& frame = renderContext.GetCurrentFrame();
-
         ModelUniform uniform{};
         uniform.localToWorldMatrix = matrix;
 
-        auto allocation = frame.RequestBufferAllocation(Vulkan::BufferUsageFlags::UNIFORM, sizeof(ModelUniform));
-        allocation.SetData(&uniform);
-
-        commandBuffer.BindBuffer(allocation.GetBuffer(), allocation.GetOffset(), allocation.GetSize(), 0, 1, 0);
+        BindUniformBuffer(&uniform, sizeof(ModelUniform), 0, 1);
 
         if (auto albedo = ResourceManager::Get().LoadResource<Texture>(material.GetAlbedoTexture()))
         {
@@ -365,7 +361,7 @@ namespace Engine
 
         auto shaders = shaderCache.Get(name, variant, ShaderStage::Vertex, ShaderStage::Fragment);
 
-        auto& layout = renderContext.GetDevice().GetResourceCache().RequestPipelineLayout({&std::get<0>(shaders), &std::get<1>(shaders)});
+        auto& layout = renderContext.GetDevice().GetResourceCache().RequestPipelineLayout({std::get<0>(shaders), std::get<1>(shaders)});
 
         commandBuffer.BindPipelineLayout(layout);
 
@@ -381,8 +377,6 @@ namespace Engine
 
             commandBuffer.PushConstants(VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PbrPushConstant), &pushConstant);
         }
-
-        commandBuffer.FlushDescriptorSet(0);
     }
 
     void VulkanRenderGraphCommand::Blit(std::string_view shader)
@@ -391,11 +385,9 @@ namespace Engine
 
         auto shaders = shaderCache.Get(shader, {}, ShaderStage::Vertex, ShaderStage::Fragment);
 
-        auto& layout = renderContext.GetDevice().GetResourceCache().RequestPipelineLayout({ &std::get<0>(shaders), &std::get<1>(shaders) });
+        auto& layout = renderContext.GetDevice().GetResourceCache().RequestPipelineLayout({ std::get<0>(shaders), std::get<1>(shaders) });
 
         commandBuffer.BindPipelineLayout(layout);
-
-        commandBuffer.FlushDescriptorSet(0);
 
         commandBuffer.Draw(3, 1, 0, 0);
     }

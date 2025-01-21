@@ -64,6 +64,24 @@ namespace Engine {
 	{
 		auto lastTime = std::chrono::high_resolution_clock::now();
 
+		//ResourceManager().Get().ImportResource("C:/Users/Joao Comini/Documents/Sponza/sponza_small.glb");
+
+		auto sponza = ResourceManager::Get().LoadResource<Scene>(6027400946597176494);
+		scene->Add(*sponza);
+
+		auto light = scene->CreateEntity();
+		scene->AddComponent<Component::DirectionalLight>(light);
+
+		auto query = scene->Query<Component::Transform, Component::MeshRender>();
+
+		for (auto entity : query)
+		{
+			auto [transform, _] = query.GetComponent(entity);
+
+			transform.scale = glm::vec3{ 0.01, 0.01, 0.01 };
+
+		}
+
 		while (running)
 		{
 			window->Update();
@@ -73,6 +91,8 @@ namespace Engine {
 			lastTime = currentTime;
 
 			OnUpdate(timestep.count());
+
+			scene->GetComponent<Component::Transform>(light).rotation *= glm::quat(glm::vec3(glm::radians(5.f) * timestep.count(), 0.f, 0.0f));
 
 			scene->Update();
 

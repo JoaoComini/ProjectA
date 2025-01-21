@@ -85,7 +85,7 @@ namespace Engine
 	{
 		auto sort = [](const RenderGeometry& a, const RenderGeometry& b)
 		{
-			return a.distance < b.distance;
+			return a.distance > b.distance;
 		};
 
 		std::sort(transparents.begin(), transparents.end(), sort);

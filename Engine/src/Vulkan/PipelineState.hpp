@@ -78,8 +78,6 @@ namespace Vulkan
 		void SetPipelineRenderingState(const PipelineRenderingState& state);
 		void SetColorBlendState(const ColorBlendState& state);
 
-		void SetSubpassIndex(uint32_t index);
-
 		void ClearDirty();
 		void Reset();
 
@@ -92,8 +90,6 @@ namespace Vulkan
 		const DepthStencilState& GetDepthStencilState() const;
 		const PipelineRenderingState& GetPipelineRenderingState() const;
 		const ColorBlendState& GetColorBlendState() const;
-
-		uint32_t GetSubpassIndex() const;
 
 		bool IsDirty() const;
 
@@ -109,8 +105,6 @@ namespace Vulkan
 		DepthStencilState depthStencil{};
 		PipelineRenderingState pipelineRendering{};
 		ColorBlendState colorBlend{};
-
-		uint32_t subpassIndex{ 0 };
 	};
 }
 

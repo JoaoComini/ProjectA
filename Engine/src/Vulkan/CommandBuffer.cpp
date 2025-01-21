@@ -120,6 +120,8 @@ namespace Vulkan
 
 	void CommandBuffer::Flush()
 	{
+		FlushDescriptorSets();
+
 		if (!pipelineState.IsDirty())
 		{
 			return;
@@ -153,17 +155,20 @@ namespace Vulkan
 		imageBindings[set][binding][arrayElement] = { sampler.GetHandle(), imageView.GetHandle(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
 	}
 
-	void CommandBuffer::FlushDescriptorSet(uint32_t set)
+	void CommandBuffer::FlushDescriptorSets()
 	{
 		assert(pipelineState.GetPipelineLayout());
 
-		auto* layout = pipelineState.GetPipelineLayout();
-		auto& descritorSetLayout = layout->GetDescriptorSetLayout(set);
+		for (int set = 0; set < std::max(bufferBindings.size(), imageBindings.size()); set++)
+		{
+			auto* layout = pipelineState.GetPipelineLayout();
+			auto& descritorSetLayout = layout->GetDescriptorSetLayout(set);
 
-		auto* frame = commandPool.GetRenderFrame();
-		auto descriptorSet = frame->RequestDescriptorSet(descritorSetLayout, bufferBindings[set], imageBindings[set]);
+			auto* frame = commandPool.GetRenderFrame();
+			auto descriptorSet = frame->RequestDescriptorSet(descritorSetLayout, bufferBindings[set], imageBindings[set]);
 
-		BindDescriptorSet(descriptorSet);
+			BindDescriptorSet(descriptorSet);
+		}
 	}
 
 	void CommandBuffer::Draw(uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance)

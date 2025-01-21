@@ -33,10 +33,6 @@ void MainMenuBar::Draw()
 			openMetrics = true;
 		});
 
-		MainMenuItem("Environment", [&]() {
-			openEnvironment = true;
-		});
-
 		MainMenuItem("Shadows", [&]() {
 			openShadows = true;
 		});
@@ -56,19 +52,6 @@ void MainMenuBar::Draw()
 		ImGui::Text("Framerate: %.1f FPS", io.Framerate);
 		ImGui::End();
 		
-	}
-
-	if (openEnvironment)
-	{
-		ImGui::Begin("Environment", &openEnvironment);
-
-		auto settings = Engine::Renderer::Get().GetSettings();
-
-		ImGui::DragFloat("Exposure", &settings.hdr.exposure, 0.1);
-			
-		Engine::Renderer::Get().SetSettings(settings);
-
-		ImGui::End();
 	}
 
 	if (openShadows)

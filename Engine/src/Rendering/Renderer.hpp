@@ -13,20 +13,14 @@ namespace Engine
 	class Window;
 	class Scene;
 
-	struct HdrSettings
-	{
-		float exposure{ 1.0 };
-	};
-
 	struct ShadowSettings
 	{
-		float depthBias{ 0.05 };
-		float normalBias{ 0.4 };
+		float depthBias{ 4 };
+		float normalBias{ 0.8 };
 	};
 
 	struct RendererSettings
 	{
-		HdrSettings hdr;
 		ShadowSettings shadow;
 	};
 

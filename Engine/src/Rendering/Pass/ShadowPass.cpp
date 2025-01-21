@@ -37,7 +37,7 @@ namespace Engine
 		{
 			const auto& transform = scene.GetComponent<Component::Transform>(entity);
 
-			auto direction = glm::normalize(transform.rotation * glm::vec3{ 0, 0, 1 });
+			data.lightDirection = glm::normalize(transform.rotation * glm::vec3{ 0, 0, 1 });
 		}
 
 		context.Add<ShadowPassData>(data);

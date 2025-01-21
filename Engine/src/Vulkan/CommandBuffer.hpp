@@ -81,7 +81,7 @@ namespace Vulkan
 		void BindBuffer(const Buffer& buffer, uint32_t offset, uint32_t size, uint32_t set, uint32_t binding, uint32_t arrayElement);
 		void BindImage(const ImageView& imageView, const Sampler& sampler, uint32_t set, uint32_t binding, uint32_t arrayElement);
 		void BindDescriptorSet(VkDescriptorSet descriptorSet);
-		void FlushDescriptorSet(uint32_t set);
+		void FlushDescriptorSets();
 
 		void PushConstants(VkShaderStageFlags stages, uint32_t offset, uint32_t size, void* data);
 
@@ -107,6 +107,5 @@ namespace Vulkan
 		PipelineState pipelineState{};
 		std::map<uint32_t, BindingMap<VkDescriptorBufferInfo>> bufferBindings;
 		std::map<uint32_t, BindingMap<VkDescriptorImageInfo>> imageBindings;
-		//std::map<uint32_t, BindingMap<std::variant<VkDescriptorBufferInfo, VkDescriptorImageInfo>>> bindings;
 	};
 }
