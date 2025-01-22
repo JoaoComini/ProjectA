@@ -6,12 +6,16 @@ namespace Vulkan
 {
     class DescriptorPool;
     class CommandBuffer;
+    class Image;
+    class PipelineLayout;
 }
+
+struct ImGuiIO;
 
 namespace Engine
 {
-    class RenderContext;
     class Window;
+    class Texture;
 
     class Gui : public Singleton<Gui>
     {
@@ -21,10 +25,16 @@ namespace Engine
         ~Gui();
 
         void Begin();
-        void End(Vulkan::CommandBuffer& commandBuffer);
+        void Draw(Vulkan::CommandBuffer& commandBuffer);
 
     private:
-        std::unique_ptr<Vulkan::DescriptorPool> descriptorPool;
+        void UploadFonts(ImGuiIO& io);
+        void LoadShaders();
+
+        std::unique_ptr<Texture> fontTexture;
+
+        Vulkan::PipelineLayout* pipelineLayout{ nullptr };
+
         Window& window;
     };
 };

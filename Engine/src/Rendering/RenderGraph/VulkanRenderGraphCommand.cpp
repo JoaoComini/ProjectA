@@ -161,7 +161,7 @@ namespace Engine
     {
         auto& frame = renderContext.GetCurrentFrame();
 
-        auto allocation = frame.RequestBufferAllocation(Vulkan::BufferUsageFlags::UNIFORM, size);
+        auto allocation = frame.RequestBufferAllocation(Vulkan::BufferUsageFlags::Uniform, size);
         allocation.SetData(data);
 
         commandBuffer.BindBuffer(allocation.GetBuffer(), allocation.GetOffset(), allocation.GetSize(), set, binding, 0);

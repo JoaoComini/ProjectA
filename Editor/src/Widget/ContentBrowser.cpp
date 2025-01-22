@@ -24,17 +24,17 @@ ContentBrowser::ContentBrowser(Vulkan::Device& device, Engine::Scene& scene)
 
 	auto fileIcon = embed::Icons::get("file.png");
 
-	fileIconTexture = importer.LoadDefault(std::vector<uint8_t>{ fileIcon.begin(), fileIcon.end() });
+	/*fileIconTexture = importer.LoadDefault(std::vector<uint8_t>{ fileIcon.begin(), fileIcon.end() });
 	fileIconTexture->CreateVulkanResources(device);
 	fileIconTexture->UploadDataToGpu(device);
-	fileIconDescriptor = ImGui_ImplVulkan_AddTexture(fileIconTexture->GetSampler().GetHandle(), fileIconTexture->GetImageView().GetHandle(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	fileIconDescriptor = ImGui_ImplVulkan_AddTexture(fileIconTexture->GetSampler().GetHandle(), fileIconTexture->GetImageView().GetHandle(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);*/
 
 	auto directoryIcon = embed::Icons::get("directory.png");
 
-	directoryIconTexture = importer.LoadDefault(std::vector<uint8_t>{ directoryIcon.begin(), directoryIcon.end() });
+	/*directoryIconTexture = importer.LoadDefault(std::vector<uint8_t>{ directoryIcon.begin(), directoryIcon.end() });
 	directoryIconTexture->CreateVulkanResources(device);
 	directoryIconTexture->UploadDataToGpu(device);
-	directoryIconDescriptor = ImGui_ImplVulkan_AddTexture(directoryIconTexture->GetSampler().GetHandle(), directoryIconTexture->GetImageView().GetHandle(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	directoryIconDescriptor = ImGui_ImplVulkan_AddTexture(directoryIconTexture->GetSampler().GetHandle(), directoryIconTexture->GetImageView().GetHandle(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);*/
 
 	RefreshResourceTree();
 }
@@ -163,7 +163,7 @@ void ContentBrowser::ContentBrowserDirectory(std::filesystem::path path)
 
 	ImGui::PushID(filename.c_str());
 
-	ContentBrowserItemIcon(filename, directoryIconDescriptor);
+	//ContentBrowserItemIcon(filename, directoryIconDescriptor);
 
 	if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
 	{
@@ -183,7 +183,7 @@ bool ContentBrowser::ContentBrowserFile(std::filesystem::path path, ResourceTree
 
 	ImGui::PushID(filename.c_str());
 
-	ContentBrowserItemIcon(filename, fileIconDescriptor);
+	//ContentBrowserItemIcon(filename, fileIconDescriptor);
 
 	if (ImGui::BeginDragDropSource())
 	{

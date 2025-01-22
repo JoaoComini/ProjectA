@@ -49,8 +49,8 @@ namespace Engine
 
 		std::unique_ptr<Vulkan::CommandPool> commandPool;
 		std::unique_ptr<SemaphorePool> semaphorePool;
-		std::unique_ptr<BufferPool> bufferPool;
 
+		std::unordered_map<Vulkan::BufferUsageFlags, std::unique_ptr<BufferPool>> bufferPools;
 		std::unordered_map<std::size_t, std::unique_ptr<DescriptorPool>> descriptorPools;
 
 		std::unique_ptr<Vulkan::Fence> renderFence;

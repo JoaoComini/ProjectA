@@ -180,6 +180,8 @@ set(
     "${SHADER_SOURCE_DIR}/composition.frag.glsl"
     "${SHADER_SOURCE_DIR}/shadowmap.vert.glsl"
     "${SHADER_SOURCE_DIR}/shadowmap.frag.glsl"
+    "${SHADER_SOURCE_DIR}/imgui.vert.glsl"
+    "${SHADER_SOURCE_DIR}/imgui.frag.glsl"
 )
 
 embed_static(Shaders ${SHADER_SRC_FILES})

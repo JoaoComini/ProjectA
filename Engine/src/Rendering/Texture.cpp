@@ -92,14 +92,14 @@ namespace Engine
 		auto properties = device.GetPhysicalDeviceProperties();
 		VkSamplerCreateInfo samplerInfo{};
 		samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-		samplerInfo.magFilter = VK_FILTER_LINEAR;
-		samplerInfo.minFilter = VK_FILTER_LINEAR;
-		samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-		samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-		samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-		samplerInfo.anisotropyEnable = VK_TRUE;
-		samplerInfo.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
-		samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+		samplerInfo.magFilter = VK_FILTER_NEAREST;
+		samplerInfo.minFilter = VK_FILTER_NEAREST;
+		samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		samplerInfo.anisotropyEnable = VK_FALSE;
+		samplerInfo.maxAnisotropy = 1.0f; // make anisotropy configurable
+		samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_WHITE;
 		samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
 		samplerInfo.maxLod = mipmaps.size();
 
@@ -124,7 +124,7 @@ namespace Engine
 			.Size(size)
 			.Persistent()
 			.SequentialWrite()
-			.BufferUsage(Vulkan::BufferUsageFlags::STAGING)
+			.BufferUsage(Vulkan::BufferUsageFlags::Staging)
 			.Build(device);
 
 		staging->SetData(data.data(), size);
@@ -136,14 +136,11 @@ namespace Engine
 		subresourceRange.baseMipLevel = 0;
 		subresourceRange.levelCount = image->GetMipLevels();
 
-		device.OneTimeSubmit([&](auto& commandBuffer) {
-			commandBuffer.SetImageLayout(*image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresourceRange);
-		});
-
 		std::vector<VkBufferImageCopy> regions;
 		PrepareBufferCopyRegions(regions);
 
 		device.OneTimeSubmit([&](auto& commandBuffer) {
+			commandBuffer.SetImageLayout(*image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresourceRange);
 			commandBuffer.CopyBufferToImage(*staging, *image, regions);
 			commandBuffer.SetImageLayout(*image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresourceRange);
 		});

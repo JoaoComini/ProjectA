@@ -22,7 +22,7 @@ namespace Engine
             .Persistent()
             .AllowTransfer()
             .SequentialWrite()
-            .BufferUsage(Vulkan::BufferUsageFlags::VERTEX)
+            .BufferUsage(Vulkan::BufferUsageFlags::Vertex)
             .Build(device);
 
         vertexBuffer->SetData(vertices.data(), sizeof(Vertex) * vertexCount);
@@ -57,7 +57,7 @@ namespace Engine
             .Persistent()
             .AllowTransfer()
             .SequentialWrite()
-            .BufferUsage(Vulkan::BufferUsageFlags::INDEX)
+            .BufferUsage(Vulkan::BufferUsageFlags::Index)
             .Build(device);
 
         indexBuffer->SetData(indices.data(), size);

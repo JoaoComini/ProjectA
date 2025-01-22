@@ -13,7 +13,9 @@ namespace Engine
 
 		renderFence = std::make_unique<Vulkan::Fence>(device);
 
-		bufferPool = std::make_unique<BufferPool>(device, Vulkan::BufferUsageFlags::UNIFORM, BUFFER_POOL_BLOCK_SIZE);
+		bufferPools.emplace(Vulkan::BufferUsageFlags::Uniform, std::make_unique<BufferPool>(device, Vulkan::BufferUsageFlags::Uniform, BUFFER_POOL_BLOCK_SIZE));
+		bufferPools.emplace(Vulkan::BufferUsageFlags::Vertex, std::make_unique<BufferPool>(device, Vulkan::BufferUsageFlags::Vertex, BUFFER_POOL_BLOCK_SIZE));
+		bufferPools.emplace(Vulkan::BufferUsageFlags::Index, std::make_unique<BufferPool>(device, Vulkan::BufferUsageFlags::Index, BUFFER_POOL_BLOCK_SIZE));
 	}
 
 	void RenderFrame::Reset()
@@ -24,9 +26,12 @@ namespace Engine
 		commandPool->Reset();
 		semaphorePool->Reset();
 
-		bufferPool->Reset();
-
 		for (auto& [_, pool]:descriptorPools)
+		{
+			pool->Reset();
+		}
+
+		for (auto& [_, pool] : bufferPools)
 		{
 			pool->Reset();
 		}
@@ -113,7 +118,16 @@ namespace Engine
 
 	BufferAllocation RenderFrame::RequestBufferAllocation(Vulkan::BufferUsageFlags usage, uint32_t size)
 	{
-		return bufferPool->Allocate(size);
+		auto it = bufferPools.find(usage);
+
+		if (it == bufferPools.end())
+		{
+			return {};
+		}
+
+		auto& pool = it->second;
+
+		return pool->Allocate(size);
 	}
 
 	void RenderFrame::SetTarget(std::unique_ptr<RenderTarget> target)
