@@ -101,8 +101,6 @@ namespace Engine
 
 	void RenderContext::End(Vulkan::CommandBuffer& commandBuffer)
 	{
-		//commandBuffer.EndRendering();
-
 		auto& frame = GetCurrentFrame();
 		auto& attachment = frame.GetTarget().GetColorAttachment(0);
 

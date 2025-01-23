@@ -13,6 +13,7 @@
 #include "Core/Window.hpp"
 
 #include <imgui.h>
+#include <backends/imgui_impl_glfw.h>
 #include <ImGuizmo.h>
 
 namespace Engine
@@ -28,12 +29,15 @@ namespace Engine
 
 		ImGui::StyleColorsDark();
 
+		ImGui_ImplGlfw_InitForOther(static_cast<GLFWwindow*>(window.GetHandle()), true);
+
 		UploadFonts(io);
 		LoadShaders();
     }
 
 	Gui::~Gui()
 	{
+		ImGui_ImplGlfw_Shutdown();
 		ImGui::DestroyContext();
 	}
 
@@ -68,7 +72,6 @@ namespace Engine
 	{
 		auto& device = Renderer::Get().GetRenderContext().GetDevice();
 
-
 		auto vertexBytes = embed::Shaders::get("imgui.vert.glsl");
 		auto fragBytes = embed::Shaders::get("imgui.frag.glsl");
 
@@ -85,12 +88,10 @@ namespace Engine
 
 	void Gui::Begin()
 	{
-		ImGuiIO& io = ImGui::GetIO();
-		auto [height, width] = window.GetFramebufferSize();
-
-		io.DisplaySize = ImVec2((float)width, (float)height);
-
+		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
+		ImGuizmo::BeginFrame();
+		ImGuizmo::SetDrawlist(ImGui::GetBackgroundDrawList());
 	}
 
 	void Gui::Draw(Vulkan::CommandBuffer& commandBuffer)
@@ -232,5 +233,12 @@ namespace Engine
 		}
 
 		commandBuffer.EndRendering();
+	}
+
+	bool Gui::OnInputEvent(const InputEvent& event)
+	{
+		ImGuiIO& io = ImGui::GetIO();
+
+		return io.WantCaptureKeyboard || io.WantCaptureMouse;
 	}
 };

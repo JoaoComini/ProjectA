@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Window.hpp"
+#include "Gui.hpp"
 #include "Scene/Scene.hpp"
 #include "Scripting/ScriptRunner.hpp"
 #include "Physics/PhysicsRunner.hpp"
@@ -42,6 +43,7 @@ namespace Engine {
 		virtual void OnUpdate(float timestep) {}
 		virtual void OnGui() {}
 		virtual void OnWindowResize(int width, int height);
+		virtual void OnInputEvent(const InputEvent& event) {}
 
 		void StartScene();
 		void UpdateScene(float timestep);
@@ -55,6 +57,7 @@ namespace Engine {
 		void SetCameraAspectRatio(Entity::Id entity);
 	private:
 		std::unique_ptr<Window> window;
+		std::unique_ptr<Gui> gui;
 		std::unique_ptr<Scene> scene;
 		std::unique_ptr<ScriptRunner> scriptRunner;
 		std::unique_ptr<PhysicsRunner> physicsRunner;

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Common/Singleton.hpp"
+#include "InputEvent.hpp"
 
 namespace Vulkan
 {
@@ -17,7 +17,7 @@ namespace Engine
     class Window;
     class Texture;
 
-    class Gui : public Singleton<Gui>
+    class Gui
     {
 
     public:
@@ -26,6 +26,8 @@ namespace Engine
 
         void Begin();
         void Draw(Vulkan::CommandBuffer& commandBuffer);
+
+        bool OnInputEvent(const InputEvent& event);
 
     private:
         void UploadFonts(ImGuiIO& io);

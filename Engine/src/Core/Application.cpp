@@ -8,8 +8,6 @@
 #include "Scene/Scene.hpp"
 #include "Scene/Components.hpp"
 
-#include "Rendering/Gui.hpp"
-
 #include "Resource/ResourceManager.hpp"
 #include "Resource/ResourceRegistry.hpp"
 
@@ -27,6 +25,17 @@ namespace Engine {
 
 		window->OnClose([&]() {
 			running = false;
+		});
+
+		window->OnInputEvent([this](const auto& event) {
+			bool captured = gui->OnInputEvent(event);
+
+			if (captured)
+			{
+				return;
+			}
+
+			OnInputEvent(event);
 		});
 
 		window->OnResize(
@@ -47,16 +56,19 @@ namespace Engine {
 		physicsRunner = std::make_unique<PhysicsRunner>(*scene);
 
 		Renderer::Create(*window, *scene);
-		Gui::Create(*window);
 		ResourceManager::Create();
 		ResourceRegistry::Create();
 		Input::Create<WindowInput>(*window);
+
+		gui = std::make_unique<Gui>(*window);
 
 		running = true;
 	}
 
 	Application::~Application()
 	{
+		gui.reset();
+
 		Container::TearDown();
 	}
 
@@ -80,11 +92,11 @@ namespace Engine {
 
 			Renderer::Get().Draw();
 
-			Gui::Get().Begin();
+			gui->Begin();
 
 			OnGui();
 
-			Gui::Get().Draw(commandBuffer);
+			gui->Draw(commandBuffer);
 
 			Renderer::Get().End();
 		}

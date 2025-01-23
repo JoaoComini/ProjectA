@@ -4,6 +4,8 @@
 
 namespace Engine {
 
+    KeyCode GlfwKeyToKeyCode(int key);
+
     Window::Window(std::string title, int width, int height, bool resizable)
     {
         glfwInit();
@@ -17,6 +19,7 @@ namespace Engine {
 
         glfwSetFramebufferSizeCallback(handle, [](GLFWwindow* window, int width, int height) {
             Window* pointer = (Window*)glfwGetWindowUserPointer(window);
+
             if (pointer->onResizeFn)
             {
                 pointer->onResizeFn(width, height);
@@ -25,20 +28,58 @@ namespace Engine {
 
         glfwSetKeyCallback(handle, [](GLFWwindow* window, int key, int scancode, int action, int mods) {
             Window* pointer = (Window*)glfwGetWindowUserPointer(window);
-            if (pointer->onKeyFn)
-            {
-                pointer->onKeyFn(key, action);
-            }
+
+            pointer->onInputEventFn(KeyInputEvent{
+                GlfwKeyToKeyCode(key),
+                static_cast<KeyAction>(action)
+            });
+        });
+
+        glfwSetMouseButtonCallback(handle, [](GLFWwindow* window, int button, int action, int mods) {
+            Window* pointer = (Window*)glfwGetWindowUserPointer(window);
+
+            pointer->onInputEventFn(MouseButtonInputEvent{
+                static_cast<MouseButton>(button),
+                static_cast<MouseButtonAction>(action)
+            });
+        });
+
+        glfwSetCursorPosCallback(handle, [](GLFWwindow* window, double x, double y) {
+            Window* pointer = (Window*)glfwGetWindowUserPointer(window);
+
+            pointer->onInputEventFn(MouseMoveInputEvent{ static_cast<float>(x), static_cast<float>(y) });
         });
 
         glfwSetWindowCloseCallback(handle, [](GLFWwindow* window) {
             Window* pointer = (Window*)glfwGetWindowUserPointer(window);
+
             if (pointer->onCloseFn)
             {
                 pointer->onCloseFn();
             }
         });
 
+        cursors[WindowCursor::Arrow] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
+        cursors[WindowCursor::TextInput] = glfwCreateStandardCursor(GLFW_IBEAM_CURSOR);
+        cursors[WindowCursor::ResizeAll] = glfwCreateStandardCursor(GLFW_CROSSHAIR_CURSOR);
+        cursors[WindowCursor::ResizeNS] = glfwCreateStandardCursor(GLFW_VRESIZE_CURSOR);
+        cursors[WindowCursor::ResizeEW] = glfwCreateStandardCursor(GLFW_HRESIZE_CURSOR);
+        cursors[WindowCursor::ResizeNESW] = glfwCreateStandardCursor(GLFW_RESIZE_NESW_CURSOR);
+        cursors[WindowCursor::ResizeNWSE] = glfwCreateStandardCursor(GLFW_RESIZE_NWSE_CURSOR);
+        cursors[WindowCursor::Hand] = glfwCreateStandardCursor(GLFW_HAND_CURSOR);
+        cursors[WindowCursor::NotAllowed] = glfwCreateStandardCursor(GLFW_NOT_ALLOWED_CURSOR);
+    }
+
+    void Window::SetCursor(WindowCursor cursor)
+    {
+        auto cursorIt = cursors.find(cursor);
+
+        if (cursorIt == cursors.end())
+        {
+            return;
+        }
+
+        glfwSetCursor(handle, cursorIt->second);
     }
 
     Window::~Window()
@@ -82,14 +123,14 @@ namespace Engine {
         this->onResizeFn = callback;
     }
 
-    void Window::OnKey(std::function<void(int, int)> callback)
-    {
-        this->onKeyFn = callback;
-    }
-
     void Window::OnClose(std::function<void()> callback)
     {
         this->onCloseFn = callback;
+    }
+
+    void Window::OnInputEvent(std::function<void(const InputEvent&)> func)
+    {
+        onInputEventFn = func;
     }
 
     std::unique_ptr<Vulkan::Surface> Window::CreateSurface(Vulkan::Instance& instance)
@@ -128,6 +169,63 @@ namespace Engine {
     {
         this->title = title;
         return *this;
+    }
+
+    KeyCode GlfwKeyToKeyCode(int key)
+    {
+        switch (key)
+        {
+        case GLFW_KEY_TAB:         return KeyCode::Tab;
+        case GLFW_KEY_LEFT_SHIFT:  return KeyCode::LeftShift;
+        case GLFW_KEY_LEFT_CONTROL:return KeyCode::LeftControl;
+        case GLFW_KEY_SPACE:       return KeyCode::Space;
+        case GLFW_KEY_ENTER:       return KeyCode::Enter;
+        case GLFW_KEY_ESCAPE:      return KeyCode::Escape;
+        case GLFW_KEY_BACKSPACE:   return KeyCode::Backspace;
+        case GLFW_KEY_DELETE:      return KeyCode::Delete;
+
+        case GLFW_KEY_A: return KeyCode::A;
+        case GLFW_KEY_B: return KeyCode::B;
+        case GLFW_KEY_C: return KeyCode::C;
+        case GLFW_KEY_D: return KeyCode::D;
+        case GLFW_KEY_E: return KeyCode::E;
+        case GLFW_KEY_F: return KeyCode::F;
+        case GLFW_KEY_G: return KeyCode::G;
+        case GLFW_KEY_H: return KeyCode::H;
+        case GLFW_KEY_I: return KeyCode::I;
+        case GLFW_KEY_J: return KeyCode::J;
+        case GLFW_KEY_K: return KeyCode::K;
+        case GLFW_KEY_L: return KeyCode::L;
+        case GLFW_KEY_M: return KeyCode::M;
+        case GLFW_KEY_N: return KeyCode::N;
+        case GLFW_KEY_O: return KeyCode::O;
+        case GLFW_KEY_P: return KeyCode::P;
+        case GLFW_KEY_Q: return KeyCode::Q;
+        case GLFW_KEY_R: return KeyCode::R;
+        case GLFW_KEY_S: return KeyCode::S;
+        case GLFW_KEY_T: return KeyCode::T;
+        case GLFW_KEY_U: return KeyCode::U;
+        case GLFW_KEY_V: return KeyCode::V;
+        case GLFW_KEY_W: return KeyCode::W;
+        case GLFW_KEY_X: return KeyCode::X;
+        case GLFW_KEY_Y: return KeyCode::Y;
+        case GLFW_KEY_Z: return KeyCode::Z;
+
+        case GLFW_KEY_F1:  return KeyCode::F1;
+        case GLFW_KEY_F2:  return KeyCode::F2;
+        case GLFW_KEY_F3:  return KeyCode::F3;
+        case GLFW_KEY_F4:  return KeyCode::F4;
+        case GLFW_KEY_F5:  return KeyCode::F5;
+        case GLFW_KEY_F6:  return KeyCode::F6;
+        case GLFW_KEY_F7:  return KeyCode::F7;
+        case GLFW_KEY_F8:  return KeyCode::F8;
+        case GLFW_KEY_F9:  return KeyCode::F9;
+        case GLFW_KEY_F10: return KeyCode::F10;
+        case GLFW_KEY_F11: return KeyCode::F11;
+        case GLFW_KEY_F12: return KeyCode::F12;
+
+        default: return KeyCode::Unknown;
+        }
     }
 
 }
