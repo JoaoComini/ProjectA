@@ -23,7 +23,7 @@ void EditorCamera::HandleMouseInput(Engine::Input& input, float timestep)
     glm::vec2 mouseDelta = (mousePosition - currentMousePosition) * timestep;
     currentMousePosition = mousePosition;
 
-    if (input.IsMouseButtonDown(Engine::MouseCode::ButtonRight))
+    if (input.IsMouseButtonDown(Engine::MouseButton::Right))
     {
         float sign = UpVector().y < 0 ? -1.0f : 1.0f;
 
@@ -32,9 +32,14 @@ void EditorCamera::HandleMouseInput(Engine::Input& input, float timestep)
     }
 }
 
+void EditorCamera::OnInputEvent(const Engine::InputEvent& event)
+{
+
+}
+
 void EditorCamera::HandleKeyboardInput(Engine::Input& input, float timestep)
 {
-    float speed = 25 * timestep;
+    float speed = 5 * timestep;
 
     if (input.IsKeyDown(Engine::KeyCode::W))
     {

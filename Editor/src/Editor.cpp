@@ -193,6 +193,10 @@ namespace Engine
 		camera->SetAspectRatio((float)width / height);
 	}
 
+	void Editor::OnInputEvent(const InputEvent& event)
+	{
+		camera->OnInputEvent(event);
+	}
 
 	void Editor::NewScene()
 	{

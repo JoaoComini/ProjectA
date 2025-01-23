@@ -25,7 +25,7 @@ namespace Engine
         void OnUpdate(float timestep) override;
         void OnGui() override;
         void OnWindowResize(int width, int height) override;
-
+        void OnInputEvent(const InputEvent& event) override;
     private:
         void DrawViewportDragDrop(ImGuiID dockId);
 

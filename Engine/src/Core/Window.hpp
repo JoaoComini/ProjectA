@@ -29,6 +29,13 @@ namespace Engine {
         NotAllowed
     };
 
+    struct WindowCallbacks
+    {
+        std::function<void(int, int)> onResize{ nullptr };
+        std::function<void()> onClose{ nullptr };
+        std::function<void(const InputEvent&)> onInputEvent{ nullptr };
+    };
+
     class Window
     {
     public:
@@ -39,8 +46,6 @@ namespace Engine {
         bool ShouldClose();
         void Update();
         void WaitForFocus();
-
-        void SetCursor(WindowCursor cursor);
 
         void OnResize(std::function<void(int, int)> callback);
         void OnClose(std::function<void()> callback);
@@ -54,12 +59,7 @@ namespace Engine {
 
     private:
         GLFWwindow* handle;
-        std::function<void(int, int)> onResizeFn = nullptr;
-        std::function<void()> onCloseFn = nullptr;
-        std::function<void(const InputEvent&)> onInputEventFn{ nullptr };
-
-        std::unordered_map<WindowCursor, GLFWcursor*> cursors;
-
+        WindowCallbacks callbacks;
 
         friend class WindowBuilder;
     };

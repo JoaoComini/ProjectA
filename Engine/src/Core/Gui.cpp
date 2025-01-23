@@ -66,6 +66,8 @@ namespace Engine
 		fontTexture = std::make_unique<Texture>(std::move(bytes), std::move(mipmaps));
 		fontTexture->CreateVulkanResources(device);
 		fontTexture->UploadDataToGpu(device);
+
+		io.Fonts->SetTexID(fontTexture.get());
 	}
 
 	void Gui::LoadShaders()
@@ -170,8 +172,6 @@ namespace Engine
 
 		commandBuffer.BindPipelineLayout(*pipelineLayout);
 
-		commandBuffer.BindImage(fontTexture->GetImageView(), fontTexture->GetSampler(), 0, 0, 0);
-
 		auto& io = ImGui::GetIO();
 
 		auto transform = glm::translate(glm::mat4{ 1 }, glm::vec3{ -1.0f, -1.0f, 0.0f });
@@ -226,6 +226,10 @@ namespace Engine
 				scissor.extent.height = static_cast<uint32_t>(cmd->ClipRect.w - cmd->ClipRect.y);
 
 				commandBuffer.SetScissor({scissor});
+
+				auto* texture = static_cast<Texture*>(cmd->GetTexID());
+
+				commandBuffer.BindImage(texture->GetImageView(), texture->GetSampler(), 0, 0, 0);
 				commandBuffer.DrawIndexed(cmd->ElemCount, 1, index, vertex, 0);
 				index += cmd->ElemCount;
 			}

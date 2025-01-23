@@ -12,6 +12,8 @@ public:
 	void HandleKeyboardInput(Engine::Input& input, float timestep);
 	void HandleMouseInput(Engine::Input& input, float timestep);
 
+	void OnInputEvent(const Engine::InputEvent& event);
+
 	glm::mat4 GetTransform();
 
 private:

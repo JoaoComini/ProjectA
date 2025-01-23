@@ -20,16 +20,13 @@ namespace Engine {
         glfwSetFramebufferSizeCallback(handle, [](GLFWwindow* window, int width, int height) {
             Window* pointer = (Window*)glfwGetWindowUserPointer(window);
 
-            if (pointer->onResizeFn)
-            {
-                pointer->onResizeFn(width, height);
-            }
+            pointer->callbacks.onResize(width, height);
         });
 
         glfwSetKeyCallback(handle, [](GLFWwindow* window, int key, int scancode, int action, int mods) {
             Window* pointer = (Window*)glfwGetWindowUserPointer(window);
 
-            pointer->onInputEventFn(KeyInputEvent{
+            pointer->callbacks.onInputEvent(KeyInputEvent{
                 GlfwKeyToKeyCode(key),
                 static_cast<KeyAction>(action)
             });
@@ -38,7 +35,7 @@ namespace Engine {
         glfwSetMouseButtonCallback(handle, [](GLFWwindow* window, int button, int action, int mods) {
             Window* pointer = (Window*)glfwGetWindowUserPointer(window);
 
-            pointer->onInputEventFn(MouseButtonInputEvent{
+            pointer->callbacks.onInputEvent(MouseButtonInputEvent{
                 static_cast<MouseButton>(button),
                 static_cast<MouseButtonAction>(action)
             });
@@ -47,39 +44,17 @@ namespace Engine {
         glfwSetCursorPosCallback(handle, [](GLFWwindow* window, double x, double y) {
             Window* pointer = (Window*)glfwGetWindowUserPointer(window);
 
-            pointer->onInputEventFn(MouseMoveInputEvent{ static_cast<float>(x), static_cast<float>(y) });
+            pointer->callbacks.onInputEvent(MouseMoveInputEvent{
+                static_cast<float>(x),
+                static_cast<float>(y) 
+            });
         });
 
         glfwSetWindowCloseCallback(handle, [](GLFWwindow* window) {
             Window* pointer = (Window*)glfwGetWindowUserPointer(window);
 
-            if (pointer->onCloseFn)
-            {
-                pointer->onCloseFn();
-            }
+            pointer->callbacks.onClose();
         });
-
-        cursors[WindowCursor::Arrow] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
-        cursors[WindowCursor::TextInput] = glfwCreateStandardCursor(GLFW_IBEAM_CURSOR);
-        cursors[WindowCursor::ResizeAll] = glfwCreateStandardCursor(GLFW_CROSSHAIR_CURSOR);
-        cursors[WindowCursor::ResizeNS] = glfwCreateStandardCursor(GLFW_VRESIZE_CURSOR);
-        cursors[WindowCursor::ResizeEW] = glfwCreateStandardCursor(GLFW_HRESIZE_CURSOR);
-        cursors[WindowCursor::ResizeNESW] = glfwCreateStandardCursor(GLFW_RESIZE_NESW_CURSOR);
-        cursors[WindowCursor::ResizeNWSE] = glfwCreateStandardCursor(GLFW_RESIZE_NWSE_CURSOR);
-        cursors[WindowCursor::Hand] = glfwCreateStandardCursor(GLFW_HAND_CURSOR);
-        cursors[WindowCursor::NotAllowed] = glfwCreateStandardCursor(GLFW_NOT_ALLOWED_CURSOR);
-    }
-
-    void Window::SetCursor(WindowCursor cursor)
-    {
-        auto cursorIt = cursors.find(cursor);
-
-        if (cursorIt == cursors.end())
-        {
-            return;
-        }
-
-        glfwSetCursor(handle, cursorIt->second);
     }
 
     Window::~Window()
@@ -120,17 +95,17 @@ namespace Engine {
 
     void Window::OnResize(std::function<void(int, int)> callback)
     {
-        this->onResizeFn = callback;
+        callbacks.onResize = callback;
     }
 
     void Window::OnClose(std::function<void()> callback)
     {
-        this->onCloseFn = callback;
+        callbacks.onClose = callback;
     }
 
     void Window::OnInputEvent(std::function<void(const InputEvent&)> func)
     {
-        onInputEventFn = func;
+        callbacks.onInputEvent = func;
     }
 
     std::unique_ptr<Vulkan::Surface> Window::CreateSurface(Vulkan::Instance& instance)
