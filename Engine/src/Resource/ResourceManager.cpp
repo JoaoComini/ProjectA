@@ -16,7 +16,7 @@
 
 namespace Engine
 {
-    ResourceManager::ResourceManager(): device(Renderer::Get().GetRenderContext().GetDevice())
+    ResourceManager::ResourceManager(RenderContext& renderContext): device(renderContext.GetDevice())
     {
     }
 

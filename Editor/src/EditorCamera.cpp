@@ -29,6 +29,8 @@ void EditorCamera::HandleMouseInput(Engine::Input& input, float timestep)
 
         yaw += mouseDelta.x;
         pitch += mouseDelta.y;
+
+        SetRotation(glm::quat(glm::vec3{ -pitch, -yaw, 0.0f }));
     }
 }
 
@@ -40,6 +42,8 @@ void EditorCamera::OnInputEvent(const Engine::InputEvent& event)
 void EditorCamera::HandleKeyboardInput(Engine::Input& input, float timestep)
 {
     float speed = 5 * timestep;
+
+    glm::vec3 position = GetPosition();
 
     if (input.IsKeyDown(Engine::KeyCode::W))
     {
@@ -70,11 +74,13 @@ void EditorCamera::HandleKeyboardInput(Engine::Input& input, float timestep)
     {
         position -= UpVector() * speed;
     }
+
+    SetPosition(position);
 }
 
 glm::mat4 EditorCamera::GetTransform()
 {
-    return glm::translate(glm::mat4(1.0f), position)
+    return glm::translate(glm::mat4(1.0f), GetPosition())
         * glm::mat4_cast(GetRotation());
 }
 
@@ -91,9 +97,4 @@ glm::vec3 EditorCamera::ForwardVector() const
 glm::vec3 EditorCamera::UpVector() const
 {
     return glm::rotate(GetRotation(), glm::vec3{0.f, 1.f, 0.f});
-}
-
-glm::quat EditorCamera::GetRotation() const
-{
-    return glm::quat(glm::vec3{ -pitch, -yaw, 0.0f });
 }

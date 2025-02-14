@@ -7,8 +7,6 @@
 
 #include "Rendering/Renderer.hpp"
 #include "Rendering/RenderFrame.hpp"
-#include "Rendering/RenderContext.hpp"
-#include "Rendering/RenderPipeline.hpp"
 
 #include "Core/Window.hpp"
 
@@ -18,8 +16,8 @@
 
 namespace Engine
 {
-    Gui::Gui(Window& window)
-		: window(window)
+    Gui::Gui(Window& window, RenderContext& renderContext)
+		: window(window), renderContext(renderContext)
     {
 		ImGui::CreateContext();
 
@@ -43,7 +41,7 @@ namespace Engine
 
 	void Gui::UploadFonts(ImGuiIO& io)
 	{
-		auto& device = Renderer::Get().GetRenderContext().GetDevice();
+		auto& device = renderContext.GetDevice();
 
 		uint8_t* pixels;
 		int width, height;
@@ -72,7 +70,7 @@ namespace Engine
 
 	void Gui::LoadShaders()
 	{
-		auto& device = Renderer::Get().GetRenderContext().GetDevice();
+		auto& device = renderContext.GetDevice();
 
 		auto vertexBytes = embed::Shaders::get("imgui.vert.glsl");
 		auto fragBytes = embed::Shaders::get("imgui.frag.glsl");
@@ -96,20 +94,14 @@ namespace Engine
 		ImGuizmo::SetDrawlist(ImGui::GetBackgroundDrawList());
 	}
 
-	void Gui::Draw(Vulkan::CommandBuffer& commandBuffer)
+	void Gui::Draw(Vulkan::CommandBuffer& commandBuffer, RenderAttachment& target)
 	{
 		ImGui::Render();
 
-		auto& frame = Renderer::Get().GetRenderContext().GetCurrentFrame();
-
-		auto& target = frame.GetTarget();
-
-		auto& attachment = target.GetColorAttachment(0);
-
 		VkRenderingAttachmentInfo color{
 			.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
-				.imageView = attachment.GetView().GetHandle(),
-				.imageLayout = attachment.GetLayout(),
+				.imageView = target.GetView().GetHandle(),
+				.imageLayout = target.GetLayout(),
 				.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
 				.storeOp = VK_ATTACHMENT_STORE_OP_STORE,
 		};
@@ -126,7 +118,7 @@ namespace Engine
 		});
 
 		commandBuffer.SetPipelineRenderingState({
-			.colorAttachmentFormats = { attachment.GetFormat() }
+			.colorAttachmentFormats = { target.GetFormat() }
 		});
 
 		Vulkan::VertexInputState vertexInputState{};
@@ -199,6 +191,8 @@ namespace Engine
 			verticesData += cmdList->VtxBuffer.Size;
 			indexesData += cmdList->IdxBuffer.Size;
 		}
+
+		auto& frame = renderContext.GetCurrentFrame();
 
 		auto vertexAllocation = frame.RequestBufferAllocation(Vulkan::BufferUsageFlags::Vertex, vertexBufferSize);
 		vertexAllocation.SetData(vertices.data());

@@ -16,16 +16,18 @@ namespace Engine
 {
     class Window;
     class Texture;
+    class RenderContext;
+    class RenderAttachment;
 
     class Gui
     {
 
     public:
-        Gui(Window& window);
+        Gui(Window& window, RenderContext& renderContext);
         ~Gui();
 
         void Begin();
-        void Draw(Vulkan::CommandBuffer& commandBuffer);
+        void Draw(Vulkan::CommandBuffer& commandBuffer, RenderAttachment& target);
 
         bool OnInputEvent(const InputEvent& event);
 
@@ -38,5 +40,6 @@ namespace Engine
         Vulkan::PipelineLayout* pipelineLayout{ nullptr };
 
         Window& window;
+        RenderContext& renderContext;
     };
 };

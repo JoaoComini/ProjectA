@@ -1,9 +1,9 @@
 #pragma once
 
-#include <Rendering/Camera.hpp>
+#include <Rendering/RenderCamera.hpp>
 #include <Core/Input.hpp>
 
-class EditorCamera: public Engine::Camera
+class EditorCamera: public Engine::RenderCamera
 {
 public:
 	EditorCamera(float fov, float aspectRatio, float nearClip, float farClip);
@@ -17,8 +17,6 @@ public:
 	glm::mat4 GetTransform();
 
 private:
-	glm::vec3 position{ 0.0f, 0.0f, 0.0f };
-
 	float yaw = 0.f, pitch = 0.f;
 	
 	glm::vec2 currentMousePosition{ 0.0f, 0.0f };
@@ -26,6 +24,4 @@ private:
 	glm::vec3 RightVector() const;
 	glm::vec3 ForwardVector() const;
 	glm::vec3 UpVector() const;
-
-	glm::quat GetRotation() const;
 };

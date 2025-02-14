@@ -58,12 +58,12 @@ void MainMenuBar::Draw()
 	{
 		ImGui::Begin("Shadows", &openShadows);
 
-		auto settings = Engine::Renderer::Get().GetSettings();
+		//auto settings = Engine::Renderer::Get().GetShadowSettings();
 
-		ImGui::DragFloat("Depth Bias", &settings.shadow.depthBias, 0.01);
-		ImGui::DragFloat("Normal Bias", &settings.shadow.normalBias, 0.01);
+		//ImGui::DragFloat("Depth Bias", &settings.depthBias, 0.01);
+		//ImGui::DragFloat("Normal Bias", &settings.normalBias, 0.01);
 
-		Engine::Renderer::Get().SetSettings(settings);
+		//Engine::Renderer::Get().SetShadowSettings(settings);
 
 		ImGui::End();
 	}

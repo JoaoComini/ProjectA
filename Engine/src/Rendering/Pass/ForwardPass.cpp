@@ -2,7 +2,7 @@
 
 #include "Rendering/Renderer.hpp"
 
-#include "Rendering/RenderGraph/RenderGraphCommand.hpp"
+#include "Rendering/RenderGraphCommand.hpp"
 
 namespace Engine
 {
@@ -21,14 +21,14 @@ namespace Engine
             }
         });
 
-        data.gbuffer = builder.Allocate({
+        data.gbuffer = builder.Allocate<RenderTexture>({
                 1600,
                 900,
                 RenderTextureFormat::HDR,
                 RenderTextureUsage::RenderTarget | RenderTextureUsage::Sampled,
         });
 
-        data.depth = builder.Allocate({
+        data.depth = builder.Allocate<RenderTexture>({
                 1600,
                 900,
                 RenderTextureFormat::Depth,
@@ -77,11 +77,9 @@ namespace Engine
 
     void ForwardPass::Render(RenderGraphCommand& command, const ForwardPassData& data)
     {
-        auto [camera, transform] = Renderer::Get().GetMainCamera();
-
         CameraUniform cameraUniform {
-            .viewProjectionMatrix = camera.GetProjection() * glm::inverse(transform),
-            .position = transform[3],
+            //.viewProjectionMatrix = camera.GetProjection() * glm::inverse(transform),
+            //.position = transform[3],
         };
 
         LightsUniform lights{};

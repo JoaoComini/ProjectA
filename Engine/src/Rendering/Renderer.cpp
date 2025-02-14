@@ -4,64 +4,87 @@
 
 #include "Core/Window.hpp"
 
-#include "Camera.hpp"
-#include "Vertex.hpp"
 #include "Resource/ResourceManager.hpp"
-#include "RenderPipeline.hpp"
 #include "RenderContext.hpp"
+
+#include "RenderGraph/RenderGraph.hpp"
+
+#include "VulkanRenderGraphAllocator.hpp"
+#include "VulkanRenderGraphCommand.hpp"
 
 namespace Engine
 {
-
-	Renderer::Renderer(Window& window, Scene& scene)
+	Renderer::Renderer(RenderContext& renderContext)
+		: renderContext(renderContext)
 	{
-		context = std::make_unique<RenderContext>(window);
-		pipeline = std::make_unique<RenderPipeline>(*context, scene);
+		allocator = std::make_unique<VulkanRenderGraphAllocator>(renderContext.GetDevice());
+
+		VkSamplerCreateInfo point{ VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
+		point.magFilter = VK_FILTER_NEAREST;
+		point.minFilter = VK_FILTER_NEAREST;
+		point.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+		point.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		point.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		point.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		point.mipLodBias = 0.0f;
+		point.minLod = 0.0f;
+		point.maxLod = 1.0f;
+		point.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
+
+		VkSamplerCreateInfo shadow{ VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
+		shadow.minFilter = VK_FILTER_LINEAR;
+		shadow.magFilter = VK_FILTER_LINEAR;
+		shadow.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+		shadow.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+		shadow.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+		shadow.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+		shadow.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+		shadow.compareEnable = VK_TRUE;
+		shadow.compareOp = VK_COMPARE_OP_GREATER_OR_EQUAL;
+
+		samplers.emplace(RenderTextureSampler::Point, std::make_unique<Vulkan::Sampler>(renderContext.GetDevice(), point));
+		samplers.emplace(RenderTextureSampler::Shadow, std::make_unique<Vulkan::Sampler>(renderContext.GetDevice(), shadow));
 	}
 
-	Vulkan::CommandBuffer& Renderer::Begin()
+	Renderer::~Renderer()
 	{
-		return *(activeCommandBuffer = context->Begin());
+		allocator.reset();
+		samplers.clear();
 	}
 
-	void Renderer::Draw()
+	void Renderer::Draw(Vulkan::CommandBuffer& commandBuffer, Scene& scene, RenderCamera& camera, RenderAttachment& target)
 	{
-		pipeline->Draw(*activeCommandBuffer);
-	}
+		RenderGraph graph;
+		RenderBatcher batcher;
+		batcher.BuildBatches(scene, camera);
 
-	void Renderer::End()
-	{
-		context->End(*activeCommandBuffer);
-	}
+		auto& graphContext = graph.GetContext();
+		graphContext.Add<ShadowSettings>(settings.shadow);
+		graphContext.Add<ResolutionSettings>(settings.resolution);
 
-	void Renderer::SetMainCamera(Camera& camera, glm::mat4 transform)
-	{
-		mainCamera = camera;
-		mainTransform = std::move(transform);
-	}
+		auto& backbufferData = graphContext.Add<BackbufferData>();
 
-	std::pair<Camera&, glm::mat4> Renderer::GetMainCamera()
-	{
-		return { mainCamera, mainTransform };
-	}
+		backbufferData.target = graph.Import<RenderTexture>(
+			{ &target },
+			{
+				.width = target.GetExtent().width,
+				.height = target.GetExtent().height,
+				.format = RenderTextureFormat::Linear,
+				.usage = RenderTextureUsage::RenderTarget
+			}
+		);
 
-	void Renderer::SetSettings(RendererSettings settings)
-	{
-		this->settings = settings;
-	}
+		ShadowPass shadowPass{ scene, {} };
+		ForwardPass forwardPass{ scene };
+		CompositionPass compositionPass;
 
-	RendererSettings Renderer::GetSettings() const
-	{
-		return settings;
-	}
+		graph.AddPass(shadowPass);
+		graph.AddPass(forwardPass);
+		graph.AddPass(compositionPass);
 
-	RenderContext& Renderer::GetRenderContext()
-	{
-		return *context;
-	}
+		graph.Compile();
 
-	RenderPipeline& Renderer::GetRenderPipeline()
-	{
-		return *pipeline;
+		VulkanRenderGraphCommand command{ renderContext, batcher, shaderCache, commandBuffer, samplers };
+		graph.Execute(command, *allocator);
 	}
 }

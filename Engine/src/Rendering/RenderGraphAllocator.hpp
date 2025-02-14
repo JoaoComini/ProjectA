@@ -1,6 +1,6 @@
 #pragma once
 
-#include "RenderGraphResource.hpp"
+#include "RenderTexture.hpp"
 
 namespace Engine
 {
@@ -9,6 +9,6 @@ namespace Engine
     public:
         virtual ~RenderGraphAllocator() = default;
         virtual RenderTexture Allocate(const RenderTextureDesc& desc) = 0;
-        virtual void Release(const RenderTextureDesc& desc, RenderTexture resource) = 0;
+        virtual void Free(RenderTexture resource, const RenderTextureDesc& desc) = 0;
     };
 }

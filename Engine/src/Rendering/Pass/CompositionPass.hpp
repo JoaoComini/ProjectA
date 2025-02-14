@@ -6,7 +6,7 @@ namespace Engine
 {
 	struct CompositionPassData { };
 
-	class CompositionPass : public RenderGraphPass<CompositionPassData>
+	class CompositionPass : public RenderGraphPass<CompositionPassData, RenderGraphCommand>
 	{
 	public:
 		void RecordRenderGraph(RenderGraphBuilder& builder, RenderGraphContext& context, CompositionPassData& data) override;

@@ -10,33 +10,37 @@ namespace Engine
     class RenderGraphContext;
     class RenderGraphCommand;
 
-    template<typename Data>
+    template<typename Data, typename Command>
     class RenderGraphPass
     {
     public:
+        virtual ~RenderGraphPass() = default;
+
         virtual void RecordRenderGraph(RenderGraphBuilder& builder, RenderGraphContext& context, Data& data) = 0;
-        virtual void Render(RenderGraphCommand& command, const Data& data) = 0;
+        virtual void Render(Command& command, const Data& data) = 0;
     };
 
     class RenderGraphPassConcept
     {
     public:
         virtual ~RenderGraphPassConcept() = default;
-        virtual void Render(RenderGraphCommand& command) = 0;
+        virtual void Render(void* command) = 0;
     };
 
-    template<typename Data>
+    template<typename Data, typename Command>
     class RenderGraphPassRender : public RenderGraphPassConcept
     {
     public:
-        RenderGraphPassRender(RenderGraphPass<Data>* pass) : pass(pass) { }
+        RenderGraphPassRender(RenderGraphPass<Data, Command>* pass) : pass(pass) { }
 
-        void Render(RenderGraphCommand& command) override
+        void Render(void* command) override
         {
-            pass->Render(command, data);
+            auto typed = static_cast<Command*>(command);
+
+            pass->Render(*typed, data);
         }
 
-        RenderGraphPass<Data>* pass{ nullptr };
+        RenderGraphPass<Data, Command>* pass{ nullptr };
         Data data{};
     };
 };

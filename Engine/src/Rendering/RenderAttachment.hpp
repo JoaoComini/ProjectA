@@ -1,3 +1,4 @@
+#pragma once
 
 #include "Vulkan/Device.hpp"
 #include "Vulkan/Image.hpp"

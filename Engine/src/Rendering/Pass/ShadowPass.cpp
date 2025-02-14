@@ -1,21 +1,18 @@
 #include "ShadowPass.hpp"
 
-#include "Vulkan/ResourceCache.hpp"
 
 #include "Resource/ResourceManager.hpp"
-
 #include "Rendering/Renderer.hpp"
-#include "Rendering/Mesh.hpp"
 
-#include "Rendering/RenderGraph/RenderGraphCommand.hpp"
+#include "Rendering/RenderGraphCommand.hpp"
 
 namespace Engine
 {
-    ShadowPass::ShadowPass(Scene& scene) : scene(scene) { }
+    ShadowPass::ShadowPass(Scene& scene, ShadowSettings settings) : scene(scene), settings(settings) { }
 
 	void ShadowPass::RecordRenderGraph(RenderGraphBuilder& builder, RenderGraphContext& context, ShadowPassData& data)
 	{
-		data.shadowmap = builder.Allocate({
+		data.shadowmap = builder.Allocate<RenderTexture>({
 			.width = 2048,
 			.height = 2048,
 			.format = RenderTextureFormat::Depth,
@@ -29,11 +26,9 @@ namespace Engine
 			}
 		});
 
-		auto query = scene.Query<Component::Transform, Component::DirectionalLight>();
+		const auto query = scene.Query<Component::Transform, Component::DirectionalLight>();
 
-		auto entity = query.First();
-
-		if (scene.Valid(entity))
+		if (const auto entity = query.First(); scene.Valid(entity))
 		{
 			const auto& transform = scene.GetComponent<Component::Transform>(entity);
 

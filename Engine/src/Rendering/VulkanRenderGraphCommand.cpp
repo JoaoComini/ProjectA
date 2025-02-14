@@ -1,17 +1,15 @@
 #include "VulkanRenderGraphCommand.hpp"
 
-#include "Vulkan/CommandBuffer.hpp"
-#include "Vulkan/ResourceCache.hpp"
+#include "../Vulkan/CommandBuffer.hpp"
+#include "../Vulkan/ResourceCache.hpp"
 
-#include "Rendering/RenderContext.hpp"
-#include "Rendering/RenderFrame.hpp"
-#include "Rendering/Renderer.hpp"
-#include "Rendering/RenderBatcher.hpp"
-#include "Rendering/ShaderCache.hpp"
+#include "RenderContext.hpp"
+#include "RenderFrame.hpp"
+#include "Renderer.hpp"
+#include "RenderBatcher.hpp"
+#include "ShaderCache.hpp"
 
-#include "Resource/ResourceManager.hpp"
-
-#include <Shaders/embed.gen.hpp>
+#include "../Resource/ResourceManager.hpp"
 
 namespace Engine
 {
@@ -23,11 +21,11 @@ namespace Engine
         const std::unordered_map<RenderTextureSampler, std::unique_ptr<Vulkan::Sampler>>& samplers
     ) : renderContext(renderContext), batcher(batcher), shaderCache(shaderCache), commandBuffer(commandBuffer), samplers(samplers) { }
 
-    void VulkanRenderGraphCommand::BeforeRead(const RenderTextureDesc&, const RenderTexture& texture, const RenderTextureAccessInfo& info)
+    void VulkanRenderGraphCommand::BeforeRead(const RenderTexture& texture, const RenderTextureDesc& desc, const RenderTextureAccessInfo& info)
     {
         assert(info.type == RenderTextureAccessType::Binding);
 
-        auto* attachment = static_cast<RenderAttachment*>(texture.image);
+        auto* attachment = texture.attachment;
         auto& view = attachment->GetView();
 
         auto& scope = attachment->GetScope();
@@ -52,11 +50,11 @@ namespace Engine
         commandBuffer.BindImage(view, *samplers.at(info.binding.sampler), info.binding.set, info.binding.location, 0);
     }
 
-    void VulkanRenderGraphCommand::BeforeWrite(const RenderTextureDesc&, const RenderTexture& texture, const RenderTextureAccessInfo& info)
+    void VulkanRenderGraphCommand::BeforeWrite(const RenderTexture& texture, const RenderTextureDesc& desc, const RenderTextureAccessInfo& info)
     {
         assert(info.type == RenderTextureAccessType::Attachment);
 
-        auto* attachment = static_cast<RenderAttachment*>(texture.image);
+        auto* attachment = texture.attachment;
         auto& view = attachment->GetView();
 
         auto& scope = attachment->GetScope();
@@ -169,9 +167,9 @@ namespace Engine
 
     std::pair<glm::mat4, glm::mat4> GetViewProjection()
     {
-        auto [camera, transform] = Renderer::Get().GetMainCamera();
+        // auto [camera, transform] = Renderer::Get().GetMainCamera();
 
-        return { glm::inverse(transform), camera.GetProjection() };
+        return { };
     }
 
     std::shared_ptr<Material> GetMaterialFromPrimitive(const Primitive& primitive)
@@ -267,7 +265,7 @@ namespace Engine
 
         commandBuffer.SetVertexInputState(vertexInputState);
 
-        auto settings = Renderer::Get().GetSettings();
+        auto settings = ShadowSettings{};
 
         auto view = glm::lookAt(-lightDirection, glm::vec3{ 0 }, glm::vec3{ 0, 1, 0 });
 
@@ -280,8 +278,8 @@ namespace Engine
         LightPushConstant pushConstant
         {
             .direction = lightDirection,
-            .depthBias = settings.shadow.depthBias * camera.GetSize() / 2048.f,
-            .normalBias = settings.shadow.normalBias * camera.GetSize() / 2048.f,
+            .depthBias = settings.depthBias * camera.GetSize() / 2048.f,
+            .normalBias = settings.normalBias * camera.GetSize() / 2048.f,
         };
 
         commandBuffer.PushConstants(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(LightPushConstant), &pushConstant);

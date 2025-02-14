@@ -10,18 +10,36 @@ namespace Engine
     class RenderGraphBuilder
     {
     public:
-        RenderGraphBuilder(std::vector<RenderGraphResourceEntry>& resources) : resources(resources) {}
+        explicit RenderGraphBuilder(std::vector<RenderGraphResource>& resources) : resources(resources) {}
 
-        RenderGraphResourceHandle Allocate(const RenderTextureDesc& desc);
-        void Read(RenderGraphResourceHandle handle, RenderTextureAccessInfo info = {});
-        void Write(RenderGraphResourceHandle handle, RenderTextureAccessInfo info = {});
+        template <typename T>
+        RenderGraphResourceHandle<T> Allocate(const typename T::Descriptor& desc)
+        {
+            auto handle = RenderGraphResourceHandle<T>(resources.size());
+            resources.emplace_back(RenderGraphResource::Type::Transient, T{}, desc);
+
+            allocates.push_back(handle);
+            return handle;
+        }
+
+        template <typename T>
+        void Read(RenderGraphResourceHandle<T> handle, const typename T::AccessInfo& info = {})
+        {
+            reads.emplace_back(handle, info);
+        }
+
+        template <typename T>
+        void Write(RenderGraphResourceHandle<T> handle, const typename T::AccessInfo& info = {})
+        {
+            writes.emplace_back(handle, info);
+        }
 
     private:
-        std::vector<RenderGraphResourceEntry>& resources;
+        std::vector<RenderGraphResource>& resources;
 
-        std::vector<RenderGraphResourceHandle> allocates;
-        std::vector<RenderTextureAccess> writes;
-        std::vector<RenderTextureAccess> reads;
+        std::vector<RenderGraphResourceHandleBase> allocates;
+        std::vector<RenderGraphResourceAccess> reads;
+        std::vector<RenderGraphResourceAccess> writes;
 
         friend class RenderGraph;
     };

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "RenderGraphResource.hpp"
+#include "RenderTexture.hpp"
 
 namespace Engine
 {
@@ -13,8 +13,10 @@ namespace Engine
     class RenderGraphCommand
     {
     public:
-        virtual void BeforeRead(const RenderTextureDesc& desc, const RenderTexture& texture, const RenderTextureAccessInfo& info) = 0;
-        virtual void BeforeWrite(const RenderTextureDesc& desc, const RenderTexture& texture, const RenderTextureAccessInfo& info) = 0;
+        virtual ~RenderGraphCommand() = default;
+
+        virtual void BeforeRead(const RenderTexture& texture, const RenderTextureDesc& desc, const RenderTextureAccessInfo& info) = 0;
+        virtual void BeforeWrite(const RenderTexture& texture, const RenderTextureDesc& desc, const RenderTextureAccessInfo& info) = 0;
 
         virtual void BeginPass() = 0;
         virtual void EndPass() = 0;

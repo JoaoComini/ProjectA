@@ -6,12 +6,9 @@
 
 namespace Engine
 {
-	RenderBatcher::RenderBatcher(Scene& scene) : scene(scene) { }
-
-    void RenderBatcher::BuildBatches()
+    void RenderBatcher::BuildBatches(Scene& scene, RenderCamera& camera)
     {
-		auto [_, cameraTransform] = Renderer::Get().GetMainCamera();
-		auto cameraPosition = cameraTransform[3];
+		auto cameraPosition = camera.GetPosition();
 
 		auto query = scene.Query<Component::MeshRender, Component::LocalToWorld>();
 
@@ -52,12 +49,6 @@ namespace Engine
 	const std::vector<RenderGeometry>& RenderBatcher::GetTransparents()
 	{
 		return transparents;
-	}
-
-	void RenderBatcher::Reset()
-	{
-		opaques.clear();
-		transparents.clear();
 	}
 
 	Material& RenderBatcher::GetMaterial(Primitive& primitive)

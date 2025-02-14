@@ -190,7 +190,9 @@ embed_static(Shaders ${SHADER_SRC_FILES})
 
 file(GLOB_RECURSE ENGINE_SRC_FILES CONFIGURE_DEPENDS src/*.cpp)
 
-add_library(Engine STATIC ${ENGINE_SRC_FILES})
+add_library(Engine STATIC ${ENGINE_SRC_FILES}
+        src/Rendering/RenderTexture.cpp
+        src/Rendering/RenderTexture.hpp)
 
 target_include_directories(Engine
     PUBLIC

@@ -34,7 +34,7 @@ namespace Engine
 		sceneHierarchy = std::make_unique<SceneHierarchy>(GetScene());
 		entityInspector = std::make_unique<EntityInspector>(GetScene());
 		mainMenuBar = std::make_unique<MainMenuBar>();
-		contentBrowser = std::make_unique<ContentBrowser>(Renderer::Get().GetRenderContext().GetDevice(), GetScene());
+		contentBrowser = std::make_unique<ContentBrowser>(GetRenderContext().GetDevice(), GetScene());
 		toolbar = std::make_unique<Toolbar>(GetScene());
 		viewportDragDrop = std::make_unique<ViewportDragDrop>();
 		entityGizmo = std::make_unique<EntityGizmo>(GetScene(), *camera);
@@ -124,7 +124,7 @@ namespace Engine
 
 	Editor::~Editor()
 	{
-		Renderer::Get().GetRenderContext().GetDevice().WaitIdle();
+		GetRenderContext().GetDevice().WaitIdle();
 	}
 
 	void Editor::OnUpdate(float timestep)
@@ -134,9 +134,8 @@ namespace Engine
 		if (scene.IsPaused())
 		{
 			camera->Update(timestep);
-			auto transform = camera->GetTransform();
-
-			Renderer::Get().SetMainCamera(*camera, transform);
+			
+			SetRenderCamera(*camera);
 			return;
 		}
 
@@ -145,10 +144,10 @@ namespace Engine
 
 		if (scene.Valid(entity))
 		{
-			auto camera = scene.GetComponent<Component::Camera>(entity).camera;
+			auto& camera = scene.GetComponent<Component::Camera>(entity).camera;
 			auto transform = scene.GetComponent<Component::Transform>(entity).GetLocalMatrix();
 
-			Renderer::Get().SetMainCamera(camera, transform);
+			SetRenderCamera({});
 		}
 
 		UpdateScene(timestep);

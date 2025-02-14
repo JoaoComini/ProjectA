@@ -1,7 +1,8 @@
 #pragma once
 
+#include <Rendering/RenderGraph/RenderGraphResource.hpp>
 #include "../RenderGraph/RenderGraphPass.hpp"
-#include "Vulkan/CommandBuffer.hpp"
+#include "Rendering/RenderTexture.hpp"
 
 namespace Engine
 {
@@ -11,11 +12,11 @@ namespace Engine
 
 	struct ForwardPassData
 	{
-		RenderGraphResourceHandle gbuffer;
-		RenderGraphResourceHandle depth;
+		RenderGraphResourceHandle<RenderTexture> gbuffer;
+		RenderGraphResourceHandle<RenderTexture> depth;
 	};
 
-	class ForwardPass : public RenderGraphPass<ForwardPassData>
+	class ForwardPass : public RenderGraphPass<ForwardPassData, RenderGraphCommand>
 	{
 	public:
 		ForwardPass(Scene& scene);

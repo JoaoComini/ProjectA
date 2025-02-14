@@ -1,6 +1,6 @@
 #include "VulkanRenderGraphAllocator.hpp"
 
-#include "Rendering/RenderAttachment.hpp"
+#include "RenderTexture.hpp"
 
 namespace Engine
 {
@@ -68,12 +68,12 @@ namespace Engine
         return { attachments.back().get() };
     }
 
-    void VulkanRenderGraphAllocator::Release(const RenderTextureDesc& desc, RenderTexture resource)
+    void VulkanRenderGraphAllocator::Free(const RenderTexture resource, const RenderTextureDesc& desc)
     {
         assert(pool.contains(desc));
 
         auto& vector = pool[desc];
 
-        vector.push_back(static_cast<RenderAttachment*>(resource.image));
+        vector.push_back(resource.attachment);
     }
 }

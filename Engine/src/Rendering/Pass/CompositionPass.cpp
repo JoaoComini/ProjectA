@@ -1,9 +1,8 @@
 #include "CompositionPass.hpp"
 
-#include "Vulkan/ResourceCache.hpp"
 #include "Rendering/Renderer.hpp"
 
-#include "Rendering/RenderGraph/RenderGraphCommand.hpp"
+#include "Rendering/RenderGraphCommand.hpp"
 
 namespace Engine
 {
@@ -19,7 +18,7 @@ namespace Engine
             }
         });
 
-        auto backbuffer = context.Get<BackbufferData>().backbuffer;
+        auto backbuffer = context.Get<BackbufferData>().target;
 
         builder.Write(backbuffer, {
             .type = RenderTextureAccessType::Attachment,

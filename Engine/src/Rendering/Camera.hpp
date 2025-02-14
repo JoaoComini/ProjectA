@@ -13,6 +13,7 @@ namespace Engine
 		};
 
 		Camera() = default;
+		virtual ~Camera() = default;
 		
 		void SetPerspective(float fov, float nearClip, float farClip);
 		void SetOrthographic(float size, float nearClip, float farClip);

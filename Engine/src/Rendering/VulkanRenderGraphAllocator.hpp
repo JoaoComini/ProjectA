@@ -11,13 +11,13 @@ namespace Engine
 {
     class RenderAttachment;
 
-    class VulkanRenderGraphAllocator : public RenderGraphAllocator
+    class VulkanRenderGraphAllocator final : public RenderGraphAllocator
     {
     public:
-        VulkanRenderGraphAllocator(Vulkan::Device& device);
+        explicit VulkanRenderGraphAllocator(Vulkan::Device& device);
 
         RenderTexture Allocate(const RenderTextureDesc& desc) override;
-        void Release(const RenderTextureDesc& desc, RenderTexture resource) override;
+        void Free(RenderTexture resource, const RenderTextureDesc& desc) override;
 
     private:
         std::vector<std::unique_ptr<RenderAttachment>> attachments;

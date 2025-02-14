@@ -1,136 +1,169 @@
 #pragma once
 
-#include "Common/Hash.hpp"
-#include "Common/ScopedEnum.hpp"
-
 namespace Engine
 {
+    class RenderGraphAllocator;
+    class RenderGraphCommand;
+
     struct RenderGraphRecord;
 
-    using RenderGraphResourceHandle = uint32_t;
-
-    enum class RenderGraphResourceType
+    class RenderGraphResourceHandleBase
     {
-        External,
-        Transient
-    };
-    template <> struct has_flags<RenderGraphResourceType> : std::true_type {};
+    public:
+        RenderGraphResourceHandleBase() = default;
+        explicit RenderGraphResourceHandleBase(uint32_t id) : id(id) {}
+        virtual ~RenderGraphResourceHandleBase() = default;
 
-    enum class RenderTextureFormat
+        uint32_t GetId() const { return id; }
+    private:
+        uint32_t id;
+    };
+
+    template <typename T>
+    class RenderGraphResourceHandle : public RenderGraphResourceHandleBase
     {
-        Linear = 1 << 0,
-        sRGB = 1 << 1,
-        HDR = 1 << 2,
-        Depth = 1 << 3
+    public:
+        RenderGraphResourceHandle() = default;
+        explicit RenderGraphResourceHandle(uint32_t id) : RenderGraphResourceHandleBase(id) {}
     };
-    template <> struct has_flags<RenderTextureFormat> : std::true_type {};
 
-    enum class RenderTextureUsage {
-        TransferSrc = 1 << 0,
-        TransferDst = 1 << 1,
-        Transfer = TransferSrc | TransferDst,
-        RenderTarget = 1 << 3,
-        Sampled = 1 << 4,
-    };
-    template <> struct has_flags<RenderTextureUsage> : std::true_type {};
-
-
-    enum class RenderTextureAccessType
+    class RenderGraphResource final
     {
-        Binding,
-        Attachment
-    };
-    template <> struct has_flags<RenderTextureAccessType> : std::true_type {};
+    public:
+        enum class Type { Imported, Transient };
 
-    enum class RenderGraphPipelineStage {
-        VertexShader = 1 << 0,
-        FragmentShader = 1 << 1,
-        ComputeShader = 1 << 2,
-    };
-    template <> struct has_flags<RenderGraphPipelineStage> : std::true_type {};
+        template<typename T>
+        RenderGraphResource(Type type, T&& resource, const typename T::Descriptor& descriptor)
+            : type(type), impl(std::make_unique<Model<T>>(std::forward<T>(resource), descriptor)) { }
 
-    enum class RenderTextureAspect
-    {
-        None = 0,
-        Color,
-        Depth,
-    };
-
-    struct RenderTextureAttachmentAccess
-    {
-        RenderTextureAspect aspect{ RenderTextureAspect::None };
-    };
-
-    enum class RenderTextureSampler
-    {
-        Point,
-        Bilinear,
-        Shadow,
-    };
-
-    struct RenderTextureBindingAccess
-    {
-        uint32_t set{ 0 };
-        uint32_t location{ 0 };
-        RenderTextureSampler sampler{ RenderTextureSampler::Point };
-    };
-
-
-    struct RenderTextureDesc
-    {
-        uint32_t width{ 0 };
-        uint32_t height{ 0 };
-        RenderTextureFormat format{};
-        RenderTextureUsage usage{};
-
-        bool operator==(RenderTextureDesc const&) const = default;
-    };
-
-    struct RenderTexture
-    {
-        void* image{ nullptr };
-    };
-
-    struct RenderTextureAccessInfo
-    {
-        RenderTextureAccessType type;
-        union
+        void Allocate(void* allocator) const
         {
-            RenderTextureAttachmentAccess attachment;
-            RenderTextureBindingAccess binding;
-        };
-    };
-
-    struct RenderTextureAccess
-    {
-        RenderGraphResourceHandle handle;
-        RenderTextureAccessInfo info;
-    };
-
-    struct RenderGraphResourceEntry
-    {
-        RenderGraphResourceType type{ RenderGraphResourceType::External };
-        RenderTextureDesc descriptor;
-        RenderTexture resource;
-        RenderGraphRecord* last{ nullptr };
-    };
-};
-
-namespace std
-{
-    template <>
-    struct hash<Engine::RenderTextureDesc>
-    {
-        size_t operator()(const Engine::RenderTextureDesc& desc) const
-        {
-            size_t hash{ 0 };
-
-            HashCombine(hash, desc.width);
-            HashCombine(hash, desc.height);
-            HashCombine(hash, desc.format);
-            HashCombine(hash, desc.usage);
-
-            return hash;
+            impl->Allocate(allocator);
         }
+
+        void Free(void* allocator) const
+        {
+            impl->Free(allocator);
+        }
+
+        void BeforeRead(void* command, void* info) const
+        {
+            impl->BeforeRead(command, info);
+        }
+
+        void BeforeWrite(void* command, void* info) const
+        {
+            impl->BeforeWrite(command, info);
+        }
+
+        Type GetType() const { return type; }
+
+        void SetLastRecord(RenderGraphRecord* last) { this->last = last; }
+        RenderGraphRecord* GetLastRecord() const { return last; }
+
+    private:
+        struct Concept
+        {
+            virtual ~Concept() = default;
+            virtual void Allocate(void* allocator) = 0;
+            virtual void Free(void* allocator) = 0;
+            virtual void BeforeRead(void* command, void* info) = 0;
+            virtual void BeforeWrite(void* command, void* info) = 0;
+        };
+
+        template<typename T>
+        struct Model final : Concept
+        {
+            Model(T&& resource, const typename T::Descriptor& descriptor)
+                : resource(std::forward<T>(resource)), descriptor(descriptor) { }
+
+            void Allocate(void *allocator) override
+            {
+                auto typed = static_cast<typename T::Allocator*>(allocator);
+
+                resource = typed->Allocate(descriptor);
+            }
+
+            void Free(void *allocator) override
+            {
+                auto typed = static_cast<typename T::Allocator*>(allocator);
+
+                typed->Free(resource, descriptor);
+            }
+
+            void BeforeRead(void *command, void *info) override
+            {
+                auto typedCommand = static_cast<typename T::Command*>(command);
+                auto typedInfo = static_cast<typename T::AccessInfo*>(info);
+
+                typedCommand->BeforeRead(resource, descriptor, *typedInfo);
+            }
+
+            void BeforeWrite(void *command, void *info) override
+            {
+                auto typedCommand = static_cast<typename T::Command*>(command);
+                auto typedInfo = static_cast<typename T::AccessInfo*>(info);
+
+                typedCommand->BeforeWrite(resource, descriptor, *typedInfo);
+            }
+
+        private:
+            T resource;
+            typename T::Descriptor descriptor;
+        };
+
+        Type type;
+        RenderGraphRecord* last{ nullptr };
+        std::unique_ptr<Concept> impl{ nullptr };
+    };
+
+    class RenderGraphResourceAccess final
+    {
+    public:
+        template<typename AccessInfo>
+        RenderGraphResourceAccess(const RenderGraphResourceHandleBase handle, const AccessInfo& info)
+            : handle(handle), impl(std::make_unique<Model<AccessInfo>>(info)) { }
+
+        void BeforeRead(void* command, RenderGraphResource& resource) const
+        {
+            impl->BeforeRead(command, resource);
+        }
+
+        void BeforeWrite(void* command, RenderGraphResource& resource) const
+        {
+            impl->BeforeWrite(command, resource);
+        }
+
+        RenderGraphResourceHandleBase GetHandle() const { return handle; }
+
+    private:
+        struct Concept
+        {
+            virtual ~Concept() = default;
+            virtual void BeforeRead(void* command, RenderGraphResource& resource) = 0;
+            virtual void BeforeWrite(void* command, RenderGraphResource& resource) = 0;
+        };
+
+        template<typename AccessInfo>
+        struct Model final : Concept
+        {
+            explicit Model(const AccessInfo& info) : info(info) { }
+
+            void BeforeRead(void *command, RenderGraphResource &resource) override
+            {
+                resource.BeforeRead(command, &info);
+            }
+
+            void BeforeWrite(void *command, RenderGraphResource &resource) override
+            {
+                resource.BeforeWrite(command, &info);
+            }
+
+        private:
+            AccessInfo info;
+        };
+
+        RenderGraphResourceHandleBase handle;
+        std::unique_ptr<Concept> impl{ nullptr };
     };
 };

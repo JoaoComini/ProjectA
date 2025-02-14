@@ -27,8 +27,8 @@ namespace Engine
             const std::unordered_map<RenderTextureSampler, std::unique_ptr<Vulkan::Sampler>>& samplers
         );
 
-        void BeforeRead(const RenderTextureDesc& desc, const RenderTexture& texture, const RenderTextureAccessInfo& info) override;
-        void BeforeWrite(const RenderTextureDesc& desc, const RenderTexture& texture, const RenderTextureAccessInfo& info) override;
+        void BeforeRead(const RenderTexture& texture, const RenderTextureDesc& desc, const RenderTextureAccessInfo& info) override;
+        void BeforeWrite(const RenderTexture& texture, const RenderTextureDesc& desc, const RenderTextureAccessInfo& info) override;
 
         void BeginPass() override;
         void EndPass() override;
@@ -37,7 +37,7 @@ namespace Engine
 
         void DrawGeometry(RenderGeometryType type, std::string_view shader) override;
         void DrawShadow(glm::vec3 lightDirection) override;
-        void Blit(std::string_view shader);
+        void Blit(std::string_view shader) override;
 
     private:
         void DrawOpaques(std::string_view shader);

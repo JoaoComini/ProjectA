@@ -1,54 +1,52 @@
 #pragma once
 
-#include "Common/Singleton.hpp"
-#include "Resource/Resource.hpp"
 #include "Vulkan/CommandBuffer.hpp"
 
-#include "RenderPipeline.hpp"
+#include "Pass/ForwardPass.hpp"
+#include "Pass/ShadowPass.hpp"
+#include "Pass/CompositionPass.hpp"
+
+#include "RenderGraphAllocator.hpp"
+
+#include "RenderCamera.hpp"
 #include "RenderContext.hpp"
+#include "ShaderCache.hpp"
 
 namespace Engine
 {
-	class Camera;
 	class Window;
 	class Scene;
 
-	struct ShadowSettings
+	struct ResolutionSettings
 	{
-		float depthBias{ 4 };
-		float normalBias{ 0.8 };
+		int width;
+		int height;
 	};
 
 	struct RendererSettings
 	{
 		ShadowSettings shadow;
+		ResolutionSettings resolution{};
 	};
 
-	class Renderer : public Singleton<Renderer>
+	struct BackbufferData
+	{
+		RenderGraphResourceHandle<RenderTexture> target;
+	};
+
+	class Renderer
 	{
 	public:
-		Renderer(Window& window, Scene& scene);
+		explicit Renderer(RenderContext& renderContext);
+		~Renderer();
 
-		Vulkan::CommandBuffer& Begin();
-		void Draw();
-		void End();
-
-		void SetMainCamera(Camera& camera, glm::mat4 transform);
-		std::pair<Camera&, glm::mat4> GetMainCamera();
-
-		void SetSettings(RendererSettings settings);
-		RendererSettings GetSettings() const;
-
-		RenderContext& GetRenderContext();
-		RenderPipeline& GetRenderPipeline();
+		void Draw(Vulkan::CommandBuffer& commandBuffer, Scene& scene, RenderCamera& camera, RenderAttachment& target);
 	private:
-		std::unique_ptr<RenderContext> context;
-		std::unique_ptr<RenderPipeline> pipeline;
+		std::unordered_map<RenderTextureSampler, std::unique_ptr<Vulkan::Sampler>> samplers;
+		std::unique_ptr<RenderGraphAllocator> allocator;
 
-		Vulkan::CommandBuffer* activeCommandBuffer{ nullptr };
-
-		Camera mainCamera{};
-		glm::mat4 mainTransform{};
+		RenderContext& renderContext;
+		ShaderCache shaderCache;
 
 		RendererSettings settings;
 	};

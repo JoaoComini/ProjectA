@@ -1,5 +1,7 @@
 #pragma once
 
+#include "RenderFrame.hpp"
+
 namespace Vulkan
 {
     class Instance;
@@ -15,8 +17,6 @@ namespace Vulkan
 namespace Engine
 {
     class Window;
-    class RenderTarget;
-    class RenderFrame;
 
     class RenderContext
     {

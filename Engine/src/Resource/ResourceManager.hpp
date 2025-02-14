@@ -8,7 +8,7 @@
 #include "Factory/Factory.hpp"
 #include "Factory/SceneFactory.hpp"
 
-#include "Vulkan/Device.hpp"
+#include "Rendering/RenderContext.hpp"
 
 #include "Project/Project.hpp"
 
@@ -17,7 +17,7 @@ namespace Engine
     class ResourceManager: public Singleton<ResourceManager>
     {
     public:
-        ResourceManager();
+        ResourceManager(RenderContext& renderContext);
 
         template<typename T>
         std::shared_ptr<T> LoadResource(const ResourceId& id)

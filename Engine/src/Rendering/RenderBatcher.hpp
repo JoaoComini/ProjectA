@@ -1,9 +1,9 @@
 #pragma once
 
-
 namespace Engine
 {
     class Scene;
+    class RenderCamera;
     class Primitive;
     class Material;
 
@@ -18,9 +18,7 @@ namespace Engine
     class RenderBatcher
     {
     public:
-        RenderBatcher(Scene& scene);
-
-        void BuildBatches();
+        void BuildBatches(Scene& scene, RenderCamera& camera);
 
 		const std::vector<RenderGeometry>& GetOpaques();
 		const std::vector<RenderGeometry>& GetTransparents();
@@ -36,7 +34,5 @@ namespace Engine
 
         std::vector<RenderGeometry> opaques;
         std::vector<RenderGeometry> transparents;
-
-        Scene& scene;
     };
 }
