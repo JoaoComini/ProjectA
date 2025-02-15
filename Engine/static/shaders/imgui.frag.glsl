@@ -1,7 +1,5 @@
 #version 450
 
-precision mediump float;
-
 layout (binding = 0) uniform sampler2D font;
 
 layout (location = 0) in vec2 inUV;

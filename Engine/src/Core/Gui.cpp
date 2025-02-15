@@ -164,14 +164,18 @@ namespace Engine
 
 		commandBuffer.BindPipelineLayout(*pipelineLayout);
 
-		auto& io = ImGui::GetIO();
-
-		auto transform = glm::translate(glm::mat4{ 1 }, glm::vec3{ -1.0f, -1.0f, 0.0f });
-		transform = glm::scale(transform, glm::vec3{ 2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y, 0.0f });
-
-		commandBuffer.PushConstants(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &transform);
-
 		ImDrawData* drawData = ImGui::GetDrawData();
+
+    	auto transform = glm::translate(glm::mat4{ 1 }, glm::vec3{ -1.0f, -1.0f, 0.0f });
+    	transform = glm::scale(transform, glm::vec3{ 2.0f / drawData->DisplaySize.x, 2.0f / drawData->DisplaySize.y, 0.0f });
+    	commandBuffer.PushConstants(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &transform);
+
+    	commandBuffer.SetViewport({{
+			.width = drawData->DisplaySize.x,
+			.height = drawData->DisplaySize.y,
+			.minDepth = 0.0f,
+			.maxDepth = 1.0f,
+		}});
 
 		size_t vertexBufferSize = drawData->TotalVtxCount * sizeof(ImDrawVert);
 		size_t indexBufferSize = drawData->TotalIdxCount * sizeof(ImDrawIdx);
