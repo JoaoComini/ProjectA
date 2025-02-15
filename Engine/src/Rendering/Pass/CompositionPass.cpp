@@ -8,9 +8,9 @@ namespace Engine
 {
     void CompositionPass::RecordRenderGraph(RenderGraphBuilder& builder, RenderGraphContext& context, CompositionPassData& data)
     {
-        auto& gbuffer = context.Get<ForwardPassData>().gBuffer;
+        const auto& gBuffer = context.Get<ForwardPassData>().gBuffer;
 
-        builder.Read(gbuffer, {
+        builder.Read(gBuffer, {
             .type = RenderTextureAccessType::Binding,
             .binding = {
                 .set = 0,
@@ -18,9 +18,9 @@ namespace Engine
             }
         });
 
-        auto backbuffer = context.Get<BackbufferData>().target;
+        const auto& backBuffer = context.Get<BackBufferData>().target;
 
-        builder.Write(backbuffer, {
+        builder.Write(backBuffer, {
             .type = RenderTextureAccessType::Attachment,
             .attachment = {
                 .aspect = RenderTextureAspect::Color,

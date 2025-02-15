@@ -57,17 +57,17 @@ namespace Engine
 		RenderBatcher batcher;
 		batcher.BuildBatches(scene, camera);
 
+		const auto [width, height] = target.GetExtent();
+
 		RenderGraph graph;
 		auto& graphContext = graph.GetContext();
-		graphContext.Add<ShadowSettings>(settings.shadow);
-		graphContext.Add<ResolutionSettings>(settings.resolution);
 
 		ImportFrameData(graph, graphContext, camera);
 		ImportBackBufferData(graph, graphContext, target);
 		ImportLightsData(graph, graphContext, scene);
 
-		ShadowPass shadowPass{ scene, {} };
-		ForwardPass forwardPass{ scene };
+		ShadowPass shadowPass{ scene, settings.shadow };
+		ForwardPass forwardPass{ scene, { width, height } };
 		CompositionPass compositionPass;
 
 		graph.AddPass(shadowPass);
@@ -111,7 +111,7 @@ namespace Engine
 
 	void Renderer::ImportBackBufferData(RenderGraph& graph, RenderGraphContext& context, RenderAttachment &target) const
 	{
-		auto& backBufferData = context.Add<BackbufferData>();
+		auto& backBufferData = context.Add<BackBufferData>();
 		backBufferData.target = graph.Import<RenderTexture>(
 			{ &target },
 			{
@@ -142,9 +142,9 @@ namespace Engine
 
 	void GetMainLightData(Scene& scene, LightsUniform& lights, ShadowUniform& shadow)
 	{
-		auto query = scene.Query<Component::Transform, Component::DirectionalLight>();
+		const auto query = scene.Query<Component::Transform, Component::DirectionalLight>();
 
-		auto entity = query.First();
+		const auto entity = query.First();
 
 		if (entity == Entity::Null)
 		{

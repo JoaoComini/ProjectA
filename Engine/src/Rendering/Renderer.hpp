@@ -17,19 +17,12 @@ namespace Engine
 	class Window;
 	class Scene;
 
-	struct ResolutionSettings
-	{
-		int width;
-		int height;
-	};
-
 	struct RendererSettings
 	{
 		ShadowSettings shadow;
-		ResolutionSettings resolution{};
 	};
 
-	struct BackbufferData
+	struct BackBufferData
 	{
 		RenderGraphResourceHandle<RenderTexture> target;
 	};

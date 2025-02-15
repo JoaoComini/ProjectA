@@ -2,8 +2,8 @@
 
 
 #include "Scene/Scene.hpp"
-#include "../RenderGraph/RenderGraphPass.hpp"
-#include "../RenderGraph/RenderGraphResource.hpp"
+#include "Rendering/RenderGraph/RenderGraphPass.hpp"
+#include "Rendering//RenderGraph/RenderGraphResource.hpp"
 #include "Rendering/RenderTexture.hpp"
 
 namespace Engine
@@ -20,7 +20,7 @@ namespace Engine
 		glm::vec3 lightDirection;
 	};
 
-	class ShadowPass : public RenderGraphPass<ShadowPassData, RenderGraphCommand>
+	class ShadowPass final : public RenderGraphPass<ShadowPassData, RenderGraphCommand>
 	{
 	public:
 		ShadowPass(Scene& scene, ShadowSettings settings);

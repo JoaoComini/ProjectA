@@ -6,7 +6,7 @@
 
 namespace Engine
 {
-    ForwardPass::ForwardPass(Scene& scene) : scene(scene) { }
+    ForwardPass::ForwardPass(Scene& scene, ResolutionSettings settings) : scene(scene), settings(settings) { }
 
     void ForwardPass::RecordRenderGraph(RenderGraphBuilder& builder, RenderGraphContext& context, ForwardPassData& data)
     {
@@ -40,16 +40,18 @@ namespace Engine
             }
         });
 
+        const auto& [width, height] = settings;
+
         data.gBuffer = builder.Allocate<RenderTexture>({
-                1600,
-                900,
+                width,
+                height,
                 RenderTextureFormat::HDR,
                 RenderTextureUsage::RenderTarget | RenderTextureUsage::Sampled,
         });
 
         data.depth = builder.Allocate<RenderTexture>({
-                1600,
-                900,
+                width,
+                height,
                 RenderTextureFormat::Depth,
                 RenderTextureUsage::RenderTarget,
         });
