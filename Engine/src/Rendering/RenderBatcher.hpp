@@ -9,7 +9,7 @@ namespace Engine
 
     struct RenderGeometry
     {
-        glm::mat4 transform;
+        glm::mat4 transform{};
 		Primitive* primitive{ nullptr };
 		Material* material{ nullptr };
 		float distance{ 0.f };
@@ -18,7 +18,7 @@ namespace Engine
     class RenderBatcher
     {
     public:
-        void BuildBatches(Scene& scene, RenderCamera& camera);
+        void BuildBatches(Scene& scene, const RenderCamera& camera);
 
 		const std::vector<RenderGeometry>& GetOpaques();
 		const std::vector<RenderGeometry>& GetTransparents();

@@ -16,7 +16,7 @@ namespace Engine
     class ShaderVariant;
     class ShaderCache;
 
-    class VulkanRenderGraphCommand : public RenderGraphCommand
+    class VulkanRenderGraphCommand final : public RenderGraphCommand
     {
     public:
         VulkanRenderGraphCommand(
@@ -30,13 +30,16 @@ namespace Engine
         void BeforeRead(const RenderTexture& texture, const RenderTextureDesc& desc, const RenderTextureAccessInfo& info) override;
         void BeforeWrite(const RenderTexture& texture, const RenderTextureDesc& desc, const RenderTextureAccessInfo& info) override;
 
+        void BeforeRead(const RenderBuffer &buffer, const RenderBufferDesc &desc, const RenderBufferAccessInfo &info) override;
+        void BeforeWrite(const RenderBuffer &buffer, const RenderBufferDesc &desc, const RenderBufferAccessInfo &info) override;
+
         void BeginPass() override;
         void EndPass() override;
 
         void BindUniformBuffer(void* data, uint32_t size, uint32_t set, uint32_t binding) override;
 
-        void DrawGeometry(RenderGeometryType type, std::string_view shader) override;
-        void DrawShadow(glm::vec3 lightDirection) override;
+        void DrawGeometry(DrawGeometrySettings settings) override;
+        void DrawShadow(DrawShadowSettings settings) override;
         void Blit(std::string_view shader) override;
 
     private:
@@ -47,6 +50,10 @@ namespace Engine
 
         void SetupShader(std::string_view shader, const Material& material);
 
+    public:
+
+
+    private:
         RenderContext& renderContext;
         RenderBatcher& batcher;
         ShaderCache& shaderCache;

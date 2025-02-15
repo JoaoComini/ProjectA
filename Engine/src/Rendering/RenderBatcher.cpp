@@ -6,7 +6,7 @@
 
 namespace Engine
 {
-    void RenderBatcher::BuildBatches(Scene& scene, RenderCamera& camera)
+    void RenderBatcher::BuildBatches(Scene& scene, const RenderCamera& camera)
     {
 		auto cameraPosition = camera.GetPosition();
 

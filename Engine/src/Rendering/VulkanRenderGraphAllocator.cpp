@@ -76,4 +76,14 @@ namespace Engine
 
         vector.push_back(resource.attachment);
     }
+
+    RenderBuffer VulkanRenderGraphAllocator::Allocate(const RenderBufferDesc& desc)
+    {
+        return {};
+    }
+
+    void VulkanRenderGraphAllocator::Free(RenderBuffer resource, const RenderBufferDesc& desc)
+    {
+
+    }
 }

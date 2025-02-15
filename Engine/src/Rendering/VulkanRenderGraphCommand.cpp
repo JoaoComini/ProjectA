@@ -113,6 +113,23 @@ namespace Engine
         extent = attachment->GetExtent();
     }
 
+    void VulkanRenderGraphCommand::BeforeRead(const RenderBuffer &buffer, const RenderBufferDesc &desc, const RenderBufferAccessInfo &info)
+    {
+        commandBuffer.BindBuffer(
+            buffer.allocation.GetBuffer(),
+            buffer.allocation.GetOffset(),
+            buffer.allocation.GetSize(),
+            info.set,
+            info.binding,
+            0
+        );
+    }
+
+    void VulkanRenderGraphCommand::BeforeWrite(const RenderBuffer &buffer, const RenderBufferDesc &desc, const RenderBufferAccessInfo &info)
+    {
+
+    }
+
     void VulkanRenderGraphCommand::BeginPass()
     {
         commandBuffer.BeginRendering({
@@ -165,21 +182,14 @@ namespace Engine
         commandBuffer.BindBuffer(allocation.GetBuffer(), allocation.GetOffset(), allocation.GetSize(), set, binding, 0);
     }
 
-    std::pair<glm::mat4, glm::mat4> GetViewProjection()
-    {
-        // auto [camera, transform] = Renderer::Get().GetMainCamera();
-
-        return { };
-    }
-
     std::shared_ptr<Material> GetMaterialFromPrimitive(const Primitive& primitive)
     {
-        ResourceId materialId = primitive.GetMaterial();
+        const ResourceId materialId = primitive.GetMaterial();
 
         return ResourceManager::Get().LoadResource<Material>(materialId);
     }
 
-    void VulkanRenderGraphCommand::DrawGeometry(RenderGeometryType type, std::string_view shader)
+    void VulkanRenderGraphCommand::DrawGeometry(DrawGeometrySettings settings)
     {
         Vulkan::VertexInputState vertexInputState{};
 
@@ -206,12 +216,12 @@ namespace Engine
 
         commandBuffer.SetVertexInputState(vertexInputState);
 
-        switch(type) {
+        switch(settings.type) {
         case RenderGeometryType::Opaque:
-            DrawOpaques(shader);
+            DrawOpaques(settings.shader);
             break;
         case RenderGeometryType::Transparent:
-            DrawTransparents(shader);
+            DrawTransparents(settings.shader);
             break;
         }
     }
@@ -237,7 +247,7 @@ namespace Engine
         float alphaCutoff;
     };
 
-    void VulkanRenderGraphCommand::DrawShadow(glm::vec3 lightDirection)
+    void VulkanRenderGraphCommand::DrawShadow(DrawShadowSettings settings)
     {
         auto shaders = shaderCache.Get("shadowmap", {}, ShaderStage::Vertex);
 
@@ -265,19 +275,16 @@ namespace Engine
 
         commandBuffer.SetVertexInputState(vertexInputState);
 
-        auto settings = ShadowSettings{};
-
-        auto view = glm::lookAt(-lightDirection, glm::vec3{ 0 }, glm::vec3{ 0, 1, 0 });
+        auto view = glm::lookAt(-settings.lightDirection, glm::vec3{ 0 }, glm::vec3{ 0, 1, 0 });
 
         Camera camera;
         camera.SetOrthographic(50, -25.f, 25.f);
 
         auto projection = camera.GetProjection();
 
-
         LightPushConstant pushConstant
         {
-            .direction = lightDirection,
+            .direction = settings.lightDirection,
             .depthBias = settings.depthBias * camera.GetSize() / 2048.f,
             .normalBias = settings.normalBias * camera.GetSize() / 2048.f,
         };

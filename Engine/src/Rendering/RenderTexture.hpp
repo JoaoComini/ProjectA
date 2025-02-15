@@ -81,7 +81,7 @@ namespace Engine
 
     struct RenderTextureAccessInfo
     {
-        RenderTextureAccessType type;
+        RenderTextureAccessType type{ RenderTextureAccessType::Attachment };
         union
         {
             RenderTextureAttachmentAccess attachment;

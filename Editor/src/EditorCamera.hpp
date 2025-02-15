@@ -3,7 +3,7 @@
 #include <Rendering/RenderCamera.hpp>
 #include <Core/Input.hpp>
 
-class EditorCamera: public Engine::RenderCamera
+class EditorCamera : public Engine::RenderCamera
 {
 public:
 	EditorCamera(float fov, float aspectRatio, float nearClip, float farClip);
@@ -13,8 +13,6 @@ public:
 	void HandleMouseInput(Engine::Input& input, float timestep);
 
 	void OnInputEvent(const Engine::InputEvent& event);
-
-	glm::mat4 GetTransform();
 
 private:
 	float yaw = 0.f, pitch = 0.f;

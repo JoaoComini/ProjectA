@@ -78,12 +78,6 @@ void EditorCamera::HandleKeyboardInput(Engine::Input& input, float timestep)
     SetPosition(position);
 }
 
-glm::mat4 EditorCamera::GetTransform()
-{
-    return glm::translate(glm::mat4(1.0f), GetPosition())
-        * glm::mat4_cast(GetRotation());
-}
-
 glm::vec3 EditorCamera::RightVector() const
 {
     return glm::rotate(GetRotation(), glm::vec3{1.f, 0.f, 0.f});

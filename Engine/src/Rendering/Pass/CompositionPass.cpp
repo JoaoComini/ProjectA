@@ -8,7 +8,7 @@ namespace Engine
 {
     void CompositionPass::RecordRenderGraph(RenderGraphBuilder& builder, RenderGraphContext& context, CompositionPassData& data)
     {
-        auto& gbuffer = context.Get<ForwardPassData>().gbuffer;
+        auto& gbuffer = context.Get<ForwardPassData>().gBuffer;
 
         builder.Read(gbuffer, {
             .type = RenderTextureAccessType::Binding,

@@ -16,7 +16,7 @@ namespace Engine
 
 	struct ShadowPassData
 	{
-		RenderGraphResourceHandle<RenderTexture> shadowmap;
+		RenderGraphResourceHandle<RenderTexture> shadowMap;
 		glm::vec3 lightDirection;
 	};
 
@@ -26,7 +26,7 @@ namespace Engine
 		ShadowPass(Scene& scene, ShadowSettings settings);
 
 		void RecordRenderGraph(RenderGraphBuilder& builder, RenderGraphContext& context, ShadowPassData& data) override;
-		void Render(RenderGraphCommand& builder, const ShadowPassData& command) override;
+		void Render(RenderGraphCommand& command, const ShadowPassData& data) override;
 	private:
 		Scene& scene;
 		ShadowSettings settings;

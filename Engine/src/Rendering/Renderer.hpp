@@ -34,6 +34,18 @@ namespace Engine
 		RenderGraphResourceHandle<RenderTexture> target;
 	};
 
+	struct FrameData
+	{
+		RenderGraphResourceHandle<RenderBuffer> camera;
+	};
+
+	struct LightData
+	{
+		RenderGraphResourceHandle<RenderBuffer> lights;
+		RenderGraphResourceHandle<RenderBuffer> shadows;
+	};
+
+
 	class Renderer
 	{
 	public:
@@ -42,6 +54,10 @@ namespace Engine
 
 		void Draw(Vulkan::CommandBuffer& commandBuffer, Scene& scene, RenderCamera& camera, RenderAttachment& target);
 	private:
+		void ImportBackBufferData(RenderGraph& graph, RenderGraphContext& context, RenderAttachment& target) const;
+		void ImportFrameData(RenderGraph& graph, RenderGraphContext& context, RenderCamera& camera) const;
+		void ImportLightsData(RenderGraph& graph, RenderGraphContext& context, Scene& scene) const;
+
 		std::unordered_map<RenderTextureSampler, std::unique_ptr<Vulkan::Sampler>> samplers;
 		std::unique_ptr<RenderGraphAllocator> allocator;
 

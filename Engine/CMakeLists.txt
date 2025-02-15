@@ -192,7 +192,8 @@ file(GLOB_RECURSE ENGINE_SRC_FILES CONFIGURE_DEPENDS src/*.cpp)
 
 add_library(Engine STATIC ${ENGINE_SRC_FILES}
         src/Rendering/RenderTexture.cpp
-        src/Rendering/RenderTexture.hpp)
+        src/Rendering/RenderTexture.hpp
+        src/Rendering/RenderBuffer.hpp)
 
 target_include_directories(Engine
     PUBLIC

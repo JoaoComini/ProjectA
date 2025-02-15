@@ -10,9 +10,28 @@ namespace Engine
 
     void ForwardPass::RecordRenderGraph(RenderGraphBuilder& builder, RenderGraphContext& context, ForwardPassData& data)
     {
+        const auto& frame = context.Get<FrameData>();
+
+        builder.Read(frame.camera, {
+            .set = 0,
+            .binding = 0,
+        });
+
+        const auto& lights = context.Get<LightData>();
+
+        builder.Read(lights.lights, {
+            .set = 0,
+            .binding = 5,
+        });
+
+        builder.Read(lights.shadows, {
+            .set = 0,
+            .binding = 7,
+        });
+
         const auto& shadow = context.Get<ShadowPassData>();
 
-        builder.Read(shadow.shadowmap, {
+        builder.Read(shadow.shadowMap, {
             .type = RenderTextureAccessType::Binding,
             .binding = {
                 .set = 0,
@@ -21,7 +40,7 @@ namespace Engine
             }
         });
 
-        data.gbuffer = builder.Allocate<RenderTexture>({
+        data.gBuffer = builder.Allocate<RenderTexture>({
                 1600,
                 900,
                 RenderTextureFormat::HDR,
@@ -35,7 +54,7 @@ namespace Engine
                 RenderTextureUsage::RenderTarget,
         });
 
-        builder.Write(data.gbuffer, {
+        builder.Write(data.gBuffer, {
             .type = RenderTextureAccessType::Attachment,
             .attachment = {
                 .aspect = RenderTextureAspect::Color,
@@ -52,93 +71,9 @@ namespace Engine
         context.Add<ForwardPassData>(data);
     }
 
-    struct CameraUniform
-    {
-        glm::mat4 viewProjectionMatrix;
-        glm::vec3 position;
-    };
-
-    struct Light
-    {
-        glm::vec4 vector;
-        glm::vec4 color;
-    };
-
-    struct alignas(16) LightsUniform
-    {
-        Light lights[32];
-        int count;
-    };
-
-    struct ShadowUniform
-    {
-        glm::mat4 viewProjection;
-    };
-
     void ForwardPass::Render(RenderGraphCommand& command, const ForwardPassData& data)
     {
-        CameraUniform cameraUniform {
-            //.viewProjectionMatrix = camera.GetProjection() * glm::inverse(transform),
-            //.position = transform[3],
-        };
-
-        LightsUniform lights{};
-        ShadowUniform shadow{};
-
-        GetMainLightData(lights, shadow);
-        GetAdditionalLightsData(lights);
-
-        command.BindUniformBuffer(&cameraUniform, sizeof(CameraUniform), 0, 0);
-        command.BindUniformBuffer(&lights, sizeof(LightsUniform), 0, 5);
-        command.BindUniformBuffer(&shadow, sizeof(ShadowUniform), 0, 7);
-
-        command.DrawGeometry(RenderGeometryType::Opaque, "forward");
-        command.DrawGeometry(RenderGeometryType::Transparent, "forward");
-    }
-
-    void ForwardPass::GetMainLightData(LightsUniform& lights, ShadowUniform& shadow)
-    {
-        auto query = scene.Query<Component::Transform, Component::DirectionalLight>();
-
-        auto entity = query.First();
-
-        if (entity == Entity::Null)
-        {
-            return;
-        }
-
-        const auto& [transform, light] = query.GetComponent(entity);
-
-        auto direction = glm::normalize(transform.rotation * glm::vec3{ 0, 0, 1 });
-        auto view = glm::lookAt(-direction, glm::vec3{ 0, 0, 0 }, glm::vec3{ 0, 1, 0 });
-
-        Camera camera;
-        camera.SetOrthographic(50, -25.f, 25.f);
-
-        auto projection = camera.GetProjection();
-
-        shadow.viewProjection = projection * view;
-
-        lights.lights[0].color = { light.color, light.intensity };
-        lights.lights[0].vector = glm::vec4{ direction, 1.f };
-
-        lights.count++;
-    }
-
-    void ForwardPass::GetAdditionalLightsData(LightsUniform& uniform)
-    {
-        auto query = scene.Query<Component::Transform, Component::PointLight>();
-        
-        for (auto entity : query)
-        {
-            auto count = uniform.count;
-
-            const auto& [transform, light] = query.GetComponent(entity);
-            
-            uniform.lights[count].color = { light.color, light.range };
-            uniform.lights[count].vector = { transform.position, 0.f };
-
-            uniform.count++;
-        }
+        command.DrawGeometry({ RenderGeometryType::Opaque, "forward" });
+        command.DrawGeometry({ RenderGeometryType::Transparent, "forward" });
     }
 };

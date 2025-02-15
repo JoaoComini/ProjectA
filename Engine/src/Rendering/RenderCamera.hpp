@@ -13,7 +13,7 @@ namespace Engine
             this->position = position;
         }
 
-        glm::vec3 GetPosition() const
+        [[nodiscard]] glm::vec3 GetPosition() const
         {
             return position;
         }
@@ -23,10 +23,17 @@ namespace Engine
             this->rotation = rotation;
         }
 
-        glm::quat GetRotation() const
+        [[nodiscard]] glm::quat GetRotation() const
         {
             return rotation;
         }
+
+        [[nodiscard]] glm::mat4 GetTransform() const
+        {
+            return translate(glm::mat4(1.0f), position)
+                * mat4_cast(rotation);
+        }
+
 
     private:
         glm::vec3 position{ 0.0f, 0.0f, 0.0f };

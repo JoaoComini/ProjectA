@@ -12,14 +12,14 @@ namespace Engine
 
 	void ShadowPass::RecordRenderGraph(RenderGraphBuilder& builder, RenderGraphContext& context, ShadowPassData& data)
 	{
-		data.shadowmap = builder.Allocate<RenderTexture>({
+		data.shadowMap = builder.Allocate<RenderTexture>({
 			.width = 2048,
 			.height = 2048,
 			.format = RenderTextureFormat::Depth,
 			.usage = RenderTextureUsage::RenderTarget | RenderTextureUsage::Sampled
 		});
 
-		builder.Write(data.shadowmap, {
+		builder.Write(data.shadowMap, {
 			.type = RenderTextureAccessType::Attachment,
 			.attachment = {
 				.aspect = RenderTextureAspect::Depth,
@@ -40,6 +40,10 @@ namespace Engine
 
 	void ShadowPass::Render(RenderGraphCommand& command, const ShadowPassData& data)
 	{
-		command.DrawShadow(data.lightDirection);
+		command.DrawShadow({
+			.lightDirection = data.lightDirection,
+			.depthBias = settings.depthBias,
+			.normalBias = settings.normalBias,
+		});
 	}
 }
