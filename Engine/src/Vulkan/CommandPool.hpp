@@ -2,6 +2,11 @@
 
 #include "Resource.hpp"
 
+namespace Engine
+{
+	class RenderFrame;
+}
+
 namespace Vulkan
 {
 	class Device;
@@ -10,15 +15,17 @@ namespace Vulkan
 	class CommandPool : public Resource<VkCommandPool>
 	{
 	public:
-		CommandPool(const Device &device);
+		CommandPool(Device &device, Engine::RenderFrame* frame = nullptr);
 		~CommandPool();
 
 		CommandBuffer& RequestCommandBuffer();
+		Engine::RenderFrame* GetRenderFrame();
 
 		void Reset();
 
 	private:
-		const Device& device;
+		Device& device;
+		Engine::RenderFrame* frame{ nullptr };
 
 		std::vector<std::unique_ptr<CommandBuffer>> commandBuffers;
 

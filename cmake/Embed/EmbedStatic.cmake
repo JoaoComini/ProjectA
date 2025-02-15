@@ -93,12 +93,12 @@ function(_embed_static_gen_source name)
                 $<JOIN:$<TARGET_PROPERTY:${name},EMBED_EXTERNS>,
                 >
 
-                std::unordered_map<std::string, file_data> index = {
+                std::unordered_map<std::string_view, file_data> index = {
                     $<JOIN:$<TARGET_PROPERTY:${name},EMBED_FILE_DATA>,
                     >
                 }\;
 
-                file get(const std::string& name)
+                file get(std::string_view name)
                 {
                     if (auto it = index.find(name)\; it != index.end())
                     {
@@ -137,7 +137,7 @@ function(_embed_static_gen_header name)
         namespace embed {
 
             namespace ${name} {
-                file get(const std::string& name)\;
+                file get(std::string_view name)\;
             }
         }
     ]] embed_header)

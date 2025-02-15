@@ -97,8 +97,8 @@ namespace Engine
 		samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 		samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 		samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-		samplerInfo.anisotropyEnable = VK_TRUE;
-		samplerInfo.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
+		samplerInfo.anisotropyEnable = VK_FALSE;
+		samplerInfo.maxAnisotropy = 1.0f;
 		samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
 		samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
 		samplerInfo.maxLod = mipmaps.size();
@@ -124,7 +124,7 @@ namespace Engine
 			.Size(size)
 			.Persistent()
 			.SequentialWrite()
-			.BufferUsage(Vulkan::BufferUsageFlags::STAGING)
+			.BufferUsage(Vulkan::BufferUsageFlags::Staging)
 			.Build(device);
 
 		staging->SetData(data.data(), size);
@@ -136,14 +136,11 @@ namespace Engine
 		subresourceRange.baseMipLevel = 0;
 		subresourceRange.levelCount = image->GetMipLevels();
 
-		device.OneTimeSubmit([&](auto& commandBuffer) {
-			commandBuffer.SetImageLayout(*image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresourceRange);
-		});
-
 		std::vector<VkBufferImageCopy> regions;
 		PrepareBufferCopyRegions(regions);
 
 		device.OneTimeSubmit([&](auto& commandBuffer) {
+			commandBuffer.SetImageLayout(*image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresourceRange);
 			commandBuffer.CopyBufferToImage(*staging, *image, regions);
 			commandBuffer.SetImageLayout(*image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresourceRange);
 		});

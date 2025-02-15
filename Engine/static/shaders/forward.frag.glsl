@@ -67,11 +67,11 @@ float CalculateShadow()
 {
     vec4 projected = shadow.viewProjection * vec4(inPosition, 1.0);
 
-    projected /= projected.w;
+    vec3 coords = projected.xyz / projected.w;
 
-    projected.xy = 0.5 * projected.xy + 0.5;
+    coords.xy = 0.5 * coords.xy + 0.5;
 
-    return texture(shadowMap, vec3(projected.xy, projected.z));
+    return texture(shadowMap, coords);
 }
 
 // Lightning --------------------------------------------------------
@@ -177,7 +177,7 @@ vec4 Albedo()
 {
 	#ifdef HAS_ALBEDO_TEXTURE
 	vec4 albedo = texture(albedoTexture, inUV);
-    return vec4(pow(albedo.rgb, vec3(GAMMA)), albedo.a);
+    return vec4(pow(albedo.rgb, vec3(GAMMA)), albedo.a) * pbr.albedoColor;
 	#else
 	return pbr.albedoColor;
 	#endif
@@ -206,7 +206,7 @@ vec3 Normal()
 float Metallic()
 {
 	#ifdef HAS_METALLIC_ROUGHNESS_TEXTURE
-    return Saturate(texture(metallicRoughnessTexture, inUV).b);
+    return Saturate(texture(metallicRoughnessTexture, inUV).b) * pbr.metallicFactor;
 	#else
 	return pbr.metallicFactor;
 	#endif
@@ -215,7 +215,7 @@ float Metallic()
 float Roughness()
 {
 	#ifdef HAS_METALLIC_ROUGHNESS_TEXTURE
-    return Saturate(texture(metallicRoughnessTexture, inUV).g);
+    return Saturate(texture(metallicRoughnessTexture, inUV).g) * pbr.roughnessFactor;
 	#else
 	return pbr.roughnessFactor;
 	#endif

@@ -4,7 +4,7 @@
 
 #include "Common/Hash.hpp"
 #include "Resource/Resource.hpp"
-#include "Vulkan/ShaderModule.hpp"
+#include "Shader.hpp"
 
 namespace Engine
 {
@@ -62,7 +62,7 @@ namespace Engine
 			return "pares";
 		}
 
-		const Vulkan::ShaderVariant& GetShaderVariant() const;
+		const ShaderVariant& GetShaderVariant() const;
 
 	private:
 		void PrepareShaderVariant();
@@ -78,7 +78,7 @@ namespace Engine
 		AlphaMode alphaMode{ AlphaMode::Opaque };
 		float alphaCutoff{ 0.5f };
 
-		Vulkan::ShaderVariant shaderVariant;
+		ShaderVariant shaderVariant;
 	};
 };
 

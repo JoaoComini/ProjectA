@@ -112,25 +112,22 @@ namespace Engine
             { "Z", KeyCode::Z },
         });
 
-        lua.new_enum<MouseCode>("MouseCode", {
-            { "Button0", MouseCode::Button0},
-            { "Button1", MouseCode::Button1},
-            { "Button2", MouseCode::Button2},
-            { "Button3", MouseCode::Button3},
-            { "Button4", MouseCode::Button4},
-            { "Button5", MouseCode::Button5},
-            { "Button6", MouseCode::Button6},
-            { "Button7", MouseCode::Button7},
-            { "ButtonLeft", MouseCode::ButtonLeft},
-            { "ButtonMiddle", MouseCode::ButtonMiddle},
-            { "ButtonRight", MouseCode::ButtonRight},
+        lua.new_enum<MouseButton>("MouseButton", {
+            { "0", MouseButton::Left},
+            { "1", MouseButton::Right},
+            { "2", MouseButton::Middle},
+            { "3", MouseButton::Back},
+            { "4", MouseButton::Forward},
+            { "Left", MouseButton::Left},
+            { "Middle", MouseButton::Right},
+            { "Right", MouseButton::Middle},
         });
 
         lua.set_function("is_key_down", [](KeyCode code) -> bool {
             return Input::Get().IsKeyDown(code);
         });
 
-        lua.set_function("is_mouse_button_down", [](MouseCode code) -> bool {
+        lua.set_function("is_mouse_button_down", [](MouseButton code) -> bool {
             return Input::Get().IsMouseButtonDown(code);
         });
     }

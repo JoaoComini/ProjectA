@@ -10,10 +10,10 @@ namespace Vulkan
 
 	enum class BufferUsageFlags : uint32_t
 	{
-		VERTEX = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-		INDEX = VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-		UNIFORM = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-		STAGING = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		Vertex = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+		Index = VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+		Uniform = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+		Staging = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
 	};
 
 	class Buffer : public Resource<VkBuffer>
@@ -56,7 +56,7 @@ namespace Vulkan
 
 	private:
 		uint32_t size = 0;
-		BufferUsageFlags bufferUsage = BufferUsageFlags::VERTEX;
+		BufferUsageFlags bufferUsage = BufferUsageFlags::Vertex;
 		VmaAllocationCreateFlags allocationCreate = 0;
 	};
 

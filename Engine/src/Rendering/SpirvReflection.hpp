@@ -1,22 +1,22 @@
 #pragma once
 
-#include "ShaderModule.hpp"
+#include "Shader.hpp"
 
 #include <spirv_glsl.hpp>
 
-namespace Vulkan
+namespace Engine
 {
 
 	class SpirvReflection
 	{
 	public:
-		SpirvReflection(VkShaderStageFlagBits stage, std::vector<uint32_t>& spirv);
+		SpirvReflection(ShaderStage stage, std::vector<uint32_t>& spirv);
 
 		void ReflectShaderResources(std::vector<ShaderResource>& shaderResources);
 
 	private:
 		spirv_cross::CompilerGLSL compiler;
-		VkShaderStageFlagBits stage;
+		ShaderStage stage;
 
 		template<ShaderResourceType>
 		void ParseShaderResource(std::vector<ShaderResource>& shaderResources);
@@ -35,7 +35,7 @@ namespace Vulkan
 		{
 			return {
 				.type = T,
-				.stages = static_cast<VkShaderStageFlags>(stage),
+				.stages = stage,
 				.name = resource.name
 			};
 		}

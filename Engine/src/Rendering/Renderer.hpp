@@ -1,60 +1,61 @@
 #pragma once
 
-#include "Common/Singleton.hpp"
-#include "Resource/Resource.hpp"
 #include "Vulkan/CommandBuffer.hpp"
 
-#include "RenderPipeline.hpp"
+#include "Pass/ForwardPass.hpp"
+#include "Pass/ShadowPass.hpp"
+#include "Pass/CompositionPass.hpp"
+
+#include "RenderGraphAllocator.hpp"
+
+#include "RenderCamera.hpp"
 #include "RenderContext.hpp"
+#include "ShaderCache.hpp"
 
 namespace Engine
 {
-	class Camera;
 	class Window;
 	class Scene;
 
-	struct HdrSettings
-	{
-		float exposure{ 1.0 };
-	};
-
-	struct ShadowSettings
-	{
-		float depthBias{ 0.05 };
-		float normalBias{ 0.4 };
-	};
-
 	struct RendererSettings
 	{
-		HdrSettings hdr;
 		ShadowSettings shadow;
 	};
 
-	class Renderer : public Singleton<Renderer>
+	struct BackBufferData
+	{
+		RenderGraphResourceHandle<RenderTexture> target;
+	};
+
+	struct FrameData
+	{
+		RenderGraphResourceHandle<RenderBuffer> camera;
+	};
+
+	struct LightData
+	{
+		RenderGraphResourceHandle<RenderBuffer> lights;
+		RenderGraphResourceHandle<RenderBuffer> shadows;
+	};
+
+
+	class Renderer
 	{
 	public:
-		Renderer(Window& window, Scene& scene);
+		explicit Renderer(RenderContext& renderContext);
+		~Renderer();
 
-		Vulkan::CommandBuffer& Begin();
-		void Draw();
-		void End();
-
-		void SetMainCamera(Camera& camera, glm::mat4 transform);
-		std::pair<Camera&, glm::mat4&> GetMainCamera();
-
-		void SetSettings(RendererSettings settings);
-		RendererSettings GetSettings() const;
-
-		RenderContext& GetRenderContext();
-		RenderPipeline& GetRenderPipeline();
+		void Draw(Vulkan::CommandBuffer& commandBuffer, Scene& scene, RenderCamera& camera, RenderAttachment& target);
 	private:
-		std::unique_ptr<RenderContext> context;
-		std::unique_ptr<RenderPipeline> pipeline;
+		void ImportBackBufferData(RenderGraph& graph, RenderGraphContext& context, RenderAttachment& target) const;
+		void ImportFrameData(RenderGraph& graph, RenderGraphContext& context, RenderCamera& camera) const;
+		void ImportLightsData(RenderGraph& graph, RenderGraphContext& context, Scene& scene) const;
 
-		Vulkan::CommandBuffer* activeCommandBuffer{ nullptr };
+		std::unordered_map<RenderTextureSampler, std::unique_ptr<Vulkan::Sampler>> samplers;
+		std::unique_ptr<RenderGraphAllocator> allocator;
 
-		Camera mainCamera{};
-		glm::mat4 mainTransform{};
+		RenderContext& renderContext;
+		ShaderCache shaderCache;
 
 		RendererSettings settings;
 	};

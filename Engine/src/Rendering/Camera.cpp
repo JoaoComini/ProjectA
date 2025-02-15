@@ -81,6 +81,11 @@ namespace Engine
 		dirty = true;
 	}
 
+	float Camera::GetSize() const
+	{
+		return size;
+	}
+
 	void Camera::UpdateProjection()
 	{
 		if (! dirty)
@@ -90,10 +95,10 @@ namespace Engine
 
 		switch (type)
 		{
-		case Engine::Camera::Pespective:
+		case Pespective:
 			projection = glm::perspective(fov, aspectRatio, farClip, nearClip);
 			break;
-		case Engine::Camera::Orthographic:
+		case Orthographic:
 			float left = -size * aspectRatio * 0.5f;
 			float right = size * aspectRatio * 0.5f;
 			float bottom = -size * 0.5f;

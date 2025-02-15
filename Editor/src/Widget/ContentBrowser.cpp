@@ -10,7 +10,6 @@
 #include <Icons/embed.gen.hpp>
 
 #include <imgui.h>
-#include <backends/imgui_impl_vulkan.h>
 
 ContentBrowser::ContentBrowser(Vulkan::Device& device, Engine::Scene& scene)
 	: device(device), scene(scene)
@@ -27,14 +26,12 @@ ContentBrowser::ContentBrowser(Vulkan::Device& device, Engine::Scene& scene)
 	fileIconTexture = importer.LoadDefault(std::vector<uint8_t>{ fileIcon.begin(), fileIcon.end() });
 	fileIconTexture->CreateVulkanResources(device);
 	fileIconTexture->UploadDataToGpu(device);
-	fileIconDescriptor = ImGui_ImplVulkan_AddTexture(fileIconTexture->GetSampler().GetHandle(), fileIconTexture->GetImageView().GetHandle(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 	auto directoryIcon = embed::Icons::get("directory.png");
 
 	directoryIconTexture = importer.LoadDefault(std::vector<uint8_t>{ directoryIcon.begin(), directoryIcon.end() });
 	directoryIconTexture->CreateVulkanResources(device);
 	directoryIconTexture->UploadDataToGpu(device);
-	directoryIconDescriptor = ImGui_ImplVulkan_AddTexture(directoryIconTexture->GetSampler().GetHandle(), directoryIconTexture->GetImageView().GetHandle(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 	RefreshResourceTree();
 }
@@ -163,7 +160,7 @@ void ContentBrowser::ContentBrowserDirectory(std::filesystem::path path)
 
 	ImGui::PushID(filename.c_str());
 
-	ContentBrowserItemIcon(filename, directoryIconDescriptor);
+	ContentBrowserItemIcon(filename, *directoryIconTexture);
 
 	if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
 	{
@@ -183,7 +180,7 @@ bool ContentBrowser::ContentBrowserFile(std::filesystem::path path, ResourceTree
 
 	ImGui::PushID(filename.c_str());
 
-	ContentBrowserItemIcon(filename, fileIconDescriptor);
+	ContentBrowserItemIcon(filename, *fileIconTexture);
 
 	if (ImGui::BeginDragDropSource())
 	{
@@ -215,10 +212,10 @@ bool ContentBrowser::ContentBrowserFile(std::filesystem::path path, ResourceTree
 	return deleted;
 }
 
-void ContentBrowser::ContentBrowserItemIcon(std::string label, VkDescriptorSet iconDescriptor)
+void ContentBrowser::ContentBrowserItemIcon(std::string label, Engine::Texture& texture)
 {
 	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
-	ImGui::ImageButton(label.c_str(), iconDescriptor, { itemSize, itemSize });
+	ImGui::ImageButton(label.c_str(), &texture, { itemSize, itemSize });
 	ImGui::PopStyleColor();
 }
 

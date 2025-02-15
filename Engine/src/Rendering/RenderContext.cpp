@@ -101,21 +101,26 @@ namespace Engine
 
 	void RenderContext::End(Vulkan::CommandBuffer& commandBuffer)
 	{
-		commandBuffer.EndRendering();
-
 		auto& frame = GetCurrentFrame();
 		auto& attachment = frame.GetTarget().GetColorAttachment(0);
 
 		{
 			Vulkan::ImageMemoryBarrierInfo barrier{};
 
-			barrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			auto& scope = attachment.GetScope();
+			auto& layout = attachment.GetLayout();
+
+			barrier.oldLayout = layout;
 			barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-			barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-			barrier.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+			barrier.srcAccessMask = scope.access;
+			barrier.srcStageMask = scope.stage;
 			barrier.dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
 
 			commandBuffer.ImageMemoryBarrier(attachment.GetView(), barrier);
+
+			scope.access = barrier.dstAccessMask;
+			scope.stage = barrier.dstStageMask;
+			layout = barrier.newLayout;
 		}
 
 		commandBuffer.End();
@@ -205,7 +210,7 @@ namespace Engine
 			*device,
 			std::move(swapchainImage),
 			VkClearValue{
-				.color = { 0.f, 0.f, 0.f, 1.f },
+				.color = { 1.f, 1.f, 0.f, 1.f },
 			},
 			Vulkan::LoadStoreInfo{}
 		);

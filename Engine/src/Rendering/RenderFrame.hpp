@@ -26,7 +26,7 @@ namespace Engine
 		static constexpr uint32_t BUFFER_POOL_BLOCK_SIZE = 256 * 1024;
 		static constexpr uint32_t DESCRIPTOR_POOL_MAX_SETS = 256;
 
-		RenderFrame(const Vulkan::Device& device, std::unique_ptr<RenderTarget> target);
+		RenderFrame(Vulkan::Device& device, std::unique_ptr<RenderTarget> target);
 		~RenderFrame() = default;
 
 		void Reset();
@@ -45,12 +45,12 @@ namespace Engine
 	private:
 		DescriptorPool& GetDescriptorPool(Vulkan::DescriptorSetLayout& descriptorSetLayout);
 
-		const Vulkan::Device& device;
+		Vulkan::Device& device;
 
 		std::unique_ptr<Vulkan::CommandPool> commandPool;
 		std::unique_ptr<SemaphorePool> semaphorePool;
-		std::unique_ptr<BufferPool> bufferPool;
 
+		std::unordered_map<Vulkan::BufferUsageFlags, std::unique_ptr<BufferPool>> bufferPools;
 		std::unordered_map<std::size_t, std::unique_ptr<DescriptorPool>> descriptorPools;
 
 		std::unique_ptr<Vulkan::Fence> renderFence;

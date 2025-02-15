@@ -2,8 +2,7 @@
 
 #include "Common/Singleton.hpp"
 
-#include "KeyCode.hpp"
-#include "MouseCode.hpp"
+#include "InputEvent.hpp"
 #include "Window.hpp"
 
 namespace Engine
@@ -12,7 +11,7 @@ namespace Engine
     {
     public:
         virtual bool IsKeyDown(KeyCode code) = 0;
-        virtual bool IsMouseButtonDown(MouseCode code) = 0;
+        virtual bool IsMouseButtonDown(MouseButton button) = 0;
         virtual glm::vec2 GetMousePosition() = 0;
     protected:
         Input() = default;

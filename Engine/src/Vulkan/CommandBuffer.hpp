@@ -5,27 +5,27 @@
 
 #include "PipelineState.hpp"
 
+#include <variant>
+
 namespace Vulkan
 {
+	template <typename T>
+	using BindingMap = std::map<uint32_t, std::map<uint32_t, T>>;
+
 	class CommandPool;
 	class Device;
 	class Framebuffer;
 	class Pipeline;
 	class PipelineLayout;
 	class Image;
+	class Sampler;
 	class ImageView;
 	class Buffer;
 
-	struct AttachmentInfo
-	{
-		VkFormat format{ VK_FORMAT_UNDEFINED };
-		VkSampleCountFlagBits samples{ VK_SAMPLE_COUNT_1_BIT };
-	};
-
 	struct LoadStoreInfo
 	{
-		VkAttachmentLoadOp loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		VkAttachmentStoreOp storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		VkAttachmentLoadOp loadOp{ VK_ATTACHMENT_LOAD_OP_CLEAR };
+		VkAttachmentStoreOp storeOp{ VK_ATTACHMENT_STORE_OP_STORE };
 	};
 
 	struct ImageMemoryBarrierInfo
@@ -58,7 +58,7 @@ namespace Vulkan
 			OneTimeSubmit = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
 		};
 
-		CommandBuffer(const Device& device, const CommandPool& commandPool, const Level level = Level::Primary);
+		CommandBuffer(Device& device, CommandPool& commandPool, Level level = Level::Primary);
 		~CommandBuffer();
 
 		void Begin(BeginFlags flags = BeginFlags::None);
@@ -78,7 +78,11 @@ namespace Vulkan
 		void SetColorBlendState(const ColorBlendState& state);
 
 		void BindPipelineLayout(PipelineLayout& pipelineLayout);
+		void BindBuffer(const Buffer& buffer, uint32_t offset, uint32_t size, uint32_t set, uint32_t binding, uint32_t arrayElement);
+		void BindImage(const ImageView& imageView, const Sampler& sampler, uint32_t set, uint32_t binding, uint32_t arrayElement);
 		void BindDescriptorSet(VkDescriptorSet descriptorSet);
+		void FlushDescriptorSets();
+
 		void PushConstants(VkShaderStageFlags stages, uint32_t offset, uint32_t size, void* data);
 
 		void Draw(uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance);
@@ -97,9 +101,11 @@ namespace Vulkan
 	private:
 		void Flush();
 
-		const Device& device;
-		const CommandPool& commandPool;
+		Device& device;
+		CommandPool& commandPool;
 
 		PipelineState pipelineState{};
+		std::map<uint32_t, BindingMap<VkDescriptorBufferInfo>> bufferBindings;
+		std::map<uint32_t, BindingMap<VkDescriptorImageInfo>> imageBindings;
 	};
 }

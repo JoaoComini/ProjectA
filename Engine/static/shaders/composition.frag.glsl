@@ -8,17 +8,13 @@ layout (location = 0) out vec4 outColor;
 
 layout (set = 0, binding = 0) uniform sampler2D gBuffer;
 
-layout(set = 0, binding = 1) uniform HdrSettings {
-    float exposure;
-} hdr;
-
 void main() 
 {
     vec3 color = texture(gBuffer, inUV).rgb;
   
-    vec3 mapped = vec3(1.0) - exp(-color * hdr.exposure);
+//  vec3 mapped = vec3(1.0) - exp(-color * hdr.exposure);  add a better tonemapper here
 
-    mapped = pow(mapped, vec3(1.0 / GAMMA));
+    vec3 corrected = pow(color, vec3(1.0 / GAMMA));
 
-    outColor = vec4(mapped, 1.0);
+    outColor = vec4(corrected, 1.0);
 }

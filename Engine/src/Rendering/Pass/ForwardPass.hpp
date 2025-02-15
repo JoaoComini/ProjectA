@@ -1,51 +1,36 @@
 #pragma once
 
-#include "GeometryPass.hpp"
+#include <Rendering/Renderer.hpp>
+
+#include "Rendering/RenderGraph/RenderGraphResource.hpp"
+#include "Rendering/RenderGraph/RenderGraphPass.hpp"
+#include "Rendering/RenderTexture.hpp"
 
 namespace Engine
 {
-	struct Light
+	class Scene;
+
+	struct ResolutionSettings
 	{
-		glm::vec4 vector;
-		glm::vec4 color;
+		uint32_t width;
+		uint32_t height;
 	};
 
-	struct alignas(16) LightsUniform
+	struct ForwardPassData
 	{
-		Light lights[32];
-		int count;
+		RenderGraphResourceHandle<RenderTexture> gBuffer;
+		RenderGraphResourceHandle<RenderTexture> depth;
 	};
 
-	struct ShadowUniform
-	{
-		glm::mat4 viewProjection;
-	};
-
-	class ForwardPass : public GeometryPass
+	class ForwardPass : public RenderGraphPass<ForwardPassData, RenderGraphCommand>
 	{
 	public:
-		ForwardPass(
-			RenderContext& renderContext,
-			Vulkan::ShaderSource&& vertexSource,
-			Vulkan::ShaderSource&& fragmentSource,
-			Scene& scene,
-			RenderTarget* shadowTarget
-		);
+		explicit ForwardPass(Scene& scene, ResolutionSettings settings);
 
-		void Draw(Vulkan::CommandBuffer& commandBuffer) override;
+		void RecordRenderGraph(RenderGraphBuilder& builder, RenderGraphContext& context, ForwardPassData& data) override;
+		void Render(RenderGraphCommand& command, const ForwardPassData& data) override;
 	private:
-		void CreateShadowMapSampler();
-
-		void GetMainLightData(LightsUniform& lights, ShadowUniform& shadow);
-		void GetAdditionalLightsData(LightsUniform& lights);
-
-		void UpdateLightUniform(Vulkan::CommandBuffer& commandBuffer, LightsUniform uniform);
-
-		void BindShadowMap();
-
-		void UpdateShadowUniform(Vulkan::CommandBuffer& commandBuffer, ShadowUniform uniform);
-	private:
-		RenderTarget* shadowTarget;
-		std::unique_ptr<Vulkan::Sampler> shadowMapSampler;
+		Scene& scene;
+		ResolutionSettings settings;
 	};
 }

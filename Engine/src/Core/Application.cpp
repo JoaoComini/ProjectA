@@ -8,8 +8,6 @@
 #include "Scene/Scene.hpp"
 #include "Scene/Components.hpp"
 
-#include "Rendering/Gui.hpp"
-
 #include "Resource/ResourceManager.hpp"
 #include "Resource/ResourceRegistry.hpp"
 
@@ -29,6 +27,17 @@ namespace Engine {
 			running = false;
 		});
 
+		window->OnInputEvent([this](const auto& event) {
+			bool captured = gui->OnInputEvent(event);
+
+			if (captured)
+			{
+				return;
+			}
+
+			OnInputEvent(event);
+		});
+
 		window->OnResize(
 			[&](int width, int height) {
 				if (width == 0 || height == 0)
@@ -40,15 +49,17 @@ namespace Engine {
 			}
 		);
 
+		renderContext = std::make_unique<RenderContext>(*window);
+		renderer = std::make_unique<Renderer>(*renderContext);
+		gui = std::make_unique<Gui>(*window, *renderContext);
+
 		scene = std::make_unique<Scene>();
 		scene->OnComponentAdded<Component::Camera, &Application::SetCameraAspectRatio>(this);
 
 		scriptRunner = std::make_unique<ScriptRunner>(*scene);
 		physicsRunner = std::make_unique<PhysicsRunner>(*scene);
 
-		Renderer::Create(*window, *scene);
-		Gui::Create(*window);
-		ResourceManager::Create();
+		ResourceManager::Create(*renderContext);
 		ResourceRegistry::Create();
 		Input::Create<WindowInput>(*window);
 
@@ -57,6 +68,8 @@ namespace Engine {
 
 	Application::~Application()
 	{
+		gui.reset();
+
 		Container::TearDown();
 	}
 
@@ -76,17 +89,21 @@ namespace Engine {
 
 			scene->Update();
 
-			auto& commandBuffer = Renderer::Get().Begin();
+			auto* commandBuffer = renderContext->Begin();
 
-			Renderer::Get().Draw();
+			auto& frame = renderContext->GetCurrentFrame();
+			auto& target = frame.GetTarget();
+			auto& attachment = target.GetColorAttachment(0);
 
-			Gui::Get().Begin();
+			renderer->Draw(*commandBuffer, *scene, camera, attachment);
+
+			gui->Begin();
 
 			OnGui();
 
-			Gui::Get().End(commandBuffer);
+			gui->Draw(*commandBuffer, attachment);
 
-			Renderer::Get().End();
+			renderContext->End(*commandBuffer);
 		}
 	}
 
@@ -129,6 +146,11 @@ namespace Engine {
 	Window& Application::GetWindow()
 	{
 		return *window;
+	}
+
+	RenderContext& Application::GetRenderContext()
+	{
+		return *renderContext;
 	}
 
 	void Application::StartScene()

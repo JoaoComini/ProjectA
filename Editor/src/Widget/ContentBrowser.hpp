@@ -31,7 +31,7 @@ private:
 	void ContentBrowserTable();
 	void ContentBrowserDirectory(std::filesystem::path path);
 	bool ContentBrowserFile(std::filesystem::path path, ResourceTree::Node* node);
-	void ContentBrowserItemIcon(std::string label, VkDescriptorSet iconDescriptor);
+	void ContentBrowserItemIcon(std::string label, Engine::Texture& texture);
 
 	int GetContentTableColumns();
 
@@ -40,10 +40,7 @@ private:
 	ResourceTree resourceTree;
 
 	std::shared_ptr<Engine::Texture> fileIconTexture;
-	VkDescriptorSet fileIconDescriptor;
-
 	std::shared_ptr<Engine::Texture> directoryIconTexture;
-	VkDescriptorSet directoryIconDescriptor;
 
 	float itemSize = 96;
 

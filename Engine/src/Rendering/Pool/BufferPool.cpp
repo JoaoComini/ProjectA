@@ -48,7 +48,7 @@ namespace Engine
 
 		auto properties = device.GetPhysicalDeviceProperties();
 
-		if (usage == Vulkan::BufferUsageFlags::UNIFORM)
+		if (usage == Vulkan::BufferUsageFlags::Uniform)
 		{
 			alignment = properties.limits.minUniformBufferOffsetAlignment;
 		}
@@ -76,11 +76,11 @@ namespace Engine
 	}
 
 	BufferAllocation::BufferAllocation(Vulkan::Buffer& buffer, uint32_t size, uint32_t offset) :
-		buffer(buffer), size(size), offset(offset) { }
+		buffer(&buffer), size(size), offset(offset) { }
 
 	const Vulkan::Buffer& BufferAllocation::GetBuffer() const
 	{
-		return buffer;
+		return *buffer;
 	}
 
 	uint32_t BufferAllocation::GetSize() const
@@ -95,7 +95,7 @@ namespace Engine
 
 	void BufferAllocation::SetData(void* data)
 	{
-		buffer.SetData(data, size, offset);
+		buffer->SetData(data, size, offset);
 	}
 
 }

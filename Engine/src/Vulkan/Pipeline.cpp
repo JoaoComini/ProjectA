@@ -1,6 +1,6 @@
 #include "Pipeline.hpp"
 
-#include "ShaderModule.hpp"
+#include "Rendering/Shader.hpp"
 
 namespace Vulkan
 {
@@ -11,27 +11,37 @@ namespace Vulkan
 		std::vector<VkShaderModule> shaderModules;
 		std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
 	
-		for (auto& shaderModule : pipelineLayout->GetShaderModules())
+		for (auto& shader : pipelineLayout->GetShaders())
 		{
-			VkPipelineShaderStageCreateInfo stageCreateinfo{};
-			stageCreateinfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-			stageCreateinfo.stage = shaderModule->GetStage();
-			stageCreateinfo.pName = "main";
+			VkPipelineShaderStageCreateInfo stageCreateInfo{};
+			stageCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+			stageCreateInfo.pName = "main";
 
-			auto& spirv = shaderModule->GetSpirv();
+			switch (shader->GetStage())
+			{
+			case Engine::ShaderStage::Vertex:
+				stageCreateInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+				break;
+			case Engine::ShaderStage::Fragment:
+				stageCreateInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+				break;
+			}
+
+			auto& spirv = shader->GetSpirv();
 
 			VkShaderModuleCreateInfo createInfo{};
 			createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
 			createInfo.codeSize = spirv.size() * sizeof(uint32_t);
 			createInfo.pCode = spirv.data();
+		
 
-			if (vkCreateShaderModule(device.GetHandle(), &createInfo, nullptr, &stageCreateinfo.module) != VK_SUCCESS)
+			if (vkCreateShaderModule(device.GetHandle(), &createInfo, nullptr, &stageCreateInfo.module) != VK_SUCCESS)
 			{
 				throw std::runtime_error("failed to create shader module!");
 			}
 
-			shaderStages.push_back(stageCreateinfo);
-			shaderModules.push_back(stageCreateinfo.module);
+			shaderStages.push_back(stageCreateInfo);
+			shaderModules.push_back(stageCreateInfo.module);
 		}
 
 		std::vector<VkDynamicState> dynamicStates = {
@@ -65,7 +75,7 @@ namespace Vulkan
 		auto& rasterizationState = state.GetRasterizationState();
 		VkPipelineRasterizationStateCreateInfo rasterizer{};
 		rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-		rasterizer.depthClampEnable = VK_FALSE;
+		rasterizer.depthClampEnable = rasterizationState.depthClampEnable;
 		rasterizer.rasterizerDiscardEnable = VK_FALSE;
 		rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
 		rasterizer.lineWidth = 1.0f;

@@ -30,6 +30,7 @@ namespace Vulkan
 	{
 		VkCullModeFlags cullMode{ VK_CULL_MODE_BACK_BIT };
 		VkFrontFace frontFace{ VK_FRONT_FACE_COUNTER_CLOCKWISE };
+		VkBool32 depthClampEnable{ VK_FALSE };
 
 		bool operator==(RasterizationState const&) const = default;
 	};
@@ -77,8 +78,6 @@ namespace Vulkan
 		void SetPipelineRenderingState(const PipelineRenderingState& state);
 		void SetColorBlendState(const ColorBlendState& state);
 
-		void SetSubpassIndex(uint32_t index);
-
 		void ClearDirty();
 		void Reset();
 
@@ -91,8 +90,6 @@ namespace Vulkan
 		const DepthStencilState& GetDepthStencilState() const;
 		const PipelineRenderingState& GetPipelineRenderingState() const;
 		const ColorBlendState& GetColorBlendState() const;
-
-		uint32_t GetSubpassIndex() const;
 
 		bool IsDirty() const;
 
@@ -108,8 +105,6 @@ namespace Vulkan
 		DepthStencilState depthStencil{};
 		PipelineRenderingState pipelineRendering{};
 		ColorBlendState colorBlend{};
-
-		uint32_t subpassIndex{ 0 };
 	};
 }
 
@@ -154,6 +149,7 @@ namespace std
 
 			HashCombine(hash, state.cullMode);
 			HashCombine(hash, state.frontFace);
+			HashCombine(hash, state.depthClampEnable);
 
 			return hash;
 		}

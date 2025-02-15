@@ -4,9 +4,9 @@
 #include <glslang/Public/ResourceLimits.h>
 #include <SPIRV/GlslangToSpv.h>
 
-namespace Vulkan
+namespace Engine
 {
-    void GlslCompiler::CompileToSpv(VkShaderStageFlagBits stage, const ShaderSource& source, const ShaderVariant& variant, std::vector<uint32_t>& spirv)
+    void GlslCompiler::CompileToSpv(ShaderStage stage, const ShaderSource& source, const ShaderVariant& variant, std::vector<uint32_t>& spirv)
     {
         glslang::InitializeProcess();
 
@@ -14,18 +14,18 @@ namespace Vulkan
 
         switch (stage)
         {
-        case VK_SHADER_STAGE_VERTEX_BIT:
+        case ShaderStage::Vertex:
             language = EShLangVertex;
             break;
-        case VK_SHADER_STAGE_FRAGMENT_BIT:
+        case ShaderStage::Fragment:
             language = EShLangFragment;
             break;
-        case VK_SHADER_STAGE_GEOMETRY_BIT:
-            language = EShLangGeometry;
-            break;
-        case VK_SHADER_STAGE_COMPUTE_BIT:
-            language = EShLangCompute;
-            break;
+        //case VK_SHADER_STAGE_GEOMETRY_BIT:
+        //    language = EShLangGeometry;
+        //    break;
+        //case VK_SHADER_STAGE_COMPUTE_BIT:
+        //    language = EShLangCompute;
+        //    break;
         };
 
         EShMessages messages = static_cast<EShMessages>(EShMsgDefault | EShMsgVulkanRules | EShMsgSpvRules);

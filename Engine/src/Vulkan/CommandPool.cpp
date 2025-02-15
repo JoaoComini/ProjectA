@@ -3,9 +3,11 @@
 #include "Device.hpp"
 #include "CommandBuffer.hpp"
 
+#include "Rendering/RenderFrame.hpp"
+
 namespace Vulkan
 {
-	CommandPool::CommandPool(const Device &device) : device(device)
+	CommandPool::CommandPool(Device &device, Engine::RenderFrame* frame) : device(device), frame(frame)
 	{
 		VkCommandPoolCreateInfo poolCreateInfo{};
 		poolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -37,6 +39,11 @@ namespace Vulkan
 		activeCommandBuffersCount++;
 
 		return *commandBuffers.back();
+	}
+
+	Engine::RenderFrame* CommandPool::GetRenderFrame()
+	{
+		return frame;
 	}
 
 	void CommandPool::Reset()

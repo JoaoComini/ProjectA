@@ -2,7 +2,7 @@
 
 #include "CommandBuffer.hpp"
 
-#include "Caching/ResourceCache.hpp"
+#include "ResourceCache.hpp"
 
 namespace Vulkan
 {

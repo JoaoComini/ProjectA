@@ -1,15 +1,15 @@
 #pragma once
 
-namespace Vulkan
-{
-    class Device;
+#include "Hash.hpp"
 
+namespace Engine
+{
     template<typename T>
     class Cache
     {
     public:
         template<typename... Args>
-        T& Get(Device& device, Args&&... args)
+        T& Get(Args&&... args)
         {
             std::size_t hash{ 0 };
 
@@ -22,7 +22,7 @@ namespace Vulkan
                 return *it->second;
             }
 
-            auto resource = std::make_unique<T>(device, std::forward<Args>(args)...);
+            auto resource = std::make_unique<T>(std::forward<Args>(args)...);
 
             auto inserted = resources.emplace(hash, std::move(resource));
 

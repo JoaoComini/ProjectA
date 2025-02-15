@@ -33,10 +33,6 @@ void MainMenuBar::Draw()
 			openMetrics = true;
 		});
 
-		MainMenuItem("Environment", [&]() {
-			openEnvironment = true;
-		});
-
 		MainMenuItem("Shadows", [&]() {
 			openShadows = true;
 		});
@@ -58,29 +54,16 @@ void MainMenuBar::Draw()
 		
 	}
 
-	if (openEnvironment)
-	{
-		ImGui::Begin("Environment", &openEnvironment);
-
-		auto settings = Engine::Renderer::Get().GetSettings();
-
-		ImGui::DragFloat("Exposure", &settings.hdr.exposure, 0.1);
-			
-		Engine::Renderer::Get().SetSettings(settings);
-
-		ImGui::End();
-	}
-
 	if (openShadows)
 	{
 		ImGui::Begin("Shadows", &openShadows);
 
-		auto settings = Engine::Renderer::Get().GetSettings();
+		//auto settings = Engine::Renderer::Get().GetShadowSettings();
 
-		ImGui::DragFloat("Depth Bias", &settings.shadow.depthBias, 0.01);
-		ImGui::DragFloat("Normal Bias", &settings.shadow.normalBias, 0.01);
+		//ImGui::DragFloat("Depth Bias", &settings.depthBias, 0.01);
+		//ImGui::DragFloat("Normal Bias", &settings.normalBias, 0.01);
 
-		Engine::Renderer::Get().SetSettings(settings);
+		//Engine::Renderer::Get().SetShadowSettings(settings);
 
 		ImGui::End();
 	}

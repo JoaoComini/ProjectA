@@ -8,19 +8,20 @@ namespace Engine
 	class BufferAllocation
 	{
 	public:
+		BufferAllocation() = default;
 		BufferAllocation(Vulkan::Buffer& buffer, uint32_t size, uint32_t offset);
 
 		void SetData(void* data);
 
-		const Vulkan::Buffer& GetBuffer() const;
-		uint32_t GetSize() const;
-		uint32_t GetOffset() const;
+		[[nodiscard]] const Vulkan::Buffer& GetBuffer() const;
+		[[nodiscard]] uint32_t GetSize() const;
+		[[nodiscard]] uint32_t GetOffset() const;
 
 	private:
-		Vulkan::Buffer& buffer;
+		Vulkan::Buffer* buffer{ nullptr };
 
-		uint32_t size = 0;
-		uint32_t offset = 0;
+		uint32_t size{ 0 };
+		uint32_t offset{ 0 };
 	};
 
 	class BufferBlock

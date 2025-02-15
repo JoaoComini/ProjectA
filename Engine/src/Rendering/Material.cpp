@@ -80,7 +80,7 @@ namespace Engine
 		return alphaCutoff;
 	}
 
-	const Vulkan::ShaderVariant& Material::GetShaderVariant() const
+	const ShaderVariant& Material::GetShaderVariant() const
 	{
 		return shaderVariant;
 	}

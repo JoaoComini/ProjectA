@@ -3,7 +3,7 @@
 #include "Input.hpp"
 #include "Window.hpp"
 
-#include "KeyCode.hpp"
+#include "InputEvent.hpp"
 
 namespace Engine
 {
@@ -13,12 +13,12 @@ namespace Engine
         WindowInput(Window& window);
 
         bool IsKeyDown(KeyCode code) override;
-        bool IsMouseButtonDown(MouseCode code) override;
+        bool IsMouseButtonDown(MouseButton code) override;
 
         glm::vec2 GetMousePosition() override;
 
     private:
-        std::unordered_map<int, bool> keys;
+        std::unordered_map<KeyCode, bool> keys;
 
         Window& window;
     };

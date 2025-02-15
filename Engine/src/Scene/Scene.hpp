@@ -31,7 +31,7 @@ namespace Engine
 		}
 
 		template<typename T>
-		auto TryGetComponent(Entity::Id id) const
+		decltype(auto) TryGetComponent(Entity::Id id) const
 		{
 			return view.try_get<T>(id);
 		}

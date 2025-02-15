@@ -1,29 +1,34 @@
 #pragma once
 
-#include "Pass.hpp"
 
 #include "Scene/Scene.hpp"
+#include "Rendering/RenderGraph/RenderGraphPass.hpp"
+#include "Rendering//RenderGraph/RenderGraphResource.hpp"
+#include "Rendering/RenderTexture.hpp"
 
 namespace Engine
 {
-	class ShadowPass : public Pass
+	struct ShadowSettings
+	{
+		float depthBias{ 4 };
+		float normalBias{ 0.8 };
+	};
+
+	struct ShadowPassData
+	{
+		RenderGraphResourceHandle<RenderTexture> shadowMap;
+		glm::vec3 lightDirection;
+	};
+
+	class ShadowPass final : public RenderGraphPass<ShadowPassData, RenderGraphCommand>
 	{
 	public:
-		ShadowPass(
-			RenderContext& renderContext,
-			Vulkan::ShaderSource&& vertexSource,
-			Vulkan::ShaderSource&& fragmentSource,
-			Scene& scene
-		);
+		ShadowPass(Scene& scene, ShadowSettings settings);
 
-		virtual void Draw(Vulkan::CommandBuffer& commandBuffer) override;
-
-	protected:
-		virtual Vulkan::PipelineLayout& GetPipelineLayout(const std::vector<Vulkan::ShaderModule*>& shaders) override;
-		void UpdateGlobalUniform(Vulkan::CommandBuffer& commandBuffer, const glm::mat4& transform, const glm::mat4& viewProjection);
-		std::pair<glm::mat4, glm::mat4> GetViewProjection() const;
-
+		void RecordRenderGraph(RenderGraphBuilder& builder, RenderGraphContext& context, ShadowPassData& data) override;
+		void Render(RenderGraphCommand& command, const ShadowPassData& data) override;
 	private:
 		Scene& scene;
+		ShadowSettings settings;
 	};
 }
