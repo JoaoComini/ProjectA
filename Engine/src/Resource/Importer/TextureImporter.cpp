@@ -7,11 +7,6 @@
 
 namespace Engine
 {
-    TextureImporter::TextureImporter(Vulkan::Device& device)
-        : device(device)
-    {
-    }
-
     void TextureImporter::ImportDefault(std::filesystem::path path)
     {
         auto texture = LoadDefault(path);

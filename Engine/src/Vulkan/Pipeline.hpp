@@ -11,7 +11,7 @@ namespace Vulkan
 	class Pipeline : public Resource<VkPipeline>
 	{
 	public:
-		Pipeline(const Device& device, PipelineState state);
+		Pipeline(const Device& device, const PipelineState& state);
 		~Pipeline();
 
 	private:

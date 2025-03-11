@@ -10,12 +10,12 @@ namespace Vulkan
     {
     }
 
-    Engine::Shader& ResourceCache::RequestShader(Engine::ShaderStage stage, const Engine::ShaderSource& source, const Engine::ShaderVariant& variant)
+    Engine::ShaderModule& ResourceCache::RequestShader(Engine::ShaderStage stage, const Engine::ShaderSource& source, const Engine::ShaderVariant& variant)
     {
         return shaders.Get(stage, source, variant);
     }
 
-    Vulkan::PipelineLayout& ResourceCache::RequestPipelineLayout(const std::vector<Engine::Shader*>& shaders)
+    Vulkan::PipelineLayout& ResourceCache::RequestPipelineLayout(const std::vector<Engine::ShaderModule*>& shaders)
     {
         return pipelineLayouts.Get(device, shaders);
     }

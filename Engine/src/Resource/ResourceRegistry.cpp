@@ -6,17 +6,17 @@
 
 namespace Engine
 {
-    bool ResourceRegistry::HasResource(ResourceId id)
+    bool ResourceRegistry::HasResource(const ResourceId id) const
     {
-        return registry.find(id) != registry.end();
+        return registry.contains(id);
     }
 
-    bool ResourceRegistry::HasResourceOnPath(std::filesystem::path path)
+    bool ResourceRegistry::HasResourceOnPath(const std::filesystem::path &path) const
     {
-        return resourcesByPath.find(path) != resourcesByPath.end();
+        return resourcesByPath.contains(path);
     }
 
-    ResourceMetadata* ResourceRegistry::FindMetadataById(ResourceId id)
+    ResourceMetadata* ResourceRegistry::FindMetadataById(const ResourceId id)
     {
         if (HasResource(id))
         {
@@ -26,7 +26,7 @@ namespace Engine
         return nullptr;
     }
 
-    ResourceId ResourceRegistry::FindResourceByPath(std::filesystem::path path)
+    ResourceId ResourceRegistry::FindResourceByPath(const std::filesystem::path &path)
     {
         if (HasResourceOnPath(path))
         {
@@ -36,7 +36,7 @@ namespace Engine
         return { 0 };
     }
 
-    std::vector<ResourceEntry> ResourceRegistry::GetEntriesByType(ResourceType type)
+    std::vector<ResourceEntry> ResourceRegistry::GetEntriesByType(const ResourceType type)
     {
         std::vector<ResourceEntry> resources;
 
@@ -53,14 +53,14 @@ namespace Engine
         return resources;
     }
 
-    void ResourceRegistry::ResourceCreated(ResourceId id, ResourceMetadata metadata)
+    void ResourceRegistry::ResourceCreated(const ResourceId id, const ResourceMetadata &metadata)
     {
         registry[id] = metadata;
         resourcesByPath[metadata.path] = id;
         Serialize();
     }
 
-    void ResourceRegistry::ResourceDeleted(ResourceId id)
+    void ResourceRegistry::ResourceDeleted(const ResourceId id)
     {
         auto& metadata = registry[id];
 
@@ -71,7 +71,7 @@ namespace Engine
 
     void ResourceRegistry::Serialize()
     {
-        auto path = Project::GetResourceRegistryPath();
+        const auto path = Project::GetResourceRegistryPath();
 
         YAML::Emitter out;
         {
@@ -91,24 +91,24 @@ namespace Engine
             out << YAML::EndMap;
         }
 
-        std::ofstream fout(path);
-        fout << out.c_str();
+        std::ofstream file(path);
+        file << out.c_str();
     }
 
     void ResourceRegistry::Deserialize()
     {
-        auto path = Project::GetResourceRegistryPath();
-        YAML::Node node;
+        const auto path = Project::GetResourceRegistryPath();
+        YAML::Node file;
         try
         {
-            node = YAML::LoadFile(path.string());
+            file = YAML::LoadFile(path.string());
         }
         catch (YAML::ParserException e)
         {
             return;
         }
 
-        auto root = node["ResourceRegistry"];
+        auto root = file["ResourceRegistry"];
 
         if (!root)
         {
@@ -128,7 +128,7 @@ namespace Engine
         }
     }
 
-    std::unordered_map<ResourceId, ResourceMetadata> const& ResourceRegistry::GetResources()
+    const std::unordered_map<ResourceId, ResourceMetadata>& ResourceRegistry::GetResources() const
     {
         return registry;
     }

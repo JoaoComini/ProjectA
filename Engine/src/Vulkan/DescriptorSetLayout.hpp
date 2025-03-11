@@ -13,13 +13,13 @@ namespace Vulkan
 	{
 	public:
 		DescriptorSetLayout(const Device& device, uint32_t set, const std::vector<Engine::ShaderResource>& setResources);
-		~DescriptorSetLayout();
+		~DescriptorSetLayout() override;
 
-		const std::vector<VkDescriptorSetLayoutBinding>& GetBindings() const;
+		[[nodiscard]] const std::vector<VkDescriptorSetLayoutBinding>& GetBindings() const;
 
-		const VkDescriptorSetLayoutBinding* GetBinding(uint32_t binding) const;
+		[[nodiscard]] const VkDescriptorSetLayoutBinding* GetBinding(uint32_t binding) const;
 
-		uint32_t GetSet() const;
+		[[nodiscard]] uint32_t GetSet() const;
 
 	private:
 		const Device& device;
@@ -29,18 +29,15 @@ namespace Vulkan
 	};
 };
 
-namespace std
+template <>
+struct std::hash<Vulkan::DescriptorSetLayout>
 {
-	template <>
-	struct hash<Vulkan::DescriptorSetLayout>
+	size_t operator()(const Vulkan::DescriptorSetLayout& layout) const noexcept
 	{
-		size_t operator()(const Vulkan::DescriptorSetLayout& layout) const
-		{
-			std::size_t hash{ 0 };
+		std::size_t hash{ 0 };
 
-			HashCombine(hash, layout.GetHandle());
+		HashCombine(hash, layout.GetHandle());
 
-			return hash;
-		}
-	};
-};
+		return hash;
+	}
+};;

@@ -1,23 +1,21 @@
 #pragma once
 
-#include <tiny_gltf.h>
-
-#include "Vulkan/Device.hpp"
-
-#include "Rendering/Texture.hpp"
-#include "Rendering/Mesh.hpp"
-
 #include "Scene/Scene.hpp"
+
+#include "Resource/ResourceImporter.hpp"
+
+namespace tinygltf
+{
+	class Model;
+}
 
 namespace Engine
 {
-	class GltfImporter
+	class GltfImporter final : public ResourceImporter
 	{
 	public:
-		GltfImporter(Vulkan::Device& device);
-
-		void Import(std::filesystem::path path);
-
+		void Import(const std::filesystem::path& source, const std::filesystem::path& destination) override;
+		std::vector<std::string> GetSupportedExtensions() const override;
 	private:
 		tinygltf::Model LoadModel(std::filesystem::path path);
 
@@ -27,10 +25,5 @@ namespace Engine
 		std::vector<Entity::Id> ImportEntities(tinygltf::Model& model, std::vector<ResourceId>& meshes, Scene &scene);
 
 		void SetupRelationship(const std::string& name, tinygltf::Model& gltfModel, Scene& scene, std::vector<Entity::Id>& entities);
-
-		std::filesystem::path GetPrefabDirectory(std::filesystem::path path);
-
-		Vulkan::Device& device;
-
 	};
 };

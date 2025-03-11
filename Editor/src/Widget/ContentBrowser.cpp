@@ -19,7 +19,7 @@ ContentBrowser::ContentBrowser(Vulkan::Device& device, Engine::Scene& scene)
 
 	currentDirectory = "";
 
-	Engine::TextureImporter importer{ device };
+	Engine::TextureImporter importer{};
 
 	auto fileIcon = embed::Icons::get("file.png");
 

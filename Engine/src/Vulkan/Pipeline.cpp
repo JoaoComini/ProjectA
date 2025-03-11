@@ -4,7 +4,7 @@
 
 namespace Vulkan
 {
-	Pipeline::Pipeline(const Device& device, PipelineState state) : device(device)
+	Pipeline::Pipeline(const Device& device, const PipelineState& state) : device(device)
 	{
 		auto pipelineLayout = state.GetPipelineLayout();
 

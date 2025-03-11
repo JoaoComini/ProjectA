@@ -21,11 +21,11 @@ namespace Vulkan
 	public:
 		ResourceCache(Device& device);
 
-		Engine::Shader& RequestShader(Engine::ShaderStage stage, const Engine::ShaderSource& source, const Engine::ShaderVariant& variant);
-		PipelineLayout& RequestPipelineLayout(const std::vector<Engine::Shader*>& shaders);
+		Engine::ShaderModule& RequestShader(Engine::ShaderStage stage, const Engine::ShaderSource& source, const Engine::ShaderVariant& variant);
+		PipelineLayout& RequestPipelineLayout(const std::vector<Engine::ShaderModule*>& shaders);
 		Pipeline& RequestPipeline(PipelineState& state);
 	private:
-		Engine::Cache<Engine::Shader> shaders;
+		Engine::Cache<Engine::ShaderModule> shaders;
 		Engine::Cache<PipelineLayout> pipelineLayouts;
 		Engine::Cache<Pipeline> pipelines;
 

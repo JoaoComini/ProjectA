@@ -10,34 +10,31 @@ namespace Vulkan
 		{
 		case Engine::ShaderResourceType::ImageSampler:
 			return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			break;
 		case Engine::ShaderResourceType::BufferUniform:
 			return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-			break;
 		default:
 			throw std::runtime_error("No conversion possible for the shader resource type.");
-			break;
 		}
 	}
 
-	DescriptorSetLayout::DescriptorSetLayout(const Device& device, uint32_t set, const std::vector<Engine::ShaderResource>& setResources)
+	DescriptorSetLayout::DescriptorSetLayout(const Device& device, const uint32_t set, const std::vector<Engine::ShaderResource>& setResources)
 		: device(device), set(set)
 	{
 		for (auto& shaderResource : setResources)
 		{
 			VkShaderStageFlags stageFlags{};
 			
-			if (bool(shaderResource.stages & Engine::ShaderStage::Vertex))
+			if (static_cast<bool>(shaderResource.stages & Engine::ShaderStage::Vertex))
 			{
 				stageFlags |= VK_SHADER_STAGE_VERTEX_BIT;
 			}
 
-			if (bool(shaderResource.stages & Engine::ShaderStage::Fragment))
+			if (static_cast<bool>(shaderResource.stages & Engine::ShaderStage::Fragment))
 			{
 				stageFlags |= VK_SHADER_STAGE_FRAGMENT_BIT;
 			}
 
-			VkDescriptorSetLayoutBinding binding = {
+			VkDescriptorSetLayoutBinding binding{
 				.binding = shaderResource.binding,
 				.descriptorType = DescriptorTypeFromShaderResourceType(shaderResource.type),
 				.descriptorCount = shaderResource.arraySize,
@@ -47,7 +44,7 @@ namespace Vulkan
 			bindings.push_back(binding);
 		}
 
-		VkDescriptorSetLayoutCreateInfo createInfo = {
+		const VkDescriptorSetLayoutCreateInfo createInfo = {
 			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
 			.pNext = nullptr,
 			.flags = 0,
@@ -68,7 +65,7 @@ namespace Vulkan
 		return bindings;
 	}
 
-	const VkDescriptorSetLayoutBinding* DescriptorSetLayout::GetBinding(uint32_t binding) const
+	const VkDescriptorSetLayoutBinding* DescriptorSetLayout::GetBinding(const uint32_t binding) const
 	{
 		for (auto& it : bindings)
 		{

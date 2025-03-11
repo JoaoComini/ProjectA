@@ -4,9 +4,9 @@
 
 namespace Engine::ResourceTools
 {
-    static std::filesystem::path FindUniqueResourcePath(std::filesystem::path path, std::string extension)
+    static std::filesystem::path FindUniqueResourcePath(const std::filesystem::path& path, const std::string& extension)
     {
-        auto base = Project::GetResourceDirectory() / path;
+        const auto base = Project::GetResourceDirectory() / path;
 
         std::filesystem::path unique;
         ResourceId existing;
@@ -23,9 +23,30 @@ namespace Engine::ResourceTools
             unique.replace_extension("." + extension);
             current += 1;
 
-            existing = ResourceRegistry::Get().FindResourceByPath(std::filesystem::relative(unique, Project::GetResourceDirectory()));
+            existing = ResourceRegistry::Get().FindResourceByPath(relative(unique, Project::GetResourceDirectory()));
         } while (existing);
 
         return unique;
+    }
+
+    static std::filesystem::path FindUniqueResourceDirectory(const std::filesystem::path& path)
+    {
+        const auto base = Project::GetResourceDirectory() / path.stem();
+
+        std::filesystem::path directory;
+        auto current = 0;
+        do
+        {
+            directory = base;
+
+            if (current > 0)
+            {
+                directory += "_" + std::to_string(current);
+            }
+
+            current += 1;
+        } while (exists(directory));
+
+        return directory;
     }
 };

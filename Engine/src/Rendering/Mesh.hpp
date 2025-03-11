@@ -17,13 +17,13 @@ namespace Engine
 	{
 
 	public:
-		AABB() {}
+		AABB() = default;
 		AABB(glm::vec3 min, glm::vec3 max) : min(min), max(max)
 		{
 			scale = max - min;
 		}
 
-		glm::vec3 GetCenter() const
+		[[nodiscard]] glm::vec3 GetCenter() const
 		{
 			return (min + max) * 0.5f;
 		}
@@ -64,7 +64,7 @@ namespace Engine
 	class Primitive
 	{
 	public:
-		Primitive(const Vulkan::Device& device);
+		explicit Primitive(const Vulkan::Device& device);
 
 		void AddIndexBuffer(std::vector<uint8_t> indices, VkIndexType type);
 		void AddVertexBuffer(std::vector<Vertex> vertices);
@@ -73,7 +73,7 @@ namespace Engine
 
 		void SetMaterial(ResourceId material);
 
-		ResourceId GetMaterial() const;
+		[[nodiscard]] ResourceId GetMaterial() const;
 	private:
 		size_t vertexCount{ 0 };
 		size_t indexCount{ 0 };
@@ -87,21 +87,21 @@ namespace Engine
 		const Vulkan::Device& device;
 	};
 
-	class Mesh: public Resource
+	class Mesh final : public Resource
 	{
 	public:
 		void AddPrimitive(std::unique_ptr<Primitive> primitive);
 		void SetBounds(AABB bounds);
-		AABB GetBounds() const;
+		[[nodiscard]] AABB GetBounds() const;
 
-		std::vector<std::unique_ptr<Primitive>> const& GetPrimitives() const;
+		[[nodiscard]] std::vector<std::unique_ptr<Primitive>> const& GetPrimitives() const;
 
 		static ResourceType GetStaticType()
 		{
 			return ResourceType::Mesh;
 		}
 
-		virtual ResourceType GetType() const override
+		[[nodiscard]] ResourceType GetType() const override
 		{
 			return GetStaticType();
 		}

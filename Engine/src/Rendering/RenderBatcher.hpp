@@ -27,7 +27,7 @@ namespace Engine
 
     private:
 
-		Material& GetMaterial(Primitive& primitive);
+		Material& GetMaterial(const Primitive& primitive);
 		void SortOpaques();
 		void SortTransparents();
 

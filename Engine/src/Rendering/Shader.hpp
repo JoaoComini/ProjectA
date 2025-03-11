@@ -39,44 +39,41 @@ namespace Engine
     class ShaderSource
     {
     public:
-        ShaderSource(const std::vector<uint8_t>& bytes);
+        explicit ShaderSource(const std::vector<uint8_t>& bytes);
 
-        const std::string& GetSource() const;
+        [[nodiscard]] const std::string& GetSource() const;
 
-        size_t GetHash() const;
+        [[nodiscard]] size_t GetHash() const;
     private:
         std::string source;
-
         size_t hash{ 0 };
     };
 
     class ShaderVariant
     {
     public:
-        void AddDefinitions(const std::vector<std::string>& definitions);
         void AddDefine(const std::string& define);
-        const std::string& GetPreamble() const;
+        [[nodiscard]] const std::string& GetPreamble() const;
 
-        size_t GetHash() const;
+        [[nodiscard]] size_t GetHash() const;
 
     private:
-        std::string preamble;
-
+        std::string preamble{};
         size_t hash{ 0 };
     };
 
-    class Shader
+    class ShaderModule
     {
     public:
-        Shader(ShaderStage stage, const ShaderSource& source, const ShaderVariant& variant);
+        ShaderModule(ShaderStage stage, const ShaderSource& source, const ShaderVariant& variant);
 
-        ShaderStage GetStage() const;
+        [[nodiscard]] ShaderStage GetStage() const;
 
-        const std::vector<ShaderResource>& GetResources() const;
+        [[nodiscard]] const std::vector<ShaderResource>& GetResources() const;
 
-        const std::vector<uint32_t>& GetSpirv() const;
+        [[nodiscard]] const std::vector<uint32_t>& GetSpirv() const;
 
-        size_t GetHash() const;
+        [[nodiscard]] size_t GetHash() const;
 
     private:
         ShaderStage stage{};
@@ -88,45 +85,36 @@ namespace Engine
     };
 }
 
-namespace std
+template <>
+struct std::hash<Engine::ShaderSource>
 {
-    template <>
-    struct hash<Engine::ShaderSource>
+    size_t operator()(const Engine::ShaderSource& source) const noexcept
     {
-        size_t operator()(const Engine::ShaderSource& source) const
-        {
-            return source.GetHash();
-        }
-    };
+        return source.GetHash();
+    }
 };
 
-namespace std
+template <>
+struct std::hash<Engine::ShaderVariant>
 {
-    template <>
-    struct hash<Engine::ShaderVariant>
+    size_t operator()(const Engine::ShaderVariant& variant) const noexcept
     {
-        size_t operator()(const Engine::ShaderVariant& variant) const
-        {
-            return variant.GetHash();
-        }
-    };
+        return variant.GetHash();
+    }
 };
 
-namespace std
+template <>
+struct std::hash<std::vector<Engine::ShaderModule*>>
 {
-    template <>
-    struct hash<std::vector<Engine::Shader*>>
+    size_t operator()(const std::vector<Engine::ShaderModule*>& modules) const noexcept
     {
-        size_t operator()(const std::vector<Engine::Shader*>& modules) const
+        size_t hash{ 0 };
+
+        for (auto& m : modules)
         {
-            size_t hash{ 0 };
-
-            for (auto& m : modules)
-            {
-                HashCombine(hash, m->GetHash());
-            }
-
-            return hash;
+            HashCombine(hash, m->GetHash());
         }
-    };
-};
+
+        return hash;
+    }
+};;

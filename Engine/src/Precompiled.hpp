@@ -19,6 +19,7 @@
 #include <array>
 #include <queue>
 #include <iterator>
+#include <span>
 
 #include <string>
 #include <string_view>

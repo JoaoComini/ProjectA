@@ -3,9 +3,9 @@
 #include "Common/Singleton.hpp"
 
 #include "Resource.hpp"
+#include "ResourceImporter.hpp"
 #include "ResourceRegistry.hpp"
 #include "ResourceTools.hpp"
-#include "Factory/Factory.hpp"
 #include "Factory/SceneFactory.hpp"
 
 #include "Rendering/RenderContext.hpp"
@@ -17,7 +17,9 @@ namespace Engine
     class ResourceManager: public Singleton<ResourceManager>
     {
     public:
-        ResourceManager(RenderContext& renderContext);
+        explicit ResourceManager(RenderContext& renderContext);
+
+        void AddImporter(std::unique_ptr<ResourceImporter> importer);
 
         template<typename T>
         std::shared_ptr<T> LoadResource(const ResourceId& id)
@@ -29,7 +31,7 @@ namespace Engine
 
             if (IsResourceLoaded(id))
             {
-                auto& resource = loadedResources[id];
+                const auto& resource = loadedResources[id];
 
                 return std::static_pointer_cast<T>(resource);
             }
@@ -64,7 +66,7 @@ namespace Engine
         {
             auto unique = ResourceTools::FindUniqueResourcePath(path, T::GetExtension());
 
-            ResourceId id{};
+            const ResourceId id{};
 
             FactoryCreate<T>(unique, payload);
 
@@ -80,7 +82,7 @@ namespace Engine
         }
 
         template<typename T, typename P>
-        void SaveResource(ResourceId id, P& payload)
+        void SaveResource(const ResourceId id, P& payload)
         {
             if (!ResourceRegistry::Get().HasResource(id))
             {
@@ -97,7 +99,7 @@ namespace Engine
             }
         }
 
-        void DeleteResource(ResourceId id)
+        void DeleteResource(const ResourceId id)
         {
             if (!ResourceRegistry::Get().HasResource(id))
             {
@@ -121,13 +123,17 @@ namespace Engine
         void ImportResource(const std::filesystem::path& path);
     private:
 
-        bool IsResourceLoaded(const ResourceId& id);
+        ResourceImporter* GetImporterByExtension(const std::filesystem::path& extension);
+
+        [[nodiscard]] bool IsResourceLoaded(const ResourceId& id) const;
 
         template<typename T>
-        std::shared_ptr<T> FactoryLoad(std::filesystem::path path);
+        std::shared_ptr<T> FactoryLoad(const std::filesystem::path& path);
 
         template<typename T, typename P>
-        void FactoryCreate(std::filesystem::path path, P& payload);
+        void FactoryCreate(const std::filesystem::path& path, P& payload);
+
+        std::vector<std::unique_ptr<ResourceImporter>> importers;
 
         std::unordered_map<ResourceId, std::shared_ptr<Resource>> loadedResources;
         Vulkan::Device& device;

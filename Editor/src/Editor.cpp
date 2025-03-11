@@ -5,6 +5,7 @@
 #include <ImGuizmo.h>
 
 #include <glm/gtc/type_ptr.hpp>
+#include <Resource/Importer/GltfImporter.hpp>
 
 #include "Resource/ResourceManager.hpp"
 #include "Rendering/Cubemap.hpp"
@@ -27,6 +28,11 @@ namespace Engine
 		}
 
 		ResourceRegistry::Get().Deserialize();
+
+		{
+			auto importer = std::make_unique<GltfImporter>();
+			ResourceManager::Get().AddImporter(std::move(importer));
+		}
 
 		auto [height, width] = GetWindow().GetFramebufferSize();
 		camera = std::make_unique<EditorCamera>(glm::radians(60.f), (float)width / height, 0.1f, 1000.f);

@@ -7,7 +7,7 @@ inline void HashCombine(std::size_t& seed, std::size_t hash)
 }
 
 template<class T>
-inline void HashCombine(std::size_t& seed, const T& t)
+void HashCombine(std::size_t& seed, const T& t)
 {
 	std::hash<T> hasher;
 
@@ -15,33 +15,30 @@ inline void HashCombine(std::size_t& seed, const T& t)
 }
 
 template<class T>
-inline void Hash(std::size_t& seed, const T& t)
+void Hash(std::size_t& seed, const T& t)
 {
 	HashCombine(seed, t);
 }
 
 template <typename T, typename... Args>
-inline void Hash(std::size_t& seed, const T& first, const Args &... args)
+void Hash(std::size_t& seed, const T& first, const Args &... args)
 {
 	Hash(seed, first);
 	Hash(seed, args...);
 }
 
-namespace std
+template<typename T>
+struct std::hash<std::vector<T>>
 {
-	template<typename T>
-	struct hash<std::vector<T>>
+	size_t operator()(const std::vector<T>& vec) const
 	{
-		size_t operator()(const std::vector<T>& vec) const
+		std::size_t hash{ 0 };
+
+		for (const auto& item : vec)
 		{
-			std::size_t hash{ 0 };
-
-			for (const auto& item : vec)
-			{
-				HashCombine(hash, item);
-			}
-
-			return hash;
+			HashCombine(hash, item);
 		}
-	};
-}
+
+		return hash;
+	}
+};

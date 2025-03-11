@@ -15,7 +15,7 @@ namespace Engine
 		Blend
 	};
 
-	class Material : public Resource
+	class Material final : public Resource
 	{
 	public:
 		Material(
@@ -29,30 +29,30 @@ namespace Engine
 			float alphaCutoff = 0.5f
 		);
 
-		~Material() = default;
+		~Material() override = default;
 
-		ResourceId GetAlbedoTexture() const;
+		[[nodiscard]] ResourceId GetAlbedoTexture() const;
 
-		ResourceId GetNormalTexture() const;
+		[[nodiscard]] ResourceId GetNormalTexture() const;
 
-		ResourceId GetMetallicRoughnessTexture() const;
+		[[nodiscard]] ResourceId GetMetallicRoughnessTexture() const;
 
-		glm::vec4 GetAlbedoColor() const;
+		[[nodiscard]] glm::vec4 GetAlbedoColor() const;
 
-		float GetMetallicFactor() const;
+		[[nodiscard]] float GetMetallicFactor() const;
 
-		float GetRoughnessFactor() const;
+		[[nodiscard]] float GetRoughnessFactor() const;
 
-		AlphaMode GetAlphaMode() const;
+		[[nodiscard]] AlphaMode GetAlphaMode() const;
 
-		float GetAlphaCutoff() const;
+		[[nodiscard]] float GetAlphaCutoff() const;
 
 		static ResourceType GetStaticType()
 		{
 			return ResourceType::Material;
 		}
 
-		virtual ResourceType GetType() const override
+		[[nodiscard]] ResourceType GetType() const override
 		{
 			return GetStaticType();
 		}
@@ -62,7 +62,7 @@ namespace Engine
 			return "pares";
 		}
 
-		const ShaderVariant& GetShaderVariant() const;
+		[[nodiscard]] const ShaderVariant& GetShaderVariant() const;
 
 	private:
 		void PrepareShaderVariant();
@@ -82,25 +82,22 @@ namespace Engine
 	};
 };
 
-namespace std
+template <>
+struct std::hash<Engine::Material>
 {
-	template <>
-	struct hash<Engine::Material>
+	size_t operator()(const Engine::Material& material) const noexcept
 	{
-		size_t operator()(const Engine::Material& material) const
-		{
-			size_t hash{ 0 };
+		size_t hash{ 0 };
 
-			HashCombine(hash, material.GetAlbedoTexture());
-			HashCombine(hash, material.GetNormalTexture());
-			HashCombine(hash, material.GetMetallicRoughnessTexture());
-			HashCombine(hash, material.GetAlbedoColor());
-			HashCombine(hash, material.GetMetallicFactor());
-			HashCombine(hash, material.GetRoughnessFactor());
-			HashCombine(hash, material.GetAlphaMode());
-			HashCombine(hash, material.GetAlphaCutoff());
+		HashCombine(hash, material.GetAlbedoTexture());
+		HashCombine(hash, material.GetNormalTexture());
+		HashCombine(hash, material.GetMetallicRoughnessTexture());
+		HashCombine(hash, material.GetAlbedoColor());
+		HashCombine(hash, material.GetMetallicFactor());
+		HashCombine(hash, material.GetRoughnessFactor());
+		HashCombine(hash, material.GetAlphaMode());
+		HashCombine(hash, material.GetAlphaCutoff());
 
-			return hash;
-		}
-	};
-};
+		return hash;
+	}
+};;

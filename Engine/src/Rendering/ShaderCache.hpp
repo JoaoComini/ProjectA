@@ -22,7 +22,7 @@ namespace Engine
 
     private:
 
-        Shader* GetOrCreateShader(std::string_view name, const ShaderVariant& variant, ShaderStage stage)
+        ShaderModule* GetOrCreateShader(std::string_view name, const ShaderVariant& variant, ShaderStage stage)
         {
             auto& source = GetOrCreateSource(name, stage);
 
@@ -48,13 +48,13 @@ namespace Engine
             return inserted.first->second;
         }
 
-        std::string GetStagePrefix(ShaderStage stage)
+        static std::string GetStagePrefix(ShaderStage stage)
         {
             switch (stage)
             {
-            case Engine::ShaderStage::Vertex:
+            case ShaderStage::Vertex:
                 return ".vert";
-            case Engine::ShaderStage::Fragment:
+            case ShaderStage::Fragment:
                 return ".frag";
             }
 
@@ -62,6 +62,6 @@ namespace Engine
         }
 
         std::unordered_map<std::string, ShaderSource> sources;
-        Cache<Shader> shaders;
+        Cache<ShaderModule> shaders;
     };
 }

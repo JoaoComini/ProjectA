@@ -51,7 +51,7 @@ namespace Engine
 		return transparents;
 	}
 
-	Material& RenderBatcher::GetMaterial(Primitive& primitive)
+	Material& RenderBatcher::GetMaterial(const Primitive& primitive)
 	{
 		return *ResourceManager::Get().LoadResource<Material>(primitive.GetMaterial());
 	}
@@ -60,16 +60,16 @@ namespace Engine
 	{
 		auto sort = [](const RenderGeometry& a, const RenderGeometry& b)
 		{
-			std::size_t hasha{ 0 };
-			Hash(hasha, a.material);
+			std::size_t hashA{ 0 };
+			Hash(hashA, a.material);
 
-			std::size_t hashb{ 0 };
-			Hash(hashb, b.material);
+			std::size_t hashB{ 0 };
+			Hash(hashB, b.material);
 
-			return hasha < hashb;
+			return hashA < hashB;
 		};
 
-		std::sort(opaques.begin(), opaques.end(), sort);
+		std::ranges::sort(opaques, sort);
 	}
 
 	void RenderBatcher::SortTransparents()
@@ -79,6 +79,6 @@ namespace Engine
 			return a.distance > b.distance;
 		};
 
-		std::sort(transparents.begin(), transparents.end(), sort);
+		std::ranges::sort(transparents, sort);
 	}
 }

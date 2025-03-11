@@ -8,7 +8,7 @@
 
 namespace Engine
 {
-    Shader::Shader(ShaderStage stage, const ShaderSource& source, const ShaderVariant& variant)
+    ShaderModule::ShaderModule(ShaderStage stage, const ShaderSource& source, const ShaderVariant& variant)
         : stage(stage)
     {
         GlslCompiler glslCompiler{};
@@ -17,25 +17,25 @@ namespace Engine
         SpirvReflection spirvReflection{ stage, spirv };
         spirvReflection.ReflectShaderResources(shaderResources);
 
-        Hash(hash, std::string{ reinterpret_cast<const char*>(spirv.data()), reinterpret_cast<const char*>(spirv.data() + spirv.size()) });
+        Hash(hash, stage, source.GetHash(), variant.GetHash());
     }
 
-    ShaderStage Shader::GetStage() const
+    ShaderStage ShaderModule::GetStage() const
     {
         return stage;
     }
 
-    const std::vector<ShaderResource>& Shader::GetResources() const
+    const std::vector<ShaderResource>& ShaderModule::GetResources() const
     {
         return shaderResources;
     }
 
-    const std::vector<uint32_t>& Shader::GetSpirv() const
+    const std::vector<uint32_t>& ShaderModule::GetSpirv() const
     {
         return spirv;
     }
 
-    size_t Shader::GetHash() const
+    size_t ShaderModule::GetHash() const
     {
         return hash;
     }
@@ -44,7 +44,7 @@ namespace Engine
     {
         source = { bytes.begin(), bytes.end() };
 
-        Hash(hash, reinterpret_cast<const char*>(source.data()), reinterpret_cast<const char*>(source.data() + source.size()));
+        Hash(hash, source);
     }
 
     const std::string& ShaderSource::GetSource() const
@@ -57,18 +57,12 @@ namespace Engine
         return hash;
     }
 
-    void ShaderVariant::AddDefinitions(const std::vector<std::string>& definitions)
-    {
-        for (const auto& define : definitions)
-        {
-            AddDefine(define);
-        }
-    }
 
     void ShaderVariant::AddDefine(const std::string& define)
     {
         preamble.append("#define " + define + "\n");
 
+        hash = 0;
         Hash(hash, preamble);
     }
 

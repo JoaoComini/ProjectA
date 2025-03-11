@@ -30,8 +30,9 @@ namespace Engine
 	{
 	public:
 		Resource() = default;
-		virtual ~Resource() {}
+		virtual ~Resource() = default;
 		ResourceId id{ 0 };
-		virtual ResourceType GetType() const = 0;
+		[[nodiscard]] virtual ResourceType GetType() const = 0;
+	private:
 	};
 };

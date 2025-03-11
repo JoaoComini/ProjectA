@@ -10,14 +10,14 @@ namespace Vulkan
 	class PipelineLayout : public Resource<VkPipelineLayout>
 	{
 	public:
-		PipelineLayout(const Device& device, const std::vector<Engine::Shader*>& shader);
-		~PipelineLayout();
+		PipelineLayout(const Device& device, const std::vector<Engine::ShaderModule*>& shader);
+		~PipelineLayout() override;
 
-		DescriptorSetLayout& GetDescriptorSetLayout(uint32_t set) const;
+		[[nodiscard]] DescriptorSetLayout& GetDescriptorSetLayout(uint32_t set) const;
 
-		const std::vector<Engine::Shader*>& GetShaders() const;
+		[[nodiscard]] const std::vector<Engine::ShaderModule*>& GetShaders() const;
 
-		bool HasShaderResource(Engine::ShaderResourceType type) const;
+		[[nodiscard]] bool HasShaderResource(Engine::ShaderResourceType type) const;
 
 	private:
 		void PrepareSetResources();
@@ -31,24 +31,21 @@ namespace Vulkan
 
 		std::vector<std::shared_ptr<DescriptorSetLayout>> descriptorSetLayouts;
 
-		std::vector<Engine::Shader*> shaders;
+		std::vector<Engine::ShaderModule*> shaders;
 
 		const Device& device;
 	};
 }
 
-namespace std
+template <>
+struct std::hash<Vulkan::PipelineLayout>
 {
-	template <>
-	struct hash<Vulkan::PipelineLayout>
+	size_t operator()(const Vulkan::PipelineLayout& layout) const noexcept
 	{
-		size_t operator()(const Vulkan::PipelineLayout& layout) const
-		{
-			std::size_t hash{ 0 };
+		std::size_t hash{ 0 };
 
-			Hash(hash, layout.GetHandle());
+		Hash(hash, layout.GetHandle());
 
-			return hash;
-		}
-	};
-};
+		return hash;
+	}
+};;

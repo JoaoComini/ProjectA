@@ -20,35 +20,45 @@ namespace Engine
     {
     }
 
-    void ResourceManager::ImportResource(const std::filesystem::path& path)
+    void ResourceManager::AddImporter(std::unique_ptr<ResourceImporter> importer)
     {
-        auto extension = path.extension();
-
-        if (extension == ".glb")
-        {
-            GltfImporter importer{ device };
-
-            importer.Import(path);
-        }
-        else if (extension == ".hdr")
-        {
-            TextureImporter importer{ device };
-
-            importer.ImportCubemap(path);
-        }
-        else
-        {
-            throw std::runtime_error("resource format not supported");
-        }
+        importers.push_back(std::move(importer));
     }
 
-    bool ResourceManager::IsResourceLoaded(const ResourceId& id)
+    void ResourceManager::ImportResource(const std::filesystem::path& path)
     {
-        return loadedResources.find(id) != loadedResources.end();
+        const auto importer = GetImporterByExtension(path.extension());
+
+        if (!importer)
+        {
+            return;
+        }
+
+        importer->Import(path, Project::GetResourceDirectory() / path.stem());
+    }
+
+    ResourceImporter* ResourceManager::GetImporterByExtension(const std::filesystem::path &extension)
+    {
+        for (const auto& importer : importers)
+        {
+            const auto supported = importer->GetSupportedExtensions();
+
+            if (std::ranges::find(supported.begin(), supported.end(), extension) != supported.end())
+            {
+                return importer.get();
+            }
+        }
+
+        return nullptr;
+    }
+
+    bool ResourceManager::IsResourceLoaded(const ResourceId& id) const
+    {
+        return loadedResources.contains(id);
     }
 
     template<>
-    std::shared_ptr<Texture> ResourceManager::FactoryLoad(std::filesystem::path path)
+    std::shared_ptr<Texture> ResourceManager::FactoryLoad(const std::filesystem::path& path)
     {
         TextureFactory factory{ device };
 
@@ -60,7 +70,7 @@ namespace Engine
     }
 
     template<>
-    std::shared_ptr<Cubemap> ResourceManager::FactoryLoad(std::filesystem::path path)
+    std::shared_ptr<Cubemap> ResourceManager::FactoryLoad(const std::filesystem::path& path)
     {
         TextureFactory factory{ device };
 
@@ -74,7 +84,7 @@ namespace Engine
     }
 
     template<>
-    std::shared_ptr<Mesh> ResourceManager::FactoryLoad(std::filesystem::path path)
+    std::shared_ptr<Mesh> ResourceManager::FactoryLoad(const std::filesystem::path& path)
     {
         MeshFactory factory{ device };
 
@@ -82,7 +92,7 @@ namespace Engine
     }
 
     template<>
-    std::shared_ptr<Material> ResourceManager::FactoryLoad(std::filesystem::path path)
+    std::shared_ptr<Material> ResourceManager::FactoryLoad(const std::filesystem::path& path)
     {
         MaterialFactory factory;
 
@@ -90,14 +100,14 @@ namespace Engine
     }
 
     template<>
-    std::shared_ptr<Scene> ResourceManager::FactoryLoad(std::filesystem::path path)
+    std::shared_ptr<Scene> ResourceManager::FactoryLoad(const std::filesystem::path& path)
     {
         SceneFactory factory;
 
         return factory.Load(path);
     }
     template<>
-    std::shared_ptr<Script> ResourceManager::FactoryLoad(std::filesystem::path path)
+    std::shared_ptr<Script> ResourceManager::FactoryLoad(const std::filesystem::path& path)
     {
         auto code = FileSystem::ReadFile(path);
 
@@ -106,7 +116,7 @@ namespace Engine
 
 
     template<>
-    void ResourceManager::FactoryCreate<Texture>(std::filesystem::path path, Texture& payload)
+    void ResourceManager::FactoryCreate<Texture>(const std::filesystem::path& path, Texture& payload)
     {
         TextureFactory factory{ device };
 
@@ -114,7 +124,7 @@ namespace Engine
     }
 
     template<>
-    void ResourceManager::FactoryCreate<Cubemap>(std::filesystem::path path, Cubemap& payload)
+    void ResourceManager::FactoryCreate<Cubemap>(const std::filesystem::path& path, Cubemap& payload)
     {
         TextureFactory factory{ device };
 
@@ -122,7 +132,7 @@ namespace Engine
     }
 
     template<>
-    void ResourceManager::FactoryCreate<Mesh>(std::filesystem::path path, MeshSpec& payload)
+    void ResourceManager::FactoryCreate<Mesh>(const std::filesystem::path& path, MeshSpec& payload)
     {
         MeshFactory factory{ device };
 
@@ -130,7 +140,7 @@ namespace Engine
     }
 
     template<>
-    void ResourceManager::FactoryCreate<Material>(std::filesystem::path path, MaterialSpec& payload)
+    void ResourceManager::FactoryCreate<Material>(const std::filesystem::path& path, MaterialSpec& payload)
     {
         MaterialFactory factory;
 
@@ -138,7 +148,7 @@ namespace Engine
     }
 
     template<>
-    void ResourceManager::FactoryCreate<Scene>(std::filesystem::path path, Scene& payload)
+    void ResourceManager::FactoryCreate<Scene>(const std::filesystem::path& path, Scene& payload)
     {
         SceneFactory factory;
 
@@ -146,7 +156,7 @@ namespace Engine
     }
 
     template<>
-    void ResourceManager::FactoryCreate<Script>(std::filesystem::path path, Script& payload)
+    void ResourceManager::FactoryCreate<Script>(const std::filesystem::path& path, Script& payload)
     {
         FileSystem::WriteFile(path, std::string{ payload.GetCode() });
     }

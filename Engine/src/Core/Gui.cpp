@@ -78,7 +78,7 @@ namespace Engine
 		auto vertexSource = ShaderSource{ std::vector<uint8_t>{ vertexBytes.begin(), vertexBytes.end() } };
 		auto fragSource = ShaderSource{ std::vector<uint8_t>{ fragBytes.begin(), fragBytes.end() } };
 
-		std::vector<Shader*> shaders;
+		std::vector<ShaderModule*> shaders;
 		shaders.push_back(&device.GetResourceCache().RequestShader(ShaderStage::Vertex, vertexSource, {}));
 		shaders.push_back(&device.GetResourceCache().RequestShader(ShaderStage::Fragment, fragSource, {}));
 

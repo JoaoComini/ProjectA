@@ -12,44 +12,34 @@
 
 #include "Resource/ResourceManager.hpp"
 
-#include "Project/Project.hpp"
-
 namespace Engine
 {
-    GltfImporter::GltfImporter(Vulkan::Device& device)
-        : device(device) 
+    void GltfImporter::Import(const std::filesystem::path &source, const std::filesystem::path &destination)
     {
-    }
-
-    void GltfImporter::Import(std::filesystem::path path)
-    {   
-        tinygltf::Model model = LoadModel(path);
-
-        auto directory = GetPrefabDirectory(path);
-
-        if (!std::filesystem::create_directory(directory))
-        {
-            return;
-        }
+        tinygltf::Model model = LoadModel(source);
 
         auto scene = Scene{};
-    
-        auto textures = ImportTextures(directory, model);
 
-        auto materials = ImportMaterials(directory, model, textures);
+        auto textures = ImportTextures(destination, model);
 
-        auto meshes = ImportMeshes(directory, model, materials);
+        auto materials = ImportMaterials(destination, model, textures);
+
+        auto meshes = ImportMeshes(destination, model, materials);
 
         auto entities =  ImportEntities(model, meshes, scene);
-        
-        SetupRelationship(directory.stem().string(), model, scene, entities);
 
-        ResourceManager::Get().CreateResource<Scene>(directory.stem() / directory.stem(), scene);
+        SetupRelationship(destination.stem().string(), model, scene, entities);
+
+        ResourceManager::Get().CreateResource<Scene>(destination.stem(), scene);
+    }
+
+    std::vector<std::string> GltfImporter::GetSupportedExtensions() const
+    {
+        return { ".glb" };
     }
 
     tinygltf::Model GltfImporter::LoadModel(std::filesystem::path path)
     {
-
         tinygltf::TinyGLTF loader;
 
         tinygltf::Model model;
@@ -100,7 +90,7 @@ namespace Engine
             auto texture = std::make_shared<Texture>(std::move(data), std::move(mipmaps));
             texture->GenerateMipmaps();
 
-            auto id = ResourceManager::Get().CreateResource<Texture>(parent.stem() / "texture", *texture);
+            auto id = ResourceManager::Get().CreateResource<Texture>(parent.stem().string() + "_" + std::to_string(i), *texture);
 
             textures.push_back(id);
         }
@@ -142,11 +132,9 @@ namespace Engine
                 { "MASK", AlphaMode::Mask }
             };
 
-            auto alphaModeIt = alphaModes.find(material.alphaMode);
-
-            if (alphaModeIt != alphaModes.end())
+            if (auto it = alphaModes.find(material.alphaMode); it != alphaModes.end())
             {
-                spec.alphaMode = alphaModeIt->second;
+                spec.alphaMode = it->second;
             }
 
             if (spec.alphaMode == AlphaMode::Mask)
@@ -154,7 +142,7 @@ namespace Engine
                 spec.alphaCutoff = material.alphaCutoff;
             }
 
-            auto id = ResourceManager::Get().CreateResource<Material>(parent.stem() / "material", spec);
+            auto id = ResourceManager::Get().CreateResource<Material>(parent.stem().string() + "_" + std::to_string(i), spec);
 
             materials.push_back(id);
         }
@@ -253,7 +241,7 @@ namespace Engine
                 spec.primitives.push_back(primitiveSpec);
             }
 
-            auto id = ResourceManager::Get().CreateResource<Mesh>(parent.stem() / mesh.name, spec);
+            auto id = ResourceManager::Get().CreateResource<Mesh>(parent.stem().string() + "_" + mesh.name, spec);
 
             meshes.push_back(id);
         }
@@ -327,26 +315,5 @@ namespace Engine
                 }
             }
         }
-    }
-
-    std::filesystem::path GltfImporter::GetPrefabDirectory(std::filesystem::path path)
-    {
-        auto base = Project::GetResourceDirectory() / path.stem();
-
-        std::filesystem::path directory;
-        auto current = 0;
-        do
-        {
-            directory = base;
-
-            if (current > 0)
-            {
-                directory += "_" + std::to_string(current);
-            }
-
-            current += 1;
-        } while (std::filesystem::exists(directory));
-
-        return directory;
     }
 };

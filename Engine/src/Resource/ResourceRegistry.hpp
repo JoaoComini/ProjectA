@@ -17,22 +17,22 @@ namespace Engine
 	class ResourceRegistry : public Singleton<ResourceRegistry>
 	{
 	public:
-		bool HasResource(ResourceId id);
-		bool HasResourceOnPath(std::filesystem::path path);
+		bool HasResource(ResourceId id) const;
+		bool HasResourceOnPath(const std::filesystem::path &path) const;
 
 		ResourceMetadata* FindMetadataById(ResourceId id);
-		ResourceId FindResourceByPath(std::filesystem::path path);
+		ResourceId FindResourceByPath(const std::filesystem::path &path);
 		std::vector<ResourceEntry> GetEntriesByType(ResourceType type);
 
-		void ResourceCreated(ResourceId id, ResourceMetadata metadata);
+		void ResourceCreated(ResourceId id, const ResourceMetadata &metadata);
 		void ResourceDeleted(ResourceId id);
 
 		void Serialize();
 		void Deserialize();
 
-		std::unordered_map<ResourceId, ResourceMetadata> const& GetResources();
+		const std::unordered_map<ResourceId, ResourceMetadata>& GetResources() const;
 	private:
 		std::unordered_map<ResourceId, ResourceMetadata> registry;
 		std::unordered_map<std::filesystem::path, ResourceId> resourcesByPath;
 	};
-};
+}
