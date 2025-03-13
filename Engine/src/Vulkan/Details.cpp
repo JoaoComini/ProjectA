@@ -1,4 +1,4 @@
-#include "Details.hpp"
+#include "Details.h"
 
 namespace Vulkan::Details
 {

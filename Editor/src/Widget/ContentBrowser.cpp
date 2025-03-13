@@ -1,11 +1,11 @@
-#include "ContentBrowser.hpp"
+#include "ContentBrowser.h"
 
-#include "Resource/ResourceManager.hpp"
-#include "Resource/Importer/TextureImporter.hpp"
-#include "Project/Project.hpp"
-#include "Scene/Scene.hpp"
+#include "Resource/ResourceManager.h"
+#include "Resource/Importer/TextureImporter.h"
+#include "Project/Project.h"
+#include "Scene/Scene.h"
 
-#include "Scripting/Script.hpp"
+#include "Scripting/Script.h"
 
 #include <Icons/embed.gen.hpp>
 
@@ -24,14 +24,12 @@ ContentBrowser::ContentBrowser(Vulkan::Device& device, Engine::Scene& scene)
 	auto fileIcon = embed::Icons::get("file.png");
 
 	fileIconTexture = importer.LoadDefault(std::vector<uint8_t>{ fileIcon.begin(), fileIcon.end() });
-	fileIconTexture->CreateVulkanResources(device);
-	fileIconTexture->UploadDataToGpu(device);
+	fileIconTexture->UploadToGpu(device);
 
 	auto directoryIcon = embed::Icons::get("directory.png");
 
 	directoryIconTexture = importer.LoadDefault(std::vector<uint8_t>{ directoryIcon.begin(), directoryIcon.end() });
-	directoryIconTexture->CreateVulkanResources(device);
-	directoryIconTexture->UploadDataToGpu(device);
+	directoryIconTexture->UploadToGpu(device);
 
 	RefreshResourceTree();
 }

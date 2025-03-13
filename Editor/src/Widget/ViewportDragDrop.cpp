@@ -1,8 +1,8 @@
-#include "ViewportDragDrop.hpp"
+#include "ViewportDragDrop.h"
 
 #include "imgui.h"
 
-#include "Resource/ResourceRegistry.hpp"
+#include "Resource/ResourceRegistry.h"
 
 void ViewportDragDrop::Draw()
 {

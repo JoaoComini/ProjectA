@@ -1,4 +1,4 @@
-#include "SceneFactory.hpp"
+#include "SceneFactory.h"
 
 #include <cereal/archives/json.hpp>
 

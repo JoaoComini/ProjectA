@@ -1,11 +1,21 @@
-#include "ResourceRegistry.hpp"
+#include "ResourceRegistry.h"
 
-#include "Project/Project.hpp"
+#include <Common/FileSystem.h>
+
+#include "Project/Project.h"
 
 #include <yaml-cpp/yaml.h>
 
 namespace Engine
 {
+    ResourceRegistry::ResourceRegistry()
+    {
+        if (const auto file = Project::GetResourceRegistryPath(); !FileSystem::Exists(file))
+        {
+            Serialize();
+        }
+    }
+
     bool ResourceRegistry::HasResource(const ResourceId id) const
     {
         return registry.contains(id);

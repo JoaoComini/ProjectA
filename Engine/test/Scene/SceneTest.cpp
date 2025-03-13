@@ -1,8 +1,8 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include "Scene/Scene.hpp"
+#include "Scene/Scene.h"
 
-#include "Fixture/Components.hpp"
+#include "Fixture/Components.h"
 
 using namespace Engine;
 

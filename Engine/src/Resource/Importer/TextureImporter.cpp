@@ -1,6 +1,6 @@
-#include "TextureImporter.hpp"
+#include "TextureImporter.h"
 
-#include "Resource/ResourceManager.hpp"
+#include "Resource/ResourceManager.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>

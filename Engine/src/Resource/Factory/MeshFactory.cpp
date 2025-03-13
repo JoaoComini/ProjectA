@@ -1,6 +1,6 @@
-#include "MeshFactory.hpp"
+#include "MeshFactory.h"
 
-#include "Common/FileSystem.hpp"
+#include "Common/FileSystem.h"
 
 #include "../Flatbuffers/Mesh_generated.h"
 
@@ -62,11 +62,11 @@ namespace Engine
         {
             auto primitive = std::make_unique<Primitive>(device);
 
-            primitive->AddVertexBuffer(p->vertices);
+            primitive->SetVertexBuffer(p->vertices);
 
             if (p->indices.size() > 0)
             {
-                primitive->AddIndexBuffer(p->indices, static_cast<VkIndexType>(p->index_type));
+                primitive->SetIndexBuffer(p->indices, static_cast<VkIndexType>(p->index_type));
             }
 
             if (p->material)

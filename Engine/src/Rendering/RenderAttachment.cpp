@@ -1,4 +1,4 @@
-#include "RenderAttachment.hpp"
+#include "RenderAttachment.h"
 
 namespace Engine
 {

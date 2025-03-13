@@ -1,14 +1,14 @@
-#include "Gui.hpp"
+#include "Gui.h"
 
-#include "Vulkan/DescriptorPool.hpp"
-#include "Vulkan/CommandBuffer.hpp"
-#include "Vulkan/Swapchain.hpp"
-#include "Vulkan/ResourceCache.hpp"
+#include "Vulkan/DescriptorPool.h"
+#include "Vulkan/CommandBuffer.h"
+#include "Vulkan/Swapchain.h"
+#include "Vulkan/ResourceCache.h"
 
-#include "Rendering/Renderer.hpp"
-#include "Rendering/RenderFrame.hpp"
+#include "Rendering/Renderer.h"
+#include "Rendering/RenderFrame.h"
 
-#include "Core/Window.hpp"
+#include "Core/Window.h"
 
 #include <imgui.h>
 #include <backends/imgui_impl_glfw.h>
@@ -62,8 +62,7 @@ namespace Engine
 		};
 
 		fontTexture = std::make_unique<Texture>(std::move(bytes), std::move(mipmaps));
-		fontTexture->CreateVulkanResources(device);
-		fontTexture->UploadDataToGpu(device);
+		fontTexture->UploadToGpu(device);
 
 		io.Fonts->SetTexID(fontTexture.get());
 	}

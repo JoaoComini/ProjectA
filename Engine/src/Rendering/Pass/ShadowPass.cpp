@@ -1,10 +1,10 @@
-#include "ShadowPass.hpp"
+#include "ShadowPass.h"
 
 
-#include "Resource/ResourceManager.hpp"
-#include "Rendering/Renderer.hpp"
+#include "Resource/ResourceManager.h"
+#include "Rendering/Renderer.h"
 
-#include "Rendering/RenderGraphCommand.hpp"
+#include "Rendering/RenderGraphCommand.h"
 
 namespace Engine
 {

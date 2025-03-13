@@ -1,6 +1,6 @@
-#include "SceneHierarchy.hpp"
+#include "SceneHierarchy.h"
 
-#include <Scene/Scene.hpp>
+#include <Scene/Scene.h>
 
 #include <imgui.h>
 

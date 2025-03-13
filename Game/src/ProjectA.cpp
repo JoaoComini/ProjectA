@@ -1,5 +1,5 @@
-#include "Core/Application.hpp"
-#include "Core/Main.hpp"
+#include "Core/Application.h"
+#include "Core/Main.h"
 
 
 namespace Engine

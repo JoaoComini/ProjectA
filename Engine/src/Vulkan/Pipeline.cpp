@@ -1,6 +1,6 @@
-#include "Pipeline.hpp"
+#include "Pipeline.h"
 
-#include "Rendering/Shader.hpp"
+#include "Rendering/Shader.h"
 
 namespace Vulkan
 {

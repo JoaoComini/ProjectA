@@ -1,6 +1,6 @@
-#include "Window.hpp"
+#include "Window.h"
 
-#include "WindowSurface.hpp"
+#include "WindowSurface.h"
 
 namespace Engine {
 

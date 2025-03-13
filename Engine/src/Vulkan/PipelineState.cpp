@@ -1,4 +1,4 @@
-#include "PipelineState.hpp"
+#include "PipelineState.h"
 
 bool operator==(const VkVertexInputAttributeDescription& lhs, const VkVertexInputAttributeDescription& rhs)
 {

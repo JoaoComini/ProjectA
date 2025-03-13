@@ -1,8 +1,8 @@
-#include "CompositionPass.hpp"
+#include "CompositionPass.h"
 
-#include "Rendering/Renderer.hpp"
+#include "Rendering/Renderer.h"
 
-#include "Rendering/RenderGraphCommand.hpp"
+#include "Rendering/RenderGraphCommand.h"
 
 namespace Engine
 {

@@ -1,4 +1,4 @@
-#include "EntityGizmo.hpp"
+#include "EntityGizmo.h"
 
 #include <glm/gtc/type_ptr.hpp>
 

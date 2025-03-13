@@ -1,18 +1,18 @@
-#include "ResourceManager.hpp"
+#include "ResourceManager.h"
 
-#include "Rendering/Cubemap.hpp"
-#include "Rendering/Renderer.hpp"
+#include "Rendering/Cubemap.h"
+#include "Rendering/Renderer.h"
 
-#include "Importer/GltfImporter.hpp"
-#include "Importer/TextureImporter.hpp"
-#include "Resource/Factory/TextureFactory.hpp"
-#include "Resource/Factory/MeshFactory.hpp"
-#include "Resource/Factory/MaterialFactory.hpp"
-#include "Resource/Factory/SceneFactory.hpp"
+#include "Importer/GltfImporter.h"
+#include "Importer/TextureImporter.h"
+#include "Resource/Factory/TextureFactory.h"
+#include "Resource/Factory/MeshFactory.h"
+#include "Resource/Factory/MaterialFactory.h"
+#include "Resource/Factory/SceneFactory.h"
 
-#include "Scripting/Script.hpp"
+#include "Scripting/Script.h"
 
-#include "Common/FileSystem.hpp"
+#include "Common/FileSystem.h"
 
 namespace Engine
 {
@@ -34,14 +34,19 @@ namespace Engine
             return;
         }
 
-        importer->Import(path, Project::GetResourceDirectory() / path.stem());
+        auto saveAs = importer->GetSaveExtension();
+
+        auto destination = Project::GetImportsDirectory() / path;
+        destination.replace_extension(saveAs);
+
+        importer->Import(path, destination);
     }
 
-    ResourceImporter* ResourceManager::GetImporterByExtension(const std::filesystem::path &extension)
+    ResourceImporter* ResourceManager::GetImporterByExtension(const std::filesystem::path &extension) const
     {
         for (const auto& importer : importers)
         {
-            const auto supported = importer->GetSupportedExtensions();
+            const auto supported = importer->GetImportExtensions();
 
             if (std::ranges::find(supported.begin(), supported.end(), extension) != supported.end())
             {
@@ -63,8 +68,7 @@ namespace Engine
         TextureFactory factory{ device };
 
         auto texture = factory.Load(path);
-        texture->CreateVulkanResources(device);
-        texture->UploadDataToGpu(device);
+        texture->UploadToGpu(device);
 
         return texture;
     }
@@ -74,11 +78,10 @@ namespace Engine
     {
         TextureFactory factory{ device };
 
-        auto texture = factory.Load(path);
+        const auto texture = factory.Load(path);
 
         auto cubemap = std::make_shared<Cubemap>(std::move(*texture));
-        cubemap->CreateVulkanResources(device);
-        cubemap->UploadDataToGpu(device);
+        cubemap->UploadToGpu(device);
 
         return cubemap;
     }

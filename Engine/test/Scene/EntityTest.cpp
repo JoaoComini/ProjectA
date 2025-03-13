@@ -1,9 +1,9 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <entt/entt.hpp>
-#include "Scene/Entity.hpp"
+#include "(Scene/Entity.h")
 
-#include "Fixture/Components.hpp"
+#include "(Fixture/Components.h")
 
 TEST_CASE("it should add components to itself", "[Entity]")
 {

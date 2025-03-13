@@ -1,12 +1,22 @@
-#include "Project.hpp"
+#include "Project.h"
 
+#include "Common/FileSystem.h"
 #include <yaml-cpp/yaml.h>
 
 namespace Engine
 {
-	Project::Project(std::filesystem::path directory, ProjectConfig& config)
+	Project::Project(const std::filesystem::path &directory, ProjectConfig& config)
 		: directory(directory), config(config)
 	{
+		if (const auto dir = GetResourceDirectory(); !FileSystem::Exists(dir))
+		{
+			FileSystem::CreateDirectory(dir);
+		}
+
+		if (const auto dir = GetImportsDirectory(); !FileSystem::Exists(dir))
+		{
+			FileSystem::CreateDirectory(dir);
+		}
 	}
 
 	void Project::Load(const std::filesystem::path& path)
@@ -32,6 +42,11 @@ namespace Engine
 	std::filesystem::path Project::GetResourceDirectory()
 	{
 		return GetProjectDirectory() / activeProject->config.resourceDirectory;
+	}
+
+	std::filesystem::path Project::GetImportsDirectory()
+	{
+		return GetProjectDirectory() / ".Imports";
 	}
 
 	std::filesystem::path Project::GetResourceRegistryPath()

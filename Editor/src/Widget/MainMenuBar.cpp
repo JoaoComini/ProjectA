@@ -1,8 +1,6 @@
-#include "MainMenuBar.hpp"
+#include "MainMenuBar.h"
 
 #include <imgui.h>
-
-#include <Rendering/Renderer.hpp>
 
 void MainMenuBar::Draw()
 {

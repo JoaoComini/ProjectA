@@ -75,11 +75,6 @@ target_include_directories(ImGuizmo
 
 target_link_libraries(ImGuizmo ImGui)
 
-# ------ FLATBUFFERS -----
-
-set(FLATBUFFERS_BUILD_TESTS OFF)
-add_subdirectory(third_party/flatbuffers)
-
 # ------ SPIRV-CROSS -----
 
 set(SPIRV_CROSS_CLI OFF CACHE BOOL "" FORCE)
@@ -190,10 +185,7 @@ embed_static(Shaders ${SHADER_SRC_FILES})
 
 file(GLOB_RECURSE ENGINE_SRC_FILES CONFIGURE_DEPENDS src/*.cpp)
 
-add_library(Engine STATIC ${ENGINE_SRC_FILES}
-        src/Rendering/RenderTexture.cpp
-        src/Rendering/RenderTexture.hpp
-        src/Rendering/RenderBuffer.hpp)
+add_library(Engine STATIC ${ENGINE_SRC_FILES})
 
 target_include_directories(Engine
     PUBLIC
@@ -213,7 +205,6 @@ target_link_libraries(Engine
     ImGui
     ImGuizmo
     yaml-cpp
-    flatbuffers
     spirv-cross-cpp
     spirv-cross-glsl
     glslang
@@ -230,7 +221,6 @@ target_compile_definitions(Engine
     PRIVATE
     GLFW_INCLUDE_VULKAN
     TINYGLTF_USE_CPP14
-    FLATBUFFERS_USE_STD_SPAN
     CEREAL_SERIALIZE_FUNCTION_NAME=Serialize
     CEREAL_SAVE_FUNCTION_NAME=Save
     CEREAL_LOAD_FUNCTION_NAME=Load
@@ -242,40 +232,8 @@ target_compile_definitions(Engine
 
 target_precompile_headers(Engine
     PUBLIC
-    "src/Precompiled.hpp"
+    "src/Precompiled.h"
 )
-
-# - COMPILE FLATBUFFERS -
-
-set(
-    FLATBUFFERS_SCHEMAS
-    "src/Resource/Flatbuffers/Material.fbs"
-    "src/Resource/Flatbuffers/Texture.fbs"
-    "src/Resource/Flatbuffers/Mesh.fbs"
-)
-
-add_custom_target(Engine_Flatbuffers ALL)
-
-foreach(SCHEMA_SRC IN LISTS FLATBUFFERS_SCHEMAS)
-    get_filename_component(SCHEMA_DIR ${SCHEMA_SRC} PATH)
-    string(REGEX REPLACE "\\.fbs$" "_generated.h" GEN_HEADER ${SCHEMA_SRC})
-    add_custom_command(
-        COMMAND
-        flatc
-        --cpp --gen-object-api
-        -o ${CMAKE_CURRENT_SOURCE_DIR}/${SCHEMA_DIR}
-        -I ${CMAKE_CURRENT_SOURCE_DIR}/${SCHEMA_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}/${SCHEMA_SRC}
-        OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/${GEN_HEADER}
-        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${SCHEMA_SRC}
-        COMMENT "flatc generation: ${SCHEMA_SRC}"
-    )
-    target_sources(Engine_Flatbuffers PRIVATE ${GEN_HEADER})
-endforeach()
-
-add_dependencies(Engine_Flatbuffers flatc)
-
-add_dependencies(Engine Engine_Flatbuffers)
 
 # -------- TESTS --------
 
@@ -285,11 +243,9 @@ include(Catch)
 
 set(ENGINE_TEST_FILES
     "test/Scene/SceneTest.cpp"
-    
     "test/Resource/ResourceTest.cpp"
-    "test/Resource/Factory/TextureFactoryTest.cpp"
-    "test/Resource/Factory/MeshFactoryTest.cpp"
-  "test/Rendering/RenderGraph/RenderGraphTest.cpp")
+    "test/Rendering/RenderGraph/RenderGraphTest.cpp"
+)
 
 add_executable(Engine_Test ${ENGINE_TEST_FILES})
 

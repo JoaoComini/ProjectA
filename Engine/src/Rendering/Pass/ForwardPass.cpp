@@ -1,8 +1,8 @@
-#include "ForwardPass.hpp"
+#include "ForwardPass.h"
 
-#include "Rendering/Renderer.hpp"
+#include "Rendering/Renderer.h"
 
-#include "Rendering/RenderGraphCommand.hpp"
+#include "Rendering/RenderGraphCommand.h"
 
 namespace Engine
 {

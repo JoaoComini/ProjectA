@@ -1,8 +1,8 @@
-#include "TextureFactory.hpp"
+#include "TextureFactory.h"
 
-#include "Resource/ResourceManager.hpp"
+#include "Resource/ResourceManager.h"
 
-#include "Common/FileSystem.hpp"
+#include "Common/FileSystem.h"
 
 #include "../Flatbuffers/Texture_generated.h"
 

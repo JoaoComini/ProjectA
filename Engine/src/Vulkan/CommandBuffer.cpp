@@ -1,12 +1,12 @@
-#include "CommandBuffer.hpp"
+#include "CommandBuffer.h"
 
-#include "Device.hpp"
-#include "CommandPool.hpp"
-#include "Pipeline.hpp"
-#include "ImageView.hpp"
-#include "Sampler.hpp"
-#include "ResourceCache.hpp"
-#include "Rendering/RenderFrame.hpp"
+#include "Device.h"
+#include "CommandPool.h"
+#include "Pipeline.h"
+#include "ImageView.h"
+#include "Sampler.h"
+#include "ResourceCache.h"
+#include "Rendering/RenderFrame.h"
 
 namespace Vulkan
 {

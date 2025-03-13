@@ -1,8 +1,8 @@
-#include "JoltContactListener.hpp"
+#include "JoltContactListener.h"
 
 #include <Jolt/Physics/Collision/EstimateCollisionResponse.h> 
 
-#include "Scene/Scene.hpp"
+#include "Scene/Scene.h"
 
 namespace Engine
 {

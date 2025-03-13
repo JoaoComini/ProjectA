@@ -1,7 +1,6 @@
-#include "ResourceTree.hpp"
+#include "ResourceTree.h"
 
 #include <filesystem>
-
 
 void ResourceTree::SetRoot(std::filesystem::path path)
 {

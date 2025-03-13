@@ -1,13 +1,13 @@
-#include "SkyboxPass.hpp"
+#include "SkyboxPass.h"
 
 
-#include "Scene/Scene.hpp"
-#include "Resource/ResourceManager.hpp"
-#include "Rendering/Renderer.hpp"
-#include "Rendering/Cubemap.hpp"
-#include "Rendering/Mesh.hpp"
+#include "Scene/Scene.h"
+#include "Resource/ResourceManager.h"
+#include "Rendering/Renderer.h"
+#include "Rendering/Cubemap.h"
+#include "Rendering/Mesh.h"
 
-#include "Vulkan/ResourceCache.hpp"
+#include "Vulkan/ResourceCache.h"
 
 namespace Engine
 {

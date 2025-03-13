@@ -1,8 +1,8 @@
-#include "PipelineLayout.hpp"
+#include "PipelineLayout.h"
 
 #include <ranges>
 
-#include "Device.hpp"
+#include "Device.h"
 
 namespace Vulkan
 {

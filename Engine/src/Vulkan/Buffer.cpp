@@ -1,10 +1,10 @@
-#include "Buffer.hpp"
+#include "Buffer.h"
 
-#include "Device.hpp"
+#include "Device.h"
 
 namespace Vulkan
 {
-    Buffer::Buffer(const Device &device, uint32_t size) : device(device), size(size)
+    Buffer::Buffer(const Device &device, const uint32_t size) : device(device), size(size)
     {
     }
 
@@ -13,18 +13,18 @@ namespace Vulkan
         vmaDestroyBuffer(device.GetAllocator(), handle, allocation);
     }
 
-    void Buffer::SetData(void* data, uint32_t size, uint32_t offset)
+    void Buffer::SetData(void* data, uint32_t size, uint32_t offset) const
     {
         memcpy(mappedData + offset, data, size);
         Flush();
     }
 
-    void Buffer::Flush()
+    void Buffer::Flush() const
     {
         vmaFlushAllocation(device.GetAllocator(), allocation, 0, size);
     }
 
-    bool Buffer::IsHostVisible()
+    bool Buffer::IsHostVisible() const
     {
         return propertyFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
     }
@@ -34,7 +34,7 @@ namespace Vulkan
         return size;
     }
 
-    BufferBuilder BufferBuilder::Size(uint32_t size)
+    BufferBuilder BufferBuilder::Size(const uint32_t size)
     {
         this->size = size;
         return *this;
@@ -58,7 +58,7 @@ namespace Vulkan
         return *this;
     }
 
-    BufferBuilder BufferBuilder::BufferUsage(BufferUsageFlags bufferUsage)
+    BufferBuilder BufferBuilder::BufferUsage(const BufferUsageFlags bufferUsage)
     {
         this->bufferUsage = bufferUsage;
         return *this;

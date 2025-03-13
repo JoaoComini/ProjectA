@@ -1,10 +1,8 @@
-#include "EntityInspector.hpp"
+#include "EntityInspector.h"
 
 #include <misc/cpp/imgui_stdlib.h>
 
-#include <Scene/Scene.hpp>
-
-#include "Controls.hpp"
+#include "Controls.h"
 
 EntityInspector::EntityInspector(Engine::Scene& scene)
 	: scene(scene)

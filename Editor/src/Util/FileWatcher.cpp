@@ -1,4 +1,4 @@
-#include "FileWatcher.hpp"
+#include "FileWatcher.h"
 
 
 FileWatcher::FileWatcher(std::filesystem::path path, std::chrono::duration<int, std::milli> delay)

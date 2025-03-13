@@ -1,8 +1,8 @@
-#include "RenderBatcher.hpp"
+#include "RenderBatcher.h"
 
-#include "Resource/ResourceManager.hpp"
-#include "Renderer.hpp"
-#include "Scene/Scene.hpp"
+#include "Resource/ResourceManager.h"
+#include "Renderer.h"
+#include "Scene/Scene.h"
 
 namespace Engine
 {
@@ -20,20 +20,19 @@ namespace Engine
 
 			for (auto& primitive : mesh->GetPrimitives())
 			{
-				auto& material = GetMaterial(*primitive);
 
 				auto bounds = mesh->GetBounds();
 				bounds.Transform(localToWorld.value);
 
 				auto distance = glm::length2(bounds.GetCenter() - glm::vec3{ cameraPosition });
 
-				if (material.GetAlphaMode() == AlphaMode::Blend)
+				if (const auto material = primitive->GetMaterial(); material->GetAlphaMode() == AlphaMode::Blend)
 				{
-					transparents.emplace_back(localToWorld.value, primitive.get(), &material, distance);
+					transparents.emplace_back(localToWorld.value, primitive.get(), distance);
 					continue;
 				}
 
-				opaques.emplace_back(localToWorld.value, primitive.get(), &material, distance);
+				opaques.emplace_back(localToWorld.value, primitive.get(), distance);
 			}
 		}
 
@@ -51,20 +50,15 @@ namespace Engine
 		return transparents;
 	}
 
-	Material& RenderBatcher::GetMaterial(const Primitive& primitive)
-	{
-		return *ResourceManager::Get().LoadResource<Material>(primitive.GetMaterial());
-	}
-
 	void RenderBatcher::SortOpaques()
 	{
 		auto sort = [](const RenderGeometry& a, const RenderGeometry& b)
 		{
 			std::size_t hashA{ 0 };
-			Hash(hashA, a.material);
+			Hash(hashA, a.primitive->GetMaterial());
 
 			std::size_t hashB{ 0 };
-			Hash(hashB, b.material);
+			Hash(hashB, b.primitive->GetMaterial());
 
 			return hashA < hashB;
 		};

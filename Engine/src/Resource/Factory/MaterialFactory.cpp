@@ -1,6 +1,6 @@
-#include "MaterialFactory.hpp"
+#include "MaterialFactory.h"
 
-#include "Common/FileSystem.hpp"
+#include "Common/FileSystem.h"
 
 #include "../Flatbuffers/Material_generated.h"
 #include "flatbuffers/flatbuffers.h"

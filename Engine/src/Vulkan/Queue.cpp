@@ -1,10 +1,10 @@
-#include "Queue.hpp"
+#include "Queue.h"
 
-#include "Device.hpp"
-#include "CommandBuffer.hpp"
-#include "Semaphore.hpp"
-#include "Fence.hpp"
-#include "Swapchain.hpp"
+#include "Device.h"
+#include "CommandBuffer.h"
+#include "Semaphore.h"
+#include "Fence.h"
+#include "Swapchain.h"
 
 namespace Vulkan
 {

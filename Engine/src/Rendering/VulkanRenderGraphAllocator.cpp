@@ -1,6 +1,6 @@
-#include "VulkanRenderGraphAllocator.hpp"
+#include "VulkanRenderGraphAllocator.h"
 
-#include "RenderTexture.hpp"
+#include "RenderTexture.h"
 
 namespace Engine
 {

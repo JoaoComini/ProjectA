@@ -1,6 +1,6 @@
-#include "Toolbar.hpp"
+#include "Toolbar.h"
 
-#include <Scene/Scene.hpp>
+#include <Scene/Scene.h>
 
 #include <imgui.h>
 #include <imgui_internal.h>

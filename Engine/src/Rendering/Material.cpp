@@ -1,16 +1,16 @@
-#include "Material.hpp"
+#include "Material.h"
 
 namespace Engine
 {
 	Material::Material(
-		ResourceId albedoTexture,
-		ResourceId normalTexture,
-		ResourceId metallicRoughnessTexture,
-		glm::vec4 albedoColor,
-		float metallicFactor,
-		float roughnessFactor,
-		AlphaMode alphaMode,
-		float alphaCutoff
+		std::shared_ptr<Texture> albedoTexture,
+		std::shared_ptr<Texture> normalTexture,
+		std::shared_ptr<Texture> metallicRoughnessTexture,
+		const glm::vec4 albedoColor,
+		const float metallicFactor,
+		const float roughnessFactor,
+		const AlphaMode alphaMode,
+		const float alphaCutoff
 	) : albedoTexture(albedoTexture), normalTexture(normalTexture), metallicRoughnessTexture(metallicRoughnessTexture),
 		albedoColor(albedoColor), metallicFactor(metallicFactor), roughnessFactor(roughnessFactor), alphaMode(alphaMode), alphaCutoff(alphaCutoff)
 	{
@@ -40,19 +40,19 @@ namespace Engine
 		}
 	}
 
-	ResourceId Material::GetAlbedoTexture() const
+	Texture* Material::GetAlbedoTexture() const
 	{
-		return albedoTexture;
+		return albedoTexture.get();
 	}
 
-	ResourceId Material::GetNormalTexture() const
+	Texture* Material::GetNormalTexture() const
 	{
-		return normalTexture;
+		return normalTexture.get();
 	}
 
-	ResourceId Material::GetMetallicRoughnessTexture() const
+	Texture* Material::GetMetallicRoughnessTexture() const
 	{
-		return metallicRoughnessTexture;
+		return metallicRoughnessTexture.get();
 	}
 
 	glm::vec4 Material::GetAlbedoColor() const

@@ -1,22 +1,46 @@
-#include "Mesh.hpp"
-#include "Mesh.hpp"
-#include "Mesh.hpp"
-#include "Mesh.hpp"
-#include "Mesh.hpp"
+#include "Mesh.h"
+#include "Mesh.h"
+#include "Mesh.h"
+#include "Mesh.h"
+#include "Mesh.h"
 
-#include "Common/Hash.hpp"
+#include "Common/Hash.h"
 
 namespace Engine
 {
-    Primitive::Primitive(const Vulkan::Device& device)
-        : device(device)
-    {
-    }
-
-    void Primitive::AddVertexBuffer(std::vector<Vertex> vertices)
+    void Primitive::SetVertices(std::vector<Vertex>&& vertices)
     {
         vertexCount = vertices.size();
 
+        vertices = std::move(vertices);
+    }
+
+    void Primitive::SetIndices(std::vector<uint8_t>&& indices, const VkIndexType type)
+    {
+        uint32_t typeSize{};
+        switch (indexType)
+        {
+            case VK_INDEX_TYPE_UINT8_KHR:
+                typeSize = sizeof(uint8_t);
+            break;
+            case VK_INDEX_TYPE_UINT16:
+                typeSize = sizeof(uint16_t);
+            break;
+            case VK_INDEX_TYPE_UINT32:
+                typeSize = sizeof(uint32_t);
+            break;
+            default:
+                break;
+        }
+
+        indexCount = indices.size() / typeSize;
+        indexType = type;
+
+        indices = std::move(indices);
+    }
+
+    void Primitive::UploadToGpu(Vulkan::Device &device)
+    {
         vertexBuffer = Vulkan::BufferBuilder()
             .Size(sizeof(Vertex) * vertexCount)
             .Persistent()
@@ -26,46 +50,27 @@ namespace Engine
             .Build(device);
 
         vertexBuffer->SetData(vertices.data(), sizeof(Vertex) * vertexCount);
-    }
 
-    void Primitive::AddIndexBuffer(std::vector<uint8_t> indices, VkIndexType type)
-    {
-        uint32_t size = indices.size();
-
-        uint32_t typeSize{};
-        switch (type)
-        {
-        case VK_INDEX_TYPE_UINT8_KHR:
-            typeSize = sizeof(uint8_t);
-            break;
-        case VK_INDEX_TYPE_UINT16:
-            typeSize = sizeof(uint16_t);
-            break;
-        case VK_INDEX_TYPE_UINT32:
-            typeSize = sizeof(uint32_t);
-            break;
-        default:
-            break;
-        }
-
-        indexCount = indices.size() / typeSize;
-
-        indexType = type;
+        vertices.clear();
+        vertices.shrink_to_fit();
 
         indexBuffer = Vulkan::BufferBuilder()
-            .Size(size)
+            .Size(indices.size())
             .Persistent()
             .AllowTransfer()
             .SequentialWrite()
             .BufferUsage(Vulkan::BufferUsageFlags::Index)
             .Build(device);
 
-        indexBuffer->SetData(indices.data(), size);
+        indexBuffer->SetData(indices.data(), indices.size());
+
+        indices.clear();
+        indices.shrink_to_fit();
     }
 
     void Primitive::Draw(Vulkan::CommandBuffer& commandBuffer) const
     {
-        VkDeviceSize offsets[] = { 0 };
+        constexpr VkDeviceSize offsets[] = { 0 };
         vkCmdBindVertexBuffers(commandBuffer.GetHandle(), 0, 1, &vertexBuffer->GetHandle(), offsets);
          
         if (indexBuffer != nullptr)
@@ -79,14 +84,22 @@ namespace Engine
         commandBuffer.Draw(vertexCount, 1, 0, 0);
     }
 
-    void Primitive::SetMaterial(ResourceId material)
+    void Primitive::SetMaterial(std::shared_ptr<Material> material)
     {
         this->material = material;
     }
 
-    ResourceId Primitive::GetMaterial() const
+    Material* Primitive::GetMaterial() const
     {
-        return material;
+        return material.get();
+    }
+
+    void Mesh::UploadToGpu(Vulkan::Device &device)
+    {
+        for (auto& primitive : primitives)
+        {
+            primitive->UploadToGpu(device);
+        }
     }
 
     void Mesh::AddPrimitive(std::unique_ptr<Primitive> primitive)
@@ -94,7 +107,7 @@ namespace Engine
         primitives.push_back(std::move(primitive));
     }
 
-    void Mesh::SetBounds(AABB bounds)
+    void Mesh::SetBounds(const AABB &bounds)
     {
         this->bounds = bounds;
     }
@@ -111,7 +124,7 @@ namespace Engine
 
     std::shared_ptr<Mesh> Mesh::BuiltIn::Cube(Vulkan::Device& device)
     {
-        static std::vector<Vertex> vertices{
+        std::vector<Vertex> vertices {
             {{ -1.0f,  1.0f, -1.0f }},
             {{ -1.0f, -1.0f, -1.0f }},
             {{ 1.0f, -1.0f, -1.0f  }},
@@ -157,10 +170,12 @@ namespace Engine
 
         auto mesh = std::make_shared<Mesh>();
 
-        auto primitive = std::make_unique<Primitive>(device);
-        primitive->AddVertexBuffer(vertices);
+        auto primitive = std::make_unique<Primitive>();
+        primitive->SetVertices(std::move(vertices));
 
         mesh->AddPrimitive(std::move(primitive));
+
+        mesh->UploadToGpu(device);
 
         return mesh;
     }

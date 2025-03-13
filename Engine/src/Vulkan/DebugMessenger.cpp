@@ -1,6 +1,6 @@
 #ifndef NDEBUG
 
-#include "DebugMessenger.hpp"
+#include "DebugMessenger.h"
 
 namespace Vulkan
 {

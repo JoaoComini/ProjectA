@@ -1,17 +1,13 @@
-#include "Editor.hpp"
+#include "Editor.h"
 
 #include <imgui.h>
 #include <imgui_internal.h>
-#include <ImGuizmo.h>
 
-#include <glm/gtc/type_ptr.hpp>
-#include <Resource/Importer/GltfImporter.hpp>
+#include <Resource/Importer/GltfImporter.h>
+#include "Resource/ResourceManager.h"
 
-#include "Resource/ResourceManager.hpp"
-#include "Rendering/Cubemap.hpp"
-
-#include "Platform/FileDialog.hpp"
-#include "Project/Project.hpp"
+#include "Platform/FileDialog.h"
+#include "Project/Project.h"
 
 namespace Engine
 {
