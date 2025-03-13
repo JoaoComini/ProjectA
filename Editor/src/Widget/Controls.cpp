@@ -2,11 +2,11 @@
 
 #include <imgui.h>
 
-#include <Scene/Components.hpp>
+#include <Scene/Components.h>
 
-#include <Rendering/Camera.hpp>
+#include <Rendering/Camera.h>
 
-#include <Resource/ResourceManager.hpp>
+#include <Resource/ResourceManager.h>
 
 namespace Controls
 {
@@ -120,7 +120,7 @@ namespace Controls
 	template<>
 	void Component(Engine::Component::MeshRender* component)
 	{
-		ImGui::TextDisabled("%s", component->mesh.ToString().c_str());
+		ImGui::TextDisabled("%s", component->mesh->id.ToString().c_str());
 	}
 
 	template<>

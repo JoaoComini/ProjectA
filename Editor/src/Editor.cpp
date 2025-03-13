@@ -3,7 +3,7 @@
 #include <imgui.h>
 #include <imgui_internal.h>
 
-#include <Resource/Importer/GltfImporter.h>
+#include <Resource/Importer/GltfModule.h>
 #include "Resource/ResourceManager.h"
 
 #include "Platform/FileDialog.h"
@@ -26,8 +26,12 @@ namespace Engine
 		ResourceRegistry::Get().Deserialize();
 
 		{
-			auto importer = std::make_unique<GltfImporter>();
-			ResourceManager::Get().AddImporter(std::move(importer));
+			auto gltf = std::make_unique<GltfModule>();
+
+			auto scene = std::make_unique<SceneImporter>();
+			scene->AddModule(std::move(gltf));
+
+			ResourceManager::Get().AddImporter(std::move(scene));
 		}
 
 		auto [height, width] = GetWindow().GetFramebufferSize();
@@ -211,7 +215,7 @@ namespace Engine
 	void Editor::SaveScene()
 	{
 		auto id = GetScene().id;
-		
+
 		if (id)
 		{
 			ResourceManager::Get().SaveResource<Scene>(id, GetScene());
@@ -220,7 +224,7 @@ namespace Engine
 		{
 			id = ResourceManager::Get().CreateResource<Scene>("untitled", GetScene());
 		}
-		
+
 		contentBrowser->RefreshResourceTree();
 	}
 
@@ -249,7 +253,7 @@ namespace Engine
 
 	void Editor::ImportFile()
 	{
-		auto file = FileDialog::OpenFile(GetWindow(), "Resource Files (*.glb,*.hdr)\0*.glb;*.hdr\0");
+		auto file = FileDialog::OpenFile(GetWindow(), "Resource Files (*.glb)\0*.glb\0");
 
 		if (file.empty())
 		{

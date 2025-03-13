@@ -24,7 +24,7 @@ namespace Engine
         uint32_t size = width * height * 4;
 
         std::vector<uint8_t> data{ pixels, pixels + size };
-        std::vector<Mipmap> mipmaps{
+        std::vector mipmaps{
             Mipmap{
                 0,
                 0,
@@ -52,7 +52,7 @@ namespace Engine
         uint32_t size = width * height * 4;
 
         std::vector<uint8_t> data{ pixels, pixels + size };
-        std::vector<Mipmap> mipmaps{
+        std::vector mipmaps{
             Mipmap{
                 0,
                 0,
@@ -89,7 +89,7 @@ namespace Engine
         uint32_t size = width * height * 4 * sizeof(float);
 
         std::vector<uint8_t> data{ reinterpret_cast<uint8_t*>(pixels), reinterpret_cast<uint8_t*>(pixels) + size };
-        std::vector<Mipmap> mipmaps{
+        std::vector mipmaps{
             Mipmap{
                 0,
                 0,

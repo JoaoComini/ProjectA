@@ -10,10 +10,6 @@ namespace Engine
 {
     ResourceRegistry::ResourceRegistry()
     {
-        if (const auto file = Project::GetResourceRegistryPath(); !FileSystem::Exists(file))
-        {
-            Serialize();
-        }
     }
 
     bool ResourceRegistry::HasResource(const ResourceId id) const

@@ -18,7 +18,7 @@ namespace Engine
     void Primitive::SetIndices(std::vector<uint8_t>&& indices, const VkIndexType type)
     {
         uint32_t typeSize{};
-        switch (indexType)
+        switch (type)
         {
             case VK_INDEX_TYPE_UINT8_KHR:
                 typeSize = sizeof(uint8_t);

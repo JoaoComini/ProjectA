@@ -16,11 +16,10 @@ namespace Engine
 		{
 			auto [meshRender, localToWorld] = query.GetComponent(entity);
 
-			auto mesh = ResourceManager::Get().LoadResource<Mesh>(meshRender.mesh);
+			auto mesh = meshRender.mesh;
 
 			for (auto& primitive : mesh->GetPrimitives())
 			{
-
 				auto bounds = mesh->GetBounds();
 				bounds.Transform(localToWorld.value);
 

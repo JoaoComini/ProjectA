@@ -1,8 +1,7 @@
 #pragma once
 
+#include "SceneImporter.h"
 #include "Scene/Scene.h"
-
-#include "Resource/ResourceImporter.h"
 
 namespace tinygltf
 {
@@ -11,10 +10,10 @@ namespace tinygltf
 
 namespace Engine
 {
-	class GltfImporter final : public ResourceImporter
+	class GltfModule final : public SceneImporterModule
 	{
 	public:
-		void Import(const std::filesystem::path& source, const std::filesystem::path& destination) override;
+		std::unique_ptr<Scene> Import(const std::filesystem::path& source) override;
 		[[nodiscard]] std::vector<std::string> GetImportExtensions() const override;
 	private:
 		tinygltf::Model LoadModel(const std::filesystem::path& path);

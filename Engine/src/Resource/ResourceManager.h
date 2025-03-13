@@ -5,7 +5,6 @@
 #include "Resource.h"
 #include "ResourceImporter.h"
 #include "ResourceRegistry.h"
-#include "Factory/SceneFactory.h"
 
 #include "Rendering/RenderContext.h"
 
@@ -37,12 +36,14 @@ namespace Engine
 
             const auto metadata = ResourceRegistry::Get().FindMetadataById(id);
 
-            auto resource = FactoryLoad<T>(Project::GetResourceDirectory() / metadata->path);
-            resource->id = id;
+            // auto resource = FactoryLoad<T>(Project::GetResourceDirectory() / metadata->path);
+            // resource->id = id;
+            //
+            // loadedResources[id] = resource;
+            //
+            // return resource;
 
-            loadedResources[id] = resource;
-
-            return resource;
+            return nullptr;
         }
 
         void UnloadResource(const ResourceId& id)
@@ -67,7 +68,7 @@ namespace Engine
 
             const ResourceId id{};
 
-            FactoryCreate<T>(destination, payload);
+            // FactoryCreate<T>(destination, payload);
 
             const ResourceMetadata metadata
             {
@@ -90,7 +91,7 @@ namespace Engine
 
             const auto metadata = ResourceRegistry::Get().FindMetadataById(id);
 
-            FactoryCreate<T>(Project::GetResourceDirectory() / metadata->path, payload);
+            // FactoryCreate<T>(Project::GetResourceDirectory() / metadata->path, payload);
 
             if (IsResourceLoaded(id))
             {
@@ -125,12 +126,6 @@ namespace Engine
         ResourceImporter* GetImporterByExtension(const std::filesystem::path& extension) const;
 
         [[nodiscard]] bool IsResourceLoaded(const ResourceId& id) const;
-
-        template<typename T>
-        std::shared_ptr<T> FactoryLoad(const std::filesystem::path& path);
-
-        template<typename T, typename P>
-        void FactoryCreate(const std::filesystem::path& path, P& payload);
 
         std::vector<std::unique_ptr<ResourceImporter>> importers;
 

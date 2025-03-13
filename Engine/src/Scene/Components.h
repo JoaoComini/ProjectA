@@ -48,7 +48,7 @@ namespace Engine::Component
 
 	struct MeshRender
 	{
-		ResourceId mesh{ 0 };
+		std::shared_ptr<Mesh> mesh{ nullptr };
 	};
 
 	struct Camera
@@ -113,7 +113,7 @@ namespace Engine::Component
 
 	struct Delete {};
 
-	template <typename... Component>
+	template <typename...>
 	struct Group { };
 
 	using Serializable = Group<

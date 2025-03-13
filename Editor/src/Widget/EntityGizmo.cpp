@@ -2,7 +2,7 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
-#include <Scene/Scene.hpp>
+#include <Scene/Scene.h>
 
 EntityGizmo::EntityGizmo(Engine::Scene& scene, EditorCamera& camera) : scene(scene), camera(camera)
 {

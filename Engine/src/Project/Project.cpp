@@ -8,15 +8,6 @@ namespace Engine
 	Project::Project(const std::filesystem::path &directory, ProjectConfig& config)
 		: directory(directory), config(config)
 	{
-		if (const auto dir = GetResourceDirectory(); !FileSystem::Exists(dir))
-		{
-			FileSystem::CreateDirectory(dir);
-		}
-
-		if (const auto dir = GetImportsDirectory(); !FileSystem::Exists(dir))
-		{
-			FileSystem::CreateDirectory(dir);
-		}
 	}
 
 	void Project::Load(const std::filesystem::path& path)
@@ -32,6 +23,16 @@ namespace Engine
 		};
 
 		activeProject = std::make_shared<Project>(path.parent_path(), config);
+
+		if (const auto dir = GetResourceDirectory(); !FileSystem::Exists(dir))
+		{
+			FileSystem::CreateDirectory(dir);
+		}
+
+		if (const auto dir = GetImportsDirectory(); !FileSystem::Exists(dir))
+		{
+			FileSystem::CreateDirectory(dir);
+		}
 	}
 
 	std::filesystem::path Project::GetProjectDirectory()
@@ -46,7 +47,7 @@ namespace Engine
 
 	std::filesystem::path Project::GetImportsDirectory()
 	{
-		return GetProjectDirectory() / ".Imports";
+		return GetResourceDirectory() / ".Imports";
 	}
 
 	std::filesystem::path Project::GetResourceRegistryPath()
