@@ -5,6 +5,7 @@
 #include "Resource.h"
 #include "ResourceImporter.h"
 #include "ResourceRegistry.h"
+#include "ResourceLoader.h"
 
 #include "Rendering/RenderContext.h"
 
@@ -17,6 +18,7 @@ namespace Engine
     public:
         explicit ResourceManager(RenderContext& renderContext);
 
+        void ImportResource(const std::filesystem::path& path);
         void AddImporter(std::unique_ptr<ResourceImporter> importer);
 
         template<typename T>
@@ -36,14 +38,11 @@ namespace Engine
 
             const auto metadata = ResourceRegistry::Get().FindMetadataById(id);
 
-            // auto resource = FactoryLoad<T>(Project::GetResourceDirectory() / metadata->path);
-            // resource->id = id;
-            //
-            // loadedResources[id] = resource;
-            //
-            // return resource;
+            auto resource =  ResourceLoader::Load<T>(Project::GetResourceDirectory() / metadata->path, device);
 
-            return nullptr;
+            loadedResources[id] = resource;
+
+            return resource;
         }
 
         void UnloadResource(const ResourceId& id)
@@ -64,15 +63,13 @@ namespace Engine
         template<typename T, typename P>
         ResourceId CreateResource(std::filesystem::path path, P& payload)
         {
-            auto destination = path.replace_extension(T::GetExtension());
-
             const ResourceId id{};
 
             // FactoryCreate<T>(destination, payload);
 
             const ResourceMetadata metadata
             {
-                .path = std::filesystem::relative(destination, Project::GetResourceDirectory()),
+                .path = std::filesystem::relative(path, Project::GetResourceDirectory()),
                 .type = T::GetStaticType()
             };
 
@@ -119,8 +116,6 @@ namespace Engine
 
             ResourceRegistry::Get().ResourceDeleted(id);
         }
-
-        void ImportResource(const std::filesystem::path& path);
     private:
 
         ResourceImporter* GetImporterByExtension(const std::filesystem::path& extension) const;

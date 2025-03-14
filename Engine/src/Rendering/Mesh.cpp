@@ -1,8 +1,6 @@
 #include "Mesh.h"
-#include "Mesh.h"
-#include "Mesh.h"
-#include "Mesh.h"
-#include "Mesh.h"
+
+#include <utility>
 
 #include "Common/Hash.h"
 
@@ -12,7 +10,7 @@ namespace Engine
     {
         vertexCount = vertices.size();
 
-        vertices = std::move(vertices);
+        this->vertices = std::move(vertices);
     }
 
     void Primitive::SetIndices(std::vector<uint8_t>&& indices, const VkIndexType type)
@@ -36,7 +34,7 @@ namespace Engine
         indexCount = indices.size() / typeSize;
         indexType = type;
 
-        indices = std::move(indices);
+        this->indices = std::move(indices);
     }
 
     void Primitive::UploadToGpu(Vulkan::Device &device)
@@ -86,7 +84,7 @@ namespace Engine
 
     void Primitive::SetMaterial(std::shared_ptr<Material> material)
     {
-        this->material = material;
+        this->material = std::move(material);
     }
 
     Material* Primitive::GetMaterial() const
@@ -98,11 +96,11 @@ namespace Engine
     {
         for (auto& primitive : primitives)
         {
-            primitive->UploadToGpu(device);
+            primitive.UploadToGpu(device);
         }
     }
 
-    void Mesh::AddPrimitive(std::unique_ptr<Primitive> primitive)
+    void Mesh::AddPrimitive(Primitive&& primitive)
     {
         primitives.push_back(std::move(primitive));
     }
@@ -117,7 +115,7 @@ namespace Engine
         return bounds;
     }
 
-    std::vector<std::unique_ptr<Primitive>> const& Mesh::GetPrimitives() const
+    const std::vector<Primitive>& Mesh::GetPrimitives() const
     {
         return primitives;
     }
@@ -170,8 +168,8 @@ namespace Engine
 
         auto mesh = std::make_shared<Mesh>();
 
-        auto primitive = std::make_unique<Primitive>();
-        primitive->SetVertices(std::move(vertices));
+        Primitive primitive{};
+        primitive.SetVertices(std::move(vertices));
 
         mesh->AddPrimitive(std::move(primitive));
 

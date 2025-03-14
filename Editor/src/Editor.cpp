@@ -3,7 +3,7 @@
 #include <imgui.h>
 #include <imgui_internal.h>
 
-#include <Resource/Importer/GltfModule.h>
+#include "Resource/Importer/GltfModule.h"
 #include "Resource/ResourceManager.h"
 
 #include "Platform/FileDialog.h"
@@ -13,7 +13,7 @@ namespace Engine
 {
     Editor::Editor(ApplicationSpec& spec) : Application(spec)
     {
-		if (auto path = spec.args[1]; std::filesystem::exists(path))
+		if (const auto path = spec.args[1]; std::filesystem::exists(path))
 		{
 			Project::Load(path);
 		}
@@ -214,7 +214,7 @@ namespace Engine
 
 	void Editor::SaveScene()
 	{
-		auto id = GetScene().id;
+		auto id = GetScene().GetId();
 
 		if (id)
 		{
@@ -230,7 +230,7 @@ namespace Engine
 
 	void Editor::AddScene(ResourceId id)
 	{
-		auto scene = ResourceManager::Get().LoadResource<Scene>(id);
+		const auto scene = ResourceManager::Get().LoadResource<Scene>(id);
 
 		GetScene().Add(*scene);
 	}

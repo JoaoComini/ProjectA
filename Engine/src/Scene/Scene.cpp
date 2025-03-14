@@ -1,7 +1,5 @@
 #include "Scene.h"
 
-#include "Components.h"
-
 namespace Engine
 {
 

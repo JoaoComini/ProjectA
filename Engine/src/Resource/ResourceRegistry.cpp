@@ -8,10 +8,6 @@
 
 namespace Engine
 {
-    ResourceRegistry::ResourceRegistry()
-    {
-    }
-
     bool ResourceRegistry::HasResource(const ResourceId id) const
     {
         return registry.contains(id);
@@ -39,7 +35,7 @@ namespace Engine
             return resourcesByPath[path];
         }
 
-        return { 0 };
+        return ResourceId{ 0 };
     }
 
     std::vector<ResourceEntry> ResourceRegistry::GetEntriesByType(const ResourceType type)
@@ -123,14 +119,14 @@ namespace Engine
 
         for (const auto& node : root)
         {
-            Uuid id = node["Id"].as<uint64_t>();
+            auto id = Uuid{ node["Id"].as<uint64_t>() };
 
-            auto& metadata = registry[id];
+            auto&[path, type] = registry[id];
 
-            metadata.path = node["Path"].as<std::string>();
-            metadata.type = StringToResourceType(node["Type"].as<std::string>());
+            path = node["Path"].as<std::string>();
+            type = StringToResourceType(node["Type"].as<std::string>());
 
-            resourcesByPath[metadata.path] = id;
+            resourcesByPath[path] = id;
         }
     }
 

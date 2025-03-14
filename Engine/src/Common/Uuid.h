@@ -6,7 +6,8 @@ namespace Engine
 	{
 	public:
 		Uuid();
-		Uuid(uint64_t value);
+
+		explicit Uuid(uint64_t value);
 
 		operator uint64_t() const
 		{
@@ -40,16 +41,11 @@ namespace Engine
 
 };
 
-namespace std
+template<>
+struct std::hash<Engine::Uuid>
 {
-	template <typename T> struct hash;
-
-	template<>
-	struct hash<Engine::Uuid>
+	size_t operator()(const Engine::Uuid& uuid) const noexcept
 	{
-		size_t operator()(const Engine::Uuid& uuid) const
-		{
-			return (uint64_t)uuid;
-		}
-	};
-};
+		return uuid;
+	}
+};;

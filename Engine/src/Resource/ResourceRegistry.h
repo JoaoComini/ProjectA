@@ -17,8 +17,6 @@ namespace Engine
 	class ResourceRegistry : public Singleton<ResourceRegistry>
 	{
 	public:
-		ResourceRegistry();
-
 		bool HasResource(ResourceId id) const;
 		bool HasResourceOnPath(const std::filesystem::path &path) const;
 

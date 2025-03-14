@@ -9,7 +9,7 @@ class ResourceTree
 public:
 	struct Node
 	{
-		Node(std::filesystem::path path, bool directory, Engine::ResourceId id = { 0 }, Engine::ResourceMetadata metadata = {})
+		Node(std::filesystem::path path, bool directory, const Engine::ResourceId id = Engine::ResourceId{ 0 }, const Engine::ResourceMetadata &metadata = {})
 			: path(path), directory(directory), id(id), metadata(metadata) {}
 
 		std::filesystem::path path;

@@ -6,6 +6,15 @@
 #include "Resource/Resource.h"
 #include "Shader.h"
 
+namespace glm
+{
+	template <class Archive>
+	void Serialize(Archive& ar, vec4& vec)
+	{
+		ar(vec.x, vec.y, vec.z, vec.w);
+	}
+}
+
 namespace Engine
 {
 	enum class AlphaMode
@@ -18,6 +27,8 @@ namespace Engine
 	class Material final : public Resource
 	{
 	public:
+		Material() = default;
+
 		Material(
 			std::shared_ptr<Texture> albedoTexture,
 			std::shared_ptr<Texture> normalTexture,
@@ -47,22 +58,22 @@ namespace Engine
 
 		[[nodiscard]] float GetAlphaCutoff() const;
 
-		static ResourceType GetStaticType()
+		[[nodiscard]] ResourceType GetType() const override
 		{
 			return ResourceType::Material;
 		}
 
-		[[nodiscard]] ResourceType GetType() const override
-		{
-			return GetStaticType();
-		}
-
-		static std::string GetExtension()
-		{
-			return "pares";
-		}
-
 		[[nodiscard]] const ShaderVariant& GetShaderVariant() const;
+
+		template<typename Archive>
+		void Serialize(Archive& ar)
+		{
+			ar(albedoTexture, normalTexture, metallicRoughnessTexture);
+			ar(albedoColor, metallicFactor, roughnessFactor);
+			ar(alphaMode, alphaCutoff);
+
+			PrepareShaderVariant();
+		}
 
 	private:
 		void PrepareShaderVariant();
@@ -89,14 +100,15 @@ struct std::hash<Engine::Material>
 	{
 		size_t hash{ 0 };
 
-		HashCombine(hash, material.GetAlbedoTexture()->id);
-		HashCombine(hash, material.GetNormalTexture()->id);
-		HashCombine(hash, material.GetMetallicRoughnessTexture()->id);
+		HashCombine(hash, material.GetAlbedoTexture()->GetId());
+		HashCombine(hash, material.GetNormalTexture()->GetId());
+		HashCombine(hash, material.GetMetallicRoughnessTexture()->GetId());
 		HashCombine(hash, material.GetAlbedoColor());
 		HashCombine(hash, material.GetMetallicFactor());
 		HashCombine(hash, material.GetRoughnessFactor());
 		HashCombine(hash, material.GetAlphaMode());
 		HashCombine(hash, material.GetAlphaCutoff());
+		HashCombine(hash, material.GetShaderVariant().GetHash());
 
 		return hash;
 	}

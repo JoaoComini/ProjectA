@@ -14,7 +14,6 @@ namespace Engine
 	) : albedoTexture(albedoTexture), normalTexture(normalTexture), metallicRoughnessTexture(metallicRoughnessTexture),
 		albedoColor(albedoColor), metallicFactor(metallicFactor), roughnessFactor(roughnessFactor), alphaMode(alphaMode), alphaCutoff(alphaCutoff)
 	{
-		PrepareShaderVariant();
 	}
 
 	void Material::PrepareShaderVariant()

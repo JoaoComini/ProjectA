@@ -12,7 +12,7 @@ namespace Engine
 
 		auto query = scene.Query<Component::MeshRender, Component::LocalToWorld>();
 
-		for (auto entity : query)
+		for (const auto entity : query)
 		{
 			auto [meshRender, localToWorld] = query.GetComponent(entity);
 
@@ -25,13 +25,13 @@ namespace Engine
 
 				auto distance = glm::length2(bounds.GetCenter() - glm::vec3{ cameraPosition });
 
-				if (const auto material = primitive->GetMaterial(); material->GetAlphaMode() == AlphaMode::Blend)
+				if (const auto material = primitive.GetMaterial(); material->GetAlphaMode() == AlphaMode::Blend)
 				{
-					transparents.emplace_back(localToWorld.value, primitive.get(), distance);
+					transparents.emplace_back(localToWorld.value, &primitive, distance);
 					continue;
 				}
 
-				opaques.emplace_back(localToWorld.value, primitive.get(), distance);
+				opaques.emplace_back(localToWorld.value, &primitive, distance);
 			}
 		}
 

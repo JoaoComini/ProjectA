@@ -81,7 +81,7 @@ namespace Engine
 	{
 		CreateVulkanResources(device);
 
-		uint32_t size = data.size();
+		const uint32_t size = data.size();
 
 		auto staging = Vulkan::BufferBuilder()
 			.Size(size)

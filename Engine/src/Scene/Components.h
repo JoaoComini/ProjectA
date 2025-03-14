@@ -3,9 +3,16 @@
 #include "Rendering/Mesh.h"
 #include "Rendering/Camera.h"
 
-#include "Resource/Resource.h"
-
 #include "Entity.h"
+
+namespace glm
+{
+	template <class Archive>
+	void Serialize(Archive& ar, quat& quat)
+	{
+		ar(quat.x, quat.y, quat.z, quat.w);
+	}
+}
 
 namespace Engine::Component
 {
@@ -15,7 +22,7 @@ namespace Engine::Component
 		glm::quat rotation{ 1.0f, 0.0f, 0.0f, 0.0f };
 		glm::vec3 scale{ 1.0f, 1.0f, 1.0f };
 
-		glm::mat4 GetLocalMatrix() const
+		[[nodiscard]] glm::mat4 GetLocalMatrix() const
 		{
 			return glm::translate(glm::mat4(1.0f), position)
 				* glm::mat4_cast(rotation)
@@ -130,7 +137,86 @@ namespace Engine::Component
 		PhysicsBody,
 		BoxShape,
 		SphereShape
-	>;
+	>;;
 
-};
+	template <class Archive>
+	void Serialize(Archive& ar, Name& name)
+	{
+		ar(name.name);
+	}
 
+	template <class Archive>
+	void Serialize(Archive& ar, Children& children)
+	{
+		ar(children.size);
+		ar(children.first);
+	}
+
+	template <class Archive>
+	void Serialize(Archive& ar, Hierarchy& hierarchy)
+	{
+		ar(hierarchy.parent);
+		ar(hierarchy.next);
+		ar(hierarchy.prev);
+	}
+
+	template <class Archive>
+	void Serialize(Archive& ar, Transform& transform)
+	{
+		ar(transform.position);
+		ar(transform.rotation);
+		ar(transform.scale);
+	}
+
+	template <class Archive>
+	void Serialize(Archive& ar, MeshRender& meshRender)
+	{
+		ar(meshRender.mesh);
+	}
+
+	template <class Archive>
+	void Serialize(Archive& ar, Camera& camera)
+	{
+		ar(camera.camera);
+	}
+
+	template <class Archive>
+	void Serialize(Archive& ar, DirectionalLight& light)
+	{
+		ar(light.color);
+		ar(light.intensity);
+	}
+
+	template <class Archive>
+	void Serialize(Archive& ar, PointLight& light)
+	{
+		ar(light.color);
+		ar(light.range);
+	}
+
+	template <class Archive>
+	void Serialize(Archive& ar, Script& script)
+	{
+		ar(script.script);
+	}
+
+	template <class Archive>
+	void Serialize(Archive& ar, PhysicsBody& body)
+	{
+		ar(body.type);
+	}
+
+	template <class Archive>
+	void Serialize(Archive& ar, BoxShape& shape)
+	{
+		ar(shape.size);
+		ar(shape.offset);
+	}
+
+	template <class Archive>
+	void Serialize(Archive& ar, SphereShape& shape)
+	{
+		ar(shape.radius);
+		ar(shape.offset);
+	}
+}

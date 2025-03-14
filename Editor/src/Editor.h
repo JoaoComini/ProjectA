@@ -16,11 +16,11 @@
 
 namespace Engine
 {
-    class Editor : public Application
+    class Editor final : public Application
     {
     public:
-        Editor(ApplicationSpec& spec);
-        ~Editor();
+        explicit Editor(ApplicationSpec& spec);
+        ~Editor() override;
 
         void OnUpdate(float timestep) override;
         void OnGui() override;
@@ -53,7 +53,7 @@ namespace Engine
         Scene sceneCopy;
     };
 
-    std::unique_ptr<Application> CreateApplication(ApplicationArgs args)
+    inline std::unique_ptr<Application> CreateApplication(const ApplicationArgs &args)
     {
         ApplicationSpec spec
         {

@@ -31,8 +31,11 @@ namespace Engine
 	public:
 		Resource() = default;
 		virtual ~Resource() = default;
-		ResourceId id{ 0 };
 		[[nodiscard]] virtual ResourceType GetType() const = 0;
+
+		void SetId(ResourceId id);
+		[[nodiscard]] ResourceId GetId() const;
 	private:
+		ResourceId id{ 0 };
 	};
 };

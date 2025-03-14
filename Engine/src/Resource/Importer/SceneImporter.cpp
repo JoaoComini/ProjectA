@@ -1,20 +1,22 @@
 #include "SceneImporter.h"
 
+#include "Resource/ResourceSaver.h"
 
 namespace Engine
 {
-    void SceneImporter::Import(const std::filesystem::path &source, const std::filesystem::path &destination)
+    void SceneImporter::Import(const ResourceId& id, const std::filesystem::path &source, const std::filesystem::path &destination)
     {
-        auto module = GetModuleByExtension(source.extension());
+        const auto module = GetModuleByExtension(source.extension());
 
         if (!module)
         {
             return;
         }
 
-        auto scene = module->Import(source);
+        const auto scene = module->Import(source);
+        scene->SetId(id);
 
-        // TODO: serialize scene (create other resources: meshes, materials, etc?)
+        ResourceSaver::Save(destination, *scene);
     }
 
     std::vector<std::string> SceneImporter::GetImportExtensions() const
@@ -34,6 +36,11 @@ namespace Engine
     std::string SceneImporter::GetSaveExtension() const
     {
         return ".scene";
+    }
+
+    ResourceType SceneImporter::GetResourceType() const
+    {
+        return ResourceType::Scene;
     }
 
     void SceneImporter::AddModule(std::unique_ptr<SceneImporterModule> module)

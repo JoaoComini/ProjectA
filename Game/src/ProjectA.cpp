@@ -12,7 +12,7 @@ namespace Engine
         }
     };
 
-    std::unique_ptr<Application> CreateApplication(ApplicationArgs args)
+    std::unique_ptr<Application> CreateApplication(const ApplicationArgs &args)
     {
         ApplicationSpec spec
         {

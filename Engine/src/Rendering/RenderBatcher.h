@@ -4,13 +4,14 @@ namespace Engine
 {
     class Scene;
     class RenderCamera;
+    class RenderContext;
     class Primitive;
     class Material;
 
     struct RenderGeometry
     {
         glm::mat4 transform{};
-		Primitive* primitive{ nullptr };
+		const Primitive* primitive{ nullptr };
 		float distance{ 0.f };
     };
 
@@ -25,11 +26,9 @@ namespace Engine
 		void Reset();
 
     private:
-
 		Material& GetMaterial(const Primitive& primitive);
 		void SortOpaques();
 		void SortTransparents();
-
 
         std::vector<RenderGeometry> opaques;
         std::vector<RenderGeometry> transparents;

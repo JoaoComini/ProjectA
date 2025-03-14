@@ -11,9 +11,9 @@
 
 namespace Engine
 {
-	template<typename... Type>
+	template<typename...>
 	struct Exclusion final {
-		explicit constexpr Exclusion() {}
+		explicit constexpr Exclusion() = default;
 	};
 
 	template<typename, typename>
@@ -22,10 +22,9 @@ namespace Engine
 	template<typename... Get, typename... Exclude>
 	struct SceneQuery<entt::type_list<Get...>, entt::type_list<Exclude...>>
 	{
-	public:
-		using Iterator = entt::view<entt::get_t<Get...>, entt::exclude_t<Exclude...>>::iterator;
+		using Iterator = typename entt::view<entt::get_t<Get...>, entt::exclude_t<Exclude...>>::iterator;
 
-		SceneQuery(entt::registry& registry)
+		explicit SceneQuery(entt::registry& registry)
 		{
 			view = registry.view<Get...>(entt::exclude<Exclude...>);
 		}
@@ -33,13 +32,13 @@ namespace Engine
 		template<typename T>
 		decltype(auto) TryGetComponent(Entity::Id id) const
 		{
-			return view.try_get<T>(id);
+			return view.template try_get<T>(id);
 		}
 
 		template<typename T>
-		bool HasComponent(Entity::Id id) const
+		[[nodiscard]] bool HasComponent(Entity::Id id) const
 		{
-			return view.any_of<T>(id);
+			return view.template any_of<T>(id);
 		}
 
 		template<typename... T>
@@ -48,7 +47,7 @@ namespace Engine
 			return view.get<T...>(id);
 		}
 
-		Entity::Id First() const
+		[[nodiscard]] Entity::Id First() const
 		{
 			return view.front();
 		}
@@ -65,7 +64,7 @@ namespace Engine
 		entt::view<entt::get_t<Get...>, entt::exclude_t<Exclude...>> view;
 	};
 
-	class Scene : public Resource
+	class Scene final : public Resource
 	{
 	public:
 		Scene();
@@ -74,7 +73,7 @@ namespace Engine
 		Entity::Id CreateEntity();
 		void DestroyEntity(Entity::Id entity);
 
-		bool Valid(Entity::Id entity) const;
+		[[nodiscard]] bool Valid(Entity::Id entity) const;
 
 		void SetParent(Entity::Id entity, Entity::Id parent);
 		Entity::Id GetParent(Entity::Id entity);
@@ -85,7 +84,7 @@ namespace Engine
 
 		void Pause();
 		void Resume();
-		bool IsPaused() const;
+		[[nodiscard]] bool IsPaused() const;
 
 		template<typename... Get, typename... Exclude>
 		decltype(auto) Query(Exclusion<Exclude...> = Exclusion{})
@@ -130,7 +129,7 @@ namespace Engine
 		}
 
 		template<typename T>
-		bool HasComponent(Entity::Id id) const
+		[[nodiscard]] bool HasComponent(Entity::Id id) const
 		{
 			return registry.any_of<T>(id);
 		}
@@ -168,7 +167,6 @@ namespace Engine
 				.template get<Component::Camera>(ar)
 				.template get<Component::DirectionalLight>(ar)
 				.template get<Component::PointLight>(ar)
-				.template get<Component::SkyLight>(ar)
 				.template get<Component::Script>(ar)
 				.template get<Component::PhysicsBody>(ar)
 				.template get<Component::BoxShape>(ar)
@@ -190,7 +188,6 @@ namespace Engine
 				.template get<Component::Camera>(ar)
 				.template get<Component::DirectionalLight>(ar)
 				.template get<Component::PointLight>(ar)
-				.template get<Component::SkyLight>(ar)
 				.template get<Component::Script>(ar)
 				.template get<Component::PhysicsBody>(ar)
 				.template get<Component::BoxShape>(ar)
@@ -202,7 +199,7 @@ namespace Engine
 			return ResourceType::Scene;
 		}
 
-		virtual ResourceType GetType() const override
+		[[nodiscard]] ResourceType GetType() const override
 		{
 			return GetStaticType();
 		}

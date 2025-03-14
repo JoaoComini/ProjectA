@@ -157,7 +157,7 @@ namespace Engine
 
             for (const auto& gltfPrimitive : gltfMesh.primitives)
             {
-                auto primitive = std::make_unique<Primitive>();
+                Primitive primitive{};
 
                 std::vector<Vertex> vertices;
 
@@ -194,7 +194,7 @@ namespace Engine
                     }
                 }
 
-                primitive->SetVertices(std::move(vertices));
+                primitive.SetVertices(std::move(vertices));
 
                 auto indexType = VK_INDEX_TYPE_MAX_ENUM;
 
@@ -224,12 +224,12 @@ namespace Engine
 
                     indices.insert(indices.end(), data, data + size);
 
-                    primitive->SetIndices(std::move(indices), indexType);
+                    primitive.SetIndices(std::move(indices), indexType);
                 }
 
                 if (materials[gltfPrimitive.material])
                 {
-                    primitive->SetMaterial(materials[gltfPrimitive.material]);
+                    primitive.SetMaterial(materials[gltfPrimitive.material]);
                 }
 
                 mesh->AddPrimitive(std::move(primitive));

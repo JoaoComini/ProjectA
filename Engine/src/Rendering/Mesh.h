@@ -1,5 +1,8 @@
 #pragma once
 
+#include <cereal/archives/adapters.hpp>
+#include <cereal/types/vector.hpp>
+
 #include "Vulkan/Device.h"
 #include "Vulkan/Buffer.h"
 #include "Vulkan/CommandBuffer.h"
@@ -72,6 +75,13 @@ namespace Engine
 		void SetMaterial(std::shared_ptr<Material> material);
 
 		[[nodiscard]] Material* GetMaterial() const;
+
+		template<typename Archive>
+		void Serialize(Archive& archive)
+		{
+			archive(indices, vertices, vertexCount, indexCount, indexType, material);
+		}
+
 	private:
 		std::vector<uint8_t> indices;
 		std::vector<Vertex> vertices;
@@ -91,25 +101,34 @@ namespace Engine
 	public:
 		void UploadToGpu(Vulkan::Device& device);
 
-		void AddPrimitive(std::unique_ptr<Primitive> primitive);
+		void AddPrimitive(Primitive&& primitive);
 		void SetBounds(const AABB &bounds);
 		[[nodiscard]] AABB GetBounds() const;
 
-		[[nodiscard]] std::vector<std::unique_ptr<Primitive>> const& GetPrimitives() const;
-
-		static ResourceType GetStaticType()
-		{
-			return ResourceType::Mesh;
-		}
+		[[nodiscard]] const std::vector<Primitive>& GetPrimitives() const;
 
 		[[nodiscard]] ResourceType GetType() const override
 		{
-			return GetStaticType();
+			return ResourceType::Mesh;
 		}
 
 		static std::string GetExtension()
 		{
 			return "pares";
+		}
+
+		template<typename Archive>
+		void Save(Archive& archive) const
+		{
+			archive(primitives);
+		}
+
+		template<typename Archive>
+		void Load(Archive& ar)
+		{
+			ar(primitives);
+
+			UploadToGpu(cereal::get_user_data<Vulkan::Device>(ar));
 		}
 
 		class BuiltIn
@@ -119,7 +138,7 @@ namespace Engine
 		};
 
 	private:
-		std::vector<std::unique_ptr<Primitive>> primitives;
+		std::vector<Primitive> primitives;
 		AABB bounds;
 	};
 }

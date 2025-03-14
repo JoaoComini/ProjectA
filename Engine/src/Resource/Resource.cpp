@@ -47,4 +47,14 @@ namespace Engine
 
         return ResourceType::None;
     }
+
+    void Resource::SetId(ResourceId id)
+    {
+        this->id = id;
+    }
+
+    ResourceId Resource::GetId() const
+    {
+        return id;
+    }
 };

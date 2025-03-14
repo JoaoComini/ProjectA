@@ -2,6 +2,8 @@
 
 #include "Resource/Resource.h"
 
+#include <cereal/types/string.hpp>
+
 namespace Engine
 {
 	class Script : public Resource
@@ -18,6 +20,12 @@ namespace Engine
 		static std::string GetExtension()
 		{
 			return "lua";
+		}
+
+		template<typename Archive>
+		void Serialize(Archive& ar)
+		{
+			ar(code);
 		}
 
 	private:

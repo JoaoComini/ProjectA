@@ -120,7 +120,7 @@ namespace Controls
 	template<>
 	void Component(Engine::Component::MeshRender* component)
 	{
-		ImGui::TextDisabled("%s", component->mesh->id.ToString().c_str());
+		ImGui::TextDisabled("%s", component->mesh->GetId().ToString().c_str());
 	}
 
 	template<>

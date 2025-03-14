@@ -4,8 +4,6 @@
 
 #include "Scripting/Script.h"
 
-#include "Common/FileSystem.h"
-
 namespace Engine
 {
     ResourceManager::ResourceManager(RenderContext& renderContext): device(renderContext.GetDevice())
@@ -28,10 +26,20 @@ namespace Engine
 
         auto saveAs = importer->GetSaveExtension();
 
-        auto destination = Project::GetImportsDirectory() / path;
+        auto destination = Project::GetImportsDirectory() / path.filename();
         destination.replace_extension(saveAs);
 
-        importer->Import(path, destination);
+        const ResourceId id;
+
+        importer->Import(id, path, destination);
+
+        const ResourceMetadata metadata
+        {
+            .path = std::filesystem::relative(destination, Project::GetResourceDirectory()),
+            .type = importer->GetResourceType()
+        };
+
+        ResourceRegistry::Get().ResourceCreated(id, metadata);
     }
 
     ResourceImporter* ResourceManager::GetImporterByExtension(const std::filesystem::path &extension) const
