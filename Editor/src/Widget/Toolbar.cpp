@@ -1,19 +1,9 @@
-#include "Toolbar.hpp"
+#include "Toolbar.h"
 
-#include <Scene/Scene.hpp>
+#include <Scene/Scene.h>
 
 #include <imgui.h>
 #include <imgui_internal.h>
-
-
-Toolbar::Toolbar(Engine::Scene& scene)
-    : scene(scene)
-{
-}
-
-Toolbar::~Toolbar()
-{
-}
 
 bool CenteredButton(const char* label, float alignment = 0.5f)
 {
@@ -29,7 +19,7 @@ bool CenteredButton(const char* label, float alignment = 0.5f)
     return ImGui::Button(label);
 }
 
-void Toolbar::Draw()
+void Toolbar::Draw(Engine::Scene& scene)
 {
     ImGuiWindowFlags flags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_MenuBar;
     ImGui::BeginViewportSideBar("##Toolbar", nullptr, ImGuiDir_Up, ImGui::GetFrameHeight(), flags);

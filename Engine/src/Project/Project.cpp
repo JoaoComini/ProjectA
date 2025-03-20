@@ -1,10 +1,11 @@
-#include "Project.hpp"
+#include "Project.h"
 
+#include "Common/FileSystem.h"
 #include <yaml-cpp/yaml.h>
 
 namespace Engine
 {
-	Project::Project(std::filesystem::path directory, ProjectConfig& config)
+	Project::Project(const std::filesystem::path &directory, ProjectConfig& config)
 		: directory(directory), config(config)
 	{
 	}
@@ -22,6 +23,16 @@ namespace Engine
 		};
 
 		activeProject = std::make_shared<Project>(path.parent_path(), config);
+
+		if (const auto dir = GetResourceDirectory(); !FileSystem::Exists(dir))
+		{
+			FileSystem::CreateDirectory(dir);
+		}
+
+		if (const auto dir = GetImportsDirectory(); !FileSystem::Exists(dir))
+		{
+			FileSystem::CreateDirectory(dir);
+		}
 	}
 
 	std::filesystem::path Project::GetProjectDirectory()
@@ -32,6 +43,11 @@ namespace Engine
 	std::filesystem::path Project::GetResourceDirectory()
 	{
 		return GetProjectDirectory() / activeProject->config.resourceDirectory;
+	}
+
+	std::filesystem::path Project::GetImportsDirectory()
+	{
+		return GetResourceDirectory() / ".Imports";
 	}
 
 	std::filesystem::path Project::GetResourceRegistryPath()

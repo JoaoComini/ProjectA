@@ -1,6 +1,6 @@
-#include "FileSystem.hpp"
+#include "FileSystem.h"
 
-std::string FileSystem::ReadFile(std::filesystem::path path)
+std::string FileSystem::ReadFile(const std::filesystem::path& path)
 {
     std::ifstream file(path, std::ios::in | std::ios::binary);
 
@@ -21,9 +21,19 @@ std::string FileSystem::ReadFile(std::filesystem::path path)
     return buffer;
 }
 
-void FileSystem::WriteFile(std::filesystem::path path, std::string content)
+void FileSystem::WriteFile(const std::filesystem::path& path, const std::string &content)
 {
     std::ofstream file(path, std::ios::out | std::ios::binary | std::ios::trunc);
 
     file << content;
+}
+
+bool FileSystem::Exists(const std::filesystem::path &path)
+{
+    return std::filesystem::exists(path);
+}
+
+bool FileSystem::CreateDirectory(const std::filesystem::path &path)
+{
+    return std::filesystem::create_directory(path);
 }

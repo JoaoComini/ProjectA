@@ -1,16 +1,16 @@
-#include "RenderContext.hpp"
+#include "RenderContext.h"
 
-#include "Core/Window.hpp"
+#include "Core/Window.h"
 
-#include "Vulkan/Device.hpp"
-#include "Vulkan/Instance.hpp"
-#include "Vulkan/PhysicalDevice.hpp"
-#include "Vulkan/Swapchain.hpp"
-#include "Vulkan/Semaphore.hpp"
-#include "Vulkan/Image.hpp"
+#include "Vulkan/Device.h"
+#include "Vulkan/Instance.h"
+#include "Vulkan/PhysicalDevice.h"
+#include "Vulkan/Swapchain.h"
+#include "Vulkan/Semaphore.h"
+#include "Vulkan/Image.h"
 
-#include "RenderFrame.hpp"
-#include "RenderTarget.hpp"
+#include "RenderFrame.h"
+#include "RenderTarget.h"
 
 namespace Engine
 {

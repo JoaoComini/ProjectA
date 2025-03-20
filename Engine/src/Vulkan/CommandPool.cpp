@@ -1,9 +1,9 @@
-#include "CommandPool.hpp"
+#include "CommandPool.h"
 
-#include "Device.hpp"
-#include "CommandBuffer.hpp"
+#include "Device.h"
+#include "CommandBuffer.h"
 
-#include "Rendering/RenderFrame.hpp"
+#include "Rendering/RenderFrame.h"
 
 namespace Vulkan
 {

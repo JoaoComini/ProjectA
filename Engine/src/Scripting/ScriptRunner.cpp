@@ -1,10 +1,10 @@
-#include "ScriptRunner.hpp"
+#include "ScriptRunner.h"
 
-#include "Script.hpp"
+#include "Script.h"
 
-#include "Resource/ResourceManager.hpp"
+#include "Resource/ResourceManager.h"
 
-#include "ScriptBridge.hpp"
+#include "ScriptBridge.h"
 
 namespace Engine
 {

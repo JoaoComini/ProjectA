@@ -1,18 +1,18 @@
-#include "ContentBrowser.hpp"
+#include "ContentBrowser.h"
 
-#include "Resource/ResourceManager.hpp"
-#include "Resource/Importer/TextureImporter.hpp"
-#include "Project/Project.hpp"
-#include "Scene/Scene.hpp"
+#include "Resource/ResourceManager.h"
+#include "Resource/Importer/TextureImporter.h"
+#include "Project/Project.h"
+#include "Scene/Scene.h"
 
-#include "Scripting/Script.hpp"
+#include "Scripting/Script.h"
 
 #include <Icons/embed.gen.hpp>
 
 #include <imgui.h>
 
-ContentBrowser::ContentBrowser(Vulkan::Device& device, Engine::Scene& scene)
-	: device(device), scene(scene)
+ContentBrowser::ContentBrowser(Vulkan::Device& device)
+	: device(device)
 {
 	baseDirectory = Engine::Project::GetResourceDirectory();
 	resourceTree.SetRoot(baseDirectory);
@@ -24,14 +24,12 @@ ContentBrowser::ContentBrowser(Vulkan::Device& device, Engine::Scene& scene)
 	auto fileIcon = embed::Icons::get("file.png");
 
 	fileIconTexture = importer.LoadDefault(std::vector<uint8_t>{ fileIcon.begin(), fileIcon.end() });
-	fileIconTexture->CreateVulkanResources(device);
-	fileIconTexture->UploadDataToGpu(device);
+	fileIconTexture->UploadToGpu(device);
 
 	auto directoryIcon = embed::Icons::get("directory.png");
 
 	directoryIconTexture = importer.LoadDefault(std::vector<uint8_t>{ directoryIcon.begin(), directoryIcon.end() });
-	directoryIconTexture->CreateVulkanResources(device);
-	directoryIconTexture->UploadDataToGpu(device);
+	directoryIconTexture->UploadToGpu(device);
 
 	RefreshResourceTree();
 }
@@ -41,12 +39,12 @@ ContentBrowser::~ContentBrowser()
 	device.WaitIdle();
 }
 
-void ContentBrowser::OnResourceDoubleClick(std::function<void(Engine::ResourceId, Engine::ResourceMetadata)> onResourceDoubleClick)
+void ContentBrowser::OnResourceDoubleClick(std::function<void(Engine::ResourceId, Engine::ResourceMapping)> onResourceDoubleClick)
 {
 	this->onResourceDoubleClick = onResourceDoubleClick;
 }
 
-void ContentBrowser::Draw()
+void ContentBrowser::Draw(Engine::Scene& scene)
 {
 	ImGuiStyle& style = ImGui::GetStyle();
 	ImGuiViewport* viewport = ImGui::GetMainViewport();
@@ -61,8 +59,8 @@ void ContentBrowser::Draw()
 			{
 				if (ImGui::MenuItem("Scene"))
 				{
-					Engine::Scene scene;
-					Engine::ResourceManager::Get().CreateResource<Engine::Scene>(currentDirectory / "scene", scene);
+					Engine::Scene created;
+					Engine::ResourceManager::Get().CreateResource<Engine::Scene>(currentDirectory / "untitled.scene", created);
 
 					RefreshResourceTree();
 				}
@@ -70,7 +68,7 @@ void ContentBrowser::Draw()
 				if (ImGui::MenuItem("Script"))
 				{
 					Engine::Script script;
-					Engine::ResourceManager::Get().CreateResource<Engine::Script>(currentDirectory / "script", script);
+					Engine::ResourceManager::Get().CreateResource<Engine::Script>(currentDirectory / "script.lua", script);
 
 					RefreshResourceTree();
 				}
@@ -202,7 +200,7 @@ bool ContentBrowser::ContentBrowserFile(std::filesystem::path path, ResourceTree
 
 	if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && onResourceDoubleClick)
 	{
-		onResourceDoubleClick(node->id, node->metadata);
+		onResourceDoubleClick(node->id, node->mapping);
 	}
 
 	ImGui::TextWrapped("%s", filename.c_str());

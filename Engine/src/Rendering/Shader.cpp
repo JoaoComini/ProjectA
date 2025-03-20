@@ -1,10 +1,10 @@
 #pragma once
-#include "Shader.hpp"
+#include "Shader.h"
 
-#include "SpirvReflection.hpp"
-#include "GlslCompiler.hpp"
+#include "SpirvReflection.h"
+#include "GlslCompiler.h"
 
-#include "Common/Hash.hpp"
+#include "Common/Hash.h"
 
 namespace Engine
 {

@@ -1,6 +1,6 @@
-#include "RenderFrame.hpp"
+#include "RenderFrame.h"
 
-#include "Common/Hash.hpp"
+#include "Common/Hash.h"
 
 namespace Engine
 {

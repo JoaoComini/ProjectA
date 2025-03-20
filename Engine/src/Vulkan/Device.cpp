@@ -1,8 +1,8 @@
-#include "Device.hpp"
+#include "Device.h"
 
-#include "CommandBuffer.hpp"
+#include "CommandBuffer.h"
 
-#include "ResourceCache.hpp"
+#include "ResourceCache.h"
 
 namespace Vulkan
 {

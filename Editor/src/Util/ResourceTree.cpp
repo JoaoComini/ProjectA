@@ -1,7 +1,6 @@
-#include "ResourceTree.hpp"
+#include "ResourceTree.h"
 
 #include <filesystem>
-
 
 void ResourceTree::SetRoot(std::filesystem::path path)
 {
@@ -40,7 +39,7 @@ ResourceTree::Node* ResourceTree::Search(std::filesystem::path path)
 	return node;
 }
 
-void ResourceTree::Refresh(std::filesystem::path path, Engine::ResourceId id, Engine::ResourceMetadata metadata)
+void ResourceTree::Refresh(std::filesystem::path path, Engine::ResourceId id, Engine::ResourceMapping mapping)
 {
 	auto currentNode = root;
 
@@ -55,7 +54,7 @@ void ResourceTree::Refresh(std::filesystem::path path, Engine::ResourceId id, En
 
 		auto directory = std::filesystem::is_directory(root->path / p);
 
-		auto node = new Node(p, directory, id, metadata);
+		auto node = new Node(p, directory, id, mapping);
 
 		AddNode(currentNode, node);
 

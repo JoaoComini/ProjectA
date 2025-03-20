@@ -1,6 +1,4 @@
-#include "Scene.hpp"
-
-#include "Components.hpp"
+#include "Scene.h"
 
 namespace Engine
 {

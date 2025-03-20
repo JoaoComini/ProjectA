@@ -1,7 +1,7 @@
-#include "PhysicsRunner.hpp"
+#include "PhysicsRunner.h"
 
-#include "Scene/Scene.hpp"
-#include "Scene/TransformHelper.hpp"
+#include "Scene/Scene.h"
+#include "Scene/TransformHelper.h"
 
 #include <Jolt/Physics/Collision/Shape/BoxShape.h>
 #include <Jolt/Physics/Collision/Shape/StaticCompoundShape.h>

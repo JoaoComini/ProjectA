@@ -1,15 +1,15 @@
-#include "VulkanRenderGraphCommand.hpp"
+#include "VulkanRenderGraphCommand.h"
 
-#include "../Vulkan/CommandBuffer.hpp"
-#include "../Vulkan/ResourceCache.hpp"
+#include "../Vulkan/CommandBuffer.h"
+#include "../Vulkan/ResourceCache.h"
 
-#include "RenderContext.hpp"
-#include "RenderFrame.hpp"
-#include "Renderer.hpp"
-#include "RenderBatcher.hpp"
-#include "ShaderCache.hpp"
+#include "RenderContext.h"
+#include "RenderFrame.h"
+#include "Renderer.h"
+#include "RenderBatcher.h"
+#include "ShaderCache.h"
 
-#include "../Resource/ResourceManager.hpp"
+#include "../Resource/ResourceManager.h"
 
 namespace Engine
 {
@@ -182,13 +182,6 @@ namespace Engine
         commandBuffer.BindBuffer(allocation.GetBuffer(), allocation.GetOffset(), allocation.GetSize(), set, binding, 0);
     }
 
-    std::shared_ptr<Material> GetMaterialFromPrimitive(const Primitive& primitive)
-    {
-        const ResourceId materialId = primitive.GetMaterial();
-
-        return ResourceManager::Get().LoadResource<Material>(materialId);
-    }
-
     void VulkanRenderGraphCommand::DrawGeometry(DrawGeometrySettings settings)
     {
         Vulkan::VertexInputState vertexInputState{};
@@ -291,8 +284,6 @@ namespace Engine
 
         commandBuffer.PushConstants(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(LightPushConstant), &pushConstant);
 
-        auto& frame = renderContext.GetCurrentFrame();
-
         for (const auto& opaque : batcher.GetOpaques())
         {
             ModelUniform uniform{
@@ -310,9 +301,11 @@ namespace Engine
     {
         for (const auto& opaque : batcher.GetOpaques())
         {
-            SetupShader(shader, *opaque.material);
+            const auto material = opaque.primitive->GetMaterial();
 
-            UpdateModelUniform(commandBuffer, opaque.transform, *opaque.material);
+            SetupShader(shader, *material);
+
+            UpdateModelUniform(commandBuffer, opaque.transform, *material);
 
             opaque.primitive->Draw(commandBuffer);
         }
@@ -329,9 +322,11 @@ namespace Engine
 
         for (const auto& transparent : batcher.GetTransparents())
         {
-            SetupShader(shader, *transparent.material);
+            const auto material = transparent.primitive->GetMaterial();
 
-            UpdateModelUniform(commandBuffer, transparent.transform, *transparent.material);
+            SetupShader(shader, *material);
+
+            UpdateModelUniform(commandBuffer, transparent.transform, *material);
 
             transparent.primitive->Draw(commandBuffer);
         }
@@ -344,17 +339,17 @@ namespace Engine
 
         BindUniformBuffer(&uniform, sizeof(ModelUniform), 0, 1);
 
-        if (auto albedo = ResourceManager::Get().LoadResource<Texture>(material.GetAlbedoTexture()))
+        if (const auto albedo = material.GetAlbedoTexture())
         {
             commandBuffer.BindImage(albedo->GetImageView(), albedo->GetSampler(), 0, 2, 0);
         }
 
-        if (auto normal = ResourceManager::Get().LoadResource<Texture>(material.GetNormalTexture()))
+        if (const auto normal = material.GetNormalTexture())
         {
             commandBuffer.BindImage(normal->GetImageView(), normal->GetSampler(), 0, 3, 0);
         }
 
-        if (auto metallicRoughness = ResourceManager::Get().LoadResource<Texture>(material.GetMetallicRoughnessTexture()))
+        if (const auto metallicRoughness = material.GetMetallicRoughnessTexture())
         {
             commandBuffer.BindImage(metallicRoughness->GetImageView(), metallicRoughness->GetSampler(), 0, 4, 0);
         }

@@ -1,12 +1,12 @@
-#include "Controls.hpp"
+#include "Controls.h"
 
 #include <imgui.h>
 
-#include <Scene/Components.hpp>
+#include <Scene/Components.h>
 
-#include <Rendering/Camera.hpp>
+#include <Rendering/Camera.h>
 
-#include <Resource/ResourceManager.hpp>
+#include <Resource/ResourceManager.h>
 
 namespace Controls
 {
@@ -120,7 +120,7 @@ namespace Controls
 	template<>
 	void Component(Engine::Component::MeshRender* component)
 	{
-		ImGui::TextDisabled("%s", component->mesh.ToString().c_str());
+		ImGui::TextDisabled("%s", component->mesh->GetId().ToString().c_str());
 	}
 
 	template<>
@@ -147,9 +147,9 @@ namespace Controls
 	void Component(Engine::Component::Script* component)
 	{
 		auto currentId = component->script;
-		auto currentMetadata = Engine::ResourceRegistry::Get().FindMetadataById(currentId);
+		auto currentMapping = Engine::ResourceRegistry::Get().FindMappingById(currentId);
 
-		if (ImGui::BeginCombo("##ScriptCombo", currentMetadata ? currentMetadata->path.string().c_str() : ""))
+		if (ImGui::BeginCombo("##ScriptCombo", currentMapping ? currentMapping->path.string().c_str() : ""))
 		{
 			auto entries = Engine::ResourceRegistry::Get().GetEntriesByType(Engine::ResourceType::Script);
 

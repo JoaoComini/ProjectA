@@ -1,6 +1,6 @@
-#include "DescriptorSetLayout.hpp"
+#include "DescriptorSetLayout.h"
 
-#include "Device.hpp"
+#include "Device.h"
 
 namespace Vulkan
 {

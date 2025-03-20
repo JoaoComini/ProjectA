@@ -1,6 +1,6 @@
-#include "ResourceCache.hpp"
+#include "ResourceCache.h"
 
-#include "Vulkan/PipelineLayout.hpp"
+#include "Vulkan/PipelineLayout.h"
 
 
 namespace Vulkan

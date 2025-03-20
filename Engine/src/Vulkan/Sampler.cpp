@@ -1,4 +1,4 @@
-#include "Sampler.hpp"
+#include "Sampler.h"
 
 
 namespace Vulkan

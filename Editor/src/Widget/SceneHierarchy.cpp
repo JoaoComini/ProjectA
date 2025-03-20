@@ -1,22 +1,19 @@
-#include "SceneHierarchy.hpp"
+#include "SceneHierarchy.h"
 
-#include <Scene/Scene.hpp>
+#include <Scene/Scene.h>
 
 #include <imgui.h>
 
-SceneHierarchy::SceneHierarchy(Engine::Scene& scene)
-    : scene(scene) {}
-
-void SceneHierarchy::Draw()
+void SceneHierarchy::Draw(Engine::Scene& scene)
 {
 	ImGui::Begin("Scene");
 
 	{
 		auto query = scene.Query<Engine::Entity::Id>(Engine::Exclusion<Engine::Component::Hierarchy>{});
 
-		for (auto entity : query)
+		for (const auto entity : query)
 		{
-			EntityNode(entity);
+			EntityNode(scene, entity);
 		}
 	}
 
@@ -33,7 +30,7 @@ void SceneHierarchy::Draw()
 	ImGui::End();
 }
 
-void SceneHierarchy::EntityNode(Engine::Entity::Id entity)
+void SceneHierarchy::EntityNode(Engine::Scene& scene, Engine::Entity::Id entity)
 {
 	ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
 
@@ -102,7 +99,7 @@ void SceneHierarchy::EntityNode(Engine::Entity::Id entity)
 
 		while (scene.Valid(current))
 		{
-			EntityNode(current);
+			EntityNode(scene, current);
 
 			current = scene.GetComponent<Engine::Component::Hierarchy>(current).next;
 		}

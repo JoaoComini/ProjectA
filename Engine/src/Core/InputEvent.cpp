@@ -1,4 +1,4 @@
-#include "InputEvent.hpp"
+#include "InputEvent.h"
 #pragma once
 
 namespace Engine

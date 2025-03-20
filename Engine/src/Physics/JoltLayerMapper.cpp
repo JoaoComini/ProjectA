@@ -1,6 +1,6 @@
-#include "JoltLayerMapper.hpp"
+#include "JoltLayerMapper.h"
 
-#include "JoltBroadPhaseLayer.hpp"
+#include "JoltBroadPhaseLayer.h"
 
 namespace Engine
 {

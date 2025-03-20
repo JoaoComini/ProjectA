@@ -1,4 +1,4 @@
-#include "GlslCompiler.hpp"
+#include "GlslCompiler.h"
 
 #include <glslang/Public/ShaderLang.h>
 #include <glslang/Public/ResourceLimits.h>

@@ -1,12 +1,12 @@
-#include "Texture.hpp"
+#include "Texture.h"
 
 #include <stb_image.h>
 
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 #include <stb_image_resize.h>
 
-#include "Vulkan/Buffer.hpp"
-#include "Vulkan/CommandBuffer.hpp"
+#include "Vulkan/Buffer.h"
+#include "Vulkan/CommandBuffer.h"
 
 namespace Engine
 {
@@ -77,6 +77,43 @@ namespace Engine
 		return static_cast<uint32_t>(std::floor(std::log2(std::max(halfWidth, halfHeight)))) + 1;
 	}
 
+	void Texture::UploadToGpu(Vulkan::Device& device)
+	{
+		CreateVulkanResources(device);
+
+		const uint32_t size = data.size();
+
+		auto staging = Vulkan::BufferBuilder()
+			.Size(size)
+			.Persistent()
+			.SequentialWrite()
+			.BufferUsage(Vulkan::BufferUsageFlags::Staging)
+			.Build(device);
+
+		staging->SetData(data.data(), size);
+
+		VkImageSubresourceRange subresourceRange{};
+		subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		subresourceRange.baseArrayLayer = 0;
+		subresourceRange.layerCount = image->GetArrayLayers();
+		subresourceRange.baseMipLevel = 0;
+		subresourceRange.levelCount = image->GetMipLevels();
+
+		std::vector<VkBufferImageCopy> regions;
+		PrepareBufferCopyRegions(regions);
+
+		device.OneTimeSubmit([&](auto& commandBuffer) {
+			commandBuffer.SetImageLayout(*image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresourceRange);
+			commandBuffer.CopyBufferToImage(*staging, *image, regions);
+			commandBuffer.SetImageLayout(*image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresourceRange);
+		});
+
+		device.ResetCommandPool();
+
+		data.clear();
+		data.shrink_to_fit();
+	}
+
 	void Texture::CreateVulkanResources(Vulkan::Device& device)
 	{
 		auto& builder = Vulkan::ImageBuilder()
@@ -114,41 +151,6 @@ namespace Engine
 	VkImageViewType Texture::GetImageViewType() const
 	{
 		return VK_IMAGE_VIEW_TYPE_2D;
-	}
-
-	void Texture::UploadDataToGpu(Vulkan::Device& device)
-	{
-		uint32_t size = data.size();
-
-		auto staging = Vulkan::BufferBuilder()
-			.Size(size)
-			.Persistent()
-			.SequentialWrite()
-			.BufferUsage(Vulkan::BufferUsageFlags::Staging)
-			.Build(device);
-
-		staging->SetData(data.data(), size);
-
-		VkImageSubresourceRange subresourceRange{};
-		subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		subresourceRange.baseArrayLayer = 0;
-		subresourceRange.layerCount = image->GetArrayLayers();
-		subresourceRange.baseMipLevel = 0;
-		subresourceRange.levelCount = image->GetMipLevels();
-
-		std::vector<VkBufferImageCopy> regions;
-		PrepareBufferCopyRegions(regions);
-
-		device.OneTimeSubmit([&](auto& commandBuffer) {
-			commandBuffer.SetImageLayout(*image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresourceRange);
-			commandBuffer.CopyBufferToImage(*staging, *image, regions);
-			commandBuffer.SetImageLayout(*image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresourceRange);
-		});
-
-		device.ResetCommandPool();
-
-		data.clear();
-		data.shrink_to_fit();
 	}
 
 	void Texture::PrepareBufferCopyRegions(std::vector<VkBufferImageCopy>& regions)

@@ -1,6 +1,8 @@
-#include "ResourceRegistry.hpp"
+#include "ResourceRegistry.h"
 
-#include "Project/Project.hpp"
+#include <Common/FileSystem.h>
+
+#include "Project/Project.h"
 
 #include <yaml-cpp/yaml.h>
 
@@ -16,7 +18,7 @@ namespace Engine
         return resourcesByPath.contains(path);
     }
 
-    ResourceMetadata* ResourceRegistry::FindMetadataById(const ResourceId id)
+    const ResourceMapping* ResourceRegistry::FindMappingById(const ResourceId id)
     {
         if (HasResource(id))
         {
@@ -33,7 +35,7 @@ namespace Engine
             return resourcesByPath[path];
         }
 
-        return { 0 };
+        return ResourceId{ 0 };
     }
 
     std::vector<ResourceEntry> ResourceRegistry::GetEntriesByType(const ResourceType type)
@@ -53,7 +55,7 @@ namespace Engine
         return resources;
     }
 
-    void ResourceRegistry::ResourceCreated(const ResourceId id, const ResourceMetadata &metadata)
+    void ResourceRegistry::ResourceCreated(const ResourceId id, const ResourceMapping &metadata)
     {
         registry[id] = metadata;
         resourcesByPath[metadata.path] = id;
@@ -117,18 +119,18 @@ namespace Engine
 
         for (const auto& node : root)
         {
-            Uuid id = node["Id"].as<uint64_t>();
+            auto id = Uuid{ node["Id"].as<uint64_t>() };
 
-            auto& metadata = registry[id];
+            auto&[path, type] = registry[id];
 
-            metadata.path = node["Path"].as<std::string>();
-            metadata.type = StringToResourceType(node["Type"].as<std::string>());
+            path = node["Path"].as<std::string>();
+            type = StringToResourceType(node["Type"].as<std::string>());
 
-            resourcesByPath[metadata.path] = id;
+            resourcesByPath[path] = id;
         }
     }
 
-    const std::unordered_map<ResourceId, ResourceMetadata>& ResourceRegistry::GetResources() const
+    const std::unordered_map<ResourceId, ResourceMapping>& ResourceRegistry::GetResources() const
     {
         return registry;
     }

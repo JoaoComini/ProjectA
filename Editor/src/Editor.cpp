@@ -1,23 +1,18 @@
-#include "Editor.hpp"
+#include "Editor.h"
 
 #include <imgui.h>
-#include <imgui_internal.h>
-#include <ImGuizmo.h>
 
-#include <glm/gtc/type_ptr.hpp>
-#include <Resource/Importer/GltfImporter.hpp>
+#include "Resource/Importer/GltfModule.h"
+#include "Resource/ResourceManager.h"
 
-#include "Resource/ResourceManager.hpp"
-#include "Rendering/Cubemap.hpp"
-
-#include "Platform/FileDialog.hpp"
-#include "Project/Project.hpp"
+#include "Platform/FileDialog.h"
+#include "Project/Project.h"
 
 namespace Engine
 {
     Editor::Editor(ApplicationSpec& spec) : Application(spec)
     {
-		if (auto path = spec.args[1]; std::filesystem::exists(path))
+		if (const auto path = spec.args[1]; std::filesystem::exists(path))
 		{
 			Project::Load(path);
 		}
@@ -30,20 +25,24 @@ namespace Engine
 		ResourceRegistry::Get().Deserialize();
 
 		{
-			auto importer = std::make_unique<GltfImporter>();
-			ResourceManager::Get().AddImporter(std::move(importer));
+			auto gltf = std::make_unique<GltfModule>();
+
+			auto scene = std::make_unique<SceneImporter>();
+			scene->AddModule(std::move(gltf));
+
+			ResourceManager::Get().AddImporter(std::move(scene));
 		}
 
 		auto [height, width] = GetWindow().GetFramebufferSize();
 		camera = std::make_unique<EditorCamera>(glm::radians(60.f), (float)width / height, 0.1f, 1000.f);
 
-		sceneHierarchy = std::make_unique<SceneHierarchy>(GetScene());
-		entityInspector = std::make_unique<EntityInspector>(GetScene());
+		sceneHierarchy = std::make_unique<SceneHierarchy>();
+		entityInspector = std::make_unique<EntityInspector>();
 		mainMenuBar = std::make_unique<MainMenuBar>();
-		contentBrowser = std::make_unique<ContentBrowser>(GetRenderContext().GetDevice(), GetScene());
-		toolbar = std::make_unique<Toolbar>(GetScene());
+		contentBrowser = std::make_unique<ContentBrowser>(GetRenderContext().GetDevice());
+		toolbar = std::make_unique<Toolbar>();
 		viewportDragDrop = std::make_unique<ViewportDragDrop>();
-		entityGizmo = std::make_unique<EntityGizmo>(GetScene(), *camera);
+		entityGizmo = std::make_unique<EntityGizmo>(*camera);
 
 		sceneHierarchy->OnSelectEntity([&](auto entity) {
 			entityInspector->SetEntity(entity);
@@ -66,8 +65,8 @@ namespace Engine
 			NewScene();
 		});
 
-		contentBrowser->OnResourceDoubleClick([&](auto id, auto metadata) {
-			switch (metadata.type)
+		contentBrowser->OnResourceDoubleClick([&](auto id, auto mapping) {
+			switch (mapping.type)
 			{
 			case ResourceType::Scene:
 				OpenScene(id);
@@ -77,9 +76,9 @@ namespace Engine
 			}
 		});
 
-		viewportDragDrop->OnDropResource([&](auto id, auto metadata)
+		viewportDragDrop->OnDropResource([&](auto id, auto mapping)
 		{
-			switch (metadata.type)
+			switch (mapping.type)
 			{
 			case ResourceType::Scene:
 				AddScene(id);
@@ -114,10 +113,10 @@ namespace Engine
 				return;
 			}
 
-			auto metadata = ResourceRegistry::Get().FindMetadataById(id);
+			auto mapping = ResourceRegistry::Get().FindMappingById(id);
 
 			// only reload scripts for now
-			if (!metadata || metadata->type != ResourceType::Script)
+			if (!mapping || mapping->type != ResourceType::Script)
 			{
 				return;
 			}
@@ -161,41 +160,21 @@ namespace Engine
 
     void Editor::OnGui()
     {
-		mainMenuBar->Draw();
-		toolbar->Draw();
+		auto& scene = GetScene();
 
-		ImGuiIO& io = ImGui::GetIO();
-		
-		ImGuiViewport* viewport = ImGui::GetMainViewport();
-		auto id = ImGui::DockSpaceOverViewport(viewport, ImGuiDockNodeFlags_PassthruCentralNode | ImGuiDockNodeFlags_NoDockingInCentralNode);
-
-		DrawViewportDragDrop(id);
-
-		sceneHierarchy->Draw();
-		entityInspector->Draw();
-		contentBrowser->Draw();
-		entityGizmo->Draw();
+		mainMenuBar->Draw(scene);
+		toolbar->Draw(scene);
+    	viewportDragDrop->Draw(scene);
+		sceneHierarchy->Draw(scene);
+		entityInspector->Draw(scene);
+		contentBrowser->Draw(scene);
+		entityGizmo->Draw(scene);
     }
-
-	void Editor::DrawViewportDragDrop(ImGuiID dockId)
-	{
-		if (ImGui::GetDragDropPayload() == nullptr)
-		{
-			return;
-		}
-
-		auto node = ImGui::DockBuilderGetCentralNode(dockId);
-
-		ImGui::SetNextWindowSize(node->Size);
-		ImGui::SetNextWindowPos(node->Pos);
-
-		viewportDragDrop->Draw();
-	}
 
 	void Editor::OnWindowResize(int width, int height)
 	{
 		Application::OnWindowResize(width, height);
-		camera->SetAspectRatio((float)width / height);
+		camera->SetAspectRatio(static_cast<float>(width) / static_cast<float>(height));
 	}
 
 	void Editor::OnInputEvent(const InputEvent& event)
@@ -214,23 +193,21 @@ namespace Engine
 
 	void Editor::SaveScene()
 	{
-		auto id = GetScene().id;
-		
-		if (id)
+		if (const auto id = GetScene().GetId())
 		{
 			ResourceManager::Get().SaveResource<Scene>(id, GetScene());
 		}
 		else
 		{
-			id = ResourceManager::Get().CreateResource<Scene>("untitled", GetScene());
+			ResourceManager::Get().CreateResource<Scene>("untitled.scene", GetScene());
 		}
-		
+
 		contentBrowser->RefreshResourceTree();
 	}
 
-	void Editor::AddScene(ResourceId id)
+	void Editor::AddScene(const ResourceId id)
 	{
-		auto scene = ResourceManager::Get().LoadResource<Scene>(id);
+		const auto scene = ResourceManager::Get().LoadResource<Scene>(id);
 
 		GetScene().Add(*scene);
 	}
@@ -247,20 +224,23 @@ namespace Engine
 
 	void Editor::AddSkyLightToScene(ResourceId id)
 	{
-		auto entity = GetScene().CreateEntity();
+		const auto entity = GetScene().CreateEntity();
 		GetScene().AddComponent<Component::SkyLight>(entity, id);
 	}
 
 	void Editor::ImportFile()
 	{
-		auto file = FileDialog::OpenFile(GetWindow(), "Resource Files (*.glb,*.hdr)\0*.glb;*.hdr\0");
+		const std::filesystem::path file = FileDialog::OpenFile(GetWindow(), "Resource Files (*.glb)\0*.glb\0");
 
 		if (file.empty())
 		{
 			return;
 		}
 
-		ResourceManager::Get().ImportResource(file);
+    	const auto destination = Project::GetResourceDirectory() / file.filename();
+    	std::filesystem::copy(file, destination);
+
+		ResourceManager::Get().ImportResource(destination);
 		contentBrowser->RefreshResourceTree();
 	}
 }

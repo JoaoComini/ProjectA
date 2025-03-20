@@ -1,11 +1,24 @@
-#include "ViewportDragDrop.hpp"
+#include "ViewportDragDrop.h"
 
-#include "imgui.h"
+#include "Resource/ResourceRegistry.h"
 
-#include "Resource/ResourceRegistry.hpp"
+#include <imgui.h>
+#include <imgui_internal.h>
 
-void ViewportDragDrop::Draw()
+void ViewportDragDrop::Draw(Engine::Scene& scene)
 {
+	ImGuiViewport* viewport = ImGui::GetMainViewport();
+	auto id = ImGui::DockSpaceOverViewport(viewport, ImGuiDockNodeFlags_PassthruCentralNode | ImGuiDockNodeFlags_NoDockingInCentralNode);
+
+	if (ImGui::GetDragDropPayload() == nullptr)
+	{
+		return;
+	}
+
+	auto node = ImGui::DockBuilderGetCentralNode(id);
+	ImGui::SetNextWindowSize(node->Size);
+	ImGui::SetNextWindowPos(node->Pos);
+
 	ImGuiWindowFlags flags = ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar;
 	flags |= ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
 
@@ -16,13 +29,13 @@ void ViewportDragDrop::Draw()
 	{
 		if (const auto payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
 		{
-			Engine::ResourceId id = *static_cast<Engine::ResourceId*>(payload->Data);
+			Engine::ResourceId resource = *static_cast<Engine::ResourceId*>(payload->Data);
 
-			if (auto metadata = Engine::ResourceRegistry::Get().FindMetadataById(id))
+			if (auto mapping = Engine::ResourceRegistry::Get().FindMappingById(resource))
 			{
 				if (onDropResourceFn)
 				{
-					onDropResourceFn(id, *metadata);
+					onDropResourceFn(resource, *mapping);
 				}
 			}
 		}

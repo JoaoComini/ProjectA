@@ -1,4 +1,4 @@
-#include "Resource.hpp"
+#include "Resource.h"
 
 namespace Engine
 {
@@ -46,5 +46,15 @@ namespace Engine
         }
 
         return ResourceType::None;
+    }
+
+    void Resource::SetId(ResourceId id)
+    {
+        this->id = id;
+    }
+
+    ResourceId Resource::GetId() const
+    {
+        return id;
     }
 };

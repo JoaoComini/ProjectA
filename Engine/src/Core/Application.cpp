@@ -1,17 +1,12 @@
-#include "Application.hpp"
+#include "Application.h"
 
-#include "glm/gtc/random.hpp"
-#include "glm/ext/matrix_transform.hpp"
+#include "Scene/Scene.h"
+#include "Scene/Components.h"
 
-#include "GLFW/glfw3.h"
+#include "Resource/ResourceManager.h"
+#include "Resource/ResourceRegistry.h"
 
-#include "Scene/Scene.hpp"
-#include "Scene/Components.hpp"
-
-#include "Resource/ResourceManager.hpp"
-#include "Resource/ResourceRegistry.hpp"
-
-#include "WindowInput.hpp"
+#include "WindowInput.h"
 
 namespace Engine {
 
@@ -28,9 +23,7 @@ namespace Engine {
 		});
 
 		window->OnInputEvent([this](const auto& event) {
-			bool captured = gui->OnInputEvent(event);
-
-			if (captured)
+			if (gui->OnInputEvent(event))
 			{
 				return;
 			}
@@ -117,7 +110,7 @@ namespace Engine {
 		}
 	}
 
-	void Application::SetCameraAspectRatio(Entity::Id entity)
+	void Application::SetCameraAspectRatio(const Entity::Id entity)
 	{
 		auto [height, width] = window->GetFramebufferSize();
 

@@ -1,6 +1,6 @@
-#include "Image.hpp"
+#include "Image.h"
 
-#include "Device.hpp"
+#include "Device.h"
 
 namespace Vulkan
 {

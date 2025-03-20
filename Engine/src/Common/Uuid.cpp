@@ -1,4 +1,4 @@
-#include "Uuid.hpp"
+#include "Uuid.h"
 
 namespace Engine
 {
@@ -8,7 +8,7 @@ namespace Engine
 
     Uuid::Uuid() : value(uniformDistribution(engine)) { }
 
-    Uuid::Uuid(uint64_t value) : value(value) { }
+    Uuid::Uuid(const uint64_t value) : value(value) { }
 };
 
 

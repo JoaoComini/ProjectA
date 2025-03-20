@@ -1,8 +1,8 @@
-#include "Cubemap.hpp"
+#include "Cubemap.h"
 
 #include <stb_image.h>
 
-#include "Vulkan/CommandBuffer.hpp"
+#include "Vulkan/CommandBuffer.h"
 
 #include <cmath>
 

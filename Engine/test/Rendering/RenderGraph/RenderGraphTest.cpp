@@ -1,6 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include <Rendering/RenderGraph/RenderGraph.hpp>
+#include <Rendering/RenderGraph/RenderGraph.h>
 
 using namespace Engine;
 

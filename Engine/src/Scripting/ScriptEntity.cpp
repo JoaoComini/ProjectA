@@ -1,4 +1,4 @@
-#include "ScriptEntity.hpp"
+#include "ScriptEntity.h"
 
 
 namespace Engine

@@ -1,4 +1,4 @@
-#include "SemaphorePool.hpp"
+#include "SemaphorePool.h"
 
 namespace Engine
 {

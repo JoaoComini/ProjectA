@@ -1,4 +1,4 @@
-#include "Script.hpp"
+#include "Script.h"
 
 namespace Engine
 {

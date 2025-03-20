@@ -1,4 +1,4 @@
-#include "Instance.hpp"
+#include "Instance.h"
 
 #include <GLFW/glfw3.h>
 

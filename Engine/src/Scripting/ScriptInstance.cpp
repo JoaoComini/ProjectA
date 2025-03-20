@@ -1,7 +1,7 @@
-#include "ScriptInstance.hpp"
+#include "ScriptInstance.h"
 
-#include "Script.hpp"
-#include "ScriptBridge.hpp"
+#include "Script.h"
+#include "ScriptBridge.h"
 
 namespace Engine
 {

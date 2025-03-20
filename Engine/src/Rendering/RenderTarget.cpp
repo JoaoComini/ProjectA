@@ -1,4 +1,4 @@
-#include "RenderTarget.hpp"
+#include "RenderTarget.h"
 
 namespace Engine
 {

@@ -1,5 +1,5 @@
-#include "Core/Application.hpp"
-#include "Core/Main.hpp"
+#include "Core/Application.h"
+#include "Core/Main.h"
 
 
 namespace Engine
@@ -12,7 +12,7 @@ namespace Engine
         }
     };
 
-    std::unique_ptr<Application> CreateApplication(ApplicationArgs args)
+    std::unique_ptr<Application> CreateApplication(const ApplicationArgs &args)
     {
         ApplicationSpec spec
         {

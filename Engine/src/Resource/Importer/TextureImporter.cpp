@@ -1,6 +1,6 @@
-#include "TextureImporter.hpp"
+#include "TextureImporter.h"
 
-#include "Resource/ResourceManager.hpp"
+#include "Resource/ResourceManager.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
@@ -11,7 +11,7 @@ namespace Engine
     {
         auto texture = LoadDefault(path);
 
-        ResourceManager::Get().CreateResource<Texture>(path.stem(), *texture);
+        ResourceManager::Get().CreateResource<Texture>(path.stem().string(), *texture);
     }
 
     std::shared_ptr<Texture> TextureImporter::LoadDefault(std::filesystem::path path)
@@ -24,7 +24,7 @@ namespace Engine
         uint32_t size = width * height * 4;
 
         std::vector<uint8_t> data{ pixels, pixels + size };
-        std::vector<Mipmap> mipmaps{
+        std::vector mipmaps{
             Mipmap{
                 0,
                 0,
@@ -52,7 +52,7 @@ namespace Engine
         uint32_t size = width * height * 4;
 
         std::vector<uint8_t> data{ pixels, pixels + size };
-        std::vector<Mipmap> mipmaps{
+        std::vector mipmaps{
             Mipmap{
                 0,
                 0,
@@ -76,7 +76,7 @@ namespace Engine
     {
         auto cubemap = LoadCubemap(path);
 
-        ResourceManager::Get().CreateResource<Cubemap>(path.stem(), *cubemap);
+        ResourceManager::Get().CreateResource<Cubemap>(path.stem().string(), *cubemap);
     }
 
     std::shared_ptr<Cubemap> TextureImporter::LoadCubemap(std::filesystem::path path)
@@ -89,7 +89,7 @@ namespace Engine
         uint32_t size = width * height * 4 * sizeof(float);
 
         std::vector<uint8_t> data{ reinterpret_cast<uint8_t*>(pixels), reinterpret_cast<uint8_t*>(pixels) + size };
-        std::vector<Mipmap> mipmaps{
+        std::vector mipmaps{
             Mipmap{
                 0,
                 0,

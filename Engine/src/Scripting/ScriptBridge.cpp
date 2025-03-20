@@ -1,13 +1,13 @@
-#include "ScriptBridge.hpp"
+#include "ScriptBridge.h"
 
-#include "Core/Input.hpp"
+#include "Core/Input.h"
 
-#include "Scene/Components.hpp"
-#include "Scene/Entity.hpp"
-#include "Scene/Scene.hpp"
+#include "Scene/Components.h"
+#include "Scene/Entity.h"
+#include "Scene/Scene.h"
 
-#include "ScriptRunner.hpp"
-#include "ScriptEntity.hpp"
+#include "ScriptRunner.h"
+#include "ScriptEntity.h"
 
 namespace Engine
 {
