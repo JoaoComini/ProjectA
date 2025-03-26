@@ -2,7 +2,7 @@
 
 namespace Engine
 {
-    glm::mat4 TransformHelper::ComputeEntityWorldMatrix(Scene& scene, Entity::Id entity)
+    glm::mat4 TransformHelper::ComputeEntityWorldMatrix(SceneGraph& scene, Entity::Id entity)
     {
         glm::mat4 matrix{ 1.f };
 

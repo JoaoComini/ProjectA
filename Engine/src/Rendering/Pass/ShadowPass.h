@@ -1,7 +1,7 @@
 #pragma once
 
 
-#include "Scene/Scene.h"
+#include "Scene/SceneGraph.h"
 #include "Rendering/RenderGraph/RenderGraphPass.h"
 #include "Rendering//RenderGraph/RenderGraphResource.h"
 #include "Rendering/RenderTexture.h"
@@ -23,12 +23,12 @@ namespace Engine
 	class ShadowPass final : public RenderGraphPass<ShadowPassData, RenderGraphCommand>
 	{
 	public:
-		ShadowPass(Scene& scene, ShadowSettings settings);
+		ShadowPass(SceneGraph& scene, ShadowSettings settings);
 
 		void RecordRenderGraph(RenderGraphBuilder& builder, RenderGraphContext& context, ShadowPassData& data) override;
 		void Render(RenderGraphCommand& command, const ShadowPassData& data) override;
 	private:
-		Scene& scene;
+		SceneGraph& scene;
 		ShadowSettings settings;
 	};
 }

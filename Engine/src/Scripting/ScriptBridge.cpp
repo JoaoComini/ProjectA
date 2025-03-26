@@ -4,7 +4,7 @@
 
 #include "Scene/Components.h"
 #include "Scene/Entity.h"
-#include "Scene/Scene.h"
+#include "Scene/SceneGraph.h"
 
 #include "ScriptRunner.h"
 #include "ScriptEntity.h"
@@ -163,8 +163,8 @@ namespace Engine
             scene.DestroyEntity(entity.GetId());
         });
 
-        metatable.set_function("add", [&scene](const Scene& other) -> void {
-            scene.Add(other);
+        metatable.set_function("add", [&scene](const SceneGraph& other) -> void {
+            // scene.Add(other);
         });
 
         metatable[sol::meta_function::new_index] = [](lua_State* state) {

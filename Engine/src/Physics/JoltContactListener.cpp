@@ -2,11 +2,11 @@
 
 #include <Jolt/Physics/Collision/EstimateCollisionResponse.h> 
 
-#include "Scene/Scene.h"
+#include "Scene/SceneGraph.h"
 
 namespace Engine
 {
-    JoltContactListener::JoltContactListener(Scene& scene, JPH::PhysicsSystem& system) : scene(scene), system(system)
+    JoltContactListener::JoltContactListener(SceneGraph& scene, JPH::PhysicsSystem& system) : scene(scene), system(system)
     {
 
     }

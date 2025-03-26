@@ -2,11 +2,11 @@
 
 #include "Resource/ResourceManager.h"
 #include "Renderer.h"
-#include "Scene/Scene.h"
+#include "Scene/SceneGraph.h"
 
 namespace Engine
 {
-    void RenderBatcher::BuildBatches(Scene& scene, const RenderCamera& camera)
+    void RenderBatcher::BuildBatches(SceneGraph& scene, const RenderCamera& camera)
     {
 		auto cameraPosition = camera.GetPosition();
 

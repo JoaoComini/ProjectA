@@ -2,7 +2,7 @@
 
 #include "Window.h"
 #include "Gui.h"
-#include "Scene/Scene.h"
+#include "Scene/SceneGraph.h"
 #include "Scripting/ScriptRunner.h"
 #include "Physics/PhysicsRunner.h"
 #include "Rendering/Renderer.h"
@@ -49,17 +49,16 @@ namespace Engine {
 		void UpdateScene(float timestep);
 		void StopScene();
 
-		Scene& GetScene();
-		void SetScene(Scene& scene);
+		SceneGraph& GetSceneGraph() const;
 
 		void SetRenderCamera(RenderCamera camera)
 		{
 			this->camera = camera;
 		}
 
-		Window& GetWindow();
+		Window& GetWindow() const;
 
-		RenderContext& GetRenderContext();
+		RenderContext& GetRenderContext() const;
 
 		void SetCameraAspectRatio(Entity::Id entity);
 	private:
@@ -68,7 +67,7 @@ namespace Engine {
 		std::unique_ptr<Renderer> renderer;
 		std::unique_ptr<Gui> gui;
 
-		std::unique_ptr<Scene> scene;
+		std::unique_ptr<SceneGraph> scene;
 		RenderCamera camera;
 
 		std::unique_ptr<ScriptRunner> scriptRunner;

@@ -13,7 +13,7 @@
 #include "JoltContactListener.h"
 #include "JoltLayerMapper.h"
 
-#include "Scene/Scene.h"
+#include "Scene/SceneGraph.h"
 
 namespace Engine
 {
@@ -29,7 +29,7 @@ namespace Engine
 		using Duration = std::chrono::duration<float>;
 
 	public:
-		PhysicsRunner(Scene& scene);
+		PhysicsRunner(SceneGraph& scene);
 
 		void Start();
 		void Update(float timestep);
@@ -58,6 +58,6 @@ namespace Engine
 
 		float alpha = 0;
 
-		Scene& scene;
+		SceneGraph& scene;
 	};
 }

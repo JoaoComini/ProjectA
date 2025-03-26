@@ -46,11 +46,9 @@ namespace Engine
         std::unique_ptr<EntityGizmo> entityGizmo;
         std::unique_ptr<Toolbar> toolbar;
 
-
-
         std::unique_ptr<FileWatcher> fileWatcher;
 
-        Scene sceneCopy;
+        ResourceId currentScene{ 0 };
     };
 
     inline std::unique_ptr<Application> CreateApplication(const ApplicationArgs &args)

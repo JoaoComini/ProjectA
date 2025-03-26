@@ -8,7 +8,7 @@
 class MainMenuBar : public Widget
 {
 public:
-	void Draw(Engine::Scene& scene) override;
+	void Draw(Engine::SceneGraph& scene) override;
 
 	void OnExit(std::function<void()> onExitFn);
 	void OnSaveScene(std::function<void()> onSaveSceneFn);

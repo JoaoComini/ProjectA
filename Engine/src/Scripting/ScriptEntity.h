@@ -1,13 +1,13 @@
 #pragma once
 
-#include "Scene/Scene.h"
+#include "Scene/SceneGraph.h"
 
 namespace Engine
 {
     class ScriptEntity
     {
     public:
-        ScriptEntity(Scene& scene, Entity::Id entity);
+        ScriptEntity(SceneGraph& scene, Entity::Id entity);
 
         template<typename T>
         decltype(auto) TryGetComponent() const
@@ -18,7 +18,7 @@ namespace Engine
         Entity::Id GetId() const;
 
     private:
-        Scene& scene;
+        SceneGraph& scene;
         Entity::Id entity{ Entity::Null };
     };
 }

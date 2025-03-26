@@ -15,7 +15,7 @@
 namespace Engine
 {
 	class Window;
-	class Scene;
+	class SceneGraph;
 
 	struct RendererSettings
 	{
@@ -45,11 +45,11 @@ namespace Engine
 		explicit Renderer(RenderContext& renderContext);
 		~Renderer();
 
-		void Draw(Vulkan::CommandBuffer& commandBuffer, Scene& scene, RenderCamera& camera, RenderAttachment& target);
+		void Draw(Vulkan::CommandBuffer& commandBuffer, SceneGraph& scene, RenderCamera& camera, RenderAttachment& target);
 	private:
 		void ImportBackBufferData(RenderGraph& graph, RenderGraphContext& context, RenderAttachment& target) const;
 		void ImportFrameData(RenderGraph& graph, RenderGraphContext& context, RenderCamera& camera) const;
-		void ImportLightsData(RenderGraph& graph, RenderGraphContext& context, Scene& scene) const;
+		void ImportLightsData(RenderGraph& graph, RenderGraphContext& context, SceneGraph& scene) const;
 
 		std::unordered_map<RenderTextureSampler, std::unique_ptr<Vulkan::Sampler>> samplers;
 		std::unique_ptr<RenderGraphAllocator> allocator;

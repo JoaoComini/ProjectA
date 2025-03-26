@@ -1,6 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include "Scene/Scene.h"
+#include "Scene/SceneGraph.h"
 
 #include "Fixture/Components.h"
 
@@ -8,7 +8,7 @@ using namespace Engine;
 
 TEST_CASE("it should create an entity", "[Scene]")
 {
-    Scene scene;
+    SceneGraph scene;
 
     auto entity = scene.CreateEntity();
 
@@ -17,7 +17,7 @@ TEST_CASE("it should create an entity", "[Scene]")
 
 TEST_CASE("it should iterate over all entities", "[Scene]")
 {
-    Scene scene;
+    SceneGraph scene;
 
     auto a = scene.CreateEntity();
     scene.AddComponent<EmptyComponent>(a);
@@ -38,7 +38,7 @@ TEST_CASE("it should iterate over all entities", "[Scene]")
 
 TEST_CASE("it should not iterate over destroyed entities", "[Scene]")
 {
-    Scene scene;
+    SceneGraph scene;
 
     auto a = scene.CreateEntity();
     scene.AddComponent<EmptyComponent>(a);
@@ -61,7 +61,7 @@ TEST_CASE("it should not iterate over destroyed entities", "[Scene]")
 
 TEST_CASE("it should find the first entity", "[Scene]")
 {
-    Scene scene;
+    SceneGraph scene;
 
     auto a = scene.CreateEntity();
     scene.AddComponent<FakeComponent>(a, 10, -1);
@@ -73,7 +73,7 @@ TEST_CASE("it should find the first entity", "[Scene]")
 
 TEST_CASE("it should set parent/child relationships", "[Scene]")
 {
-    Scene scene;
+    SceneGraph scene;
 
     auto parent = scene.CreateEntity();
     auto child1 = scene.CreateEntity();
@@ -100,7 +100,7 @@ TEST_CASE("it should set parent/child relationships", "[Scene]")
 
 TEST_CASE("it should unset parent/child relationships", "[Scene]")
 {
-    Scene scene;
+    SceneGraph scene;
 
     auto parent = scene.CreateEntity();
     auto child1 = scene.CreateEntity();

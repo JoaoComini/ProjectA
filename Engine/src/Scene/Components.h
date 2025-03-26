@@ -5,6 +5,9 @@
 
 #include "Entity.h"
 
+#include <cereal/types/string.hpp>
+#include <cereal/types/memory.hpp>
+
 namespace glm
 {
 	template <class Archive>
@@ -37,7 +40,7 @@ namespace Engine::Component
 
 	struct Name
 	{
-		std::string name = "Empty Entity";
+		std::string value = "Empty Entity";
 	};
 
 	struct Children
@@ -121,9 +124,15 @@ namespace Engine::Component
 	struct Delete {};
 
 	template <typename...>
-	struct Group { };
+	struct GroupT
+	{
+		explicit constexpr GroupT() = default;
+	};
 
-	using Serializable = Group<
+	template <typename... Components>
+	struct Group : GroupT<Components...>{};
+
+	inline constexpr auto Serializable = Group<
 		Transform,
 		Name,
 		Children,
@@ -132,17 +141,17 @@ namespace Engine::Component
 		Camera,
 		DirectionalLight,
 		PointLight,
-		SkyLight,
+		// SkyLight, TODO: fix skylight
 		Script,
 		PhysicsBody,
 		BoxShape,
 		SphereShape
-	>;;
+	>{};
 
 	template <class Archive>
 	void Serialize(Archive& ar, Name& name)
 	{
-		ar(name.name);
+		ar(name.value);
 	}
 
 	template <class Archive>

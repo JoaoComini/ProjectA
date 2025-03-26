@@ -11,7 +11,7 @@ class EntityGizmo : public Widget
 public:
 	explicit EntityGizmo(EditorCamera& camera);
 
-    void Draw(Engine::Scene& scene) override;
+    void Draw(Engine::SceneGraph& scene) override;
 
 	void SetEntity(Engine::Entity::Id entity);
 

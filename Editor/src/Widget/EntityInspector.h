@@ -9,13 +9,13 @@ class EntityInspector: public Widget
 {
 public:
     void SetEntity(Engine::Entity::Id entity);
-    void Draw(Engine::Scene& scene) override;
+    void Draw(Engine::SceneGraph& scene) override;
 
 private:
     Engine::Entity::Id entity{ Engine::Entity::Null };
 
     template<typename T>
-    void AddComponentMenuItem(Engine::Scene& scene, const std::string label)
+    void AddComponentMenuItem(Engine::SceneGraph& scene, const std::string label)
     {
         if (!scene.HasComponent<T>(entity))
         {
@@ -28,7 +28,7 @@ private:
     }
 
 	template<typename T>
-	void ComponentControlNode(Engine::Scene& scene, const std::string label, T* component)
+	void ComponentControlNode(Engine::SceneGraph& scene, const std::string label, T* component)
 	{
 		ImGui::Separator();
 

@@ -12,7 +12,7 @@
 
 namespace Engine
 {
-	class Scene;
+	class SceneGraph;
 };
 
 class ContentBrowser : public Widget
@@ -21,7 +21,7 @@ public:
 	explicit ContentBrowser(Vulkan::Device& device);
 	~ContentBrowser() override;
 
-	void Draw(Engine::Scene& scene) override;
+	void Draw(Engine::SceneGraph& scene) override;
 	void RefreshResourceTree();
 
 	void OnResourceDoubleClick(std::function<void(Engine::ResourceId, Engine::ResourceMapping)> onResourceDoubleClick);

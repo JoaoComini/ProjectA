@@ -2,7 +2,7 @@
 
 #include "ScriptInstance.h"
 
-#include "Scene/Scene.h"
+#include "Scene/SceneGraph.h"
 
 #include <sol/sol.hpp>
 
@@ -11,7 +11,7 @@ namespace Engine
 	class ScriptRunner
 	{
 	public:
-		ScriptRunner(Scene& scene);
+		ScriptRunner(SceneGraph& scene);
 
 		void Start();
 		void Update(float delta);
@@ -19,11 +19,11 @@ namespace Engine
 
 		ScriptInstance* FindScriptInstance(Entity::Id entity);
 
-		Scene& GetScene() const;
+		SceneGraph& GetScene() const;
 		sol::state_view GetState() const;
 
 	private:
-		Scene& scene;
+		SceneGraph& scene;
 		sol::state lua;
 
 		std::unordered_map<Entity::Id, ScriptInstance> instances;

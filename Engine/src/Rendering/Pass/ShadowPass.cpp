@@ -8,7 +8,7 @@
 
 namespace Engine
 {
-    ShadowPass::ShadowPass(Scene& scene, ShadowSettings settings) : scene(scene), settings(settings) { }
+    ShadowPass::ShadowPass(SceneGraph& scene, ShadowSettings settings) : scene(scene), settings(settings) { }
 
 	void ShadowPass::RecordRenderGraph(RenderGraphBuilder& builder, RenderGraphContext& context, ShadowPassData& data)
 	{

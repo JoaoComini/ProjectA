@@ -52,7 +52,7 @@ namespace Engine
 		samplers.clear();
 	}
 
-	void Renderer::Draw(Vulkan::CommandBuffer& commandBuffer, Scene& scene, RenderCamera& camera, RenderAttachment& target)
+	void Renderer::Draw(Vulkan::CommandBuffer& commandBuffer, SceneGraph& scene, RenderCamera& camera, RenderAttachment& target)
 	{
 		RenderBatcher batcher;
 		batcher.BuildBatches(scene, camera);
@@ -140,7 +140,7 @@ namespace Engine
 		glm::mat4 viewProjection;
 	};
 
-	void GetMainLightData(Scene& scene, LightsUniform& lights, ShadowUniform& shadow)
+	void GetMainLightData(SceneGraph& scene, LightsUniform& lights, ShadowUniform& shadow)
 	{
 		const auto query = scene.Query<Component::Transform, Component::DirectionalLight>();
 
@@ -169,7 +169,7 @@ namespace Engine
 		lights.count++;
 	}
 
-	void GetAdditionalLightsData(Scene& scene, LightsUniform& uniform)
+	void GetAdditionalLightsData(SceneGraph& scene, LightsUniform& uniform)
 	{
 		auto query = scene.Query<Component::Transform, Component::PointLight>();
 
@@ -186,7 +186,7 @@ namespace Engine
 		}
 	}
 
-	void Renderer::ImportLightsData(RenderGraph &graph, RenderGraphContext &context, Scene &scene) const
+	void Renderer::ImportLightsData(RenderGraph &graph, RenderGraphContext &context, SceneGraph &scene) const
 	{
 		LightsUniform lights{};
 		ShadowUniform shadow{};

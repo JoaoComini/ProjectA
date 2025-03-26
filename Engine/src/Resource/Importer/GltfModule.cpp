@@ -8,31 +8,7 @@
 
 namespace Engine
 {
-    std::unique_ptr<Scene> GltfModule::Import(const std::filesystem::path &source)
-    {
-        tinygltf::Model model = LoadModel(source);
-
-        auto scene = std::make_unique<Scene>();
-
-        auto textures = ImportTextures(model);
-
-        auto materials = ImportMaterials(model, textures);
-
-        auto meshes = ImportMeshes(model, materials);
-
-        auto entities =  ImportEntities(model, meshes, *scene);
-
-        SetupRelationship(source.stem().string(), model, *scene, entities);
-
-        return scene;
-    }
-
-    std::vector<std::string> GltfModule::GetImportExtensions() const
-    {
-        return { ".glb" };
-    }
-
-    tinygltf::Model GltfModule::LoadModel(const std::filesystem::path& path)
+    tinygltf::Model LoadModel(const std::filesystem::path& path)
     {
         tinygltf::TinyGLTF loader;
 
@@ -57,7 +33,7 @@ namespace Engine
         return model;
     }
 
-    std::vector<std::shared_ptr<Texture>> GltfModule::ImportTextures(const tinygltf::Model& model)
+    std::vector<std::shared_ptr<Texture>> ImportTextures(const tinygltf::Model& model)
     {
         std::vector<std::shared_ptr<Texture>> textures;
 
@@ -90,7 +66,7 @@ namespace Engine
         return textures;
     }
 
-    std::vector<std::shared_ptr<Material>> GltfModule::ImportMaterials(const tinygltf::Model& model, const std::vector<std::shared_ptr<Texture>>& textures)
+    std::vector<std::shared_ptr<Material>> ImportMaterials(const tinygltf::Model& model, const std::vector<std::shared_ptr<Texture>>& textures)
     {
         std::vector<std::shared_ptr<Material>> materials;
 
@@ -130,15 +106,17 @@ namespace Engine
                 alphaMode = it->second;
             }
 
+            auto color = static_cast<glm::vec4>(glm::make_vec4(pbr.baseColorFactor.data()));
+
             auto material = std::make_shared<Material>(
                 albedo,
                 normal,
                 metallicRoughness,
-                glm::make_vec4(pbr.baseColorFactor.data()),
+                color,
                 static_cast<float>(pbr.metallicFactor),
                 static_cast<float>(pbr.roughnessFactor),
                 alphaMode,
-                gltfMaterial.alphaCutoff
+                static_cast<float>(gltfMaterial.alphaCutoff)
             );
 
             materials.push_back(material);
@@ -147,7 +125,7 @@ namespace Engine
         return materials;
     }
 
-    std::vector<std::shared_ptr<Mesh>> GltfModule::ImportMeshes(const tinygltf::Model& model, const std::vector<std::shared_ptr<Material>>& materials)
+    std::vector<std::shared_ptr<Mesh>> ImportMeshes(const tinygltf::Model& model, const std::vector<std::shared_ptr<Material>>& materials)
     {
         std::vector<std::shared_ptr<Mesh>> meshes;
 
@@ -241,7 +219,7 @@ namespace Engine
         return meshes;
     }
 
-    std::vector<Entity::Id> GltfModule::ImportEntities(tinygltf::Model& model, std::vector<std::shared_ptr<Mesh>>& meshes, Scene& scene)
+    std::vector<Entity::Id> ImportEntities(tinygltf::Model& model, std::vector<std::shared_ptr<Mesh>>& meshes, Scene& scene)
     {
         std::vector<Entity::Id> entities;
 
@@ -268,7 +246,7 @@ namespace Engine
 
             if (!gltfNode.name.empty())
             {
-                scene.GetComponent<Component::Name>(entity).name = gltfNode.name;
+                scene.GetComponent<Component::Name>(entity).value = gltfNode.name;
             }
 
             entities.push_back(entity);
@@ -277,10 +255,10 @@ namespace Engine
         return entities;
     }
 
-    void GltfModule::SetupRelationship(const std::string& name, const tinygltf::Model& gltfModel, Scene& scene, std::vector<Entity::Id>& entities)
+    void SetupRelationship(const std::string& name, const tinygltf::Model& gltfModel, Scene& scene, std::vector<Entity::Id>& entities)
     {
         auto root = scene.CreateEntity();
-        scene.GetComponent<Component::Name>(root).name = name;
+        scene.GetComponent<Component::Name>(root).value = name;
 
         for (auto& gltfScene : gltfModel.scenes)
         {
@@ -307,5 +285,28 @@ namespace Engine
                 }
             }
         }
+    }
+
+    std::unique_ptr<SceneResource> GltfModule::Import(const std::filesystem::path &source)
+    {
+        tinygltf::Model model = LoadModel(source);
+
+        auto scene = std::make_unique<SceneResource>();
+
+        auto textures = ImportTextures(model);
+
+        auto materials = ImportMaterials(model, textures);
+
+        auto meshes = ImportMeshes(model, materials);
+
+        auto entities =  ImportEntities(model, meshes, *scene);
+        SetupRelationship(source.stem().string(), model, *scene, entities);
+
+        return scene;
+    }
+
+    std::vector<std::string> GltfModule::GetImportExtensions() const
+    {
+        return { ".glb" };
     }
 };

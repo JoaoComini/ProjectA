@@ -5,7 +5,7 @@
 #include <imgui.h>
 #include <imgui_internal.h>
 
-void ViewportDragDrop::Draw(Engine::Scene& scene)
+void ViewportDragDrop::Draw(Engine::SceneGraph& scene)
 {
 	ImGuiViewport* viewport = ImGui::GetMainViewport();
 	auto id = ImGui::DockSpaceOverViewport(viewport, ImGuiDockNodeFlags_PassthruCentralNode | ImGuiDockNodeFlags_NoDockingInCentralNode);

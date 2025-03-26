@@ -6,7 +6,7 @@
 
 namespace Engine
 {
-    ForwardPass::ForwardPass(Scene& scene, ResolutionSettings settings) : scene(scene), settings(settings) { }
+    ForwardPass::ForwardPass(SceneGraph& scene, ResolutionSettings settings) : scene(scene), settings(settings) { }
 
     void ForwardPass::RecordRenderGraph(RenderGraphBuilder& builder, RenderGraphContext& context, ForwardPassData& data)
     {

@@ -3,7 +3,7 @@
 
 namespace Engine
 {
-    ScriptEntity::ScriptEntity(Scene& scene, Entity::Id entity)
+    ScriptEntity::ScriptEntity(SceneGraph& scene, Entity::Id entity)
         : scene(scene), entity(entity)
     {
     }

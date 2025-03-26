@@ -1,6 +1,6 @@
 #include "Application.h"
 
-#include "Scene/Scene.h"
+#include "Scene/SceneGraph.h"
 #include "Scene/Components.h"
 
 #include "Resource/ResourceManager.h"
@@ -46,7 +46,7 @@ namespace Engine {
 		renderer = std::make_unique<Renderer>(*renderContext);
 		gui = std::make_unique<Gui>(*window, *renderContext);
 
-		scene = std::make_unique<Scene>();
+		scene = std::make_unique<SceneGraph>();
 		scene->OnComponentAdded<Component::Camera, &Application::SetCameraAspectRatio>(this);
 
 		scriptRunner = std::make_unique<ScriptRunner>(*scene);
@@ -126,22 +126,17 @@ namespace Engine {
 		running = false;
 	}
 
-	void Application::SetScene(Scene& scene)
-	{
-		*this->scene = scene;
-	}
-
-	Scene& Application::GetScene()
+	SceneGraph& Application::GetSceneGraph() const
 	{
 		return *scene;
 	}
 
-	Window& Application::GetWindow()
+	Window& Application::GetWindow() const
 	{
 		return *window;
 	}
 
-	RenderContext& Application::GetRenderContext()
+	RenderContext& Application::GetRenderContext() const
 	{
 		return *renderContext;
 	}
@@ -158,6 +153,8 @@ namespace Engine {
 	{
 		scriptRunner->Update(timestep);
 		physicsRunner->Update(timestep);
+
+		scene->Update();
 	}
 
 	void Application::StopScene()

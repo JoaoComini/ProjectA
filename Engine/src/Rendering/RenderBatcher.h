@@ -2,7 +2,7 @@
 
 namespace Engine
 {
-    class Scene;
+    class SceneGraph;
     class RenderCamera;
     class RenderContext;
     class Primitive;
@@ -18,7 +18,7 @@ namespace Engine
     class RenderBatcher
     {
     public:
-        void BuildBatches(Scene& scene, const RenderCamera& camera);
+        void BuildBatches(SceneGraph& scene, const RenderCamera& camera);
 
 		const std::vector<RenderGeometry>& GetOpaques();
 		const std::vector<RenderGeometry>& GetTransparents();

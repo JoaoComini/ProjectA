@@ -5,7 +5,7 @@
 class Toolbar : public Widget
 {
 public:
-	void Draw(Engine::Scene& scene) override;
+	void Draw(Engine::SceneGraph& scene) override;
 
 	void OnPlay(std::function<void()> onPlayFn);
 	void OnStop(std::function<void()> onStopFn);

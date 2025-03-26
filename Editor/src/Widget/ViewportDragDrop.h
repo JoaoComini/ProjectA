@@ -9,7 +9,7 @@ using OnDropResourceFn = std::function<void(Engine::ResourceId, Engine::Resource
 class ViewportDragDrop final : public Widget
 {
 public:
-    void Draw(Engine::Scene& scene) override;
+    void Draw(Engine::SceneGraph& scene) override;
     void OnDropResource(OnDropResourceFn fn);
 
 private:

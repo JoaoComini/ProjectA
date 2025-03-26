@@ -1,6 +1,6 @@
 #include "PhysicsRunner.h"
 
-#include "Scene/Scene.h"
+#include "Scene/SceneGraph.h"
 #include "Scene/TransformHelper.h"
 
 #include <Jolt/Physics/Collision/Shape/BoxShape.h>
@@ -45,7 +45,7 @@ namespace Engine
 		return { quat.GetW(), quat.GetX(), quat.GetY(), quat.GetZ() };
 	}
 
-	PhysicsRunner::PhysicsRunner(Scene& scene) : scene(scene)
+	PhysicsRunner::PhysicsRunner(SceneGraph& scene) : scene(scene)
 	{
 		JPH::RegisterDefaultAllocator();
 
@@ -88,7 +88,7 @@ namespace Engine
 		return result.Get();
 	}
 
-	void GetShapes(Scene& scene, Entity::Id entity, glm::mat4 parent, std::vector<ShapeConfig>& configs)
+	void GetShapes(SceneGraph& scene, Entity::Id entity, glm::mat4 parent, std::vector<ShapeConfig>& configs)
 	{
 		auto& transform = scene.GetComponent<Component::Transform>(entity);
 
@@ -128,7 +128,7 @@ namespace Engine
 		}
 	}
 
-	JPH::ShapeRefC BuildShapeForEntity(Scene& scene, Entity::Id entity)
+	JPH::ShapeRefC BuildShapeForEntity(SceneGraph& scene, Entity::Id entity)
 	{
 		std::vector<ShapeConfig> configs;
 

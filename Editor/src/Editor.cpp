@@ -93,13 +93,16 @@ namespace Engine
 
 		toolbar->OnPlay([&]() {
 			entityGizmo->SetEntity({});
-			sceneCopy = GetScene();
+			// TODO: copy scene state
+
+			// sceneCopy = GetScene();
+
 			StartScene();
 		});
 
 		toolbar->OnStop([&]() {
 			StopScene();
-			SetScene(sceneCopy);
+			// SetScene(sceneCopy);
 			entityInspector->SetEntity({});
 			entityGizmo->SetEntity({});
 		});
@@ -124,7 +127,7 @@ namespace Engine
 			ResourceManager::Get().UnloadResource(id);
 		});
 
-		GetScene().Pause();
+		GetSceneGraph().Pause();
     }
 
 	Editor::~Editor()
@@ -134,7 +137,7 @@ namespace Engine
 
 	void Editor::OnUpdate(float timestep)
 	{
-		auto& scene = GetScene();
+		auto& scene = GetSceneGraph();
 
 		if (scene.IsPaused())
 		{
@@ -149,6 +152,8 @@ namespace Engine
 
 		if (scene.Valid(entity))
 		{
+			// TODO: use camera component
+
 			auto& camera = scene.GetComponent<Component::Camera>(entity).camera;
 			auto transform = scene.GetComponent<Component::Transform>(entity).GetLocalMatrix();
 
@@ -160,7 +165,7 @@ namespace Engine
 
     void Editor::OnGui()
     {
-		auto& scene = GetScene();
+		auto& scene = GetSceneGraph();
 
 		mainMenuBar->Draw(scene);
 		toolbar->Draw(scene);
@@ -184,8 +189,10 @@ namespace Engine
 
 	void Editor::NewScene()
 	{
-		Scene scene;
-		SetScene(scene);
+    	auto& graph = GetSceneGraph();
+    	graph.Clear();
+
+		currentScene = ResourceId{ 0 };
 
 		entityInspector->SetEntity({});
 		entityGizmo->SetEntity({});
@@ -193,30 +200,37 @@ namespace Engine
 
 	void Editor::SaveScene()
 	{
-		if (const auto id = GetScene().GetId())
+    	auto& graph = GetSceneGraph();
+
+    	auto scene = graph.Pack();
+
+		if (! currentScene)
 		{
-			ResourceManager::Get().SaveResource<Scene>(id, GetScene());
+			currentScene = ResourceManager::Get().CreateResource<SceneResource>("untitled.scene", *scene);
+			return;
 		}
-		else
-		{
-			ResourceManager::Get().CreateResource<Scene>("untitled.scene", GetScene());
-		}
+
+		ResourceManager::Get().SaveResource<SceneResource>(currentScene, *scene);
 
 		contentBrowser->RefreshResourceTree();
 	}
 
 	void Editor::AddScene(const ResourceId id)
 	{
-		const auto scene = ResourceManager::Get().LoadResource<Scene>(id);
+		const auto scene = ResourceManager::Get().LoadResource<SceneResource>(id);
 
-		GetScene().Add(*scene);
+		GetSceneGraph().Add(*scene);
 	}
 
 	void Editor::OpenScene(ResourceId id)
 	{
-		auto scene = ResourceManager::Get().LoadResource<Scene>(id);
+    	auto resource = ResourceManager::Get().LoadResource<SceneResource>(id);
 
-		SetScene(*scene);
+		auto& graph = GetSceneGraph();
+    	graph.Clear();
+    	graph.Add(*resource);
+
+    	currentScene = id;
 
 		entityInspector->SetEntity({});
 		entityGizmo->SetEntity({});
@@ -224,8 +238,8 @@ namespace Engine
 
 	void Editor::AddSkyLightToScene(ResourceId id)
 	{
-		const auto entity = GetScene().CreateEntity();
-		GetScene().AddComponent<Component::SkyLight>(entity, id);
+		const auto entity = GetSceneGraph().CreateEntity();
+		GetSceneGraph().AddComponent<Component::SkyLight>(entity, id);
 	}
 
 	void Editor::ImportFile()

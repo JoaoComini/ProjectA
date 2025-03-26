@@ -2,13 +2,13 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
-#include <Scene/Scene.h>
+#include <Scene/SceneGraph.h>
 
 EntityGizmo::EntityGizmo(EditorCamera& camera) : camera(camera)
 {
 }
 
-void EntityGizmo::Draw(Engine::Scene& scene)
+void EntityGizmo::Draw(Engine::SceneGraph& scene)
 {
 	if (!scene.Valid(entity))
 	{

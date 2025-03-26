@@ -1,18 +1,23 @@
 #include "SceneHierarchy.h"
 
-#include <Scene/Scene.h>
+#include <Scene/SceneGraph.h>
 
 #include <imgui.h>
 
-void SceneHierarchy::Draw(Engine::Scene& scene)
+void SceneHierarchy::Draw(Engine::SceneGraph& scene)
 {
 	ImGui::Begin("Scene");
 
 	{
-		auto query = scene.Query<Engine::Entity::Id>(Engine::Exclusion<Engine::Component::Hierarchy>{});
+		auto query = scene.Query<Engine::Entity::Id>(Engine::Exclusion<Engine::Component::Hierarchy>);
 
 		for (const auto entity : query)
 		{
+			if (! scene.Valid(entity))
+			{
+				continue;
+			}
+
 			EntityNode(scene, entity);
 		}
 	}
@@ -30,7 +35,7 @@ void SceneHierarchy::Draw(Engine::Scene& scene)
 	ImGui::End();
 }
 
-void SceneHierarchy::EntityNode(Engine::Scene& scene, Engine::Entity::Id entity)
+void SceneHierarchy::EntityNode(Engine::SceneGraph& scene, Engine::Entity::Id entity)
 {
 	ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
 
@@ -50,7 +55,7 @@ void SceneHierarchy::EntityNode(Engine::Scene& scene, Engine::Entity::Id entity)
 
 	auto id = (void*)(uint64_t)entity;
 
-	bool open = ImGui::TreeNodeEx(id, flags, "%s", name.name.c_str());
+	bool open = ImGui::TreeNodeEx(id, flags, "%s", name.value.c_str());
 
 	if (ImGui::IsItemClicked())
 	{

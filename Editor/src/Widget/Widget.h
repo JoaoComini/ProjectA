@@ -1,10 +1,10 @@
 #pragma once
 
-#include <Scene/Scene.h>
+#include <Scene/SceneGraph.h>
 
 class Widget
 {
 public:
 	virtual ~Widget() = default;
-	virtual void Draw(Engine::Scene& scene) {}
+	virtual void Draw(Engine::SceneGraph& scene) {}
 };

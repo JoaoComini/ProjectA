@@ -3,13 +3,14 @@
 #include "Resource/ResourceManager.h"
 #include "Resource/Importer/TextureImporter.h"
 #include "Project/Project.h"
-#include "Scene/Scene.h"
+#include "Scene/SceneGraph.h"
 
 #include "Scripting/Script.h"
 
 #include <Icons/embed.gen.hpp>
 
 #include <imgui.h>
+#include <Scene/Scene.h>
 
 ContentBrowser::ContentBrowser(Vulkan::Device& device)
 	: device(device)
@@ -44,7 +45,7 @@ void ContentBrowser::OnResourceDoubleClick(std::function<void(Engine::ResourceId
 	this->onResourceDoubleClick = onResourceDoubleClick;
 }
 
-void ContentBrowser::Draw(Engine::Scene& scene)
+void ContentBrowser::Draw(Engine::SceneGraph& scene)
 {
 	ImGuiStyle& style = ImGui::GetStyle();
 	ImGuiViewport* viewport = ImGui::GetMainViewport();
@@ -59,8 +60,8 @@ void ContentBrowser::Draw(Engine::Scene& scene)
 			{
 				if (ImGui::MenuItem("Scene"))
 				{
-					Engine::Scene created;
-					Engine::ResourceManager::Get().CreateResource<Engine::Scene>(currentDirectory / "untitled.scene", created);
+					Engine::SceneResource created;
+					Engine::ResourceManager::Get().CreateResource<Engine::SceneResource>(currentDirectory / "untitled.scene", created);
 
 					RefreshResourceTree();
 				}

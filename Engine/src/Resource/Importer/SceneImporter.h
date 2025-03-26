@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Scene/Scene.h"
+#include "Scene/SceneResource.h"
 #include "Resource/ResourceImporter.h"
 
 namespace Engine
@@ -9,7 +9,7 @@ namespace Engine
     {
     public:
         virtual ~SceneImporterModule() = default;
-        virtual std::unique_ptr<Scene> Import(const std::filesystem::path& path) = 0;
+        virtual std::unique_ptr<SceneResource> Import(const std::filesystem::path& path) = 0;
         [[nodiscard]] virtual std::vector<std::string> GetImportExtensions() const = 0;
     };
 

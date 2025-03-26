@@ -8,7 +8,7 @@
 
 namespace Engine
 {
-	class Scene;
+	class SceneGraph;
 
 	struct ResolutionSettings
 	{
@@ -25,12 +25,12 @@ namespace Engine
 	class ForwardPass : public RenderGraphPass<ForwardPassData, RenderGraphCommand>
 	{
 	public:
-		explicit ForwardPass(Scene& scene, ResolutionSettings settings);
+		explicit ForwardPass(SceneGraph& scene, ResolutionSettings settings);
 
 		void RecordRenderGraph(RenderGraphBuilder& builder, RenderGraphContext& context, ForwardPassData& data) override;
 		void Render(RenderGraphCommand& command, const ForwardPassData& data) override;
 	private:
-		Scene& scene;
+		SceneGraph& scene;
 		ResolutionSettings settings;
 	};
 }

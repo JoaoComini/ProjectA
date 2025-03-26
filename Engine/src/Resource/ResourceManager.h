@@ -54,6 +54,7 @@ namespace Engine
             }
 
             auto resource =  ResourceLoader::Load<T>(resourcePath, device);
+            resource->SetId(id);
 
             loadedResources[id] = resource;
 
@@ -67,12 +68,12 @@ namespace Engine
 
             ResourceSaver::Save<T>(destination, resource);
 
-            const auto id = ResourceRegistry::Get().FindResourceByPath(destination);
-
-            if (id)
+            if (auto id = ResourceRegistry::Get().FindResourceByPath(destination))
             {
                 return id;
             }
+
+            ResourceId id{};
 
             const ResourceMapping mapping
             {

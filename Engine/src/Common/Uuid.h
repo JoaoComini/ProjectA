@@ -6,7 +6,6 @@ namespace Engine
 	{
 	public:
 		Uuid();
-
 		explicit Uuid(uint64_t value);
 
 		operator uint64_t() const

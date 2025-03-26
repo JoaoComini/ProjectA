@@ -8,7 +8,7 @@
 
 namespace Engine
 {
-	ScriptRunner::ScriptRunner(Scene& scene) : scene(scene)
+	ScriptRunner::ScriptRunner(SceneGraph& scene) : scene(scene)
 	{
 		lua.open_libraries(sol::lib::base);
 
@@ -104,7 +104,7 @@ namespace Engine
 		return nullptr;
 	}
 
-	Scene& ScriptRunner::GetScene() const
+	SceneGraph& ScriptRunner::GetScene() const
 	{
 		return scene;
 	}

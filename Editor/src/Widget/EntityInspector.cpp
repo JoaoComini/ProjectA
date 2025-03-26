@@ -9,7 +9,7 @@ void EntityInspector::SetEntity(Engine::Entity::Id entity)
 	this->entity = entity;
 }
 
-void EntityInspector::Draw(Engine::Scene& scene)
+void EntityInspector::Draw(Engine::SceneGraph& scene)
 {
 	ImGuiViewport* viewport = ImGui::GetMainViewport();
 	ImGui::SetNextWindowSizeConstraints({ 350, 0 }, viewport->Size);
@@ -26,7 +26,7 @@ void EntityInspector::Draw(Engine::Scene& scene)
 
 	if (name)
 	{
-		ImGui::InputText("##Name", &name->name);
+		ImGui::InputText("##Name", &name->value);
 	}
 
 	ImGui::SameLine();

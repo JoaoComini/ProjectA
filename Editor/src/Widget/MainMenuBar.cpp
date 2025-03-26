@@ -1,9 +1,9 @@
 #include "MainMenuBar.h"
 
 #include <imgui.h>
-#include <Scene/Scene.h>
+#include <Scene/SceneGraph.h>
 
-void MainMenuBar::Draw(Engine::Scene& scene)
+void MainMenuBar::Draw(Engine::SceneGraph& scene)
 {
 	ImGui::BeginMainMenuBar();
 
