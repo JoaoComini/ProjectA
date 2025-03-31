@@ -1,7 +1,6 @@
 #pragma once
 
 #include "SceneImporter.h"
-#include "Scene/SceneGraph.h"
 
 namespace tinygltf
 {
@@ -10,6 +9,8 @@ namespace tinygltf
 
 namespace Engine
 {
+	class SceneResource;
+
 	class GltfModule final : public SceneImporterModule
 	{
 	public:

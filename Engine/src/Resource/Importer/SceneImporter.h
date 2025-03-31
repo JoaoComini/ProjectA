@@ -1,10 +1,11 @@
 #pragma once
 
-#include "Scene/SceneResource.h"
 #include "Resource/ResourceImporter.h"
 
 namespace Engine
 {
+    class SceneResource;
+
     class SceneImporterModule
     {
     public:

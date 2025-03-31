@@ -2,7 +2,9 @@
 
 #include "SceneMixin.h"
 #include "Entity.h"
+
 #include "Components.h"
+#include "Component/Delete.h"
 
 // template<typename Type, typename EnTT>
 // struct entt::storage_type<Type, EnTT> {
@@ -144,35 +146,8 @@ namespace Engine
             registry.on_construct<T>().template connect<MemberFunc>(instance);
         }
 
-        template<class Archive>
-        static void SaveSnapshot(Archive& ar, const Scene& scene)
-        {
-            entt::snapshot snapshot{ scene.registry };
-            snapshot.get<entt::entity>(ar);
-
-            SnapshotComponentGroup(ar, snapshot, Component::Serializable);
-        }
-
-        template<class Archive>
-        static void LoadSnapshot(Archive& ar, Scene& scene)
-        {
-            entt::snapshot_loader snapshot{ scene.registry };
-            snapshot.get<entt::entity>(ar);
-
-            SnapshotComponentGroup(ar, snapshot, Component::Serializable);
-
-            snapshot.orphans();
-        }
-
-        template<class Archive, class Snapshot, typename... Components>
-        static void SnapshotComponentGroup(Archive& ar, Snapshot& snapshot, Component::Group<Components...>)
-        {
-            ([&]()
-            {
-                snapshot.template get<Components>(ar);
-            }(), ...);
-        }
-
+        static std::unordered_map<Entity::Id, Entity::Id> Map(const Scene& from, Scene& to);
+        static void Copy(const Scene& from, Scene& to);
     protected:
         void AddChild(Entity::Id parent, Entity::Id child);
         void RemoveChild(Entity::Id parent, Entity::Id child);

@@ -1,8 +1,7 @@
 #include "SceneImporter.h"
 
-#include <Common/FileSystem.h>
-
 #include "Resource/ResourceSaver.h"
+#include "Scene/SceneResource.h"
 
 namespace Engine
 {

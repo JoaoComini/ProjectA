@@ -1,9 +1,7 @@
 #include "Editor.h"
 
-#include <imgui.h>
-
-#include "Resource/Importer/GltfModule.h"
 #include "Resource/ResourceManager.h"
+#include "Resource/Importer/GltfModule.h"
 
 #include "Platform/FileDialog.h"
 #include "Project/Project.h"
@@ -76,7 +74,7 @@ namespace Engine
 			}
 		});
 
-		viewportDragDrop->OnDropResource([&](auto id, auto mapping)
+		viewportDragDrop->OnDropResource([&](auto id, const auto& mapping)
 		{
 			switch (mapping.type)
 			{
@@ -202,7 +200,7 @@ namespace Engine
 	{
     	auto& graph = GetSceneGraph();
 
-    	auto scene = graph.Pack();
+    	const auto scene = graph.Pack();
 
 		if (! currentScene)
 		{
@@ -217,18 +215,21 @@ namespace Engine
 
 	void Editor::AddScene(const ResourceId id)
 	{
+		if (currentScene == id)
+		{
+			return;
+		}
+
 		const auto scene = ResourceManager::Get().LoadResource<SceneResource>(id);
 
-		GetSceneGraph().Add(*scene);
+		GetSceneGraph().Instantiate(scene);
 	}
 
 	void Editor::OpenScene(ResourceId id)
 	{
     	auto resource = ResourceManager::Get().LoadResource<SceneResource>(id);
 
-		auto& graph = GetSceneGraph();
-    	graph.Clear();
-    	graph.Add(*resource);
+    	GetSceneGraph().Replace(*resource);
 
     	currentScene = id;
 

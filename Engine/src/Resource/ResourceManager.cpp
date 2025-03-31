@@ -1,9 +1,8 @@
 #include "ResourceManager.h"
 
 #include "ResourceMetadata.h"
-#include "Rendering/Renderer.h"
 
-#include "Scripting/Script.h"
+#include "Rendering/Renderer.h"
 
 namespace Engine
 {

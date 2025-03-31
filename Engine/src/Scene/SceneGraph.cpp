@@ -1,97 +1,108 @@
 #include "SceneGraph.h"
 
+#include "Component/SceneInstance.h"
+
 namespace Engine
 {
+    template<typename... T>
+    void InitializeStorages(entt::registry& registry, Component::Group<T...>)
+    {
+        ([&]()
+        {
+           static_cast<void>(registry.storage<T>());
+        }(), ...);
+    }
+
     SceneGraph::SceneGraph()
     {
         OnComponentAdded<Component::Transform, &SceneGraph::AddOrReplaceComponent<Component::LocalToWorld>>(this);
+        InitializeStorages(registry, Component::Serializable);
     }
 
-    std::unordered_map<entt::entity, Entity::Id> MapEntities(const entt::registry& source, entt::registry& destination)
+    bool ShouldPackWithInstance(const entt::sparse_set& storage)
     {
-        std::unordered_map<entt::entity, Entity::Id> map{};
-
-        for (const auto entities = source.storage<entt::entity>(); const auto& [entity]: entities->each())
-        {
-            map[entity] = destination.create();
-        }
-
-        return map;
-    }
-
-    Entity::Id MapEntity(const entt::entity& source, const std::unordered_map<entt::entity, Entity::Id>& map)
-    {
-        if (const auto it = map.find(source); it != map.end())
-        {
-            return it->second;
-        }
-
-        return Entity::Null;
-    }
-
-    template<typename T>
-    void MapComponent(const entt::registry& source, entt::registry& destination, const std::unordered_map<entt::entity, Entity::Id>& map)
-    {
-        const auto components = source.storage<T>();
-
-        if (!components)
-        {
-            return;
-        }
-
-        for (auto [entity, component] : components->each())
-        {
-            auto mapped = MapEntity(entity, map);
-            auto copy = component;
-
-            if constexpr (std::is_same_v<T, Component::Hierarchy>)
-            {
-                copy.prev = MapEntity(component.prev, map);
-                copy.next = MapEntity(component.next, map);
-                copy.parent = MapEntity(component.parent, map);
-            }
-
-            if constexpr (std::is_same_v<T, Component::Children>)
-            {
-                copy.first = MapEntity(component.first, map);
-            }
-
-            destination.emplace<T>(mapped, copy);
-        }
-    }
-
-    template<typename... T>
-    void MapComponentGroup(const entt::registry& source, entt::registry& destination, const std::unordered_map<entt::entity, Entity::Id>& map, Component::Group<T...>)
-    {
-        ([&]()
-            {
-                MapComponent<T>(source, destination, map);
-            }(),
-        ...);
-    }
-
-    void SceneGraph::Add(const SceneResource& scene)
-    {
-        const auto map = MapEntities(scene.registry, registry);
-        MapComponentGroup(scene.registry, registry, map, Component::Serializable);
+        return storage.type() == entt::type_id<Component::SceneInstance>()
+            || storage.type() == entt::type_id<Component::Hierarchy>()
+            || storage.type() == entt::type_id<Component::Children>();
     }
 
     std::unique_ptr<SceneResource> SceneGraph::Pack() const
     {
         auto resource = std::make_unique<SceneResource>();
 
-        auto map = MapEntities(registry, resource->registry);
-        MapComponentGroup(registry, resource->registry, map, Component::Serializable);
+        Copy(*this, *resource);
+
+        // Destroy all Components but SceneInstances from Instanced entities
+        auto query = resource->Query<Component::SceneInstance>();
+        for (const auto entity: query)
+        {
+            resource->registry.erase_if(entity, [](auto, const auto &storage)
+            {
+                return !ShouldPackWithInstance(storage);
+            });
+        }
+
+        resource->registry.compact();
 
         return resource;
+    }
+
+    Entity::Id SceneGraph::Instantiate(std::shared_ptr<SceneResource> scene)
+    {
+        const auto map = Map(*scene, *this);
+
+        for (auto& [local, current]: map)
+        {
+            if (const auto instance = TryGetComponent<Component::SceneInstance>(current))
+            {
+                CopyEntityFromSceneInstance(current, *instance);
+                continue;
+            }
+
+            registry.emplace<Component::SceneInstance>(current, scene, local);
+        }
+
+        return Entity::Null; // TODO: return scene root
+    }
+
+    void SceneGraph::Replace(const SceneResource& scene)
+    {
+        Clear();
+
+        Copy(scene, *this);
+
+        auto query = Query<Component::SceneInstance>();
+        for (const auto entity : query)
+        {
+            const auto& instance = query.GetComponent<Component::SceneInstance>(entity);
+            CopyEntityFromSceneInstance(entity, instance);
+        }
+    }
+
+    void SceneGraph::CopyEntityFromSceneInstance(Entity::Id entity, const Component::SceneInstance& instance)
+    {
+        for (auto [id, from] : instance.scene->registry.storage())
+        {
+            if (ShouldPackWithInstance(from))
+            {
+                continue;
+            }
+
+            assert(registry.storage(id) != nullptr && "Storage must not be null");
+
+            if (auto* to = registry.storage(id); from.contains(instance.local))
+            {
+                to->push(entity, from.value(instance.local));
+            }
+        }
     }
 
     void SceneGraph::Update()
     {
         {
-            auto query = Query<Component::Delete>();
+            auto view = registry.view<Component::Delete>();
 
-            for (const auto entity : query)
+            for (const auto entity : view)
             {
                 registry.destroy(entity);
             }
@@ -100,7 +111,7 @@ namespace Engine
         {
             auto query = Query<Component::Transform>(Exclusion<Component::Hierarchy>);
 
-            for (auto entity : query)
+            for (const auto entity : query)
             {
                 ComputeEntityLocalToWorld({}, entity);
             }

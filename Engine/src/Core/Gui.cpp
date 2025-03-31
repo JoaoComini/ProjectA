@@ -1,13 +1,12 @@
 #include "Gui.h"
 
-#include "Vulkan/DescriptorPool.h"
 #include "Vulkan/CommandBuffer.h"
 #include "Vulkan/Swapchain.h"
 #include "Vulkan/ResourceCache.h"
 
 #include "Rendering/Renderer.h"
 #include "Rendering/RenderFrame.h"
-
+#include "Rendering/Texture.h"
 #include "Core/Window.h"
 
 #include <imgui.h>

@@ -5,6 +5,7 @@
 #include <Scene/Components.h>
 
 #include <Rendering/Camera.h>
+#include <Rendering/Mesh.h>
 
 #include <Resource/ResourceManager.h>
 

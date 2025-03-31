@@ -121,33 +121,6 @@ namespace Engine::Component
 		glm::vec3 offset{ 0 };
 	};
 
-	struct Delete {};
-
-	template <typename...>
-	struct GroupT
-	{
-		explicit constexpr GroupT() = default;
-	};
-
-	template <typename... Components>
-	struct Group : GroupT<Components...>{};
-
-	inline constexpr auto Serializable = Group<
-		Transform,
-		Name,
-		Children,
-		Hierarchy,
-		MeshRender,
-		Camera,
-		DirectionalLight,
-		PointLight,
-		// SkyLight, TODO: fix skylight
-		Script,
-		PhysicsBody,
-		BoxShape,
-		SphereShape
-	>{};
-
 	template <class Archive>
 	void Serialize(Archive& ar, Name& name)
 	{

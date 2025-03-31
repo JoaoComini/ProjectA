@@ -1,12 +1,13 @@
 #pragma once
 
 #include "Common/Singleton.h"
+#include "Common/FileSystem.h"
 
 #include "Resource.h"
-#include "ResourceImporter.h"
 #include "ResourceRegistry.h"
-#include "ResourceLoader.h"
 #include "ResourceMetadata.h"
+#include "ResourceImporter.h"
+#include "ResourceLoader.h"
 #include "ResourceSaver.h"
 
 #include "Rendering/RenderContext.h"
@@ -19,6 +20,9 @@ namespace Engine
     {
     public:
         explicit ResourceManager(RenderContext& renderContext);
+
+        ResourceManager(const ResourceManager&) = delete;
+        ResourceManager& operator=(const ResourceManager&) = delete;
 
         void ImportResource(const std::filesystem::path& path);
         void AddImporter(std::unique_ptr<ResourceImporter> importer);
@@ -53,7 +57,7 @@ namespace Engine
                 }
             }
 
-            auto resource =  ResourceLoader::Load<T>(resourcePath, device);
+            auto resource =  ResourceLoader::Load<T>(resourcePath, *this);
             resource->SetId(id);
 
             loadedResources[id] = resource;
@@ -104,15 +108,16 @@ namespace Engine
         void UnloadResource(const ResourceId& id);
         void DeleteResource(const ResourceId& id);
 
-    private:
+        [[nodiscard]] Vulkan::Device& GetDevice() const { return device; }
 
+    private:
         [[nodiscard]] ResourceImporter* GetImporterByExtension(const std::filesystem::path& extension) const;
 
         [[nodiscard]] bool IsResourceLoaded(const ResourceId& id) const;
 
         std::vector<std::unique_ptr<ResourceImporter>> importers;
-
         std::unordered_map<ResourceId, std::shared_ptr<Resource>> loadedResources;
+
         Vulkan::Device& device;
     };
 };

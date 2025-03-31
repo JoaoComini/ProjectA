@@ -3,8 +3,6 @@
 #include "Common/Singleton.h"
 
 #include "Resource.h"
-#include <filesystem>
-
 
 namespace Engine
 {

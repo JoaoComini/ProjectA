@@ -7,7 +7,7 @@
 #include "Vulkan/Buffer.h"
 #include "Vulkan/CommandBuffer.h"
 
-#include "Resource/Resource.h"
+#include "Resource/ResourceManager.h"
 
 #include "Material.h"
 #include "Vertex.h"
@@ -128,7 +128,9 @@ namespace Engine
 		{
 			ar(primitives);
 
-			UploadToGpu(cereal::get_user_data<Vulkan::Device>(ar));
+			auto& manager = cereal::get_user_data<ResourceManager>(ar);
+
+			UploadToGpu(manager.GetDevice());
 		}
 
 		class BuiltIn

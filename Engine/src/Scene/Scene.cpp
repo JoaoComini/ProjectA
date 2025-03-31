@@ -1,10 +1,12 @@
 #include "Scene.h"
 
+#include "Component/Group.h"
+
 namespace Engine
 {
     Entity::Id Scene::CreateEntity()
     {
-        auto entity = registry.create();
+        const auto entity = registry.create();
 
         AddComponent<Component::Name>(entity);
         AddComponent<Component::Transform>(entity);
@@ -14,12 +16,12 @@ namespace Engine
 
     void Scene::DestroyEntity(Entity::Id entity)
     {
-        if (auto hierarchy = TryGetComponent<Component::Hierarchy>(entity))
+        if (const auto hierarchy = TryGetComponent<Component::Hierarchy>(entity))
         {
             RemoveChild(hierarchy->parent, entity);
         }
 
-        if (auto children = TryGetComponent<Component::Children>(entity))
+        if (const auto children = TryGetComponent<Component::Children>(entity))
         {
             auto curr = children->first;
 
@@ -116,7 +118,6 @@ namespace Engine
         }
     }
 
-
     Entity::Id Scene::GetParent(Entity::Id entity)
     {
         if (auto hierarchy = TryGetComponent<Component::Hierarchy>(entity))
@@ -125,5 +126,125 @@ namespace Engine
         }
 
         return Entity::Null;
+    }
+
+    std::unordered_map<entt::entity, Entity::Id> MapEntities(const entt::registry& from, entt::registry& to)
+    {
+        std::unordered_map<entt::entity, Entity::Id> map{};
+
+        for (const auto entities = from.storage<entt::entity>(); const auto& [entity]: entities->each())
+        {
+            map[entity] = to.create();
+        }
+
+        return map;
+    }
+
+    Entity::Id MapEntity(const entt::entity& from, const std::unordered_map<entt::entity, Entity::Id>& map)
+    {
+        if (const auto it = map.find(from); it != map.end())
+        {
+            return it->second;
+        }
+
+        return Entity::Null;
+    }
+
+    template<typename T>
+    void MapComponent(const entt::registry& from, entt::registry& to, const std::unordered_map<entt::entity, Entity::Id>& map)
+    {
+        const auto components = from.storage<T>();
+
+        if (!components)
+        {
+            return;
+        }
+
+        for (auto [entity, component] : components->reach())
+        {
+            auto mapped = MapEntity(entity, map);
+
+            if (mapped == Entity::Null)
+            {
+                continue;
+            }
+
+            auto copy = component;
+
+            if constexpr (std::is_same_v<T, Component::Hierarchy>)
+            {
+                copy.prev = MapEntity(component.prev, map);
+                copy.next = MapEntity(component.next, map);
+                copy.parent = MapEntity(component.parent, map);
+            }
+
+            if constexpr (std::is_same_v<T, Component::Children>)
+            {
+                copy.first = MapEntity(component.first, map);
+            }
+
+            to.emplace<T>(mapped, copy);
+        }
+    }
+
+    template<typename... T>
+    void MapComponentGroup(const entt::registry& from, entt::registry& to, const std::unordered_map<entt::entity, Entity::Id>& map, Component::Group<T...>)
+    {
+        ([&]()
+            {
+                MapComponent<T>(from, to, map);
+            }(),
+        ...);
+    }
+
+    std::unordered_map<Entity::Id, Entity::Id> Scene::Map(const Scene& from, Scene& to)
+    {
+        const auto map = MapEntities(from.registry, to.registry);
+        MapComponentGroup(from.registry, to.registry, map, Component::Serializable);
+
+        return map;
+    }
+
+    void CopyEntities(const entt::registry& from, entt::registry& to)
+    {
+        const auto entities = from.storage<entt::entity>();
+
+        to.storage<entt::entity>().push(entities->rbegin(), entities->rend());
+        to.storage<entt::entity>().free_list(entities->free_list());
+    }
+
+    template<typename T>
+    void CopyComponent(const entt::registry& from, entt::registry& to)
+    {
+        const auto components = from.storage<T>();
+
+        if (! components)
+        {
+            return;
+        }
+
+        to.storage<T>().insert(components->entt::sparse_set::rbegin(), components->entt::sparse_set::rend(), components->rbegin());
+    }
+
+
+    template<typename... T>
+    void CopyComponentGroup(const entt::registry& from, entt::registry& to, Component::Group<T...>)
+    {
+        ([&]()
+            {
+                CopyComponent<T>(from, to);
+            }(),
+        ...);
+    }
+
+
+    void Scene::Copy(const Scene& from, Scene& to)
+    {
+        for([[maybe_unused]] auto [_, storage] : to.registry.storage()) {
+            assert(storage.empty() && "Scene must be empty");
+        }
+
+        CopyEntities(from.registry, to.registry);
+        CopyComponentGroup(from.registry, to.registry, Component::Serializable);
     }
 }

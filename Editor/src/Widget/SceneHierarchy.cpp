@@ -1,6 +1,7 @@
 #include "SceneHierarchy.h"
 
 #include <Scene/SceneGraph.h>
+#include <Scene/Component/SceneInstance.h>
 
 #include <imgui.h>
 
@@ -55,7 +56,19 @@ void SceneHierarchy::EntityNode(Engine::SceneGraph& scene, Engine::Entity::Id en
 
 	auto id = (void*)(uint64_t)entity;
 
+	auto instanced = scene.HasComponent<Engine::Component::SceneInstance>(entity);
+
+	if (instanced)
+	{
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(231.f/255.f, 182.f/255.f, 58.f/255.f, 1.f));
+	}
+
 	bool open = ImGui::TreeNodeEx(id, flags, "%s", name.value.c_str());
+
+	if (instanced)
+	{
+		ImGui::PopStyleColor();
+	}
 
 	if (ImGui::IsItemClicked())
 	{

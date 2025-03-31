@@ -7,7 +7,7 @@
 #include "Vulkan/ImageView.h"
 #include "Vulkan/Sampler.h"
 
-#include "Resource/Resource.h"
+#include "Resource/ResourceManager.h"
 
 template<typename Archive>
 void Serialize(Archive& ar, VkExtent3D& extent)
@@ -69,7 +69,9 @@ namespace Engine
 		{
 			ar(mipmaps, data);
 
-			UploadToGpu(cereal::get_user_data<Vulkan::Device>(ar));
+			auto& manager = cereal::get_user_data<ResourceManager>(ar);
+
+			UploadToGpu(manager.GetDevice());
 		}
 
 	protected:

@@ -1,7 +1,5 @@
 #include "ShadowPass.h"
 
-
-#include "Resource/ResourceManager.h"
 #include "Rendering/Renderer.h"
 
 #include "Rendering/RenderGraphCommand.h"

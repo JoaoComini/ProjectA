@@ -6,6 +6,9 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
 
+#include "Rendering/Mesh.h"
+#include "Scene/SceneResource.h"
+
 namespace Engine
 {
     tinygltf::Model LoadModel(const std::filesystem::path& path)

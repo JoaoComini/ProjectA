@@ -12,6 +12,8 @@
 #include "RenderContext.h"
 #include "ShaderCache.h"
 
+#include "Scene/SceneGraph.h"
+
 namespace Engine
 {
 	class Window;
@@ -37,7 +39,6 @@ namespace Engine
 		RenderGraphResourceHandle<RenderBuffer> lights;
 		RenderGraphResourceHandle<RenderBuffer> shadows;
 	};
-
 
 	class Renderer
 	{

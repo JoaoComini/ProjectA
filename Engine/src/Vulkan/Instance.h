@@ -5,11 +5,11 @@
 
 namespace Vulkan
 {
-    struct Instance : public Resource<VkInstance>
+    class Instance : public Resource<VkInstance>
     {
     public:
         Instance();
-        ~Instance();
+        ~Instance() override;
 
     private:
 #ifndef NDEBUG

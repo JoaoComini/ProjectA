@@ -1,7 +1,10 @@
 #include "RenderBatcher.h"
 
-#include "Resource/ResourceManager.h"
 #include "Renderer.h"
+#include "Mesh.h"
+
+#include "Resource/ResourceManager.h"
+
 #include "Scene/SceneGraph.h"
 
 namespace Engine

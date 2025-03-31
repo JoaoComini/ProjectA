@@ -10,9 +10,10 @@ namespace Engine
 	public:
 		SceneGraph();
 
-		void Add(const SceneResource& scene);
+		[[nodiscard]] std::unique_ptr<SceneResource> Pack() const;
 
-		std::unique_ptr<SceneResource> Pack() const;
+		Entity::Id Instantiate(std::shared_ptr<SceneResource> scene);
+		void Replace(const SceneResource& scene);
 
 		void Update();
 
@@ -21,6 +22,7 @@ namespace Engine
 		[[nodiscard]] bool IsPaused() const;
 
 	private:
+		void CopyEntityFromSceneInstance(Entity::Id entity, const Component::SceneInstance& from);
 		void ComputeEntityLocalToWorld(const Component::LocalToWorld& parent, Entity::Id entity);
 
 		bool paused = false;

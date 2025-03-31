@@ -8,18 +8,15 @@
 #include <cereal/types/string.hpp>
 #include <cereal/types/memory.hpp>
 
-namespace Vulkan
-{
-    class Device;
-}
-
 namespace Engine
 {
+    class ResourceManager;
+
     class ResourceLoader
     {
     public:
         template <typename T>
-        static std::shared_ptr<T> Load(const std::filesystem::path& path, Vulkan::Device& device)
+        static std::shared_ptr<T> Load(const std::filesystem::path& path, ResourceManager& manager)
         {
             static_assert(std::is_base_of_v<Resource, T>, "T must be derived from Resource");
 
@@ -27,7 +24,7 @@ namespace Engine
 
             auto resource = std::make_shared<T>();
 
-            cereal::UserDataAdapter<Vulkan::Device, cereal::PortableBinaryInputArchive> archive{ device, stream };
+            cereal::UserDataAdapter<ResourceManager, cereal::PortableBinaryInputArchive> archive{ manager, stream };
             archive(*resource);
 
             return resource;

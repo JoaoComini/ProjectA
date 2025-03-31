@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Common/FileSystem.h>
 #include <yaml-cpp/yaml.h>
 
 template<>
@@ -22,18 +21,8 @@ namespace Engine
     class ResourceMetadata
     {
     public:
-        void LoadFromFile(const std::filesystem::path& path)
-        {
-            root = YAML::LoadFile(path.string());
-        }
-
-        void SaveToFile(const std::filesystem::path& path) const
-        {
-            YAML::Emitter emitter;
-            emitter << root;
-
-            FileSystem::WriteFile(path, emitter.c_str());
-        }
+        void LoadFromFile(const std::filesystem::path& path);
+        void SaveToFile(const std::filesystem::path& path) const;
 
         template<typename T>
         void SetValue(const std::string& section, const std::string& key, const T& value)
@@ -47,13 +36,8 @@ namespace Engine
             return root[section][key].as<T>();
         }
 
-        bool HasValue(const std::string& section, const std::string& key) const
-        {
-            return ! root[section][key].IsNull();
-        }
-
+        bool HasValue(const std::string& section, const std::string& key) const;
     private:
         YAML::Node root;
-        std::filesystem::path path;
     };
 }
