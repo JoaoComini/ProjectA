@@ -31,4 +31,17 @@ namespace Engine::Component
         BoxShape,
         SphereShape
     >{};
+
+    inline constexpr auto Overridable = Group<
+        Transform,
+        MeshRender,
+        Camera,
+        DirectionalLight,
+        PointLight,
+        // SkyLight, TODO: fix skylight
+        Script,
+        PhysicsBody,
+        BoxShape,
+        SphereShape
+    >{};
 }

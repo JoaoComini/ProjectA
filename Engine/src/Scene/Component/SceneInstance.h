@@ -8,6 +8,8 @@ namespace Engine::Component
     {
         std::shared_ptr<SceneResource> scene;
         Entity::Id local;
+
+        std::unordered_map<entt::id_type, std::vector<uint8_t>> overrides;
     };
 
     template <class Archive>

@@ -117,6 +117,12 @@ namespace Engine
         }
 
         template<typename... T>
+        auto TryGetComponent(Entity::Id id) const
+        {
+            return registry.try_get<T...>(id);
+        }
+
+        template<typename... T>
         auto TryGetComponent(Entity::Id id)
         {
             return registry.try_get<T...>(id);

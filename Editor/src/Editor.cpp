@@ -198,9 +198,8 @@ namespace Engine
 
 	void Editor::SaveScene()
 	{
-    	auto& graph = GetSceneGraph();
-
-    	const auto scene = graph.Pack();
+    	const auto scene = std::make_unique<SceneResource>();
+    	scene->Pack(GetSceneGraph());
 
 		if (! currentScene)
 		{

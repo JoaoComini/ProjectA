@@ -5,11 +5,11 @@
 namespace Engine
 {
     template<typename... T>
-    void InitializeStorages(entt::registry& registry, Component::Group<T...>)
+    void InitializeStorages(entt::registry& registry, Component::GroupT<T...>)
     {
         ([&]()
         {
-           static_cast<void>(registry.storage<T>());
+           registry.storage<T>();
         }(), ...);
     }
 
@@ -19,32 +19,11 @@ namespace Engine
         InitializeStorages(registry, Component::Serializable);
     }
 
-    bool ShouldPackWithInstance(const entt::sparse_set& storage)
+    inline bool ShouldPackWithInstance(const entt::sparse_set& storage)
     {
         return storage.type() == entt::type_id<Component::SceneInstance>()
             || storage.type() == entt::type_id<Component::Hierarchy>()
             || storage.type() == entt::type_id<Component::Children>();
-    }
-
-    std::unique_ptr<SceneResource> SceneGraph::Pack() const
-    {
-        auto resource = std::make_unique<SceneResource>();
-
-        Copy(*this, *resource);
-
-        // Destroy all Components but SceneInstances from Instanced entities
-        auto query = resource->Query<Component::SceneInstance>();
-        for (const auto entity: query)
-        {
-            resource->registry.erase_if(entity, [](auto, const auto &storage)
-            {
-                return !ShouldPackWithInstance(storage);
-            });
-        }
-
-        resource->registry.compact();
-
-        return resource;
     }
 
     Entity::Id SceneGraph::Instantiate(std::shared_ptr<SceneResource> scene)
@@ -79,21 +58,19 @@ namespace Engine
         }
     }
 
-    void SceneGraph::CopyEntityFromSceneInstance(Entity::Id entity, const Component::SceneInstance& instance)
+    void SceneGraph::CopyEntityFromSceneInstance(const Entity::Id entity, const Component::SceneInstance& instance)
     {
         for (auto [id, from] : instance.scene->registry.storage())
         {
-            if (ShouldPackWithInstance(from))
+            if (ShouldPackWithInstance(from) || ! from.contains(instance.local))
             {
                 continue;
             }
 
             assert(registry.storage(id) != nullptr && "Storage must not be null");
 
-            if (auto* to = registry.storage(id); from.contains(instance.local))
-            {
-                to->push(entity, from.value(instance.local));
-            }
+            const auto to = registry.storage(id);
+            to->push(entity, from.value(instance.local));
         }
     }
 

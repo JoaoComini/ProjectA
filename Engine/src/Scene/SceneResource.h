@@ -10,6 +10,8 @@ namespace Engine
     public:
         SceneResource() = default;
 
+    	void Pack(const SceneGraph& graph);
+
     	[[nodiscard]] ResourceType GetType() const override;
 
         template<class Archive>
@@ -41,11 +43,6 @@ namespace Engine
     	template<class Archive, class Snapshot, typename... Components>
 		static void SnapshotComponentGroup(Archive& ar, Snapshot& snapshot, Component::Group<Components...>);
     };
-
-    namespace Component
-	{
-
-	}
 
 	template<class Archive, class Snapshot, typename ... Components>
 	void SceneResource::SnapshotComponentGroup(Archive &ar, Snapshot &snapshot, Component::Group<Components...>)
